@@ -64,11 +64,11 @@ varying vec2 vUv;
 void main() { vUv = uv; gl_Position = vec4(position.xy, 0., 1.); }
 `;
 
-// Renders a fragment shader into a mipmapped float texture once, so heavy noise costs nothing per frame.
-export function bakeTexture({ width, height, fragment, uniforms = {}, wrap = THREE.ClampToEdgeWrapping, wrapS = THREE.RepeatWrapping }) {
+// Renders a fragment shader into a mipmapped texture (half float unless `type` says otherwise) once, so heavy noise costs nothing per frame.
+export function bakeTexture({ width, height, fragment, uniforms = {}, wrap = THREE.ClampToEdgeWrapping, wrapS = THREE.RepeatWrapping, type = THREE.HalfFloatType }) {
   const renderer = getRenderer();
   const target = new THREE.WebGLRenderTarget(width, height, {
-    type: THREE.HalfFloatType,
+    type,
     format: THREE.RGBAFormat,
     minFilter: THREE.LinearMipmapLinearFilter,
     magFilter: THREE.LinearFilter,

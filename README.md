@@ -72,9 +72,8 @@ Models, textures and audio go in `public/assets/`, and everything used is credit
 **You build:** renderer and post-processing, skybox, Earth and Mars with atmosphere shaders, cockpit, cabin and Mars visuals, VFX (flame, plasma, dust), HUD theme, cinematic API, all sound, Low/High quality settings.
 
 **Next tasks:**
-1. Real Earth and Mars textures, with credits.
-2. Art pass on the rocket parts and mission props, then real audio.
-3. Measure frame rate on a mid-range laptop.
+1. Art pass on the rocket parts and mission props, then real audio.
+2. Measure frame rate on a mid-range laptop.
 
 **You use:** nothing blocking. Work in `/sandbox/role3.html`.
 
@@ -104,7 +103,7 @@ Update your row whenever you push to `dev`.
 |---|---|
 | 1 | Nothing yet. `index.html` and `src/core/` don't exist, so `/` shows a 404 and `npm run build` fails. |
 | 2 | Nothing yet |
-| 3 | All hour-3 APIs below. See every view at `/sandbox/role3.html`. Art is generated in code. The cabin is a full art pass and the VFX exist; parts, props and sounds are still placeholders. |
+| 3 | All hour-3 APIs below. See every view at `/sandbox/role3.html`. Earth and Mars use real maps; the rest of the art is generated in code. The cabin is a full art pass and the VFX exist; parts, props and sounds are still placeholders. |
 | 4 | Nothing yet |
 
 ## Role 3 APIs you can use now
@@ -147,7 +146,7 @@ Units are metres and +Y is up.
 | `vfx:exhaust` | Origin at the nozzle exit, smoke falls down -Y. `userData.set({ throttle: 0..1, airDensity: 0..1 })`. Invisible in vacuum. |
 | `vfx:entryPlasma` | Add it to the cockpit group (its coordinates). `userData.set({ intensity: 0..1 })`. Streaks outside the window, and an orange light inside. |
 | `vfx:landingDust` | Origin on the ground under the engine, +Y up. `userData.set({ intensity: 0..1 })`. A sheet of dust up to about 40 m wide. |
-| `planet:earth`, `planet:mars` | Radius 1, so set `planet.scale.setScalar(radius)`. To spin it, rotate `userData.surface`, not the group. |
+| `planet:earth`, `planet:mars` | Radius 1, so set `planet.scale.setScalar(radius)`. To spin it, rotate `userData.surface`, not the group. Call `await assets.preload(['planet:earth', 'planet:mars'])` during loading so no placeholder shows. |
 | `rocketPart:<id>` | The look comes from words in the id: `capsule`, `tank`, `engine`, `nose`, `fin`, `leg`, `heat`. Size comes from `_s`, `_m` or `_l`. `userData.height` is the stacking height. |
 | `lander`, `halcyonLander` | Your ship and the lost crew's wreck |
 | `scanPoint`, `sampleRock`, `discoveryRock`, `solarPanel`, `iceDeposit`, `dataLog` | Mission props, holograms for now |

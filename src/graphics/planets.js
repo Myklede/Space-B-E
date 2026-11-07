@@ -1,5 +1,5 @@
 import * as THREE from 'three';
-import { bakeTexture, GLSL_NOISE, qualitySettings, sharedUniforms } from './shared.js';
+import { bakeTexture, getRenderer, GLSL_NOISE, qualitySettings, sharedUniforms } from './shared.js';
 
 const EARTH_COLOR = /* glsl */ `
 varying vec2 vUv;
@@ -73,6 +73,43 @@ void main() {
   gl_FragColor = vec4(col, clamp(large * .6 + crater + fine * .08, 0., 1.));
 }`;
 
+// Real maps. These compose the same two textures the procedural bake makes, so the surface shader doesn't care which it got.
+const EARTH_COMPOSE_COLOR = /* glsl */ `
+varying vec2 vUv;
+uniform sampler2D uDay;
+void main() {
+  vec3 c = texture2D(uDay, vUv).rgb;
+  float lum = dot(c, vec3(.2126, .7152, .0722));
+  // Open water: blue clearly ahead of red, no brighter than green, and dark. Ice and cloud-white fail on the first test.
+  bool water = c.b > c.r * 1.5 + .0015 && c.b > c.g * .95 && lum < .3;
+  gl_FragColor = vec4(c * (water ? .8 : .9), water ? 0. : .06 + .2 * lum); // alpha 0 marks open ocean
+}`;
+
+const EARTH_COMPOSE_CLOUDS = /* glsl */ `
+varying vec2 vUv;
+uniform sampler2D uClouds;
+uniform sampler2D uNight;
+uniform sampler2D uMap;
+void main() {
+  float c = texture2D(uClouds, vUv).r;
+  float clouds = smoothstep(.06, .92, c);
+  vec3 n = texture2D(uNight, vUv).rgb;
+  float lights = smoothstep(.06, .5, dot(n, vec3(.2126, .7152, .0722)));
+  lights *= step(.001, texture2D(uMap, vUv).a); // never over open water
+  gl_FragColor = vec4(clouds, lights, 0., 1.);
+}`;
+
+const MARS_COMPOSE_COLOR = /* glsl */ `
+varying vec2 vUv;
+uniform sampler2D uMars;
+${GLSL_NOISE}
+void main() {
+  vec3 c = texture2D(uMars, vUv).rgb;
+  float lum = dot(c, vec3(.2126, .7152, .0722));
+  float fine = fbm(dirFromUv(vUv) * 60., 4) - .5;
+  gl_FragColor = vec4(c, clamp(lum * 1.3 + fine * .08, 0., 1.)); // the photo has its own shading baked in, so relief stays gentle
+}`;
+
 const SURFACE_VERTEX = /* glsl */ `
 #include <common>
 #include <logdepthbuf_pars_vertex>
@@ -103,7 +140,9 @@ uniform float uBump;
 uniform float uTime;
 uniform vec3 uSunDir;
 uniform float uTexel;
+uniform float uClose;
 varying vec2 vUv;
+${GLSL_NOISE}
 varying vec3 vQ;
 varying vec3 vWorld;
 varying vec3 vT;
@@ -122,6 +161,11 @@ void main() {
   vec3 L = uSunDir;
   vec3 sun = vec3(1., .97, .92) * 1.75;
   vec4 base = texture2D(uColor, vUv);
+  // Near the ground a 4K map is about 1 km a pixel. Noise on the direction adds the missing grain, only when close.
+  if (uClose > .001 && (uIsEarth < .5 || base.a > .001)) {
+    float g = vnoise(N * 1500.) * .5 + vnoise(N * 5200.) * .3 + vnoise(N * 17000.) * .2;
+    base.rgb *= 1. + uClose * (g - .5) * .7;
+  }
   vec3 Nb = bumped(N, normalize(vT), normalize(vB), uBump);
   float lit = max(dot(Nb, L), 0.);
   vec3 col = base.rgb * sun * lit;
@@ -204,26 +248,93 @@ void main() {
 }`;
 
 const SETTINGS = {
-  earth: { top: 1.1, falloff: 7.5, beta: [3.3, 7.7, 18.9], sunPower: 1.15, bump: 0.018 },
-  mars: { top: 1.2, falloff: 6.1, beta: [1.5, 1.02, 0.46], sunPower: 1.5, bump: 0.05 },
+  earth: { top: 1.1, falloff: 7.5, beta: [3.3, 7.7, 18.9], sunPower: 1.15, bump: 0.006 },
+  mars: { top: 1.2, falloff: 6.1, beta: [0.6, 0.41, 0.19], sunPower: 1.5, bump: 0.008 },
 };
 
-const baked = new Map();
+const baked = new Map(); // name -> { color, clouds }, shared by every instance
+const loading = new Map(); // name -> Promise, so each planet loads once
+const live = new Map(); // name -> Set of surface materials waiting on, or showing, those maps
 
-function bakedMaps(name) {
-  if (baked.has(name)) return baked.get(name);
+function proceduralMaps(name) {
   const width = qualitySettings().planetTexture;
   const height = width / 2;
-  let maps;
   if (name === 'earth') {
     const color = bakeTexture({ width, height, fragment: EARTH_COLOR });
     const clouds = bakeTexture({ width, height, fragment: EARTH_CLOUDS, uniforms: { uColor: { value: color } } });
-    maps = { color, clouds };
-  } else {
-    maps = { color: bakeTexture({ width, height, fragment: MARS_COLOR }), clouds: null };
+    return { color, clouds };
   }
-  baked.set(name, maps);
-  return maps;
+  return { color: bakeTexture({ width, height, fragment: MARS_COLOR }), clouds: null };
+}
+
+function loadTexture(file, srgb) {
+  const url = `${import.meta.env.BASE_URL}assets/textures/${file}_${qualitySettings().planetTexture / 1024}k.jpg`;
+  return new THREE.TextureLoader().loadAsync(url).then((t) => {
+    t.colorSpace = srgb ? THREE.SRGBColorSpace : THREE.NoColorSpace;
+    t.wrapS = THREE.RepeatWrapping;
+    t.minFilter = THREE.LinearFilter; // read 1:1 by the compose pass, so no mip chain needed
+    t.generateMipmaps = false;
+    return t;
+  });
+}
+
+function composeMaps(name, src) {
+  const width = qualitySettings().planetTexture;
+  const height = width / 2;
+  if (name === 'earth') {
+    const color = bakeTexture({ width, height, fragment: EARTH_COMPOSE_COLOR, uniforms: { uDay: { value: src.day } } });
+    const clouds = bakeTexture({
+      width, height, fragment: EARTH_COMPOSE_CLOUDS, type: THREE.UnsignedByteType,
+      uniforms: { uClouds: { value: src.clouds }, uNight: { value: src.night }, uMap: { value: color } },
+    });
+    return { color, clouds };
+  }
+  return { color: bakeTexture({ width, height, fragment: MARS_COMPOSE_COLOR, uniforms: { uMars: { value: src.mars } } }), clouds: null };
+}
+
+/** Resolves once the real maps of a planet are composed and every live instance uses them. Safe to call many times. */
+export function loadPlanetMaps(name) {
+  if (!SETTINGS[name]) return Promise.resolve();
+  if (loading.has(name)) return loading.get(name);
+  const files = name === 'earth'
+    ? { day: ['earth_day', true], clouds: ['earth_clouds', false], night: ['earth_night', false] }
+    : { mars: ['mars', true] };
+  const promise = (async () => {
+    const sources = {};
+    let maps;
+    try {
+      await Promise.all(Object.entries(files).map(async ([key, [file, srgb]]) => { sources[key] = await loadTexture(file, srgb); }));
+      const t0 = performance.now();
+      maps = composeMaps(name, sources);
+      getRenderer().getContext().finish();
+      performance.measure(`planet:${name}:compose`, { start: t0, end: performance.now() });
+    } catch (error) {
+      console.warn(`[planets] real ${name} maps unavailable (${error?.message ?? 'an image failed to load'}), using generated ones`);
+      maps = proceduralMaps(name);
+    }
+    Object.values(sources).forEach((t) => t.dispose());
+    baked.set(name, maps);
+    for (const material of live.get(name) ?? []) {
+      material.uniforms.uColor.value = maps.color;
+      material.uniforms.uClouds.value = maps.clouds ?? maps.color;
+    }
+  })();
+  loading.set(name, promise);
+  return promise;
+}
+
+// Flat stand-ins shown for the instant before the real maps arrive: deep ocean, or rust. Alpha is above 0 so no glint appears.
+const placeholders = new Map();
+function placeholderMaps(name) {
+  if (!placeholders.has(name)) {
+    const make = (r, g, b, a) => {
+      const t = new THREE.DataTexture(new Uint8Array([r, g, b, a]), 1, 1);
+      t.needsUpdate = true;
+      return t;
+    };
+    placeholders.set(name, { color: make(...(name === 'earth' ? [3, 14, 40, 30] : [140, 70, 35, 120])), clouds: make(0, 0, 0, 255) });
+  }
+  return placeholders.get(name);
 }
 
 /**
@@ -232,7 +343,8 @@ function bakedMaps(name) {
  */
 export function createPlanet(name) {
   const cfg = SETTINGS[name];
-  const maps = bakedMaps(name);
+  const maps = baked.get(name) ?? placeholderMaps(name);
+  loadPlanetMaps(name);
   const group = new THREE.Group();
   group.name = `planet:${name}`;
 
@@ -242,6 +354,7 @@ export function createPlanet(name) {
       vertexShader: SURFACE_VERTEX,
       fragmentShader: SURFACE_FRAGMENT,
       uniforms: {
+        uClose: { value: 0 },
         uColor: { value: maps.color },
         uClouds: { value: maps.clouds ?? maps.color },
         uIsEarth: { value: name === 'earth' ? 1 : 0 },
@@ -253,6 +366,8 @@ export function createPlanet(name) {
     }),
   );
   group.add(surface);
+  if (!live.has(name)) live.set(name, new Set());
+  live.get(name).add(surface.material);
 
   const shellMaterial = new THREE.ShaderMaterial({
     vertexShader: ATMOSPHERE_VERTEX,
@@ -282,6 +397,7 @@ export function createPlanet(name) {
     camera.getWorldPosition(cam);
     group.worldToLocal(cam);
     shellMaterial.uniforms.uCamObj.value.copy(cam);
+    surface.material.uniforms.uClose.value = 1 - THREE.MathUtils.smoothstep(cam.length() - 1, 0.04, 0.2);
     shellMaterial.side = cam.length() < cfg.top ? THREE.BackSide : THREE.FrontSide;
   };
   return group;

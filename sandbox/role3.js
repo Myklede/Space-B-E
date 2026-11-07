@@ -47,6 +47,12 @@ function planetBelow(name, radius, altitude, sun, elevation = -90) {
   return { scene, planet };
 }
 
+// Real maps load once, here, so no view ever shows the placeholder planet.
+await assets.preload(['planet:earth', 'planet:mars']);
+
+// Turns the globe so longitude `lon` (east positive) faces the +z side, where the cameras here look.
+const faceLon = (planet, lon) => { planet.userData.surface.rotation.y = THREE.MathUtils.degToRad(-90 - lon); };
+
 // VFX objects of the current view, driven by the lil-gui sliders.
 const vfx = [];
 
@@ -54,7 +60,8 @@ const VIEWS = {
   orbit: {
     label: 'Earth orbit',
     build() {
-      const { scene } = planetBelow('earth', EARTH_R, 170e3, [0.86, 0.36, -0.36], -36);
+      const { scene, planet } = planetBelow('earth', EARTH_R, 170e3, [0.86, 0.36, -0.36], -36);
+      faceLon(planet, 10);
       pivot();
       look([0, 0, 0], [0.04, -0.1, -1]);
       return scene;
@@ -66,6 +73,7 @@ const VIEWS = {
       const scene = createSpaceScene();
       const planet = assets.get('planet:earth');
       planet.scale.setScalar(EARTH_R);
+      faceLon(planet, 20);
       planet.position.set(0, 0, -EARTH_R * 3.1);
       scene.add(planet);
       graphics.setSunDirection(new THREE.Vector3(0.82, 0.3, 0.55));
@@ -87,7 +95,9 @@ const VIEWS = {
   marsorbit: {
     label: 'Mars orbit',
     build() {
-      const { scene } = planetBelow('mars', MARS_R, 90e3, [0.8, 0.42, -0.42], -36);
+      const { scene, planet } = planetBelow('mars', MARS_R, 90e3, [0.8, 0.42, -0.42], -36);
+      faceLon(planet, -62);
+      planet.userData.surface.rotation.x = -1.12; // the view looks toward the horizon, so tilt Valles Marineris (14 S) up to about 50 N of the camera
       pivot();
       look([0, 0, 0], [0.04, -0.1, -1]);
       return scene;
@@ -125,7 +135,8 @@ const VIEWS = {
   cockpit: {
     label: 'Cockpit',
     build() {
-      const { scene } = planetBelow('earth', EARTH_R, 170e3, [0.86, 0.36, -0.36], -40);
+      const { scene, planet } = planetBelow('earth', EARTH_R, 170e3, [0.86, 0.36, -0.36], -40);
+      faceLon(planet, -95); // the US east coast sits right of centre, in daylight
       scene.add(assets.get('cockpit'));
       pivot();
       look([0, 0, 0], [0, -0.2, -1]);

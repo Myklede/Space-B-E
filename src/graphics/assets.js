@@ -1,5 +1,5 @@
 import * as THREE from 'three';
-import { createPlanet } from './planets.js';
+import { createPlanet, loadPlanetMaps } from './planets.js';
 import { createSpaceSky } from './sky.js';
 import { createCabin, createCockpit, interiorEnvironment, pbr } from './interiors.js';
 import { createEngineFlame, createEntryPlasma, createExhaust, createLandingDust } from './vfx.js';
@@ -178,6 +178,8 @@ export const assets = {
     }
     return hologram(name);
   },
+  /** Resolves when the real maps of the given `planet:*` names are ready, so get() never shows a placeholder. Other names are ignored. */
+  preload: (names) => Promise.all(names.filter((n) => n.startsWith('planet:')).map((n) => loadPlanetMaps(n.slice(7)))).then(() => {}),
   has: (name) => factories.has(name) || name.startsWith('rocketPart:'),
   names: () => [...factories.keys(), 'rocketPart:<id>'],
   register,
