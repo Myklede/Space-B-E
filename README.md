@@ -162,7 +162,7 @@ Stubs and tests may also import `/src/core/stubScreen.js` and `/src/core/mocks/*
 | `getState()`, `requestState(to, data)` | Current state, and asking to change it. `data` is passed to the next module's `enter(state, data)`. Invalid changes are refused and logged. |
 | `input.isDown(code)`, `onPress(code, fn)`, `onEscape(fn)`, `mouseDelta()` | Keys use `KeyboardEvent.code`, such as `KeyW`. Handlers are removed on every state change, so register them in `enter`. |
 | `input.lockPointer()`, `unlockPointer()`, `isLocked()` | Mouse look. Browsers only allow locking from a click or key press. |
-| `ui.mount(element, { layer })`, `mountPersistent`, `unmount` | Puts your HTML on screen, using the HUD classes below. `layer` is `'hud'` or `'menu'` (default). Mounted elements are removed on every state change; persistent ones stay until you unmount them. Position them with your own CSS. |
+| `ui.mount(element, { layer })`, `mountPersistent`, `unmount` | Puts your HTML on screen, using the HUD classes below. `layer` is `'hud'` or `'menu'` (default). Mounted elements are removed on every state change; persistent ones stay until you unmount them. Position them with your own CSS. Mounted elements catch clicks unless you set `element.style.pointerEvents = 'none'` before mounting (do that for a full-screen HUD layer). |
 | `economy.getMoney()`, `canAfford(cost)`, `spend(cost, reason)`, `reward(amount, reason)`, `chargeFailure(shipCost)`, `isBankrupt()`, `reset()` | The only way to change money. Numbers come from `src/core/balance.json`. |
 | `save.load()`, `save.update(partial)`, `save.reset()` | The only way to use `localStorage`. |
 | `getShip()`, `setShip(spec)` | The current ship. `getShip` returns the Reliable mock until a ship is built. |
