@@ -510,7 +510,10 @@ export function createDesignPage({ assembly, catalog, sections, materials, engin
   }
 
   // ---------- the launch pad card (designPad.js) ----------
-  const padViews = createPadViews({ assembly, sections, h, item, fact, facts, para, prosCons, primary, signed, go, back, state, sound, changed, toggleFocus, getLast: () => last });
+  // the big explanation card (partCard.js, card agent): openCard({ kind: 'part' | 'option' | 'shape' | 'pad' | 'equip' | 'hull', ... })
+  let cardApi = null;
+  const openCard = (target) => cardApi?.open?.(target);
+  const padViews = createPadViews({ assembly, sections, h, item, fact, facts, para, prosCons, primary, signed, go, back, state, sound, changed, toggleFocus, getLast: () => last, icons, openCard });
 
   // ---------- cards ----------
   function sectionSummary(id) {

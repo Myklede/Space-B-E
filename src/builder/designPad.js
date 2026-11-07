@@ -7,7 +7,7 @@ import { fmtInt, fmtMoney, fmtMoneyShort } from './format.js';
 
 /**
  * createPadViews(ui) → { body(view), crumb(view), summary(), artKey(dims), art(dims) }
- * ui: { assembly, sections, h, item, fact, facts, para, prosCons, primary, signed, go, back, state, sound, changed,
+ * ui: { assembly, sections, h, item, fact, facts, para, prosCons, primary, signed, go, back, state, sound, changed, icons, openCard,
  *       toggleFocus, getLast } (the design page's own helpers, so the card looks like the other three)
  */
 export function createPadViews(ui) {

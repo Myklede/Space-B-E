@@ -100,12 +100,68 @@ Người dùng muốn làm lại giao diện trang thiết kế:
   - Bệ phóng: giá bãi so với chờ ở Cape; Baikonur, Plesetsk miễn phí nhưng dưới 0 °C cả tuần; tháp lùi tránh vây, chân, booster; tay với chạm đúng vỏ; kẹp móc dưới bồn thấp nhất; tuyết khi dưới 0 °C. `pad/art.js` đọc `surfaceRadius` từ `nose/art.js` (cùng Role 1).
 - 2026-11-07: **tích hợp**: vẽ lại 320 ảnh thẻ; `autoplace.js` coi fairing là mũi; tổng tiền trên thẻ phần tính đủ cụm động cơ (test mới); `npm run check` qua; cập nhật `README.md`, `README-ARCH.md`, `docs/DECISIONS.md`; SHARE_PROBLEMS: Role 3 thêm ~80 mã linh kiện chưa có hình bay, Role 2 `stats.reliability` không dùng khi bay (severity decision). Chưa push lên dev.
 
-## 4b. Đang bàn: có cảnh báo cho người chơi hay để tai nạn xảy ra? (2026-11-07)
+## 4b. Có cảnh báo cho người chơi hay để tai nạn xảy ra? (2026-11-07, đã chốt ở mục 6)
 
 - Người dùng hỏi: nên báo "No spare oxygen", "Not enough Δv…" hay giấu đi để người chơi tự trải nghiệm tai nạn.
 - AI đề xuất hướng giữa: (1) trong trang thiết kế chỉ hiện con số (Δv / cần), bỏ câu chỉ cách sửa, thêm "Why?" mở Formula Lens; (2) Go/No-Go vẫn đọc NO-GO kèm lý do, người chơi được OVERRIDE (spec §5.5 và contract đã chốt, các ending dựa vào đây; bài học Challenger/Columbia là cảnh báo có nhưng bị bỏ qua); (3) không cảnh báo những gì phụ thuộc cách lái và độ tin cậy ẩn; (4) màn kết thúc nối lại nguyên nhân (Role 4); (5) tuỳ chọn chế độ "Veteran" trong Settings.
 - **Người dùng trả lời (2026-11-07):** đồng ý hướng xác suất "kiểu cầu thủ FIFA": bộ phận càng đắt càng chắc chắn nhưng vẫn có thể hỏng; đồ rẻ đôi khi vẫn thành công; liều khi Δv thiếu một chút đôi khi vẫn tới nơi (kịch tính khi sắp hết tiền). **Không nhắc lộ liễu** trong lúc lắp (chán nếu "cần 5000, lắp đúng 5000, bay thành công"). Khi thất bại thì **hiện phân tích nguyên nhân** để lần sau người chơi tự tính kỹ hơn.
 - AI đề xuất cách làm (chờ người dùng chốt chi tiết): tàu thực tế lệch quanh thông số thiết kế lúc xác nhận (đồ đắt lệch ít, đồ rẻ lệch nhiều, hiếm khi có lỗi chế tạo); bỏ con số "cần X m/s" và câu chỉ cách sửa trong trang thiết kế; Go/No-Go nói kiểu điều khiển viên, không số, không cách sửa; TEST FIRE tốn tiền có thể phát hiện lỗi động cơ (spec §5.3); "Hội đồng điều tra tai nạn" trong hangar sau chuyến bay hỏng. Nổ/hỏng giữa chuyến cần Role 2.
+
+## 6. Đợt 3 (2026-11-07): may rủi, vỏ liền khối, bệ phóng mới, thẻ giải thích (ĐÃ CHỐT)
+
+### Người dùng đã chốt
+- **May rủi kiểu FIFA:**
+  - Tàu thực tế lệch quanh thông số thiết kế lúc xác nhận, biên độ nhỏ khoảng ±2%: đồ đắt lệch ít, đồ rẻ lệch nhiều.
+  - Hiếm khi có lỗi chế tạo, xác suất bằng 1 − độ tin cậy của bộ phận đó.
+  - Liều đôi khi vẫn thành công.
+  - TEST FIRE tốn tiền và có thể phát hiện lỗi động cơ.
+  - Có hội đồng điều tra tai nạn trong hangar sau chuyến bay hỏng.
+- **Không nhắc lộ liễu:**
+  - Trang thiết kế chỉ hiện số của tàu, không có "cần X m/s", không có câu chỉ cách sửa, không có dấu "!" (chỉ lỗi cứng).
+  - Go/No-Go nói kiểu điều khiển viên, nhắc nhẹ, không số, không cách sửa; vẫn OVERRIDE được.
+- **Bệ phóng = bệ dưới đất**, không chọn ngày giờ:
+  - Hàng 1: bệ phóng thật có sẵn (LC-39A, SLC-40, Starbase, Gagarin's Start, ELA-3…), mỗi bệ kèm bộ thiết bị và khí hậu.
+  - Hàng 2: chỉnh từng thiết bị (máng dẫn lửa, phun nước, kẹp giữ, tháp, chống sét, radar thời tiết…).
+  - Bệ đắt chịu lửa nhiều hơn, cho phép hết ga ngay từ đầu.
+  - Tàu mạnh hơn sức chịu của bệ thì có đủ bốn hậu quả:
+    1. Giảm ga, mất một ít Δv.
+    2. Mảnh văng làm hỏng động cơ (may rủi).
+    3. Tốn tiền sửa bệ lần sau.
+    4. Kẹp giữ tốt bắt lỗi trước khi rời bệ.
+- **Thời tiết do game đưa:** dự báo cho ngày phóng theo khí hậu bệ; Go/No-Go có HOLD (chờ thêm một ngày, mất phí). Radar rẻ thì dự báo có thể sai. Cold Morning (demo Challenger) vẫn phải chạy được.
+- **Vỏ liền khối:**
+  - Game tự bọc vỏ trụ và chóp nón chuyển cỡ để tàu thành một khối.
+  - Người chơi chọn vật liệu vỏ cho từng phần (nhôm, nhôm-liti, carbon, thép…).
+  - Vỏ ảnh hưởng khối lượng, giá, chịu nhiệt khi bay lên, độ bền ở Max-Q (xác suất gãy), lực cản.
+  - Thêm độ bền sau mỗi chuyến, tỷ lệ hỏng, vật lý giống thật.
+  - Đồ gắn ngoài (pin, O₂, máy khoa học…) đưa vào trong vỏ; mở thẻ thì vỏ trong suốt. Chỉ những thứ vốn ở ngoài mới ở ngoài: booster, vây, chân, ăng-ten, tháp thoát hiểm.
+- **Độ bền = cả hai:**
+  - Tái sử dụng tàu sau chuyến về an toàn, phí tân trang rẻ hơn nhưng mỗi chuyến mòn thêm (Role 1 làm).
+  - Hao mòn trong chuyến bay ở Max-Q và nhiệt (ghi cho Role 2, cần cả nhóm đồng ý).
+- **Thẻ giải thích lớn ở giữa màn hình:**
+  - Mở khi bấm vào bộ phận (trên tàu 3D hoặc tên/hình trong cột phải); nút INSTALL nhỏ trong cột phải vẫn còn.
+  - Nội dung: (1) nó làm gì và vì sao cần, thiếu thì sao; (2) bên trong hoạt động thế nào (3D tách lớp + từng mảnh); (3) con số nói bằng lời đời thường và so với món đang lắp. Không cần phần lịch sử.
+  - Chữ to, thoáng. Tiếng Anh dễ hiểu, có nút EN/VI. Tiếng Việt chỉ ở thẻ lớn và hội đồng điều tra; tiếng Anh là mặc định (spec: UI English).
+- **Đội agent:** 5 thực thi + 5 giám sát, Opus 5.5, mức extra high.
+
+### Bước 0 (AI làm, commit `6b34db6`, merge dev `c0989b1`)
+- File khung có giao diện cố định:
+  - `hull.js` (`computeHull`, `hullChoices`, `hullMaterial`).
+  - `weather.js` (`weatherFor`).
+  - `sections/pad/effects.js` (`padEffects`).
+  - `designPad.js` (thẻ Bệ phóng, tách khỏi `designPage.js`).
+  - `i18n.js` (`tr`, `getLang`, `setLang`, `onLang`).
+  - `explain.js` và các file `explain*.json`.
+- `stats.js` đã cộng khối lượng, giá, lực cản của vỏ và phí, độ tin cậy, Δv mất khi giảm ga của bệ (hiện đều trung tính).
+- `assembly` có `hull` và `setHull`, `setLaunch`.
+- Trang thiết kế đã bỏ "need", bỏ dấu "!", thêm hàng "3 · Outer skin".
+
+### Chia việc (mỗi agent chỉ sửa file của mình)
+1. **Vỏ (hull):** `hull.js`, `bay/hullArt.js` (mới), `assembly.js` (đặt đồ vào trong), `designScene.js`, `hangarScene.js`, `bay/partArt.js`, `sections/{nose,body,tail}/art.js`, `data/hull.json` (mới), `data/explain-hull.json`, `tests/hull.test.mjs`.
+2. **Bệ phóng (pad):** `sections/pad/*` (cả `explain.json`), `weather.js`, `designPad.js` (+ `designPad.css`), `data/presets/*.json` (chỉ trường `launch`), `data/launch.json`, `tests/pad.test.mjs`, khối pad trong `tests/builder.test.mjs`.
+3. **Thẻ lớn (card):** `partCard.js` (+ `partCard.css`), `designPage.js`, `builder.css` (phần `vd-`), `everyday.js` (con số nói bằng lời, EN/VI), `tests/card.test.mjs`.
+4. **May rủi (luck):** `asBuilt.js`, `investigation.js` (+ css), `gonogo.js`, `gonogoView.js`, `data/text.json`, `index.js`, `hangarScreen.js`, `bay/teststand.js`, `tests/luck.test.mjs`.
+5. **Lời giải thích (content):** `sections/{nose,body,tail}/explain.json`, `data/explain-general.json`.
 
 ## 5. Việc tồn đọng
 

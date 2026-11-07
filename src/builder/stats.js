@@ -138,8 +138,11 @@ export function computeShipSpec(assembly, { catalog, engines, launch, balance, p
   const skin = hull.segments ?? [];
   const totalMass = sum(layout, massOf) + sum(skin, (g) => g.mass ?? 0);
   const comY = totalMass > 0 ? (sum(layout, (e) => massOf(e) * e.centerY) + sum(skin, (g) => (g.mass ?? 0) * (g.centerY ?? 0))) / totalMass : 0;
-  const totalArea = sum(layout, (e) => e.def.aero.sideArea) + sum(skin, (g) => g.sideArea ?? 0);
-  const copY = totalArea > 0 ? (sum(layout, (e) => e.def.aero.sideArea * e.centerY) + sum(skin, (g) => (g.sideArea ?? 0) * (g.centerY ?? 0))) / totalArea : comY;
+  // equipment riding inside the skin (hull.insideIds) is out of the airflow
+  const inside = new Set(hull.insideIds ?? []);
+  const areaOf = (e) => (inside.has(e.id) ? 0 : e.def.aero.sideArea);
+  const totalArea = sum(layout, areaOf) + sum(skin, (g) => g.sideArea ?? 0);
+  const copY = totalArea > 0 ? (sum(layout, (e) => areaOf(e) * e.centerY) + sum(skin, (g) => (g.sideArea ?? 0) * (g.centerY ?? 0))) / totalArea : comY;
   const stackHeight = layout.reduce((top, e) => (e.attach === 'axial' ? Math.max(top, e.y + e.height) : top), 0);
   const comOffset = comY - stackHeight / 2;
   const copOffset = copY - stackHeight / 2;
