@@ -1,4 +1,4 @@
-// Rover model (Role 2): Role 3's `assets.get('rover')` when it exists, otherwise a procedural model shaped like the
+// Rover model (Role 2): Role 3's `assets.get('rover')` when it exists (optional userData.eye = driver's eye), otherwise a procedural model shaped like the
 // Apollo Lunar Roving Vehicle: aluminium chassis, wire-mesh wheels with chevron treads, fenders, two seats, the
 // T-handle hand controller and display console, the umbrella high-gain antenna, the TV camera and a rear tool pallet.
 // Origin on the ground at the middle of the wheelbase, forward = −Z (RoverController's heading convention).
@@ -138,7 +138,8 @@ export function createRoverModel() {
   return {
     object,
     // Driver's eye in rover coordinates (left seat), for the first-person camera.
-    eye: new THREE.Vector3(-0.32, ROVER.wheelRadius + 0.12 + 0.95, 0.22),
+    // Role 3's model may set userData.eye if its driver's seat is elsewhere
+    eye: object.userData.eye?.clone?.() ?? new THREE.Vector3(-0.32, ROVER.wheelRadius + 0.12 + 0.95, 0.22),
     update(rover, dt) {
       object.position.set(rover.x, rover.y, rover.z);
       object.rotation.set(rover.pitch, rover.heading, -rover.roll, 'YXZ');
