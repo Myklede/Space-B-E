@@ -1,12 +1,23 @@
 {
   "name": "Nose",
   "short": "Nose",
-  "blurb": "The top of the ship: the fairing, the crew capsule, its heat shield and everything the crew needs.",
+  "blurb": "The top of the ship: the escape tower, the cover, the crew capsule, its heat shield and everything the crew needs.",
   "rows": [
     {
+      "id": "escape",
+      "name": "Escape tower",
+      "role": "A solid rocket on top that pulls the capsule clear of a failing booster.",
+      "mode": "stack",
+      "pick": {
+        "families": [
+          "abort"
+        ]
+      }
+    },
+    {
       "id": "fairing",
-      "name": "Nose cone / fairing",
-      "role": "The shell that cuts through the air on the way up.",
+      "name": "Nose cover / fairing",
+      "role": "What sits on the capsule's nose: a fairing, a cover or a nose cap.",
       "mode": "stack",
       "pick": {
         "families": [
@@ -38,13 +49,26 @@
     },
     {
       "id": "payload",
-      "name": "Payload adapter & kick stage",
-      "role": "The joint to the stage below, and an optional final solid motor.",
+      "name": "Trunk, adapter & kick stage",
+      "role": "What joins the capsule to the stage below, and an optional final solid motor.",
       "mode": "stack",
       "pick": {
         "families": [
           "stages",
           "boosters"
+        ]
+      }
+    },
+    {
+      "id": "abort",
+      "name": "Abort engines",
+      "role": "Engines in the capsule wall that push it clear: an escape with no tower.",
+      "mode": "radial",
+      "host": "capsule",
+      "symmetry": 4,
+      "pick": {
+        "flags": [
+          "abortPusher"
         ]
       }
     },
@@ -75,7 +99,7 @@
     },
     {
       "id": "crew",
-      "name": "Air, water & shelter",
+      "name": "Air, water, cooling & shelter",
       "role": "Keeping the crew alive between the planets.",
       "mode": "radial",
       "host": "capsule",
@@ -84,7 +108,8 @@
           "spareO2Tanks",
           "scrubber",
           "shelter",
-          "waterRecycler"
+          "waterRecycler",
+          "radiator"
         ]
       }
     },
@@ -101,32 +126,307 @@
           "navigation"
         ]
       }
-    },
-    {
-      "id": "cooling",
-      "name": "Cabin cooling",
-      "role": "Getting rid of heat in a vacuum.",
-      "mode": "radial",
-      "host": "capsule",
-      "pick": {
-        "flags": [
-          "radiator"
-        ]
-      }
     }
   ],
   "shapes": [
     {
-      "id": "fairing_capsule",
-      "name": "Capsule under a pointed fairing",
-      "real": "Gemini on Titan II",
-      "desc": "A sharp nose over a two-seat capsule: low drag through the thick air.",
+      "id": "mercury",
+      "name": "Small capsule under an escape tower",
+      "real": "Mercury on Redstone and Atlas (1961–63)",
+      "desc": "One seat under a red truss tower. The tower's motor yanks the capsule clear if the booster fails, and is thrown away on a good flight.",
       "pros": [
-        "Low drag"
+        "Light and cheap",
+        "Escape tower: up to +2 % ship reliability (the whole-ship bonus is capped at 6 %)"
       ],
       "cons": [
+        "One cramped seat and only 300 W of power",
+        "Small heat shield: 45 m² of entry drag against 80 for the medium one, so the engines brake harder at Mars"
+      ],
+      "diameter": "s",
+      "icon": "les_tower_mercury",
+      "stack": [
+        "les_tower_mercury",
+        "capsule_s",
+        "heat_shield_s"
+      ],
+      "radial": [
+        {
+          "type": "parachute",
+          "on": 1,
+          "angle": 180,
+          "yFrac": 0.12
+        },
+        {
+          "type": "antenna_low",
+          "on": 1,
+          "angle": 60,
+          "yFrac": 0.2
+        },
+        {
+          "type": "rcs_pack",
+          "on": 1,
+          "angle": 300,
+          "yFrac": 0.14
+        }
+      ]
+    },
+    {
+      "id": "gemini",
+      "name": "Capsule with a recovery nose",
+      "real": "Gemini on Titan II (1965–66)",
+      "desc": "No fairing and no tower: the capsule's own narrow nose holds the main parachute and a rendezvous radar. Gemini crews relied on ejection seats (pick them inside the cabin). The real Gemini cabin was black; the Mk2 here is white.",
+      "pros": [
+        "Brings its own main parachute",
+        "No tower to carry"
+      ],
+      "cons": [
+        "No escape tower",
+        "Blunt nose: more drag"
+      ],
+      "diameter": "m",
+      "icon": "nose_gemini_rr",
+      "stack": [
+        "nose_gemini_rr",
+        "capsule_m",
+        "heat_shield_m"
+      ],
+      "radial": [
+        {
+          "type": "antenna_low",
+          "on": 1,
+          "angle": 90,
+          "yFrac": 0.35
+        },
+        {
+          "type": "rcs_pack",
+          "on": 1,
+          "angle": 0,
+          "yFrac": 0.25
+        },
+        {
+          "type": "drogue_chute",
+          "on": 1,
+          "angle": 200,
+          "yFrac": 0.4
+        }
+      ]
+    },
+    {
+      "id": "apollo",
+      "name": "Command module under tower and cover",
+      "real": "Apollo on Saturn IB and Saturn V (1968–75)",
+      "desc": "A big blunt cabin with the escape tower standing on its nose. On Apollo a cork-and-fibreglass cover wrapped the whole cabin during the climb; the game draws only its top collar. Three main chutes and two drogues bring it home.",
+      "pros": [
+        "Escape tower: up to +3 % ship reliability (the whole-ship bonus is capped at 6 %)",
+        "Lands safely on two of three mains",
+        "Big shield: gentle entry"
+      ],
+      "cons": [
+        "Heavy: needs a large extra tank and a pair of solid boosters (about $4.8M in all on the Reliable body)",
+        "Tall nose: needs engine steering (a gimbal ring) or bigger fins"
+      ],
+      "diameter": "l",
+      "icon": "les_tower_apollo",
+      "stack": [
+        "les_tower_apollo",
+        "bpc_apollo",
+        "capsule_l",
+        "heat_shield_l"
+      ],
+      "radial": [
+        {
+          "type": "chute_cluster_3",
+          "on": 2,
+          "angle": 200,
+          "yFrac": 0.42
+        },
+        {
+          "type": "drogue_chute",
+          "on": 2,
+          "angle": 110,
+          "yFrac": 0.5,
+          "symmetry": 2
+        },
+        {
+          "type": "antenna_low",
+          "on": 2,
+          "angle": 45,
+          "yFrac": 0.3
+        },
+        {
+          "type": "rcs_pack",
+          "on": 2,
+          "angle": 330,
+          "yFrac": 0.22
+        }
+      ]
+    },
+    {
+      "id": "soyuz",
+      "name": "Capsule under a fairing with an escape tower",
+      "real": "Soyuz (since 1967); Shenzhou is built the same way",
+      "desc": "The escape tower stands on the fairing, and in an abort the whole front end flies away with the crew. Four grid fins fold out to keep it straight.",
+      "pros": [
+        "The escape system that saved Soyuz T-10a",
+        "Up to +3 % ship reliability (the whole-ship bonus is capped at 6 %)",
+        "Smooth nose: low drag"
+      ],
+      "cons": [
+        "Heavy: needs one more tank and a pair of solid boosters",
+        "Tall nose: needs engine steering (a gimbal ring) or bigger fins"
+      ],
+      "diameter": "m",
+      "icon": "las_soyuz",
+      "stack": [
+        "las_soyuz",
+        "capsule_m",
+        "heat_shield_m"
+      ],
+      "radial": [
+        {
+          "type": "parachute",
+          "on": 1,
+          "angle": 180,
+          "yFrac": 0.3
+        },
+        {
+          "type": "drogue_chute",
+          "on": 1,
+          "angle": 235,
+          "yFrac": 0.35
+        },
+        {
+          "type": "antenna_low",
+          "on": 1,
+          "angle": 90,
+          "yFrac": 0.35
+        },
+        {
+          "type": "rcs_pack",
+          "on": 1,
+          "angle": 0,
+          "yFrac": 0.25
+        }
+      ]
+    },
+    {
+      "id": "big_cabin",
+      "name": "Big cabin under an abort tower",
+      "real": "Orion on SLS (Artemis, since 2022)",
+      "desc": "A large cabin with its own spare oxygen under the strongest escape system built. Three main chutes, two drogues.",
+      "pros": [
+        "Room and spare oxygen",
+        "Abort tower: up to +3.5 % ship reliability (the whole-ship bonus is capped at 6 %)",
+        "Big shield: gentle entry"
+      ],
+      "cons": [
+        "The heaviest nose: needs a large extra tank and a pair of solid boosters (about $4.9M in all on the Reliable body)",
+        "Tall nose: needs engine steering (a gimbal ring) or bigger fins",
+        "The most expensive nose"
+      ],
+      "diameter": "l",
+      "icon": "las_orion",
+      "stack": [
+        "las_orion",
+        "capsule_l",
+        "heat_shield_l"
+      ],
+      "radial": [
+        {
+          "type": "chute_cluster_3",
+          "on": 1,
+          "angle": 200,
+          "yFrac": 0.42
+        },
+        {
+          "type": "drogue_chute",
+          "on": 1,
+          "angle": 110,
+          "yFrac": 0.5,
+          "symmetry": 2
+        },
+        {
+          "type": "antenna_medium",
+          "on": 1,
+          "angle": 45,
+          "yFrac": 0.3
+        },
+        {
+          "type": "rcs_pack",
+          "on": 1,
+          "angle": 330,
+          "yFrac": 0.22
+        }
+      ]
+    },
+    {
+      "id": "crew_dragon",
+      "name": "Capsule with pusher abort engines and a trunk",
+      "real": "Crew Dragon on Falcon 9 (since 2020)",
+      "desc": "No tower: four pods of engines in the capsule wall push it clear. A hinged cap covers the docking port, and a trunk with solar cells rides underneath.",
+      "pros": [
+        "Nothing to throw away",
+        "Solar power in the trunk",
+        "Abort pods: up to +2.5 % ship reliability (the whole-ship bonus is capped at 6 %)"
+      ],
+      "cons": [
+        "Heavy: needs one more tank and a pair of solid boosters",
+        "Tall nose: needs engine steering (a gimbal ring) or bigger fins",
+        "Toxic hypergolic propellant"
+      ],
+      "diameter": "m",
+      "icon": "nosecap_dragon",
+      "stack": [
+        "nosecap_dragon",
+        "capsule_m",
+        "heat_shield_m",
+        "crew_trunk_m"
+      ],
+      "radial": [
+        {
+          "type": "abort_pusher_pod",
+          "on": 1,
+          "angle": 45,
+          "yFrac": 0.12,
+          "symmetry": 4
+        },
+        {
+          "type": "chute_cluster_3",
+          "on": 1,
+          "angle": 180,
+          "yFrac": 0.45
+        },
+        {
+          "type": "drogue_chute",
+          "on": 1,
+          "angle": 90,
+          "yFrac": 0.5,
+          "symmetry": 2
+        },
+        {
+          "type": "antenna_low",
+          "on": 1,
+          "angle": 0,
+          "yFrac": 0.45
+        }
+      ]
+    },
+    {
+      "id": "fairing_capsule",
+      "name": "Capsule under a pointed fairing",
+      "real": "Vostok on the R-7: the cabin rode inside a shroud, with no escape tower",
+      "desc": "A sharp shroud that encloses the capsule: low drag through the thick air, but no escape tower (Vostok's cosmonaut had an ejection seat). Vostok's cabin was a 2.3 m sphere; here the shroud covers your capsule.",
+      "pros": [
+        "Low drag",
+        "Light"
+      ],
+      "cons": [
+        "No escape tower",
+        "Tall nose: may need bigger fins",
         "The fairing is mass you carry to Mars"
       ],
+      "diameter": "m",
+      "icon": "nose_pointed_m",
       "stack": [
         "nose_pointed_m",
         "capsule_m",
@@ -137,34 +437,37 @@
           "type": "parachute",
           "on": 1,
           "angle": 180,
-          "yFrac": 0.55
+          "yFrac": 0.32
         },
         {
           "type": "antenna_low",
           "on": 1,
           "angle": 90,
-          "yFrac": 0.55
+          "yFrac": 0.35
         },
         {
           "type": "rcs_pack",
           "on": 1,
           "angle": 0,
-          "yFrac": 0.3
+          "yFrac": 0.25
         }
       ]
     },
     {
       "id": "bare_capsule",
       "name": "Bare capsule",
-      "real": "Crew Dragon, Soyuz descent module",
-      "desc": "The capsule itself is the nose: no fairing at all.",
+      "real": "A capsule flown as its own nose, the cheapest crew nose",
+      "desc": "The capsule itself is the nose: no fairing, no tower, no trunk.",
       "pros": [
         "Lightest nose",
         "Cheapest"
       ],
       "cons": [
-        "More drag on the way up"
+        "More drag on the way up",
+        "No escape system"
       ],
+      "diameter": "m",
+      "icon": "capsule_m",
       "stack": [
         "capsule_m",
         "heat_shield_m"
@@ -174,61 +477,69 @@
           "type": "parachute",
           "on": 0,
           "angle": 180,
-          "yFrac": 0.55
+          "yFrac": 0.32
         },
         {
           "type": "antenna_low",
           "on": 0,
           "angle": 90,
-          "yFrac": 0.55
+          "yFrac": 0.35
         },
         {
           "type": "rcs_pack",
           "on": 0,
           "angle": 0,
-          "yFrac": 0.3
+          "yFrac": 0.25
         }
       ]
     },
     {
-      "id": "big_cabin",
-      "name": "Big crew cabin",
-      "real": "Apollo command module, Orion",
-      "desc": "A large cabin with its own spare oxygen under a blunt cover.",
+      "id": "dawn_stack",
+      "name": "Payload stack with a kick motor",
+      "real": "Dawn on a Delta II 7925H (2007)",
+      "desc": "A fairing over the capsule, which sits on the payload attach fitting, on a Star 48-class solid motor, on the spin table that spins it up before it fires.",
       "pros": [
-        "Room and spare oxygen"
+        "The kick motor adds two tonnes of propellant",
+        "Spin-stabilised: no guidance needed for the burn"
       ],
       "cons": [
-        "Heavy"
+        "Solid motor: low Isp, one burn",
+        "No escape tower",
+        "Tall nose: needs engine steering (a gimbal ring) or bigger fins"
       ],
+      "diameter": "m",
+      "icon": "kick_motor_s",
       "stack": [
-        "nose_blunt_m",
-        "capsule_l",
-        "heat_shield_l"
+        "nose_pointed_m",
+        "capsule_m",
+        "heat_shield_m",
+        "paf_m",
+        "kick_motor_s",
+        "spin_table_clamp"
       ],
       "radial": [
         {
           "type": "parachute",
           "on": 1,
           "angle": 180,
-          "yFrac": 0.55
+          "yFrac": 0.32
         },
         {
-          "type": "drogue_chute",
+          "type": "antenna_high",
           "on": 1,
-          "angle": 220,
-          "yFrac": 0.6
+          "angle": 270,
+          "yFrac": 0.3
         },
         {
-          "type": "antenna_medium",
-          "on": 1,
-          "angle": 90,
-          "yFrac": 0.55
-        },
-        {
-          "type": "rcs_pack",
+          "type": "star_tracker",
           "on": 1,
           "angle": 0,
+          "yFrac": 0.4
+        },
+        {
+          "type": "reaction_wheel",
+          "on": 1,
+          "angle": 90,
           "yFrac": 0.3
         }
       ]

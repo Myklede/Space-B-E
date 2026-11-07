@@ -108,7 +108,7 @@
               "cons": [
                 "A hard landing is felt in full"
               ],
-              "real": "Gemini"
+              "real": "Mercury contour couch, moulded to each astronaut"
             },
             {
               "id": "shock",
@@ -125,6 +125,23 @@
               "costD": 40000,
               "rel": 0.004,
               "real": "Apollo, Orion"
+            },
+            {
+              "id": "ejection",
+              "name": "Ejection seats",
+              "note": "Each seat is a small rocket that throws its astronaut clear, then opens a parachute. An escape with no tower, but only low and slow.",
+              "pros": [
+                "An escape without a tower",
+                "Reliability +0.6 %"
+              ],
+              "cons": [
+                "+150 kg",
+                "Only works low and slow"
+              ],
+              "massD": 150,
+              "costD": 120000,
+              "rel": 0.006,
+              "real": "Gemini (usable up to about 4.6 km), Vostok (the cosmonaut ejected on every landing)"
             }
           ]
         },
@@ -416,6 +433,22 @@
               "costD": 12000,
               "rel": -0.004,
               "real": "Apollo, Orion mains"
+            },
+            {
+              "id": "ribbon",
+              "name": "Conical ribbon",
+              "note": "Bands of tape with gaps between them: air leaks through, so it survives opening at high speed. Less drag.",
+              "pros": [
+                "Opens fast and high",
+                "Reliability +0.4 %"
+              ],
+              "cons": [
+                "−20 % drag"
+              ],
+              "chuteF": 0.8,
+              "costD": 6000,
+              "rel": 0.004,
+              "real": "Apollo and Orion drogue chutes"
             }
           ]
         },
@@ -450,6 +483,366 @@
               "costD": 8000,
               "rel": 0.004,
               "real": "Orion, Dragon"
+            }
+          ]
+        }
+      ]
+    },
+    "ablative_shield": {
+      "name": "Inside the heat shield",
+      "slots": [
+        {
+          "key": "thickness",
+          "name": "Ablator thickness",
+          "role": "How much material there is to burn away.",
+          "art": "layer",
+          "options": [
+            {
+              "id": "standard",
+              "name": "Standard",
+              "note": "Sized for one entry with margin.",
+              "pros": [],
+              "cons": [],
+              "real": ""
+            },
+            {
+              "id": "thick",
+              "name": "Thick",
+              "note": "A quarter more ablator for a steep or hot entry.",
+              "pros": [
+                "Reliability +1 %"
+              ],
+              "cons": [
+                "+25 % mass"
+              ],
+              "massF": 1.25,
+              "costF": 1.15,
+              "rel": 0.01,
+              "real": "Stardust (12.9 km/s entry)"
+            }
+          ]
+        },
+        {
+          "key": "gaps",
+          "name": "Seams",
+          "role": "How the blocks of shield are joined.",
+          "art": "gap",
+          "options": [
+            {
+              "id": "filler",
+              "name": "Gap filler",
+              "note": "Blocks of ablator with a soft filler between them.",
+              "pros": [
+                "Standard"
+              ],
+              "cons": [
+                "Fillers can protrude and trip the flow"
+              ],
+              "real": "Orion (Artemis I)"
+            },
+            {
+              "id": "monolithic",
+              "name": "One piece",
+              "note": "The whole shield cast as one block. No seams, hard to make.",
+              "pros": [
+                "No seams",
+                "Reliability +0.5 %"
+              ],
+              "cons": [
+                "+20 % cost"
+              ],
+              "costF": 1.2,
+              "rel": 0.005,
+              "real": "Apollo Avcoat honeycomb"
+            }
+          ]
+        },
+        {
+          "key": "ablator",
+          "name": "Ablator",
+          "role": "What the shield is made of: the material that chars and carries the heat away.",
+          "art": "ablator",
+          "options": [
+            {
+              "id": "avcoat",
+              "name": "Avcoat in honeycomb",
+              "note": "Silica fibres in epoxy, gunned cell by cell into a fibreglass honeycomb. Chars into a tough crust and carries the heat away.",
+              "pros": [
+                "Proven on the Moon return"
+              ],
+              "cons": [
+                "Slow to make: every cell is filled by hand"
+              ],
+              "real": "Apollo, Orion"
+            },
+            {
+              "id": "pica",
+              "name": "PICA (carbon ablator)",
+              "note": "Phenolic-impregnated carbon: a light, foam-like carbon block, the best for the fastest entries.",
+              "pros": [
+                "−18 % mass",
+                "Reliability +0.2 %"
+              ],
+              "cons": [
+                "+20 % cost",
+                "Brittle blocks with seams"
+              ],
+              "massF": 0.82,
+              "costF": 1.2,
+              "rel": 0.002,
+              "real": "Stardust (12.9 km/s, the fastest entry ever flown), Crew Dragon PICA-X"
+            },
+            {
+              "id": "sla",
+              "name": "SLA-561V (cork and silica)",
+              "note": "Cork and silica in a honeycomb: light and cheap, fine for Mars, too weak for the 11 km/s return to Earth.",
+              "pros": [
+                "−25 % mass",
+                "−15 % cost"
+              ],
+              "cons": [
+                "Reliability −0.6 %",
+                "Mars only"
+              ],
+              "massF": 0.75,
+              "costF": 0.85,
+              "rel": -0.006,
+              "real": "Viking, Mars Pathfinder, Spirit and Opportunity"
+            }
+          ]
+        }
+      ]
+    },
+    "escape_tower": {
+      "name": "Inside the escape tower",
+      "slots": [
+        {
+          "key": "motor",
+          "name": "Escape motor",
+          "role": "The solid motor that pulls the capsule away.",
+          "art": "motor",
+          "options": [
+            {
+              "id": "canted",
+              "name": "Canted nozzles at the base",
+              "note": "A solid motor whose nozzles sit just above the truss, tilted outward so the flame misses the capsule.",
+              "pros": [
+                "Proven on Mercury and Apollo"
+              ],
+              "cons": [
+                "The tower must be tall to keep the flame off the cabin"
+              ],
+              "real": "Apollo launch escape motor: four canted nozzles, about 147,000 lbf (654 kN) for 3.2 s"
+            },
+            {
+              "id": "ring",
+              "name": "Ring of small nozzles",
+              "note": "Many small nozzles round the tower spread the push; one can burn through and the others still carry the cabin.",
+              "pros": [
+                "Reliability +0.3 %"
+              ],
+              "cons": [
+                "+3 % mass",
+                "+10 % cost"
+              ],
+              "massF": 1.03,
+              "costF": 1.1,
+              "rel": 0.003,
+              "real": "Soyuz SAS main motor, up to 76 t (745 kN)"
+            },
+            {
+              "id": "reverse",
+              "name": "Reverse-flow motor",
+              "note": "The gas flows up the motor and turns back out through four nozzles near the top: a shorter tower, and the flame starts far from the capsule.",
+              "pros": [
+                "Reliability +0.6 %"
+              ],
+              "cons": [
+                "+6 % mass",
+                "+30 % cost"
+              ],
+              "massF": 1.06,
+              "costF": 1.3,
+              "rel": 0.006,
+              "real": "Orion abort motor, about 400,000 lbf (1.8 MN)"
+            }
+          ]
+        },
+        {
+          "key": "jettison",
+          "name": "Tower jettison",
+          "role": "How the tower leaves on a good flight, once the air is thin.",
+          "art": "jettison",
+          "options": [
+            {
+              "id": "separate",
+              "name": "Separate jettison motor",
+              "note": "A small motor near the top pulls the tower away a couple of minutes after launch.",
+              "pros": [
+                "Standard"
+              ],
+              "cons": [],
+              "real": "Apollo tower jettison motor, 31,500 lbf for 1.1 s; Mercury 1.4-KS-785"
+            },
+            {
+              "id": "backup",
+              "name": "Jettison motor with backup",
+              "note": "If the jettison motor fails to light, the escape motor fires instead: the tower always goes.",
+              "pros": [
+                "Reliability +0.4 %"
+              ],
+              "cons": [
+                "+$25k"
+              ],
+              "costD": 25000,
+              "rel": 0.004,
+              "real": "Apollo: the launch escape motor was the backup for tower jettison"
+            },
+            {
+              "id": "shared",
+              "name": "One motor does both",
+              "note": "The escape motor also throws the tower away. Lighter and cheaper, but one failure keeps the tower on.",
+              "pros": [
+                "−7 % mass",
+                "−$40k"
+              ],
+              "cons": [
+                "Reliability −0.4 %"
+              ],
+              "massF": 0.93,
+              "costD": -40000,
+              "rel": -0.004,
+              "real": "Early Soyuz SAS: the same solid motor separated the capsule and, on a normal flight, the tower"
+            }
+          ]
+        },
+        {
+          "key": "steering",
+          "name": "Steering after an abort",
+          "role": "What keeps the escaping capsule pointed the right way.",
+          "art": "steering",
+          "options": [
+            {
+              "id": "ballast",
+              "name": "Ballast in the nose",
+              "note": "A lump of ballast keeps the nose heavy, so the escaping stack flies straight like a dart.",
+              "pros": [
+                "Simple"
+              ],
+              "cons": [
+                "The capsule must turn itself round afterwards"
+              ],
+              "real": "Mercury: 236 lb (107 kg) of ballast in the tower nose"
+            },
+            {
+              "id": "canards",
+              "name": "Deployable canards",
+              "note": "Two clamshell fins open 11 seconds after an abort and turn the capsule heat-shield first before the tower leaves.",
+              "pros": [
+                "Reliability +0.5 %"
+              ],
+              "cons": [
+                "+40 kg",
+                "+$45k"
+              ],
+              "massD": 40,
+              "costD": 45000,
+              "rel": 0.005,
+              "real": "Apollo: two metal canards about 4 ft long"
+            },
+            {
+              "id": "acm",
+              "name": "Attitude control motor",
+              "note": "A solid gas generator with eight valves round the tower steers the whole escape stack, even right off the pad.",
+              "pros": [
+                "Reliability +0.8 %"
+              ],
+              "cons": [
+                "+90 kg",
+                "+$120k"
+              ],
+              "massD": 90,
+              "costD": 120000,
+              "rel": 0.008,
+              "real": "Orion attitude control motor: up to 7,000 lbf of steering force"
+            }
+          ]
+        }
+      ]
+    },
+    "abort_pod": {
+      "name": "Inside the abort pod",
+      "slots": [
+        {
+          "key": "chamber",
+          "name": "Engine chambers",
+          "role": "How the two engines in the pod are made.",
+          "art": "chamber",
+          "options": [
+            {
+              "id": "printed",
+              "name": "3D-printed Inconel",
+              "note": "Each chamber is laser-sintered in one piece of nickel superalloy, cooling channels and all. Light and quick to make.",
+              "pros": [
+                "Light",
+                "Quick to build"
+              ],
+              "cons": [
+                "Porosity is hard to inspect"
+              ],
+              "real": "SuperDraco: 71 kN, the first fully printed engine to fly"
+            },
+            {
+              "id": "machined",
+              "name": "Forged and machined",
+              "note": "Machined from forgings and welded: heavier, but every wall and weld can be inspected.",
+              "pros": [
+                "Reliability +0.4 %"
+              ],
+              "cons": [
+                "+10 % mass",
+                "+20 % cost"
+              ],
+              "massF": 1.1,
+              "costF": 1.2,
+              "rel": 0.004,
+              "real": "Aerojet RS-88, Starliner's launch abort engine"
+            }
+          ]
+        },
+        {
+          "key": "propellant",
+          "name": "Propellant",
+          "role": "Where the abort engines draw their propellant from.",
+          "art": "tanks",
+          "options": [
+            {
+              "id": "shared",
+              "name": "Shared with the thrusters",
+              "note": "Hypergolic NTO and MMH from the same tanks as the steering thrusters; an unused abort leaves propellant for manoeuvres.",
+              "pros": [
+                "No extra tanks"
+              ],
+              "cons": [
+                "A leaking thruster could drain the abort"
+              ],
+              "real": "Crew Dragon"
+            },
+            {
+              "id": "dedicated",
+              "name": "Own tanks and valves",
+              "note": "The pod keeps its own small tanks: nothing else can drain them.",
+              "pros": [
+                "Reliability +0.3 %"
+              ],
+              "cons": [
+                "+35 kg",
+                "+$30k"
+              ],
+              "massD": 35,
+              "costD": 30000,
+              "rel": 0.003,
+              "real": "Separate abort feed lines, as in Starliner's service module"
             }
           ]
         }
