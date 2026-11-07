@@ -143,6 +143,8 @@ export function createRoverModel() {
     // Role 3's model may set userData.eye if its driver's seat is elsewhere
     eye: object.userData.eye?.clone?.() ?? new THREE.Vector3(-0.32, ROVER.wheelRadius + 0.12 + 0.95, 0.22),
     update(rover, dt) {
+      const dust = Math.min(1, (rover.odometer || 0) / 2000); // dustier with distance: full at 2 km
+      if (Math.abs(dust - (this._dust ?? -1)) > 0.01) { this._dust = dust; object.userData.setDust?.(dust); }
       object.position.set(rover.x, rover.y, rover.z);
       object.rotation.set(rover.pitch, rover.heading, -rover.roll, 'YXZ');
       spinAngle -= (rover.speed / ROVER.wheelRadius) * dt;

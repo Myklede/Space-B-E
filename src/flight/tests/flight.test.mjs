@@ -440,6 +440,13 @@ test('launch clamps (holdDown) keep a full-thrust rocket on the pad until releas
   assert.ok(fc.liftoffT !== null && fc.altitude > 1);
 });
 
+import { cockpitStickValues } from '../cockpitControls.js';
+test('cockpit stick values: W = -1 pitch, D = +1 yaw, clamped and NaN-safe', () => {
+  const a = cockpitStickValues({ pitch: -1, yaw: 1 }, 0.5);
+  assert.deepEqual(a, { pitch: -1, yaw: 1, throttle: 0.5 });
+  assert.deepEqual(cockpitStickValues({ pitch: NaN, yaw: 5 }, 7), { pitch: 0, yaw: 1, throttle: 1 });
+});
+
 let fails = 0;
 for (const [s, name, e] of results) {
   console.log(`${s === 'ok' ? '  ✓' : '  ✗'} ${name}`);
@@ -447,3 +454,4 @@ for (const [s, name, e] of results) {
 }
 console.log(`\n${results.length - fails}/${results.length} flight tests passed`);
 process.exit(fails ? 1 : 0);
+

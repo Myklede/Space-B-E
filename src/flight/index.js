@@ -13,7 +13,7 @@ import { G0, PLANETS, economy, events, getShip, input, requestState, ui } from '
 import { astronaut } from '/src/surface/astronaut.js';
 import { getMars } from '/src/surface/scenes.js';
 import { FlightController } from './FlightController.js';
-import { createCockpitControls } from './cockpitControls.js';
+import { createCockpitControls, cockpitStickValues } from './cockpitControls.js';
 import { ascentGuide, assistReadout, landingGuide, predictPath } from './flightAssist.js';
 import { createDebrisField } from './debris.js';
 import { pressureRatio } from './atmosphere.js';
@@ -299,6 +299,7 @@ function transferBurn() {
 // ---------- module ----------
 export default {
   init() {
+    if (new URLSearchParams(location.search).get('debug') === '1') window.__role2flight = { get look() { return s?.look; }, get fc() { return s?.fc; } }; // debug only
     setTimeout(prepareLaunchSite, 0); // after boot finished its own work
   },
 
@@ -373,6 +374,8 @@ export default {
     }
     fc.update(dt, s.controls.input, { timeWarp: s.warp });
     s.controls.endFrame();
+    const stickValues = cockpitStickValues(s.controls.input, fc.throttle);
+    for (const c of [s.view?.cockpit, s.site?.cockpit, s.surface?.cockpit]) c?.userData?.setControls?.(stickValues);
     const t = fc.telemetry;
     const a = assistReadout(fc);
     const air = pressureRatio(fc.planet, t.altitude);
