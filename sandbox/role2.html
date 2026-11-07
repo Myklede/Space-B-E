@@ -1,0 +1,39 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <title>Role 2 Sandbox</title>
+    <link rel="icon" href="data:," />
+    <style>
+      html, body { margin: 0; height: 100%; overflow: hidden; background: #000; }
+      #stage { position: fixed; inset: 0; }
+      #modes { position: fixed; top: 14px; right: 14px; z-index: 40; display: flex; flex-wrap: wrap; gap: 6px; justify-content: flex-end; max-width: 60vw; }
+      #modes .on { border-color: var(--hud-cyan); color: var(--hud-cyan); }
+      #left { position: fixed; top: 14px; left: 14px; z-index: 20; display: grid; gap: 8px; width: 330px; }
+      #right { position: fixed; bottom: 14px; right: 14px; z-index: 20; display: grid; gap: 8px; width: 260px; }
+      .row { display: flex; justify-content: space-between; align-items: baseline; gap: 10px; margin-bottom: 4px; }
+      .row .hud-value { font-size: var(--hud-text-md); }
+      #warn { position: fixed; left: 50%; top: 22%; transform: translateX(-50%); z-index: 25; text-align: center; display: grid; gap: 6px; pointer-events: none; }
+      #prompt { position: fixed; left: 50%; bottom: 20%; transform: translateX(-50%); z-index: 25; pointer-events: none; min-width: 260px; text-align: center; }
+      #prompt:empty, #warn:empty { display: none; }
+      #help { position: fixed; left: 14px; bottom: 14px; z-index: 20; max-width: 55vw; }
+      #events { position: fixed; right: 290px; bottom: 14px; z-index: 20; text-align: right; white-space: pre; opacity: .7; }
+      #end { position: fixed; inset: 0; z-index: 50; display: none; place-items: center; background: rgb(0 0 0 / .7); text-align: center; }
+      .formula { font-size: var(--hud-text-sm); color: var(--hud-muted); }
+      .formula b { color: var(--hud-cyan); font-weight: 500; }
+    </style>
+  </head>
+  <body class="hud">
+    <div id="stage"></div>
+    <nav id="modes" aria-label="Modes"></nav>
+    <section id="left"></section>
+    <section id="right"></section>
+    <div id="warn"></div>
+    <div id="prompt" class="hud-panel"></div>
+    <div id="help" class="hud-label"></div>
+    <div id="events" class="hud-label"></div>
+    <div id="end"></div>
+    <script type="module" src="./role2.js"></script>
+  </body>
+</html>
