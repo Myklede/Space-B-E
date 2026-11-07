@@ -77,6 +77,24 @@ Copy this block. Keep each line short and factual. Don't commit screenshots.
 
 ## Role 2: Flight & Astronaut
 
+### The cockpit's joystick and throttle lever never move
+- **For:** Role 2 · **From:** Role 3 (dtri) · **Found:** 2026-11-07 on dev 8e9af5c · **Severity:** polish
+- **Where:** `src/flight/index.js`, where the cockpit is created (`assets.get('cockpit')`) and the flight update loop
+- **Steps:** `/?debug=1&state=LAUNCH`, look down (the gloved hands sit on a joystick at the right and a throttle lever at the left), then throttle up with Q and pitch with W/S
+- **Expected:** the stick tilts with pitch/yaw input and the throttle lever slides with the throttle
+- **Actual:** they stay still, because nothing calls the new cockpit API
+- **Suggested fix:** every frame call `cockpit.userData.setControls({ pitch: state.pitch, yaw: state.yaw, throttle: fc.throttle })` (pitch and yaw -1…1, W = nose down = -1; throttle 0…1; motion is smoothed inside the cockpit). See the `cockpit` row in README "Role 3 APIs".
+- **Status:** open
+
+### Check your Mars positions on the new terrain
+- **For:** Role 2 · **From:** Role 3 (dtri) · **Found:** 2026-11-07 on dev 8e9af5c · **Severity:** polish
+- **Where:** `getTerrainHeight` (`src/graphics/terrain.js`) now has about 480 craters, a river channel, buttes and dunes; anything you place on Mars by coordinates
+- **Steps:** `/?debug=1&state=SURFACE`, walk or drive to each task / interactable / prop you place outside the cabin
+- **Expected:** every position stays on walkable ground (Role 3 kept the landing zone flat within 60 m and crater-free within 150 m, and measured the lander, hatch, rover parking and the Halcyon wreck)
+- **Actual:** Role 3 only measured the positions it could find. The Halcyon wreck at (430, -320) now sits on a levelled 40 m bench (the delta scarp under it was 24°); anything else you placed far out may now be in a crater or on a bank.
+- **Suggested fix:** if a position is bad, move it (or tell Role 3 and we'll flatten a spot like the wreck bench)
+- **Status:** open
+
 ## Role 3: Graphics, Audio & Core
 
 ### Reliable mock has no armor, so one debris hit ends the demo run
@@ -86,7 +104,7 @@ Copy this block. Keep each line short and factual. Don't commit screenshots.
 - **Expected:** the "Reliable" preset is the guaranteed-success demo ship (spec §5.1: "guaranteed success if flown sensibly"). One absorbed hit would keep the live demo safe (the Thin Skin mock already has `armorHits: 1`).
 - **Actual:** Reliable has `armorHits: 0`, so a single debris hit during the pitch ends the run.
 - **Suggested fix:** set `armorHits` to 1 in `ship.reliable.json` (and its cost/mass if Role 1's builder recomputes them). Role 2 can't edit `src/core/`.
-- **Status:** open
+- **Status:** fixed in ae246cd, Role 2 (Minh Vuong) please verify
 
 ## Role 4: Story, Cruise & Knowledge
 
@@ -127,3 +145,12 @@ Copy this block. Keep each line short and factual. Don't commit screenshots.
 - **Status:** open
 
 ## Needs the whole team
+
+### How the game should use the two rovers
+- **For:** all four roles · **From:** Role 3 (dtri) · **Found:** 2026-11-07 on dev 8e9af5c · **Severity:** decision
+- **Where:** `assets.get('rover')` is the futuristic space-SUV rover (Blender model, the default Role 2 drives today); `assets.get('rover:lrv')` is a realistic Apollo LRV with the same interface (same size, wheel pivots, `setDust`; its seat is the default eye). Both drive with Role 2's `RoverController` unchanged.
+- **Steps:** see both in `/sandbox/role3.html?view=rover` and `?view=roverLrv`
+- **Expected:** a team decision on how the LRV appears in the game
+- **Actual:** only `rover` is used. Options: (1) the player chooses a rover before the EVA (Role 1 or Role 2 UI); (2) both are parked by the lander and the player drives whichever they walk to (Role 2); (3) the LRV is a relic of an earlier mission parked near the Halcyon-1 wreck, still drivable, with a story log (Role 2 places it, Role 4 writes the log).
+- **Suggested fix:** pick one; no contract change is needed for any of them
+- **Status:** open
