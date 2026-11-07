@@ -4,6 +4,7 @@ import GUI from 'lil-gui';
 import { ENDINGS, EVENTS, STATES } from './contract.js';
 import * as events from './events.js';
 import { debugJump } from './state.js';
+import { save } from './save.js';
 import { setShip, getShip } from './ship.js';
 import { economy } from './economy.js';
 import reliable from './mocks/ship.reliable.json';
@@ -48,6 +49,10 @@ export function startDebug() {
 
   gui.add(model, 'ending', Object.keys(ENDINGS));
   gui.add({ trigger: () => events.emit('flight:failed', { endingId: model.ending, cause: 'Triggered from the debug panel' }) }, 'trigger').name('Trigger ending');
+
+  // Graphics quality is read at boot, so a change takes effect after a reload.
+  model.quality = save.load().quality ?? 'high';
+  gui.add(model, 'quality', { 'Low': 'low', 'High': 'high' }).name('quality (reload)').onChange((quality) => save.update({ quality }));
 
   events.on('economy:changed', ({ money }) => {
     model.money = money;

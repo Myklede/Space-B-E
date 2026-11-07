@@ -1,5 +1,5 @@
 /**
- * audio.play(id, { volume, loop, rate })  plays a sound, and audio.stop(id) stops a loop.
+ * audio.play(id, { volume, loop, rate, fadeIn })  plays a sound, and audio.stop(id) stops a loop.
  * audio.setAir(0..1)  thins engine and world sound as the air thins (1 at sea level, 0 in vacuum). UI sounds ignore it.
  * audio.register(id, url, { bus, loop, gain, loopTrim })  swaps a synthesised placeholder for a real file, with nobody else's code changing.
  * audio.preload(ids) fetches (and decodes, once unlocked) files ahead of time; audio.isLoaded(id); audio.playing() lists active ids.
@@ -208,7 +208,7 @@ class AudioManager {
   }
 
   play(id, options = {}) {
-    const { volume = 1, loop, rate = 1 } = options;
+    const { volume = 1, loop, rate = 1, fadeIn = 0 } = options;
     const synth = SYNTHS[id];
     const file = this.#files.get(id);
     if (!synth && !file) {
@@ -229,9 +229,11 @@ class AudioManager {
     if (looping && this.#active.has(id)) return;
     const bus = this.#buses[file?.bus ?? synth.bus];
     const out = this.#ctx.createGain();
-    out.gain.value = useFile ? volume * file.gain : volume;
+    const level = useFile ? volume * file.gain : volume;
+    out.gain.value = fadeIn > 0 ? 0 : level;
+    if (fadeIn > 0) out.gain.linearRampToValueAtTime(level, this.#ctx.currentTime + fadeIn);
     out.connect(bus);
-    const entry = { out, nodes: [], pending: useFile && !file.buffer, cancelled: false, loop: looping };
+    const entry = { out, nodes: [], pending: useFile && !file.buffer, cancelled: false, loop: looping, base: useFile ? file.gain : 1 };
     if (useFile) {
       this.#track(id, entry);
       this.#playFile(id, file, entry, { volume, looping, rate });
@@ -295,6 +297,19 @@ class AudioManager {
       }
       entry.out.gain.setTargetAtTime(0, now, Math.max(fade / 3, 0.001));
       entry.nodes.forEach((node) => node.stop(now + fade + 0.05));
+    });
+  }
+
+  /** Moves a playing loop to a new volume (0..1 of its normal level) over `seconds`, without restarting it. */
+  fadeTo(id, volume, seconds = 1) {
+    const set = this.#active.get(id);
+    if (!set || !this.#ctx) return;
+    const now = this.#ctx.currentTime;
+    set.forEach((entry) => {
+      if (entry.cancelled) return;
+      entry.out.gain.cancelScheduledValues(now);
+      entry.out.gain.setValueAtTime(entry.out.gain.value, now);
+      entry.out.gain.linearRampToValueAtTime(volume * (entry.base ?? 1), now + Math.max(seconds, 0.01));
     });
   }
 

@@ -4,7 +4,9 @@ const mounted = new Set();
 const persistent = new Set();
 
 function place(element, layer) {
-  element.style.pointerEvents = 'auto';
+  // Clickable by default, but keep an explicit inline pointer-events (a full-screen HUD layer sets 'none' so it
+  // never blocks buttons underneath).
+  if (!element.style.pointerEvents) element.style.pointerEvents = 'auto';
   element.style.zIndex = layer === 'hud' ? '10' : '20';
   (document.getElementById('ui') ?? document.body).append(element);
   return element;

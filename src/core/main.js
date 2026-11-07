@@ -1,5 +1,7 @@
 // Boot and THE single game loop. Nobody else calls requestAnimationFrame or graphics.render.
 import { graphics, assets } from '/src/graphics/index.js';
+import { audio } from '/src/audio/index.js';
+import { initAudioDirector } from '/src/audio/director.js';
 import builder from '/src/builder/index.js';
 import flight from '/src/flight/index.js';
 import surface from '/src/surface/index.js';
@@ -62,10 +64,13 @@ async function boot() {
     console.error('[main] asset preload failed:', error);
   }
   for (const [name, module] of Object.entries(modules)) call(`${name}.init`, module, 'init');
+  initAudioDirector();
 
   call(`${STATE_OWNERS.MENU}.enter(MENU)`, ownerOf(STATES.MENU), 'enter', STATES.MENU);
   if (params.get('debug') === '1') {
     const { startDebug } = await import('./debug.js');
+    window.__game.audio = audio; // lets tests read audio.playing()
+    window.__game.graphics = graphics; // and graphics.pixelRatioNow
     startDebug();
     const wanted = params.get('state');
     if (wanted && wanted !== STATES.MENU) debugJump(wanted);
