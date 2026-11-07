@@ -79,6 +79,15 @@ Copy this block. Keep each line short and factual. Don't commit screenshots.
 
 ## Role 3: Graphics, Audio & Core
 
+### Reliable mock has no armor, so one debris hit ends the demo run
+- **For:** Role 3 · **From:** Role 2 (Minh Vuong) · **Found:** 2026-11-07 on dev c0b99d6 · **Severity:** polish
+- **Where:** `src/core/mocks/ship.reliable.json:20` (`armorHits: 0`). Role 2 reads it at `src/flight/FlightController.js:101` and `:130`, and spawns the once-per-mission debris at `src/flight/index.js:381` ("Orbital debris encounter").
+- **Steps:** `/?debug=1&state=ORBIT`, wait about 20 s for "ORBITAL DEBRIS AHEAD" (or press B), don't dodge. The HUD shows `ARMOR 0` and the hit ends the flight.
+- **Expected:** the "Reliable" preset is the guaranteed-success demo ship (spec §5.1: "guaranteed success if flown sensibly"). One absorbed hit would keep the live demo safe (the Thin Skin mock already has `armorHits: 1`).
+- **Actual:** Reliable has `armorHits: 0`, so a single debris hit during the pitch ends the run.
+- **Suggested fix:** set `armorHits` to 1 in `ship.reliable.json` (and its cost/mass if Role 1's builder recomputes them). Role 2 can't edit `src/core/`.
+- **Status:** open
+
 ## Role 4: Story, Cruise & Knowledge
 
 ### ENDING reuses whatever camera the last state left
@@ -106,6 +115,15 @@ Copy this block. Keep each line short and factual. Don't commit screenshots.
 - **Expected:** a short real fact about crew life (spec §7.1, §13)
 - **Actual:** `guidebook:open` arrives with `crew-exercise`, `crew-water`, `crew-food` or `family-photo`, and the stub shows only the id
 - **Suggested fix:** create entries with those ids (or tell Role 2 the ids you prefer). Mars tasks can use `registerInteractable({ id, state: 'SURFACE', position, prompt, hold, onUse })`, see README "Role 2 APIs".
+- **Status:** open
+
+### Pale Blue Dot text lives in Role 2's code; Role 4 owns the wording
+- **For:** Role 4 · **From:** Role 2 (Minh Vuong) · **Found:** 2026-11-07 on dev c0b99d6 (feature in Role 2's push after f93ee5a) · **Severity:** polish
+- **Where:** `src/surface/index.js:38-39` (exported constants `EARTH_HINT` and `EARTH_CAPTION`)
+- **Steps:** `/?debug=1&state=SURFACE`, press `N` (debug: jump to dusk), look toward the low bluish dot in the sunset sky and hold `Z` (helmet zoom). The caption appears once per mission.
+- **Expected:** spec §11 "Pale Blue Dot moment" and §13 say Role 4 writes HQ/narrative lines.
+- **Actual:** Role 2 built the moment (sol clock: the Sun sinks to dusk over about 6 min of EVA, Earth appears as the evening star drawn by Role 3's sky, helmet zoom, caption) with placeholder wording. Hint: "Look for Earth: low in the sky, hold Z to zoom". Caption: "EARTH · about 225 million km away" / "Everyone you have ever loved is on that dot."
+- **Suggested fix:** Role 4 tells Role 2 the final wording (or a story data key to read it from), and Role 2 updates the constants. No contract change needed. Optionally Role 4 may also want an HQ radio line at that moment.
 - **Status:** open
 
 ## Needs the whole team
