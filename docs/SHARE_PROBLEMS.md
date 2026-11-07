@@ -84,7 +84,7 @@ Copy this block. Keep each line short and factual. Don't commit screenshots.
 - **Expected:** a clear view of Earth's limb from the cockpit
 - **Actual:** the ship now points along its motion, so the path lies in a plane through the camera and is seen edge-on: one thin cyan line from the top of the window to the bottom
 - **Suggested fix:** hide the path in the cockpit view and keep it for the outside camera (C)
-- **Status:** open
+- **Status:** fixed in 7a06711, Role 3 (dtri) please verify
 
 ### LANDING under the parachute shows only flat sky
 - **For:** Role 2 · **From:** Role 3 (dtri) · **Found:** 2026-11-07 on dev 691ae19 · **Severity:** polish
@@ -93,7 +93,7 @@ Copy this block. Keep each line short and factual. Don't commit screenshots.
 - **Expected:** some ground or horizon while descending from about 3 km
 - **Actual:** the window shows a uniform butterscotch sky until touchdown
 - **Suggested fix:** tilt the default look so the ground shows, or hint that C switches to the outside camera
-- **Status:** open
+- **Status:** fixed in 7a06711, Role 3 (dtri) please verify
 
 ### Switching camera views changes the light count
 - **For:** Role 2 · **From:** Role 3 (dtri) · **Found:** 2026-11-07 on dev 6fb54a4 · **Severity:** polish
@@ -102,9 +102,45 @@ Copy this block. Keep each line short and factual. Don't commit screenshots.
 - **Expected:** no hitch
 - **Actual:** hiding an object that holds lights changes the scene's light count, and three.js then recompiles every lit material (about 200 ms on an M5). Role 3's warm-up (`src/graphics/warmup.js`) now pre-compiles both views during PRELAUNCH, so it no longer hitches, but a new light or visibility rule in flight would bring it back.
 - **Suggested fix:** keep lights in the scene and set their intensity to 0 instead of hiding them (that is what `src/graphics/vfx.js` does)
-- **Status:** open
+- **Status:** fixed in 7a06711, Role 3 (dtri) please verify
 
 ## Role 3: Graphics, Audio & Core
+
+### `check:boot` refuses to run without Google Chrome at its default path
+- **For:** Role 3 · **From:** Role 2 (Minh Vuong) · **Found:** 2026-11-07 on dev 691ae19 · **Severity:** bug
+- **Where:** `scripts/check-boot.mjs:53` (`chromium.launch({ channel: 'chrome' })`)
+- **Steps:** on Linux/WSL without Google Chrome installed (and no sudo to install it), run `npm run check` or push to `dev`
+- **Expected:** every teammate can run the check that the pre-push hook requires
+- **Actual:** `FAILED check:boot: Chrome could not start (... 'chrome' is not found at /opt/google/chrome/chrome)`, so the push is refused. Role 2 runs the unmodified check with Playwright's Chromium mounted at that path in a user namespace.
+- **Suggested fix:** accept an `executablePath` from an env var (for example `CHROME_PATH`), or fall back to Playwright's bundled Chromium when the Chrome channel is missing
+- **Status:** open
+
+### `check:boot` needs a stub panel in every state, so real screens must keep one
+- **For:** Role 3 · **From:** Role 2 (Minh Vuong) · **Found:** 2026-11-07 on dev 691ae19 · **Severity:** polish
+- **Where:** `scripts/check-boot.mjs:90` (`page.locator('[data-stub]').count()`)
+- **Steps:** replace a stub with a real screen that has no `[data-stub]` element, run `npm run check:boot`
+- **Expected:** a real screen passes the boot walk
+- **Actual:** `no stub screen is mounted in <STATE>`, so Role 2's real flight and surface screens still show a small "dev shortcut" stub panel, which must be gone for the demo
+- **Suggested fix:** also accept a marker real screens can set (for example any element with `data-screen`), then each role drops its stub panel
+- **Status:** open
+
+### Rocket part `antenna_s` has no art and shows a hologram box
+- **For:** Role 3 · **From:** Role 2 (Minh Vuong) · **Found:** 2026-11-07 on dev 691ae19 · **Severity:** polish
+- **Where:** `src/graphics/assets.js` (`PARTS`, the id words are capsule, tank, engine, nose, fin, leg, heat)
+- **Steps:** `/?debug=1&state=LAUNCH` with the Reliable mock, press C
+- **Expected:** an antenna on top of the capsule
+- **Actual:** a cyan hologram box, because `antenna_s` (in `src/core/mocks/ship.reliable.json`) matches no part word
+- **Suggested fix:** add an antenna part, or drop `antenna_s` from the mocks if Role 1's builder supplies its own art through `assets.setRocketPartArt`
+- **Status:** open
+
+### Mock ships list a `deltaV` their masses can't give
+- **For:** Role 3 · **From:** Role 2 (Minh Vuong) · **Found:** 2026-11-07 on dev 691ae19 · **Severity:** bug
+- **Where:** `src/core/mocks/ship.reliable.json` (and the other mocks), `stats.deltaV`
+- **Steps:** compare `stats.deltaV` with the rocket equation for the same file's `wetMass`, `dryMass`, `ispVac`
+- **Expected:** `deltaV = ispVac · G0 · ln(wetMass / dryMass)` = 380 · 9.80665 · ln(42000 / 9000) ≈ 5741 m/s, which is what flight actually gets
+- **Actual:** `deltaV: 8900`, so anything that reads it (the Δv budget, Go/No-Go) promises about 3 km/s the ship doesn't have
+- **Suggested fix:** compute `deltaV` from the formula in the mocks (Role 1's builder should compute it the same way)
+- **Status:** open
 
 ## Role 4: Story, Cruise & Knowledge
 
@@ -124,6 +160,15 @@ Copy this block. Keep each line short and factual. Don't commit screenshots.
 - **Expected:** the player can start over
 - **Actual:** the contract resets money only when it is below $0, but bankruptcy is declared below $1.0M (`balance.insolvencyFloor`), so the player stays stuck
 - **Suggested fix:** on `bankrupt`, reset money to `balance.startMoney`
+- **Status:** open
+
+### Cabin props open Guidebook entries that don't exist yet
+- **For:** Role 4 · **From:** Role 2 (Minh Vuong) · **Found:** 2026-11-07 on dev 691ae19 · **Severity:** polish
+- **Where:** `src/guidebook/` (the entries); Role 2 emits them from `src/surface/index.js` (`PROP_ENTRIES`)
+- **Steps:** `/?debug=1&state=INTERIOR`, walk to the exercise bike, water recycler, food rack or family photo, press E
+- **Expected:** a short real fact about crew life (spec §7.1, §13)
+- **Actual:** `guidebook:open` arrives with `crew-exercise`, `crew-water`, `crew-food` or `family-photo`, and the stub shows only the id
+- **Suggested fix:** create entries with those ids (or tell Role 2 the ids you prefer). Mars tasks can use `registerInteractable({ id, state: 'SURFACE', position, prompt, hold, onUse })`, see README "Role 2 APIs".
 - **Status:** open
 
 ## Needs the whole team
