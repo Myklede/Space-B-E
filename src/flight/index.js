@@ -16,7 +16,12 @@ import { FlightController } from './FlightController.js';
 import { createCockpitControls, cockpitStickValues } from './cockpitControls.js';
 import { ascentGuide, assistReadout, landingGuide, predictPath } from './flightAssist.js';
 import { createDebrisField } from './debris.js';
-import { pressureRatio } from './atmosphere.js';
+import { atmosphereTop, pressureRatio } from './atmosphere.js';
+import { createPacer, createEventDetector, paceContext } from './pacing.js';
+import { approachBack, computeCorridor, corridorGauge, predictInterface } from './corridor.js';
+import { createChecklist, objectiveText } from './objectives.js';
+import { clearPhaseRatings, createPhaseTracker, getPhaseRatings } from './rating.js';
+import { dot } from './vec.js';
 import { STARTS } from './presets.js';
 import { createFlightHUD } from './hud/createFlightHUD.js';
 import { stackParts } from './rocketStack.js';
@@ -25,6 +30,8 @@ import { ZOOM_DEFAULT, ZOOM_PAD, applyMouse, createChaseState, createOrbit, hori
 const fmt = (n, d = 0) => (Number.isFinite(n) ? n.toFixed(d) : '∞');
 
 export { FlightController };
+// Phase ratings for Role 4's Flight Report: [{ phase: 'ascent'|'entry'|'landing', stars: 1..3, stats, text }] (see rating.js).
+export { getPhaseRatings };
 
 const ENTRY_TO_LANDING = 6000; // m: ENTRY hands over to LANDING here
 // m: below this the view switches to Role 3's detailed Mars terrain. That patch is about ±900 m wide, so higher up
@@ -46,7 +53,11 @@ const TELEMETRY_EVERY = 0.5; // s (contract: flight:telemetry about twice per se
 const toCockpit = new THREE.Quaternion().setFromAxisAngle(new THREE.Vector3(1, 0, 0), Math.PI / 2); // nose +Y → cockpit −Z
 
 // Mission state that survives state changes (LAUNCH → ORBIT keeps the same controller; LANDING ⇄ INTERIOR too).
-const mission = { fc: null, planetId: null, fuelForMars: null, debrisDone: false };
+const mission = { fc: null, planetId: null, fuelForMars: null, debrisDone: false, tracker: createPhaseTracker(), card: null, ascentList: createChecklist('ascent'), entryList: createChecklist('entry'), blackout: 'before' };
+const ENTRY_FPA = -22.8; // deg at the atmosphere's edge: inside the corridor but off its centre, so a small trim (W/S) pays off
+const ENTRY_APPROACH = 40; // s of approach before the atmosphere (time to trim the corridor)
+const CARD_SECONDS = 6;
+const WARP_KEYS = { Period: 1, Comma: -1 };
 let s = null; // per-state session (scene, camera, HUD, controls)
 
 const v3 = (p) => new THREE.Vector3(p.x, p.y, p.z);
@@ -70,6 +81,12 @@ function controllerFor(state) {
     astronaut.reset();
     mission.fuelForMars = null;
     mission.debrisDone = false;
+    clearPhaseRatings(); // a new mission starts: forget last flight's ratings
+    mission.tracker = createPhaseTracker();
+    mission.ascentList = createChecklist('ascent');
+    mission.entryList = createChecklist('entry');
+    mission.blackout = 'before';
+    mission.card = null;
     return newController('earth', STARTS.earthPad);
   }
   if (state === 'ORBIT') {
@@ -77,7 +94,13 @@ function controllerFor(state) {
     return newController('earth', circularOrbitStart('earth', 200000));
   }
   const marsFuel = mission.fuelForMars ?? getShip().stats.fuelMass * 0.25;
-  if (state === 'ENTRY') return newController('mars', STARTS.marsEntry, marsFuel);
+  if (state === 'ENTRY') {
+    mission.entryList = createChecklist('entry');
+    mission.blackout = 'before';
+    const entry = newController('mars', { ...STARTS.marsEntry, flightPathDeg: ENTRY_FPA }, marsFuel);
+    approachBack(entry, ENTRY_APPROACH); // start far enough out to trim the angle before the interface
+    return entry;
+  }
   // LANDING: keep the Mars controller from ENTRY, or the landed one when coming back to the seat.
   if (fc && mission.planetId === 'mars' && !fc.failed && (fc.landed || fc.altitude < ENTRY_TO_LANDING + 1000)) return fc;
   return newController('mars', STARTS.marsLanding, marsFuel);
@@ -328,7 +351,7 @@ function transferBurn() {
 export default {
   init() {
     if (new URLSearchParams(location.search).get('debug') === '1') window.__role2flight = {
-      get look() { return s?.look; }, get fc() { return s?.fc; }, get orbit() { return s?.orbit; },
+      get look() { return s?.look; }, get fc() { return s?.fc; }, get orbit() { return s?.orbit; }, get session() { return s; },
       // set the outside camera for screenshots: orbit(yawDeg, pitchDeg, dist); `wheel` fakes a wheel step; chase(on) toggles the view
       orbit(yawDeg, pitchDeg, dist) { if (s) { s.orbit.yaw = THREE.MathUtils.degToRad(yawDeg); s.orbit.pitch = THREE.MathUtils.degToRad(pitchDeg); if (dist) s.orbit.dist = dist; s.cam.ready = false; } return s?.orbit; },
       wheel(delta) { if (s) s.orbit.dist = stepZoom(s.orbit.dist, delta); return s?.orbit.dist; },
@@ -344,7 +367,8 @@ export default {
     const view = buildSpaceView(fc.planetId);
     s = {
       state, fc, view, surface: null, mode: null,
-      look: { yaw: 0, pitch: 0 }, orbit: createOrbit(state === 'LAUNCH' ? ZOOM_PAD : ZOOM_DEFAULT), cam: createChaseState(), chase: false, warp: 1, assist: true,
+      look: { yaw: 0, pitch: 0 }, orbit: createOrbit(state === 'LAUNCH' ? ZOOM_PAD : ZOOM_DEFAULT), cam: createChaseState(), chase: false, pacer: createPacer(), events: createEventDetector(), warpInfo: { warp: 1 }, assist: true,
+      corridor: fc.planetId === 'mars' && fc.altitude > atmosphereTop(fc.planet) ? computeCorridor(fc) : null,
       sinceTelemetry: 0, engineSound: false, done: false,
     };
     const hudLayer = document.createElement('div');
@@ -369,8 +393,8 @@ export default {
       s.chase = !s.chase;
       if (s.chase) { resetOrbit(s.orbit); s.cam.ready = false; } // behind and above, zoom kept
     });
-    input.onPress('Period', () => { s.warp = Math.min(100, s.warp * 10); });
-    input.onPress('Comma', () => { s.warp = Math.max(1, s.warp / 10); });
+    input.onPress('Period', () => s.pacer.stepManual(WARP_KEYS.Period)); // manual warp: 1 · 2 · 4 · 10 · 50 · 100 (the physics caps it in the air)
+    input.onPress('Comma', () => s.pacer.stepManual(WARP_KEYS.Comma));
     input.onPress('KeyB', () => fc.setObstacles(createDebrisField({ fc, seed: Math.floor(Math.random() * 1e6) })));
     if (state === 'ORBIT') input.onPress('KeyT', transferBurn);
     s.lockOnClick = () => input.lockPointer();
@@ -382,6 +406,7 @@ export default {
     }
     fc.onNotice = (type) => {
       if (CALLOUTS[type]) s.callout = { text: CALLOUTS[type], t: CALLOUT_SECONDS };
+      if (['maxq_warning', 'fuel_empty', 'parachute', 'debris_near_miss', 'engine_hot', 'g_high'].includes(type)) s.pacer.event(type, fc.t); // key events: back to 1×
       if (type === 'debris_hit' || type === 'parachute' || type === 'fairing_sep') audio.play('impact.small');
       if (['maxq_warning', 'g_high', 'heat_warning', 'engine_hot'].includes(type)) audio.play('alarm.master');
       if (type === 'orbit_achieved') audio.play('radio.blip');
@@ -414,7 +439,17 @@ export default {
       if (s.countdown <= IGNITION_AT && fc.throttle === 0) fc.throttle = 1; // main engine start at T-3
       if (s.countdown <= 0) fc.holdDown = false; // T-0: clamps release
     }
-    fc.update(dt, s.controls.input, { timeWarp: s.warp });
+    // pacing: time compression + automatic slow-down (pacing.js); physics stays at the fixed step
+    const top = atmosphereTop(fc.planet);
+    const approaching = fc.planetId === 'mars' && fc.altitude > top && !fc.landed;
+    const pilot = { ...s.controls.input };
+    if (state === 'ENTRY' && approaching) pilot.trim = pilot.pitch; // W/S trim the entry angle before the atmosphere (RCS, costs fuel)
+    const ascent0 = ascentGuide(fc), landing0 = landingGuide(fc);
+    const aligned = !ascent0 || dot(fc.forward, ascent0.direction) > Math.cos(THREE.MathUtils.degToRad(6));
+    const pace = paceContext(fc, { ascent: ascent0, landing: landing0, countdown: s.countdown > 0, trimming: !!pilot.trim, aligned });
+    for (const name of s.events.update(pace)) s.pacer.event(name, pace.t);
+    s.warpInfo = s.pacer.decide(pace, Math.min(dt, 0.1));
+    fc.update(dt, pilot, { timeWarp: s.warpInfo.warp, stopOnNotice: true });
     s.controls.endFrame();
     const stickValues = cockpitStickValues(s.controls.input, fc.throttle);
     for (const c of [s.view?.cockpit, s.site?.cockpit, s.surface?.cockpit]) c?.userData?.setControls?.(stickValues);
@@ -430,6 +465,7 @@ export default {
         mission.debrisDone = true;
         fc.setObstacles(createDebrisField({ fc, aheadDistance: 3600, count: 45, seed: 2041 }));
         s.debrisWarning = 8;
+        s.pacer.event('debris', fc.t, 4);
         audio.play('alarm.master');
       }
     }
@@ -439,6 +475,11 @@ export default {
       if (fc.planetId === 'mars') s.callout = { text: 'Touchdown confirmed. Welcome to Mars.', t: CALLOUT_SECONDS * 2 };
     }
     s.wasLanded = fc.landed;
+
+    // phase ratings (stars) + the numbers behind the entry corridor gauge
+    const interfaceAngle = approaching ? predictInterface(fc)?.fpaDeg ?? null : null;
+    for (const r of mission.tracker.update(fc, { guideDir: ascent0?.direction ?? null, guideStep: ascent0?.step ?? null, corridor: s.corridor, interfaceAngleDeg: interfaceAngle })) mission.card = { text: r.text, t: CARD_SECONDS };
+    if (mission.card) { mission.card.t -= dt; if (mission.card.t <= 0) mission.card = null; }
 
     // automatic state moves
     if (!s.done && !fc.failed) {
@@ -564,7 +605,8 @@ export default {
     if (s.debrisWarning > 0) a.warnings.unshift({ level: 'red', text: 'ORBITAL DEBRIS AHEAD: steer and burn sideways to dodge' });
     if (state === 'ORBIT' && t.phase === 'orbit') a.warnings.push({ level: 'amber', text: `IN ORBIT: press T for the transfer burn (${fmt((economy.balance.deltaVKmS?.transfer ?? 2.1) * 1000)} m/s)` });
     const guide = s.assist && !(s.countdown > 0) ? ascentGuide(fc) ?? landingGuide(fc) : null;
-    if (guide) a.warnings.unshift({ level: 'amber', text: guide.text });
+    if (guide && state === 'ENTRY' && approaching) a.warnings.unshift({ level: 'amber', text: 'Approach: trim the entry angle before the air. Hold W for steeper, S for shallower (small fuel cost)' });
+    else if (guide) a.warnings.unshift({ level: 'amber', text: guide.text });
     if (s.callout?.t > 0) {
       s.callout.t -= dt;
       a.warnings.unshift({ level: 'amber', text: `MISSION CONTROL: ${s.callout.text}` });
@@ -573,7 +615,21 @@ export default {
       const n = Math.ceil(s.countdown);
       a.warnings.unshift({ level: n <= IGNITION_AT ? 'red' : 'amber', text: `T-${n}${n <= IGNITION_AT ? ' · MAIN ENGINE START' : ' · clamps on'}` });
     }
-    s.hud.update(t, a, s.assist);
+    // objective, step checklist, warp indicator, entry corridor gauge
+    const earth = fc.planetId === 'earth';
+    if (landing0?.blackout) mission.blackout = 'in'; else if (mission.blackout === 'in') mission.blackout = 'after';
+    const list = earth ? mission.ascentList : mission.entryList;
+    const checklist = list.update(earth ? (ascent0?.step ?? null) : (landing0?.step ?? null), { complete: earth ? t.phase === 'orbit' : fc.landed, blackout: mission.blackout });
+    if (earth && ascent0?.step === 'coast' && pace.tApo !== null) a.warnings.unshift({ level: 'amber', text: `Coasting to apoapsis… ${t.altitude > top ? `T-${Math.ceil(pace.tApo)} s` : 'climbing out of the air'}` });
+    const gauge = s.corridor && fc.altitude > 60000 && !fc.chuteOpen && !fc.failed ? corridorGauge(fc, s.corridor) : null;
+    const warpShown = s.warpInfo.warp > 1 || fc.warpEffective > 1.05;
+    s.hud.update(t, a, s.assist, {
+      objective: objectiveText(fc, { state, debrisActive: s.debrisWarning > 0 }),
+      checklist,
+      warp: warpShown ? { value: fc.warpEffective, label: s.warpInfo.label ?? (s.warpInfo.auto ? null : 'manual (, .)'), auto: s.warpInfo.auto } : null,
+      card: mission.card,
+      gauge,
+    });
     const cam = s.mode === 'surface' ? s.surface.camera : s.mode === 'site' ? s.site.camera : view.camera;
     const project = (dir) => {
       if (!dir || !s.assist) return null;

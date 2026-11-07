@@ -119,6 +119,8 @@ export function ascentGuide(fc, profile = ASCENT_PROFILE) {
   return null;
 }
 
+// Share of the heat limit above which the plasma blocks the radio (a good Mars entry peaks at ~6 % of the limit, so 4 % = the hot core of the entry).
+export const BLACKOUT_HEAT_FRAC = 0.04;
 const TOUCHDOWN_HINT = 3; // m/s, matches FlightController TUNING.touchdownLimit.legs
 
 // Entry + landing guide (Flight Assist), the real Mars "7 minutes of terror" sequence:
@@ -129,7 +131,7 @@ export function landingGuide(fc) {
   if (t.phase !== 'entry' && t.phase !== 'landing') return null;
   const a = assistReadout(fc);
   if (t.heatFlux > 0 && !fc.chuteOpen && t.altitude > 15000) {
-    const blackout = t.heatFlux > t.heatLimit * 0.15; // hot plasma around the ship blocks the radio (real effect)
+    const blackout = t.heatFlux > t.heatLimit * BLACKOUT_HEAT_FRAC; // hot plasma around the ship blocks the radio (real effect)
     return { step: 'entry', blackout, text: blackout ? 'PLASMA BLACKOUT: no radio. The heat shield takes the heat, ride it down' : 'Entry: the heat shield takes the heat. Keep your hands off and ride it down' };
   }
   if (!fc.chuteOpen && t.speed > 500) return { step: 'slowing', text: 'Too fast for the parachute yet: the air is slowing you down' };

@@ -65,7 +65,7 @@ test('circular orbit keeps its altitude for one full period (energy conserved)',
   assert.equal(fc.failed, null);
 });
 
-test('time warp is refused inside the atmosphere and honoured in orbit', () => {
+test('time warp: capped at 4x in the air (10x in near-vacuum air), honoured in orbit, sub-stepped at the fixed step', () => {
   const R = MOCK_PLANETS.earth.radius;
   const vc = Math.sqrt((PLANETS.earth.g * R * R) / (R + 150000));
   const fc = new FlightController({ planets: MOCK_PLANETS, shipSpec: MOCK_SHIPS.reliable, start: { altitude: 150000, speed: vc } });
@@ -73,7 +73,8 @@ test('time warp is refused inside the atmosphere and honoured in orbit', () => {
   assert.ok(Math.abs(fc.t - 5) < 0.02, `t=${fc.t}`);
   const low = new FlightController({ planets: MOCK_PLANETS, shipSpec: MOCK_SHIPS.reliable, start: { altitude: 20000, speed: 300 } });
   low.update(0.1, {}, { timeWarp: 50 });
-  assert.ok(Math.abs(low.t - 0.1) < 0.02);
+  assert.ok(Math.abs(low.t - 0.4) < 0.02, `low.t=${low.t}`); // 20 km: air thick enough → 4x
+  assert.ok(Math.abs(low.warpEffective - 4) < 0.1);
 });
 
 test('liftoff emits events; a sensible gravity turn reaches orbit', () => {
