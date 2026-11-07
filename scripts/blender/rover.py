@@ -204,8 +204,10 @@ material('decal_gold', (1.0, 0.62, 0.15), 0.4, 0.0)
 class Acc:
     def __init__(self):
         self.m = {}
+        self.parts = []  # every separate part as added: (material, verts, faces), used by the floating-part check
     def add(self, mat, geo, uv=None):
         verts, faces = geo
+        self.parts.append((mat, [tuple(v) for v in verts], [tuple(f) for f in faces]))
         d = self.m.setdefault(mat, {'v': [], 'f': [], 'uv': []})
         o = len(d['v'])
         d['v'] += [tuple(v) for v in verts]
@@ -297,6 +299,8 @@ class B:
     def __init__(self):
         self.acc = Acc()
     def box(self, mat, w, h, d, x, y, z, rx=0, ry=0, rz=0, bevel=0.012, segs=2):
+        if bevel == 0 and mat in ('led', 'liner') and min(w, h, d) < 0.02:
+            dims = [w, h, d]; k = dims.index(min(dims)); dims[k] += 0.012; w, h, d = dims  # sinks into the surface it sits on
         M = Euler((rx, ry, rz), 'XYZ').to_matrix()
         self.acc.add(mat, xform(finish(*box_geo(w, h, d), bevel, segs), M, (x, y, z)))
     def rbox(self, mat, w, h, d, x, y, z, r, rx=0):
@@ -328,8 +332,9 @@ class B:
         v = [(x, y - h / 2, z + w / 2), (x, y - h / 2, z - w / 2), (x, y + h / 2, z - w / 2), (x, y + h / 2, z + w / 2)]
         self.acc.add(mat, (v, [(0, 1, 2, 3)]), [[(0, 0), (1, 0), (1, 1), (0, 1)]])
     def bolt(self, x, y, z, dx, dy, dz, r=0.011, h=0.012):
-        d = Vector((dx, dy, dz)).normalized() * h
-        self.strut('silver', (x, y, z), (x + d.x, y + d.y, z + d.z), r, 6)
+        d = Vector((dx, dy, dz)).normalized()
+        a = Vector((x, y, z)) - d * 0.03  # the stud sinks into the part it fastens, so it is attached
+        self.strut('silver', a, Vector((x, y, z)) + d * h, r, 6)
     def sphere(self, mat, r, x, y, z):
         prof = [(r * math.sin(math.pi * k / 8), -r * math.cos(math.pi * k / 8)) for k in range(9)]
         geo, _ = lathe_geo(prof, 12)
@@ -515,13 +520,13 @@ def nose(b):
         for dy in (-0.085, 0.085):
             b.led(x, 0.6 + dy, z + 0.002, 0.085, 0.016, 0.014)
         # side marker and a small light on the fender corner
-        b.led(sx * 0.595, 0.7, ZF + 0.35, 0.012, 0.03, 0.03)
+        b.led(sx * 0.552, 0.7, ZF + 0.35, 0.012, 0.03, 0.03)
         b.rbox('graphite', 0.05, 0.04, 0.05, sx * 0.84, 0.99, -1.52, 0.012)
         b.led(sx * 0.84, 0.99, -1.55, 0.03, 0.02, 0.01)
     b.rbox('frame', 1.1, 0.1, 0.1, 0, 0.55, ZF - 0.01, 0.025)           # dark bumper
-    b.led(0, 0.615, ZF - 0.062, 0.62, 0.016, 0.01)                         # light blade on the nose edge
+    b.led(0, 0.58, ZF - 0.058, 0.62, 0.016, 0.01)                         # light blade on the nose edge
     b.box('liner', 0.5, 0.05, 0.01, 0, 0.5, ZF + 0.0, bevel=0)            # intake slot under the bumper
-    b.box('liner', 0.7, 0.004, 0.012, 0, 0.63, ZF + 0.0, bevel=0)
+    b.box('liner', 0.7, 0.004, 0.012, 0, 0.6, ZF - 0.0, bevel=0)
     b.rbox('graphite', 1.4, 0.55, 0.03, 0, 0.72, -0.715, 0.008)           # dash face
     for sx in (-1, 1):
         b.box('liner', 0.012, 0.36, 0.5, sx * 0.694, 0.78, -0.5, bevel=0)
@@ -548,9 +553,9 @@ def sides_and_frame(b):
         for y, z in [(1.2, ZF + 0.3), (1.5, -1.3)]:
             b.led(sx * 0.96, y, z, 0.012, 0.03, 0.03)
         b.led(sx * (0.93), 1.7, 0.6, 0.012, 0.03, 0.03)
-        b.led(sx * 0.9, 1.0, ZR + 0.062, 0.03, 0.03, 0.012)
-        b.led(sx * 0.96, 1.2, ZR - 0.1, 0.012, 0.03, 0.03)
-        for (y, z) in [(1.05, ZF + 0.2), (1.35, -1.43), (1.6, -1.22)]:
+        b.led(sx * 0.9, 1.0, ZR + 0.1, 0.03, 0.03, 0.012)
+        b.led(sx * 0.96, 1.2, 1.81, 0.012, 0.03, 0.03)
+        for (y, z) in [(1.05, -1.45), (1.35, -1.32), (1.6, -1.2)]:
             b.bolt(sx * 0.962, y, z, sx, 0, 0)
         for (y, z) in [(1.0, 0.6), (1.4, 0.6), (1.7, 0.6)]:
             b.bolt(sx * 0.93, y, z, sx, 0, 0)
@@ -574,11 +579,12 @@ def seats(b):
         b.rbox('seat', 0.07, 0.38, 0.1, x - 0.2, 0.86, 0.52 + dz, 0.02, rx=0.3)
         b.rbox('seat', 0.07, 0.38, 0.1, x + 0.2, 0.86, 0.52 + dz, 0.02, rx=0.3)
         b.rbox('seat', 0.3, 0.2, 0.09, x, 1.2, 0.56 + dz, 0.035, rx=0.25)
+        b.rbox('seat', 0.08, 0.2, 0.06, x, 1.12, 0.52 + dz, 0.02, rx=0.25)  # headrest post down to the seat back
         b.rbox('silver', 0.1, 0.06, 0.1, x, 1.0, 0.5 + dz, 0.02, rx=0.25)
         for ddx in (-0.1, 0.1):
-            b.bar('strap', (x + ddx, 1.12, 0.5 + dz), (x + ddx * 1.6, 0.6, 0.2 + dz), 0.045, 0.01, 0, 1)
-        b.bar('strap', (x - 0.22, 0.52, 0.45 + dz), (x - 0.04, 0.6, 0.18 + dz), 0.045, 0.01, 0, 1)
-        b.bar('strap', (x + 0.22, 0.52, 0.45 + dz), (x + 0.04, 0.6, 0.18 + dz), 0.045, 0.01, 0, 1)
+            b.bar('strap', (x + ddx, 1.12, 0.5 + dz), (x + ddx * 1.6, 0.6, 0.2 + dz), 0.045, 0.024, 0, 1)
+        b.bar('strap', (x - 0.22, 0.52, 0.45 + dz), (x - 0.04, 0.6, 0.18 + dz), 0.045, 0.024, 0, 1)
+        b.bar('strap', (x + 0.22, 0.52, 0.45 + dz), (x + 0.04, 0.6, 0.18 + dz), 0.045, 0.024, 0, 1)
         b.box('silver', 0.07, 0.025, 0.05, x, 0.6, 0.17 + dz, bevel=0.006, segs=1)
         b.box('inset', 0.5, 0.04, 0.4, x, 0.44, 0.3 + dz, bevel=0.008, segs=1)
     b.box('graphite', 1.44, 0.9, 0.04, 0, 0.9, 0.02, bevel=0)
@@ -612,17 +618,17 @@ def roof(b):
             b.bolt(sx * 0.62, y0 + 0.103, z, 0, 1, 0)
     # bay roof with the solar panel and a frame lip
     b.top('frame', rrect(-0.9, 0.9, 0.5, ZR + 0.04, 0.07, 3), 1.64, 0.07, 0.014, 2)
-    x0, x1, z0, z1, y = -0.78, 0.78, 0.6, ZR - 0.04, 1.7145
+    x0, x1, z0, z1, y = -0.78, 0.78, 0.6, ZR - 0.04, 1.7115
     b.raw('solar', ([(x0, y, z0), (x0, y, z1), (x1, y, z1), (x1, y, z0)], [(0, 1, 2, 3)]), [[(0, 0), (0, 1), (1, 1), (1, 0)]])
     # dish on a short mast, camera mast and whip antenna above the white block
-    b.strut('silver', (-0.2, 1.84, 0.02), (-0.2, 1.97, 0.02), 0.022)
+    b.strut('silver', (-0.2, 1.81, 0.02), (-0.2, 1.97, 0.02), 0.022)
     p = [(0.17 * i / 8, 1.4 * (0.17 * i / 8) ** 2) for i in range(9)]
     geo, _ = lathe_geo([(r, a) for r, a in p] + [(r * 0.97, a - 0.01) for r, a in reversed(p)], 22)
     M = Euler((-0.55, 0, 0), 'XYZ').to_matrix() @ Matrix(((0, 1, 0), (1, 0, 0), (0, 0, 1)))
     b.raw('silver', xform(geo, M, (-0.2, 1.995, 0.0)))
     b.strut('graphite', (-0.2, 1.97, 0.02), (-0.2, 2.01, 0.02), 0.03)
     b.strut('silver', (-0.2, 2.0, 0.02), (-0.2, 2.0 + math.cos(0.55) * 0.17, 0.02 - math.sin(0.55) * 0.17 - 0.02), 0.005, 6)
-    b.strut('silver', (0.4, 1.84, 0.25), (0.4, 2.0, 0.25), 0.02)
+    b.strut('silver', (0.4, 1.81, 0.25), (0.4, 2.02, 0.25), 0.02)
     b.rbox('graphite', 0.12, 0.09, 0.12, 0.4, 2.05, 0.25, 0.025)
     b.led(0.4, 2.05, 0.19, 0.035, 0.035, 0.012)
     b.strut('graphite', (0.8, 1.71, ZR - 0.1), (0.8, 2.3, ZR - 0.1), 0.007, 6)
@@ -644,7 +650,7 @@ def cable(b, pts, r=0.01):
 def bay(b):
     b.side('graphite', [(0.58, 0.5), (0.58, 0.9), (ZR, 0.9), (ZR, 0.5)], -0.5, 0.5, 0.02, 2)
     b.top('silver', rrect(-0.85, 0.85, 0.58, ZR + 0.2, 0.05, 3), 0.9, 0.09, 0.014, 2)  # shelf deck, tail overhang
-    b.led(0, 0.7, ZR + 0.012, 0.5, 0.02, 0.012)
+    b.led(0, 0.7, ZR + 0.18, 0.5, 0.02, 0.012)
     for sx in (-1, 1):  # slate side sills behind the tyres (inside x 0.58: the rear wheels steer too), angled tail fairing
         b.rbox('frame', 0.1, 0.4, 1.2, sx * 0.49, 0.7, 1.2, 0.025)
         b.led(sx * 0.541, 0.74, 0.7, 0.012, 0.03, 0.03)
@@ -666,24 +672,29 @@ def bay(b):
         b.box('frame', 0.04, 0.04, 0.8, x, 1.1, 1.35, bevel=0.006, segs=1)
         b.box('frame', 0.04, 0.04, 0.5, x, 1.56, 1.55, bevel=0.006, segs=1)
         b.box('frame', 0.04, 0.5, 0.04, x, 1.33, ZR - 0.06, bevel=0.006, segs=1)
-        b.led(sx * 0.45, 1.622, 1.2, 0.05, 0.018, 0.6)
-        b.box('graphite', 0.08, 0.014, 0.64, sx * 0.45, 1.63, 1.2, bevel=0)
+        b.led(sx * 0.45, 1.626, 1.2, 0.05, 0.018, 0.6)
+        b.box('graphite', 0.08, 0.014, 0.64, sx * 0.45, 1.634, 1.2, bevel=0)
     # equipment on the shelf
-    case(b, -0.42, 1.17, 0.95, 0.46, 0.34, 0.4, -1)
-    case(b, -0.42, 1.17, 1.45, 0.46, 0.34, 0.4, -1)
-    b.box('silver', 0.44, 0.02, 0.38, -0.42, 1.35, 0.95, bevel=0.006, segs=1)
+    case(b, -0.42, 1.16, 0.95, 0.46, 0.34, 0.4, -1)
+    case(b, -0.42, 1.16, 1.45, 0.46, 0.34, 0.4, -1)
+    b.box('silver', 0.44, 0.02, 0.38, -0.42, 1.335, 0.95, bevel=0.006, segs=1)
     # control rack with two lit screens facing +x
     b.rbox('graphite', 0.4, 0.56, 0.5, 0.1, 1.27, 1.15, 0.03)
-    b.plane_x('screen', 0.4, 0.2, 0.303, 1.40, 1.15)
-    b.plane_x('station', 0.4, 0.18, 0.303, 1.17, 1.15)
-    b.rbox('inset', 0.016, 0.04, 0.4, 0.31, 1.06, 1.15, 0.006)
+    b.plane_x('screen', 0.4, 0.2, 0.301, 1.40, 1.15)
+    b.plane_x('station', 0.4, 0.18, 0.301, 1.17, 1.15)
+    b.rbox('inset', 0.016, 0.04, 0.4, 0.304, 1.06, 1.15, 0.006)
     b.led(0.306, 1.02, 1.15, 0.01, 0.014, 0.3)
     # tool rack on the back wall: two rails with tools, a canister, and a silver tank
     for y in (1.3, 1.46):
         b.strut('silver', (0.0, y, ZR - 0.12), (0.85 - 0.12, y, ZR - 0.12), 0.012, 8)
+    # mounting: two flat standoff posts bolted between the rear sill beam and the rear header, the rails are fixed to them
+    for x in (0.0, 0.73):
+        b.box('frame', 0.05, 0.5, 0.05, x, 1.3, ZR - 0.085, bevel=0.006, segs=1)
+        for y in (1.3, 1.46):
+            b.bolt(x, y, ZR - 0.11, 0, 0, -1, 0.014, 0.01)
     for k, x in enumerate((0.1, 0.22, 0.34, 0.46)):
         b.strut('silver', (x, 1.46, ZR - 0.12), (x, 1.2 + 0.03 * k, ZR - 0.12), 0.01, 6)
-        b.rbox('graphite', 0.04, 0.07, 0.04, x, 1.16 + 0.03 * k, ZR - 0.12, 0.01)
+        b.rbox('graphite', 0.04, 0.07, 0.04, x, 1.18 + 0.03 * k, ZR - 0.12, 0.01)
     b.strut('silver', (0.5, 0.99, 0.8), (0.5, 1.5, 0.8), 0.07, 14)
     b.led(0.5, 1.2, 0.86, 0.1, 0.015, 0.012)
     case(b, -0.1, 1.07, 1.65, 0.3, 0.2, 0.3, 1)
@@ -704,7 +715,7 @@ def bay(b):
     for dx in (-0.032, 0.032):
         b.box('silver', 0.014, 0.12, 0.04, ax + dx, 1.36, az + 0.3, bevel=0.003, segs=1)
     for y in (1.2, 1.88):
-        b.bolt(ax + 0.07, y, az, 1, 0, 0)
+        b.bolt(ax + 0.05, y, az, 1, 0, 0)
 
 def suspension(b):
     for sx in (-1, 1):
@@ -811,6 +822,61 @@ total_tris = body_tris + 4 * wheel_tris
 print(f'ROVER triangles: body {body_tris}, wheel {wheel_tris} x4, total {total_tris}')
 
 
+
+
+# ------------------------------------------------------------------ floating-part check (static body, before merging)
+def check_floating(acc, tol=0.002):
+    """Parts are 'attached' when they touch (overlap, or a vertex within tol of the other part). Parts that are not
+    connected, directly or through other parts, to the main structure are floating."""
+    from mathutils.bvhtree import BVHTree
+    parts = []
+    for mat, v, f in acc.parts:
+        pv = [Vector(G(p)) for p in v]
+        tris = [(face[0], face[i], face[i + 1]) for face in f for i in range(1, len(face) - 1)]
+        if not tris:
+            continue
+        a = np.array([tuple(p) for p in pv])
+        parts.append({'mat': mat, 'v': pv, 'tris': tris, 'bvh': BVHTree.FromPolygons(pv, tris), 'lo': a.min(0) - tol, 'hi': a.max(0) + tol, 'c': a.mean(0)})
+    n = len(parts)
+    lo = np.array([p['lo'] for p in parts]); hi = np.array([p['hi'] for p in parts])
+    parent = list(range(n))
+    def find(i):
+        while parent[i] != i:
+            parent[i] = parent[parent[i]]; i = parent[i]
+        return i
+    for i in range(n):
+        near = np.nonzero(np.all((lo <= hi[i]) & (hi >= lo[i]), axis=1))[0]
+        for j in near:
+            if j <= i or find(i) == find(j):
+                continue
+            a, b_ = parts[i], parts[j]
+            touch = bool(a['bvh'].overlap(b_['bvh']))
+            if not touch:
+                for p, other in ((a, b_), (b_, a)):
+                    for q in p['v']:
+                        loc, nrm, idx, dist = other['bvh'].find_nearest(q, tol)
+                        if loc is not None:
+                            touch = True; break
+                    if touch:
+                        break
+            if touch:
+                parent[find(i)] = find(j)
+    roots = {}
+    for i in range(n):
+        roots.setdefault(find(i), []).append(i)
+    main = max(roots.values(), key=len)
+    floaters = [g for g in roots.values() if g is not main]
+    print(f'ROVER floating check: {n} parts, main structure {len(main)}, floating groups {len(floaters)}')
+    mv, mt = [], []
+    for i in main:
+        o = len(mv); mv += parts[i]['v']; mt += [(o + t[0], o + t[1], o + t[2]) for t in parts[i]['tris']]
+    mbvh = BVHTree.FromPolygons(mv, mt)
+    for g in floaters:
+        gap = min((mbvh.find_nearest(q)[3] or 9) for i in g for q in parts[i]['v'])
+        c = np.mean([parts[i]['c'] for i in g], axis=0)
+        print(f'ROVER   floating: {len(g)} part(s) {sorted(set(parts[i]["mat"] for i in g))} near game ({c[0]:.2f}, {c[2]:.2f}, {-c[1]:.2f}), gap {gap * 1000:.0f} mm')
+
+check_floating(body.acc)
 
 # ------------------------------------------------------------------ steering clearance check (all four wheels steer up to ~20 deg)
 def check_clearance(max_deg=21):
@@ -949,6 +1015,7 @@ def render_previews(outdir):
         'rear34': ((4.6, 1.8, 6.0), (0, 0.95, 0), 50),         # rear right: open bay and arm
         'front': ((0, 1.2, -9), (0, 0.95, 0), 70),
         'top': ((0, 9, 0.01), (0, 0.5, 0), 70),
+        'bay': ((-1.9, 1.35, 3.6), (0.25, 1.3, 1.6), 50),    # rear-left at bay height: tool rack and equipment
     }
     for name, (loc, tgt, lens) in shots.items():
         cam.location = G(loc); cam.data.lens = lens; look_at(cam, tgt)
