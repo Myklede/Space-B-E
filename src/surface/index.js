@@ -5,7 +5,8 @@
 //   INTERIOR  stations: pilotSeat (→ LANDING cockpit, or → RETURN when Mars Exploration is 100 %), suitLocker,
 //             o2Station, commsConsole, sampleStorage, bunk, airlock (suit on → 3 s cycle → SURFACE).
 //   SURFACE   walk Jezero; O₂ drains (30/15/5 % cautions, 0 % → flight:failed outOfBreath); the hatch → INTERIOR.
-//             The crewed rover (Apollo LRV-style, RoverController) is parked by the lander: E to drive, E to get out.
+//             Two crewed rovers are parked by the lander: the Apollo LRV (E to drive) and the futuristic MR-01
+//             (locked until Mars Exploration reaches 50 %). E to drive, E to get out.
 //
 // registerInteractable({ id, position, prompt, onUse, hold?, radius?, state? }) is the README/contract API for
 // Role 4's tasks. `state` ('SURFACE' or 'INTERIOR') limits where it can be used; positions are in that scene's
@@ -22,7 +23,8 @@ import { createSuitHUD } from './hud/createSuitHUD.js';
 import { astronaut } from './astronaut.js';
 import { getCabin, getMars, getMarsSunSetter, prepareScenes } from './scenes.js';
 import { createSolClock, createEarthCaption, easeFov, isLookingAtEarth, NORMAL_FOV } from './dusk.js';
-import { RoverController } from './RoverController.js';
+import { RoverController, ROVER, ROVER_MR01 } from './RoverController.js';
+import { mr01Unlock, MR01_LOCKED_PROMPT, MR01_UNLOCKED_NOTICE } from './rovers.js';
 import { createRoverModel } from './roverModel.js';
 import { createGroundMarks } from './groundMarks.js';
 
@@ -30,7 +32,9 @@ const TELEMETRY_EVERY = 0.5;
 const LANDER_RADIUS = 3.2; // m, the lander's legs: you can't walk through them
 const HATCH = { x: 0, z: 3.6 }; // where you climb back in (in front of the lander)
 const MAX_MOUSE_STEP = 300; // px per frame: ignore the jump some browsers report right after pointer lock
-const ROVER_PARKING = { x: 6.5, z: 7, heading: -0.6 }; // unfolded next to the lander, like the Apollo LRVs
+const ROVER_PARKING = { x: 6.5, z: 7, heading: -0.6 }; // the Apollo LRV, unfolded next to the lander
+// MR-01 on the other side of the lander, mirrored so the two rovers frame the hatch view; inside Role 3's flat landing zone (60 m)
+const MR01_PARKING = { x: -7, z: 7, heading: 0.6 };
 // Crew-life props in the cabin open these Guidebook entries (Role 4 writes them; ids listed in the README).
 export const PROP_ENTRIES = { exerciseBike: 'crew-exercise', waterRecycler: 'crew-water', foodRack: 'crew-food', familyPhoto: 'family-photo' };
 
@@ -55,26 +59,49 @@ registerInteractable({
   onUse: () => requestState('INTERIOR'),
 });
 
-// The rover keeps its place, battery and odometer across visits outside (module-level, like the astronaut).
-const roverSpot = { x: ROVER_PARKING.x, y: 0, z: ROVER_PARKING.z }; // interactable position, follows the rover
-const roverCollider = { x: ROVER_PARKING.x, z: ROVER_PARKING.z, r: 1.6 }; // the walker can't walk through it
-let rover = null;
-let roverModel = null;
-function getRover() {
-  if (!rover) {
-    rover = new RoverController({
-      gravity: PLANETS.mars.g, getGroundHeight: getTerrainHeight, start: ROVER_PARKING,
-      colliders: [{ x: 0, z: 0, r: LANDER_RADIUS }], onNotice: (type, d) => roverNotice(type, d),
-    });
-    roverModel = createRoverModel();
-  }
-  return rover;
+// Both rovers keep their place, battery and odometer across visits outside (module-level, like the astronaut).
+// An entry: { key, spec, assetName, parking, spot (interactable position), collider (walker + other rover can't pass), rover, model }.
+function makeFleetEntry(key, spec, assetName, parking) {
+  return {
+    key, spec, assetName, parking, rover: null, model: null,
+    spot: { x: parking.x, y: 0, z: parking.z },
+    collider: { x: parking.x, z: parking.z, r: 1.6 },
+  };
 }
+const fleet = {
+  lrv: makeFleetEntry('lrv', ROVER, 'rover:lrv', ROVER_PARKING),
+  mr01: makeFleetEntry('mr01', ROVER_MR01, 'rover', MR01_PARKING),
+};
+const fleetList = Object.values(fleet);
+let active = null; // the fleet entry being driven
+function getRover(entry) {
+  if (!entry.rover) {
+    const other = entry === fleet.lrv ? fleet.mr01 : fleet.lrv;
+    entry.rover = new RoverController({
+      gravity: PLANETS.mars.g, getGroundHeight: getTerrainHeight, start: entry.parking, spec: entry.spec,
+      colliders: [{ x: 0, z: 0, r: LANDER_RADIUS }, other.collider], onNotice: (type, d) => roverNotice(type, d),
+    });
+    entry.model = createRoverModel(entry.assetName);
+  }
+  return entry.rover;
+}
+const syncSpot = (e) => { // keep the interactable and collider on the rover
+  if (!e.rover) return;
+  e.spot.x = e.collider.x = e.rover.x;
+  e.spot.z = e.collider.z = e.rover.z;
+  e.spot.y = e.rover.y + 1.0;
+};
 registerInteractable({
-  id: 'rover', state: 'SURFACE', radius: 2.6, minFacing: 0.3, position: roverSpot,
-  prompt: () => (rover?.overturned ? 'The rover is on its side' : 'E: drive the rover'),
-  enabled: () => !s?.driving && !rover?.overturned,
-  onUse: () => boardRover(),
+  id: 'rover', state: 'SURFACE', radius: 3.2, minFacing: 0.3, position: fleet.lrv.spot,
+  prompt: 'E: drive the Apollo LRV',
+  enabled: () => !s?.driving && !fleet.lrv.rover?.overturned,
+  onUse: () => boardRover('lrv'),
+});
+registerInteractable({
+  id: 'rover:mr01', state: 'SURFACE', radius: 3.2, minFacing: 0.3, position: fleet.mr01.spot,
+  prompt: () => (mr01Unlock.unlocked ? 'E: drive MR-01' : MR01_LOCKED_PROMPT),
+  enabled: () => !s?.driving && !fleet.mr01.rover?.overturned,
+  onUse: () => boardRover('mr01'), // does nothing while locked
 });
 
 // Wheel tracks and boot prints persist across visits (module-level); added to the Mars scene only while outside.
@@ -110,8 +137,12 @@ function roverNotice(type, d) {
   }
 }
 
-function boardRover() {
+function boardRover(key = 'lrv') {
+  const entry = fleet[key] ?? fleet.lrv;
   if (!s || s.inside || s.driving) return;
+  if (entry === fleet.mr01 && !mr01Unlock.unlocked) return; // locked: E does nothing
+  getRover(entry);
+  active = entry;
   s.driving = true;
   s.look = { yaw: 0, pitch: -0.08 };
   s.notice = { text: 'Driving: W/S throttle and reverse · A/D steer · SPACE brake · E get out', t: 6 };
@@ -121,6 +152,7 @@ function leaveRover() {
   if (!s?.driving) return;
   s.driving = false;
   // step off on the driver's (left) side, facing the way the rover points
+  const rover = active.rover;
   const r = rover.right;
   const x = rover.x - r.x * 1.7, z = rover.z - r.z * 1.7;
   s.walker.pos.x = x;
@@ -129,6 +161,8 @@ function leaveRover() {
   s.walker.vel.x = s.walker.vel.y = s.walker.vel.z = 0;
   s.walker.yaw = rover.heading;
   s.walker.pitch = 0;
+  syncSpot(active);
+  active = null;
 }
 
 // Outside only: advance the sol clock, ease the helmet zoom, hint and caption for Earth.
@@ -150,18 +184,20 @@ function updateDusk(dt, zoomHeld) {
 export default {
   init() {
     setTimeout(prepareScenes, 0); // build Mars + cabin in the background so entering them never freezes
+    events.on('progress:changed', ({ percent }) => mr01Unlock.setPercent(percent)); // cached; MR-01 unlocks at 50 %
     // debug handle for automated checks (only with ?debug=1)
     if (isDebug()) {
       window.__role2 = {
-        boardRover, leaveRover,
+        boardRover: (name = 'lrv') => boardRover(name === 'mr01' || name === 'mr-01' ? 'mr01' : 'lrv'), leaveRover, unlockMr01: () => mr01Unlock.debugUnlock(),
+        get rovers() { return { lrv: fleet.lrv.rover, mr01: fleet.mr01.rover }; }, get unlock() { return mr01Unlock; },
         setO2: (p) => astronaut.oxygen.debugSetPercent(p), dusk: () => getSolClock().jumpToDusk(),
         lookAt(d) { const v = new THREE.Vector3(d.x, d.y, d.z).normalize(); if (s?.walker) { s.walker.yaw = Math.atan2(-v.x, -v.z); s.walker.pitch = Math.asin(v.y); } },
         get fov() { return s?.camera.fov; }, get sol() { return solClock; },
         get dust() { return astronaut.dust; }, get marks() { return marks; }, get walker() { return s?.walker; }, get camera() { return s?.camera; },
         get cabin() { return s?.cabin; },
         // debug only: drive the rover n metres in steps (marks, dust and odometer follow), then park it
-        driveMetres(n, steer = 0.4) { for (let m = 0; m < n; m += 0.1) { rover.update(0.05, { throttle: 1, steer }); astronaut.dust.accumulate(0.05, { speed: rover.speed, mode: 'drive' }); marks?.update({ mode: 'drive', rover }); } roverModel?.update(rover, 0); },
-        walkMetres(n, yaw = 0) { for (let m = 0; m < n; m += 0.1) { s.walker.pos.x -= Math.sin(yaw) * 0.1; s.walker.pos.z -= Math.cos(yaw) * 0.1; s.walker.pos.y = getTerrainHeight(s.walker.pos.x, s.walker.pos.z); marks?.update({ mode: 'walk', walker: s.walker }); } }, get rover() { return rover; }, get driving() { return !!s?.driving; } };
+        driveMetres(n, steer = 0.4, name) { const e = name ? fleet[name === 'mr01' ? 'mr01' : 'lrv'] : (active ?? fleet.lrv); const rover = getRover(e), roverModel = e.model; for (let m = 0; m < n; m += 0.1) { rover.update(0.05, { throttle: 1, steer }); astronaut.dust.accumulate(0.05, { speed: rover.speed, mode: 'drive' }); marks?.update({ mode: 'drive', rover }); } roverModel?.update(rover, 0); syncSpot(e); },
+        walkMetres(n, yaw = 0) { for (let m = 0; m < n; m += 0.1) { s.walker.pos.x -= Math.sin(yaw) * 0.1; s.walker.pos.z -= Math.cos(yaw) * 0.1; s.walker.pos.y = getTerrainHeight(s.walker.pos.x, s.walker.pos.z); marks?.update({ mode: 'walk', walker: s.walker }); } }, get rover() { return (active ?? fleet.lrv).rover; }, get driving() { return !!s?.driving; } };
     }
   },
 
@@ -236,13 +272,17 @@ export default {
             s.notice = { text: `Hard landing (${d.impactSpeed.toFixed(1)} m/s). Mars gravity is weak, but a fall still hurts.`, t: 4 };
           }
         },
-        gravity: PLANETS.mars.g, getGroundHeight: getTerrainHeight, colliders: [{ x: 0, z: 0, r: LANDER_RADIUS }, roverCollider],
+        gravity: PLANETS.mars.g, getGroundHeight: getTerrainHeight, colliders: [{ x: 0, z: 0, r: LANDER_RADIUS }, fleet.lrv.collider, fleet.mr01.collider],
         mode: 'suit', start: { x: HATCH.x, z: HATCH.z + 2 }, yaw: Math.PI, // step out facing away from the ship
       });
-      getRover();
+      try { mr01Unlock.setPercent(getProgress().percent); } catch { /* Role 4's module not ready: keep the cached value */ }
       mars.scene.add(getMarks().object);
-      mars.scene.add(roverModel.object); // only while we are outside (the shared Mars scene is also the landing view)
-      roverModel.update(rover, 0);
+      for (const e of fleetList) { // only while we are outside (the shared Mars scene is also the landing view)
+        getRover(e);
+        mars.scene.add(e.model.object);
+        e.model.update(e.rover, 0);
+        syncSpot(e);
+      }
       audio.play('ambience.mars', { loop: true });
       audio.play('suit.breath', { loop: true });
     }
@@ -258,6 +298,7 @@ export default {
       else {
         input.onPress('KeyK', () => astronaut.oxygen.debugSetPercent(32)); // 30 % caution a few seconds later
         input.onPress('KeyN', () => getSolClock().jumpToDusk()); // nightfall
+        input.onPress('KeyU', () => mr01Unlock.debugUnlock()); // unlock MR-01 now
       }
     }
   },
@@ -273,6 +314,7 @@ export default {
     let hudTelemetry, hudYaw;
 
     if (s.driving) {
+      const rover = active.rover, roverModel = active.model;
       // ---- driving the rover: look around from the driver's seat ----
       if (mouseOk) {
         const zs = camera.fov / NORMAL_FOV; // slower look while zoomed
@@ -286,6 +328,7 @@ export default {
       });
       roverModel.update(rover, dt);
       getMarks().update({ mode: 'drive', rover });
+      syncSpot(active);
       astronaut.dust.accumulate(dt, { speed: rover.onGround ? Math.abs(rover.speed) : 0, mode: 'drive' });
       roverModel.object.updateMatrixWorld(true);
       const eye = roverModel.eye.clone().applyMatrix4(roverModel.object.matrixWorld);
@@ -299,7 +342,7 @@ export default {
       const rt = rover.telemetry;
       hudTelemetry = { heartRate: Math.round(walker.heartRate), gravity: walker.gravity, pos: rt.pos, speed: rt.speed, running: false, onGround: rt.onGround };
       hudYaw = rover.heading + s.look.yaw;
-      s.roverPanelText = `LRV · ${rt.speedKmh.toFixed(1)} km/h · battery ${(rt.batteryFrac * 100).toFixed(0)} % · slope ${rt.pitchDeg.toFixed(0)}° / roll ${rt.rollDeg.toFixed(0)}° · ${rt.odometerKm.toFixed(2)} km`
+      s.roverPanelText = `${rt.name} · ${rt.speedKmh.toFixed(1)} km/h · battery ${(rt.batteryFrac * 100).toFixed(0)} % · slope ${rt.pitchDeg.toFixed(0)}° / roll ${rt.rollDeg.toFixed(0)}° · ${rt.odometerKm.toFixed(2)} km`
         + (rt.overturned ? ' · OVERTURNED' : rt.slip > 0.15 ? ' · SLIDING' : !rt.onGround ? ' · AIRBORNE' : '');
     } else {
       // ---- on foot ----
@@ -317,12 +360,7 @@ export default {
       }
       oxygen.update(dt, { inside, running: walker.running, suited: inside ? astronaut.suited : true });
       astronaut.body.update(dt, { env: inside ? 'cabin_mars' : 'mars', heartRate: walker.heartRate });
-      if (rover && !inside) {
-        roverModel.update(rover, dt);
-        roverSpot.x = roverCollider.x = rover.x;
-        roverSpot.z = roverCollider.z = rover.z;
-        roverSpot.y = rover.y + 1.0;
-      }
+      if (!inside) for (const e of fleetList) if (e.rover) { e.model.update(e.rover, dt); syncSpot(e); }
       ui_ = registry.update(dt, walker.eye, walker.lookDir, k('KeyE'));
 
       // head bob: one bob per step; Mars steps are slower and floatier (step rate ∝ √g), suits bounce less
@@ -337,7 +375,10 @@ export default {
       s.roverPanelText = '';
     }
 
-    if (!inside) updateDusk(dt, k('KeyZ'));
+    if (!inside) {
+      updateDusk(dt, k('KeyZ'));
+      if (mr01Unlock.unlocked && mr01Unlock.takeNotice()) s.notice = { text: MR01_UNLOCKED_NOTICE, t: 7, calm: true };
+    }
 
     const level = inside ? 'ok' : oxygen.level;
     if (level !== s.lastLevel) {
@@ -351,7 +392,7 @@ export default {
       telemetry: hudTelemetry, oxygen, suited: inside ? astronaut.suited : true, inside,
       focused: ui_.focused, yaw: hudYaw, shipPosition: { x: HATCH.x, z: HATCH.z },
       bodyStats: astronaut.body.snapshot(), airlockProgress: s.cabin?.airlockProgress ?? 0,
-      prebreathe: s.cabin?.prebreathe ?? null, dust: astronaut.dust.level,
+      prebreathe: s.cabin?.prebreathe ?? null, dust: astronaut.dust.level, driving: !!s.driving,
     });
 
     if (s.notice?.t > 0) s.notice.t -= dt;
@@ -368,7 +409,7 @@ export default {
       s.sinceTelemetry = 0;
       events.emit('flight:telemetry', {
         t: performance.now() / 1000, phase: inside ? 'interior' : s.driving ? 'rover' : 'eva', o2Percent: oxygen.percent,
-        speed: s.driving ? rover.telemetry.speed : walker.telemetry.speed,
+        speed: s.driving ? active.rover.telemetry.speed : walker.telemetry.speed,
         heartRate: Math.round(walker.heartRate), radiationMsv: astronaut.body.doseMSv,
       });
     }
@@ -377,7 +418,8 @@ export default {
   exit() {
     if (!s) return;
     previous = s.state;
-    if (!s.inside && roverModel) { roverModel.object.removeFromParent(); marks?.object.removeFromParent(); }
+    if (!s.inside) { for (const e of fleetList) e.model?.object.removeFromParent(); marks?.object.removeFromParent(); }
+    if (s.driving) { syncSpot(active); active = null; }
     graphics.setEffects({ shake: 0 });
     s.cabin?.dispose();
     s.hud.dispose();

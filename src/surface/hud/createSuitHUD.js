@@ -1,5 +1,7 @@
 import { MAX_DUST_OPACITY } from '../visorDust.js';
 
+const WALK_HELP = 'CLICK mouse look · WASD walk · SHIFT run · SPACE jump · E interact / hold to scan';
+const DRIVE_HELP = 'MOUSE look around · W/S throttle / reverse · A/D steer · SPACE brake · E get out';
 const fmt = (value, digits = 0) => Number.isFinite(value) ? value.toFixed(digits) : '—';
 
 export function createSuitHUD({ parent = document.body, reducedMotion = false } = {}) {
@@ -43,7 +45,7 @@ export function createSuitHUD({ parent = document.body, reducedMotion = false } 
 <div class="row"><span>LOCAL GRAVITY</span><span data-id="gravity"></span></div>
 <div class="row body"><span>DOSE / PEAK G</span><span data-id="body"></span></div></div>
 <div class="navigation"><small>SHIP RADIO BEACON</small><div><span class="beacon">↑</span> <span data-id="distance"></span></div><div data-id="motion"></div></div>
-<div class="help">CLICK mouse look · WASD walk · SHIFT run · SPACE jump · E interact / hold to scan</div>`;
+<div class="help" data-id="help">${WALK_HELP}</div>`;
   parent.append(root);
   const fields = Object.fromEntries([...root.querySelectorAll('[data-id]')].map(el => [el.dataset.id, el]));
   const helmet = root.querySelector('.helmet');
@@ -98,7 +100,7 @@ export function createSuitHUD({ parent = document.body, reducedMotion = false } 
 
   return {
     root,
-    update(dt, { telemetry: t, oxygen, suited, inside, focused, yaw, shipPosition, bodyStats, airlockProgress = 0, prebreathe = null, dust = 0 }) {
+    update(dt, { telemetry: t, oxygen, suited, inside, focused, yaw, shipPosition, bodyStats, airlockProgress = 0, prebreathe = null, dust = 0, driving = false }) {
       elapsed += dt;
       const level = inside ? 'ok' : oxygen.level;
       root.dataset.level = level;
@@ -112,6 +114,8 @@ export function createSuitHUD({ parent = document.body, reducedMotion = false } 
       root.querySelector('.body').hidden = !bodyStats;
       if (bodyStats) fields.body.textContent = `${fmt(bodyStats.doseMSv, 3)} mSv / ${fmt(bodyStats.peakG, 1)} g`;
       meter.value = oxygen.percent;
+      const help = driving ? DRIVE_HELP : WALK_HELP;
+      if (fields.help.textContent !== help) fields.help.textContent = help;
       fields.prompt.textContent = focused?.prompt ?? '';
       progress.hidden = focused?.holdProgress == null;
       progress.value = focused?.holdProgress ?? 0;

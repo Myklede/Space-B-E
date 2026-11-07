@@ -104,7 +104,9 @@ export function createGroundMarks({ getGroundHeight, trackHalf = 0.915 } = {}) {
   }
 
   /** rover: { x, z, right:{x,z}, onGround, overturned } while driving */
+  let lastRover = null;
   function addRoverTracks(rover) {
+    if (rover !== lastRover) { lastRover = rover; breakTracks(); } // switched rovers: no ribbon between them
     const smp = sampler.update(rover.x, rover.z);
     if (!smp || !rover.onGround) { if (!rover.onGround) sampler.reset(); return false; }
     const r = rover.right;
