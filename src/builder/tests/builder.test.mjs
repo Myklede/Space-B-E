@@ -223,7 +223,7 @@ ok(`text.json: ${contract.HARD_BLOCKS.length} blocks and ${contract.WARNINGS.len
     SEC.applyShape(single, sections.tail, { ...octa, stack: [octa.stack[0], octa.stack[1]] });
     check(r.spec.stats.thrust === n * engineStats(r.spec.engines[0], engines, G0).thrust, 'cluster thrust is engines × one engine');
     const partsCost = r.breakdown.parts.reduce((t, p) => t + p.cost, 0);
-    check(Math.abs(partsCost - r.spec.stats.cost) < 1, 'the cost per part adds up to the ship cost with a cluster (section cards sum it)');
+    check(Math.abs(partsCost + (r.breakdown.hull?.cost ?? 0) - r.spec.stats.cost) < 1, 'the cost per part plus the outer skin adds up to the ship cost with a cluster (section cards sum it)');
   }
   // rows: add and clear
   const c = new Assembly(presets.reliable, catalog);
@@ -233,16 +233,23 @@ ok(`text.json: ${contract.HARD_BLOCKS.length} blocks and ${contract.WARNINGS.len
   SEC.clearSection(c, sections.nose);
   check(!c.chain().some((p) => catalog.get(p.type).section === 'nose') && c.validate().length === 0, 'clearing the nose leaves a connected body and tail');
   // pad
+  // the pad: real launch complexes, each with a kit of equipment and a climate (more in tests/pad.test.mjs)
   const pad = sections.pad;
-  check(pad.sites.length > 0 && pad.sites.every((st) => st.slots.length > 0), 'pad: every site has launch windows');
+  check(pad.sites.length >= 7 && pad.sites.every((st) => st.kit && st.climate && Number.isFinite(st.climate.meanC)), 'pad: every complex has a kit and a climate');
+  for (const st of pad.sites) for (const [k, v] of Object.entries(st.kit)) if (!pad.equipment.find((eq) => eq.key === k)?.options.some((o) => o.id === v)) fail(`pad complex ${st.id}: kit ${k}=${v} is not an option`);
   for (const eq of pad.equipment) if (!eq.options.length || (eq.options[0].fee ?? 0) !== 0 || (eq.options[0].reliability ?? 0) !== 0) fail(`pad equipment ${eq.key}: the first option must be the free, neutral default`);
   const d = new Assembly(presets.reliable, catalog);
   const base = computeShipSpec(d, depsS);
   const eq = pad.equipment[0];
-  d.setPadOption(eq.key, eq.options[eq.options.length - 1].id);
+  const cur = base.breakdown.padFx.choices.find((c) => c.eq.key === eq.key).option;
+  const top = eq.options[eq.options.length - 1];
+  check(top.id !== cur.id, `pad: the preset's ${eq.key} is not already the top option`);
+  d.setPadOption(eq.key, top.id);
   const after = computeShipSpec(d, depsS);
   check(after.breakdown.launchFee > base.breakdown.launchFee && after.spec.stats.reliability > base.spec.stats.reliability, 'pad equipment adds a fee and reliability');
-  check(new Assembly(d.toJSON(), catalog).launch.pad[eq.key] === eq.options[eq.options.length - 1].id, 'pad choices survive save and share codes');
+  check(after.breakdown.padFx.heatLimitKN > base.breakdown.padFx.heatLimitKN, 'a bigger launch mount takes more thrust');
+  check(new Assembly(d.toJSON(), catalog).launch.pad[eq.key] === top.id, 'pad choices survive save and share codes');
+  check(base.breakdown.padFx.excess === 0 && base.breakdown.padFx.liftoffLossMps === 0 && base.breakdown.weather.forecastC >= 10, 'Reliable: no excess, no loss, a mild day on its pad');
 }
 
 // ---------- presets ----------

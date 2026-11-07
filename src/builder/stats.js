@@ -107,11 +107,6 @@ export function computeShipSpec(assembly, { catalog, engines, launch, balance, p
   const ispVac = thrust > 0 ? (sum(engineSpecs, (s, i) => s.ispVac * s.thrust * n(i)) + sum(boosterSpecs, (s) => s.ispVac * s.thrust)) / thrust : 0;
   const ispSL = thrust > 0 ? (sum(engineSpecs, (s, i) => s.ispSL * s.thrust * n(i)) + sum(boosterSpecs, (s) => s.ispSL * s.thrust)) / thrust : 0;
   const mainFuel = engineSpecs[0]?.fuel ?? null;
-  const engineCount0 = engineCount;
-  const padFx = padEffects(assembly.launch, { pad, weather, thrustSL, engineCount: engineCount0 });
-  const padChoices = padFx.choices ?? [];
-  const launchFee = padFx.fee ?? 0;
-  const padReliability = padFx.reliability ?? 0;
 
   // Masses (engine hardware mass and cost scale with the chamber material; options add on top)
   const dryOf = (e) => (e.def.mass * massFactor(e) + mod(e).massD) * mod(e).massF;
@@ -122,6 +117,11 @@ export function computeShipSpec(assembly, { catalog, engines, launch, balance, p
   const dryMass = partMass + deadFuel; // fuel the engine can't burn is just weight
   // an over-strong ship on a weak pad throttles back for the first seconds: that propellant is spent on the pad
   const fullWet = dryMass + usableFuel;
+  // the pad (sections/pad/effects.js) compares its heat limit with the thrust on it and knows the ship's weight
+  const padFx = padEffects(assembly.launch, { pad, weather, thrustSL, engineCount, g: planets.earth.g, wetMass: fullWet });
+  const padChoices = padFx.choices ?? [];
+  const launchFee = padFx.fee ?? 0;
+  const padReliability = padFx.reliability ?? 0;
   const liftoffBurn = padFx.liftoffLossMps > 0 && ispSL > 0 ? Math.min(usableFuel, fullWet * (1 - Math.exp(-padFx.liftoffLossMps / (ispSL * g0)))) : 0;
   const fuelMass = usableFuel - liftoffBurn;
   const wetMass = dryMass + fuelMass;
