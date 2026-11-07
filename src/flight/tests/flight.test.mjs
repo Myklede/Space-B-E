@@ -3,6 +3,8 @@ import assert from 'node:assert/strict';
 import { FlightController as RawFC, FIXED_DT, TUNING } from '../FlightController.js';
 import { PLANETS, G0 } from '../../core/planets.js';
 import * as contract from '../../core/contract.js';
+import { readFileSync } from 'node:fs';
+const coreJson = (rel) => JSON.parse(readFileSync(new URL(`../../core/${rel}`, import.meta.url)));
 import { MOCK_SHIPS, STARTS } from '../presets.js';
 const MOCK_PLANETS = PLANETS;
 class FlightController extends RawFC { constructor(o) { super({ g0: G0, ...o }); } }
@@ -313,6 +315,55 @@ test('only contract flight:event types and ending ids reach the bus', () => {
     if (n === 'flight:event') assert.ok(contract.FLIGHT_EVENT_TYPES.includes(p.type), `type ${p.type}`);
     if (n === 'flight:failed') assert.ok(p.endingId in contract.ENDINGS, `ending ${p.endingId}`);
   }
+});
+
+test('whole mission is winnable with the core Reliable mock and balance.json (ascent → transfer → entry → landing)', () => {
+  const ship = coreJson('mocks/ship.reliable.json');
+  const balance = coreJson('balance.json');
+  // 1. ascent: a good gravity turn to a ~95 km orbit
+  const fc = new FlightController({ planets: PLANETS, shipSpec: ship });
+  fc.throttle = 1;
+  let circ = false;
+  for (let t = 0; t < 3000 && !fc.failed && fc.phase !== 'orbit'; t += FIXED_DT) {
+    const tel = fc.telemetry;
+    if (fc.liftoffT !== null) {
+      const up = fc.up, east = norm(v3(up.y, -up.x, 0));
+      const p = (Math.min(89, Math.max(0, (tel.altitude - 2000) / 400)) * Math.PI) / 180;
+      if (!circ) {
+        fc.orient = qFromTo(LOCAL_FORWARD, norm({ x: up.x * Math.cos(p) + east.x * Math.sin(p), y: up.y * Math.cos(p) + east.y * Math.sin(p), z: 0 }));
+        fc.throttle = tel.dynamicPressure > 30000 ? 0.5 : tel.gLoad > 4.5 ? 0.6 : 1;
+        if (tel.apoapsis > 95000) { fc.throttle = 0; circ = true; }
+      } else {
+        fc.orient = qFromTo(LOCAL_FORWARD, east);
+        fc.throttle = tel.verticalSpeed < 15 && tel.altitude > 85000 ? 1 : 0;
+      }
+    }
+    fc.update(FIXED_DT, {});
+  }
+  assert.equal(fc.phase, 'orbit', JSON.stringify(fc.failed));
+  const ascentUsed = fc.deltaVLeft.call({ ship: fc.ship, g0: G0, mass: fc.ship.dryMass + fc.ship.fuelMass }) - fc.deltaVLeft();
+  assert.ok(ascentUsed <= balance.deltaVKmS.ascent * 1000 * 1.05, `ascent used ${ascentUsed.toFixed(0)} m/s`);
+  // 2. transfer burn exactly as src/flight/index.js does it (rocket equation)
+  const dv = balance.deltaVKmS.transfer * 1000;
+  const fuelForMars = fc.mass / Math.exp(dv / (fc.ship.ispVac * G0)) - fc.ship.dryMass;
+  assert.ok(fuelForMars > 0, `no fuel left after the transfer (${fuelForMars.toFixed(0)} kg)`);
+  // 3. entry + landing: chute, then a last-moment retro burn (what BURN NOW tells the player)
+  const m = new FlightController({ planets: PLANETS, planetId: 'mars', shipSpec: ship, start: STARTS.marsEntry, fuel: fuelForMars });
+  for (let t = 0; t < 900 && !m.failed && !m.landed; t += FIXED_DT) {
+    const tel = m.telemetry;
+    if (tel.altitude > 3000) { m.update(FIXED_DT, {}); continue; }
+    const a = assistReadout(m);
+    if ((a.burnNow || tel.horizontalSpeed > 2) && tel.verticalSpeed < -4) { m.update(FIXED_DT, { brake: true }); continue; }
+    m.orient = qFromTo(LOCAL_FORWARD, m.up);
+    if (tel.altitude < 60 || tel.verticalSpeed > -4) {
+      const want = tel.altitude > 15 ? -4 : -1.5;
+      m.throttle = Math.max(0, Math.min(1, (tel.gravity + (want - tel.verticalSpeed) * 3) / (m.thrustNow() / m.mass)));
+    } else m.throttle = 0;
+    m.update(FIXED_DT, {});
+  }
+  assert.equal(m.failed, null, JSON.stringify(m.failed));
+  assert.equal(m.landed, true);
+  console.log(`    (mission: ascent ${ascentUsed.toFixed(0)} m/s, ${fuelForMars.toFixed(0)} kg fuel at Mars, ${m.deltaVLeft().toFixed(0)} m/s left after landing)`);
 });
 
 let fails = 0;

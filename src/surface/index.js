@@ -23,7 +23,8 @@ import { astronaut } from './astronaut.js';
 
 const TELEMETRY_EVERY = 0.5;
 const LANDER_RADIUS = 3.2; // m, the lander's legs: you can't walk through them
-const HATCH = { x: 0, z: 3.6 }; // where you climb back in (in front of the lander)
+const HATCH = { x: 0, z: 3.6 };
+const MAX_MOUSE_STEP = 300; // px per frame: ignore the jump some browsers report right after pointer lock // where you climb back in (in front of the lander)
 
 const registry = createInteractables();
 
@@ -126,7 +127,7 @@ export default {
     if (!s) return;
     const { walker, camera, inside } = s;
     const mouse = input.mouseDelta();
-    walker.look(mouse.x, mouse.y);
+    if (Math.abs(mouse.x) < MAX_MOUSE_STEP && Math.abs(mouse.y) < MAX_MOUSE_STEP) walker.look(mouse.x, mouse.y);
     const k = input.isDown;
     walker.update(dt, {
       forward: (k('KeyW') ? 1 : 0) - (k('KeyS') ? 1 : 0),
@@ -140,11 +141,20 @@ export default {
     astronaut.body.update(dt, { env: inside ? 'cabin_mars' : 'mars', heartRate: walker.heartRate });
     const ui_ = registry.update(dt, walker.eye, walker.lookDir, k('KeyE'));
 
+    // head bob: one bob per step; Mars steps are slower and floatier (step rate ∝ √g), suits bounce less
+    const speed = walker.telemetry.speed;
+    if (walker.onGround && speed > 0.2) s.stepPhase = (s.stepPhase ?? 0) + dt * speed * 2.2 * Math.sqrt(walker.gravity / PLANETS.earth.g);
+    const bob = walker.onGround ? Math.sin((s.stepPhase ?? 0) * Math.PI) ** 2 * Math.min(1, speed / 2) * (inside ? 0.035 : 0.05) : 0;
     const eye = walker.eye;
-    camera.position.set(eye.x, eye.y, eye.z);
+    camera.position.set(eye.x, eye.y - bob, eye.z);
     camera.quaternion.setFromEuler(new THREE.Euler(walker.pitch, walker.yaw, 0, 'YXZ'));
 
     const level = inside ? 'ok' : oxygen.level;
+    if (level !== s.lastLevel) {
+      // alarm each time O₂ crosses into a worse caution level (30 / 15 / 5 %)
+      if (['caution', 'warning', 'critical'].indexOf(level) > ['caution', 'warning', 'critical'].indexOf(s.lastLevel ?? 'ok')) audio.play('alarm.o2');
+      s.lastLevel = level;
+    }
     graphics.setEffects({ vignette: level === 'critical' ? 0.8 : level === 'warning' ? 0.4 : 0 });
     s.hud.update(dt, {
       telemetry: walker.telemetry, oxygen, suited: inside ? astronaut.suited : true, inside,

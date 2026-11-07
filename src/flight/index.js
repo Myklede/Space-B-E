@@ -14,7 +14,7 @@ import { stubScreen } from '/src/core/stubScreen.js';
 import { astronaut } from '/src/surface/astronaut.js';
 import { FlightController } from './FlightController.js';
 import { createCockpitControls } from './cockpitControls.js';
-import { assistReadout } from './flightAssist.js';
+import { assistReadout, predictPath } from './flightAssist.js';
 import { createDebrisField } from './debris.js';
 import { pressureRatio } from './atmosphere.js';
 import { STARTS } from './presets.js';
@@ -24,12 +24,14 @@ const fmt = (n, d = 0) => (Number.isFinite(n) ? n.toFixed(d) : '∞');
 
 export { FlightController };
 
-const LOW_MARS_ALTITUDE = 6000; // m: below this the view switches to Role 3's detailed Mars terrain
+const LOW_MARS_ALTITUDE = 6000;
+const DEBRIS_AFTER_ORBIT = 20; // s in orbit before the orbital-debris encounter (TEAM_PROMPT §6.3)
+const MAX_MOUSE_STEP = 300; // px per frame: ignore the jump some browsers report right after pointer lock // m: below this the view switches to Role 3's detailed Mars terrain
 const TELEMETRY_EVERY = 0.5; // s (contract: flight:telemetry about twice per second)
 const toCockpit = new THREE.Quaternion().setFromAxisAngle(new THREE.Vector3(1, 0, 0), Math.PI / 2); // nose +Y → cockpit −Z
 
 // Mission state that survives state changes (LAUNCH → ORBIT keeps the same controller; LANDING ⇄ INTERIOR too).
-const mission = { fc: null, planetId: null, fuelForMars: null };
+const mission = { fc: null, planetId: null, fuelForMars: null, debrisDone: false };
 let s = null; // per-state session (scene, camera, HUD, controls)
 
 const v3 = (p) => new THREE.Vector3(p.x, p.y, p.z);
@@ -43,7 +45,7 @@ function newController(planetId, start, fuel) {
 
 function circularOrbitStart(planetId, altitude) {
   const p = PLANETS[planetId];
-  return { altitude, speed: Math.sqrt((p.g * p.radius ** 2) / (p.radius + altitude)), flightPathDeg: 0 };
+  return { altitude, speed: Math.sqrt((p.g * p.radius ** 2) / (p.radius + altitude)), flightPathDeg: 0, facing: 'prograde' };
 }
 
 // Make sure a controller fits the state we are entering (debug jumps can enter any state directly).
@@ -52,6 +54,7 @@ function controllerFor(state) {
   if (state === 'LAUNCH') {
     astronaut.reset();
     mission.fuelForMars = null;
+    mission.debrisDone = false;
     return newController('earth', STARTS.earthPad);
   }
   if (state === 'ORBIT') {
@@ -84,8 +87,41 @@ function buildSpaceView(planetId) {
   rig.add(cockpit, camera);
   scene.add(rig);
 
-  // rocket for the chase camera (Role 3 parts stacked on the axis; local +Y = nose, same as the physics)
+  // the player's own rocket for the chase camera (local +Y = nose, same as the physics)
+  const { rocket, eyeY } = buildRocket(getShip());
+  const flame = assets.get('vfx:engineFlame');
+  const exhaust = assets.get('vfx:exhaust');
+  rocket.add(flame, exhaust);
+  rocket.position.y = -eyeY; // the capsule sits where the physics point (and the cockpit camera) is
+  const rocketRoot = new THREE.Group();
+  rocketRoot.add(rocket);
+  scene.add(rocketRoot);
+
+  // planet-centred frame (moves with −pos like the planet): trajectory line + debris live here
+  const frame = new THREE.Group();
+  const path = new THREE.Line(new THREE.BufferGeometry(), new THREE.LineBasicMaterial({ color: 0x72e6e0, transparent: true, opacity: 0.65 }));
+  path.frustumCulled = false;
+  frame.add(path);
+  scene.add(frame);
+  return { scene, camera, planet, rig, cockpit, plasma, flame, exhaust, rocketRoot, frame, path, debris: new Map() };
+}
+
+// Builds the rocket from ShipSpec.parts (Role 1's builder; metres, y along the axis, rotation in degrees about the
+// axis). Falls back to a simple stack when the ship has no parts. eyeY = height of the capsule's window.
+function buildRocket(spec) {
   const rocket = new THREE.Group();
+  const parts = spec?.parts ?? [];
+  if (parts.length) {
+    let eyeY = 0;
+    for (const p of parts) {
+      const part = assets.get(`rocketPart:${p.type}`);
+      part.position.set(p.x ?? 0, p.y ?? 0, p.z ?? 0);
+      part.rotation.y = THREE.MathUtils.degToRad(p.rotation ?? 0);
+      rocket.add(part);
+      if (/capsule/.test(p.type)) eyeY = (p.y ?? 0) + (part.userData.height ?? 2) * 0.55;
+    }
+    return { rocket, eyeY: eyeY || Math.max(...parts.map((p) => p.y ?? 0)) };
+  }
   let y = 0;
   for (const id of ['engine_m', 'tank_l', 'tank_l', 'capsule_m']) {
     const part = assets.get(`rocketPart:${id}`);
@@ -93,14 +129,31 @@ function buildSpaceView(planetId) {
     y += part.userData.height ?? 3;
     rocket.add(part);
   }
-  const flame = assets.get('vfx:engineFlame');
-  const exhaust = assets.get('vfx:exhaust');
-  rocket.add(flame, exhaust);
-  rocket.position.y = -(y - 1);
-  const rocketRoot = new THREE.Group();
-  rocketRoot.add(rocket);
-  scene.add(rocketRoot);
-  return { scene, camera, planet, rig, cockpit, plasma, flame, exhaust, rocketRoot };
+  return { rocket, eyeY: y - 1 };
+}
+
+const debrisGeometry = new THREE.DodecahedronGeometry(1, 0);
+const debrisMaterial = new THREE.MeshStandardMaterial({ color: 0x9aa0a6, metalness: 0.7, roughness: 0.45 });
+
+// Debris meshes follow fc.obstacles (planet frame), tumbling with the provided spin.
+function syncDebris(view, fc, dt) {
+  const alive = new Set();
+  for (const o of fc.obstacles) {
+    alive.add(o.id);
+    let m = view.debris.get(o.id);
+    if (!m) {
+      m = new THREE.Mesh(debrisGeometry, debrisMaterial);
+      m.scale.set(o.radius, o.radius * 0.6, o.radius * 0.9);
+      view.frame.add(m);
+      view.debris.set(o.id, m);
+    }
+    m.position.set(o.pos.x, o.pos.y, o.pos.z);
+    m.rotation.x += o.spin.x * dt;
+    m.rotation.y += o.spin.y * dt;
+  }
+  for (const [id, m] of view.debris) {
+    if (!alive.has(id)) { view.frame.remove(m); view.debris.delete(id); }
+  }
 }
 
 function buildSurfaceView(fc) {
@@ -187,8 +240,10 @@ export default {
     if (!s) return;
     const { fc, view } = s;
     const mouse = input.mouseDelta();
-    s.look.yaw = s.look.yaw - mouse.x * 0.002;
-    s.look.pitch = Math.max(-1.2, Math.min(1.2, s.look.pitch - mouse.y * 0.002));
+    if (Math.abs(mouse.x) < MAX_MOUSE_STEP && Math.abs(mouse.y) < MAX_MOUSE_STEP) {
+      s.look.yaw = s.look.yaw - mouse.x * 0.002;
+      s.look.pitch = Math.max(-1.2, Math.min(1.2, s.look.pitch - mouse.y * 0.002));
+    }
 
     s.controls.poll();
     fc.update(dt, s.controls.input, { timeWarp: s.warp });
@@ -197,6 +252,18 @@ export default {
     const a = assistReadout(fc);
     const air = pressureRatio(fc.planet, t.altitude);
     astronaut.body.update(dt, { env: fc.planetId === 'earth' ? (t.altitude > 100000 ? 'earth_orbit' : 'earth') : 'mars_orbit', gLoad: t.gLoad });
+
+    // Orbital debris encounter, once per mission, some time after reaching orbit (armor = ShipSpec.stats.armorHits)
+    if (state === 'ORBIT' && t.phase === 'orbit' && !mission.debrisDone) {
+      s.inOrbitFor = (s.inOrbitFor ?? 0) + dt;
+      if (s.inOrbitFor > DEBRIS_AFTER_ORBIT) {
+        mission.debrisDone = true;
+        fc.setObstacles(createDebrisField({ fc, aheadDistance: 3600, count: 45, seed: 2041 }));
+        s.debrisWarning = 8;
+        audio.play('alarm.master');
+      }
+    }
+    if (s.debrisWarning > 0) s.debrisWarning -= dt;
 
     // automatic state moves
     if (!s.done && !fc.failed) {
@@ -222,6 +289,16 @@ export default {
       if (s.mode !== 'surface') { s.mode = 'surface'; graphics.setView(sv.scene, sv.camera); }
     } else {
       view.planet.position.set(-fc.pos.x, -fc.pos.y, -fc.pos.z);
+      view.frame.position.copy(view.planet.position);
+      syncDebris(view, fc, dt);
+      s.pathTimer = (s.pathTimer ?? 0) - dt;
+      view.path.visible = s.assist && !fc.onGround;
+      if (view.path.visible && s.pathTimer <= 0) {
+        s.pathTimer = 0.5;
+        const pts = predictPath(fc, { seconds: t.phase === 'orbit' ? 3500 : 600 });
+        view.path.geometry.dispose();
+        view.path.geometry = new THREE.BufferGeometry().setFromPoints(pts.map(v3));
+      }
       view.rocketRoot.quaternion.copy(shipQ);
       view.rocketRoot.visible = s.chase;
       view.cockpit.visible = !s.chase;
@@ -270,6 +347,7 @@ export default {
 
     // HUD (Codex's flight HUD) + prograde/retrograde markers projected from the active camera
     if (fc.landed) a.warnings.push({ level: 'amber', text: 'LANDED: press E to stand up' });
+    if (s.debrisWarning > 0) a.warnings.unshift({ level: 'red', text: 'ORBITAL DEBRIS AHEAD: steer and burn sideways to dodge' });
     if (state === 'ORBIT' && t.phase === 'orbit') a.warnings.push({ level: 'amber', text: `IN ORBIT: press T for the transfer burn (${fmt((economy.balance.deltaVKmS?.transfer ?? 2.1) * 1000)} m/s)` });
     s.hud.update(t, a, s.assist);
     const cam = s.mode === 'surface' ? s.surface.camera : view.camera;
@@ -283,6 +361,8 @@ export default {
     const toLocal = (d) => (d && s.mode === 'surface' ? v3(d).applyQuaternion(s.surface.toLocal) : d);
     s.hud.marker('pro', project(toLocal(a.prograde)));
     s.hud.marker('retro', project(toLocal(a.retrograde)));
+    const danger = t.collisionWarning && fc.obstacles.find((o) => o.id === t.collisionWarning.id);
+    s.hud.marker('collision', danger ? project(v3(danger.pos).sub(v3(fc.pos)).normalize()) : null);
   },
 
   exit() {

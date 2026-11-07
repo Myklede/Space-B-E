@@ -148,7 +148,7 @@ export class FlightController {
   }
 
   // --- start conditions -----------------------------------------------------
-  // 'pad': standing on the surface. {altitude, speed, flightPathDeg}: free flight (e.g. Mars entry).
+  // 'pad': standing on the surface. {altitude, speed, flightPathDeg, facing?}: free flight (e.g. Mars entry).
   setStart(start) {
     const R = this.planet.radius;
     const up = v3(0, 1, 0);
@@ -167,9 +167,9 @@ export class FlightController {
     this.pos = scale(up, R + alt);
     // horizontal direction = +X
     this.vel = v3(Math.cos(fpa) * speed, Math.sin(fpa) * speed, 0);
-    // point the heat shield (tail) along velocity: nose retrograde
-    const retro = speed > 0 ? norm(scale(this.vel, -1)) : up;
-    this.orient = qFromTo(LOCAL_FORWARD, retro);
+    // default: heat shield (tail) along velocity, nose retrograde (entry). start.facing = 'prograde' for orbits.
+    const along = start.facing === 'prograde' ? norm(this.vel) : norm(scale(this.vel, -1));
+    this.orient = qFromTo(LOCAL_FORWARD, speed > 0 ? along : up);
     this.onGround = false;
     this.inFairing = false;
     this._setPhase(this._computePhase());
