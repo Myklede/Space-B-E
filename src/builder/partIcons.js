@@ -1,21 +1,22 @@
 // Pictures of parts for the catalogue cards: each part's own 3D art rendered once to a small image (cached).
 import * as THREE from 'three';
+import { assets } from '/src/graphics/index.js';
 import { partArt } from './bay/partArt.js';
 import { SIZE_SCALE, BASE_RADIUS } from './assembly.js';
 
-export function createIconRenderer({ renderer, size = 192 }) {
+export function createIconRenderer({ renderer, size = 384 }) {
   const cache = new Map();
   const rt = new THREE.WebGLRenderTarget(size, size, { depthBuffer: true });
   rt.texture.colorSpace = THREE.SRGBColorSpace;
   const scene = new THREE.Scene();
   const camera = new THREE.PerspectiveCamera(28, 1, 0.05, 100);
-  const key = new THREE.DirectionalLight(0xfff4e6, 3.2);
+  const key = new THREE.DirectionalLight(0xfff4e6, 2.0);
   key.position.set(3, 5, 4);
-  const fill = new THREE.DirectionalLight(0x8ea4c8, 1.2);
+  const fill = new THREE.DirectionalLight(0x8ea4c8, 0.9);
   fill.position.set(-4, 2, -3);
-  const rim = new THREE.DirectionalLight(0x67e8f9, 1.6);
+  const rim = new THREE.DirectionalLight(0x67e8f9, 1.4);
   rim.position.set(0, 3, -5);
-  scene.add(key, fill, rim, new THREE.AmbientLight(0x405060, 1.2));
+  scene.add(key, fill, rim, new THREE.AmbientLight(0x405060, 0.5), new THREE.HemisphereLight(0xdfe9ff, 0x202428, 0.45));
   const pixels = new Uint8Array(size * size * 4);
   const canvas = document.createElement('canvas');
   canvas.width = canvas.height = size;
@@ -26,7 +27,10 @@ export function createIconRenderer({ renderer, size = 192 }) {
     const art = partArt(entry);
     const holder = new THREE.Group();
     holder.add(art);
+    holder.rotation.y = -0.4;
     scene.add(holder);
+    scene.environment = assets.environment?.() ?? null;
+    scene.environmentIntensity = 0.3; // untextured white hardware must not blow out
     const box = new THREE.Box3().setFromObject(holder);
     const sphere = box.getBoundingSphere(new THREE.Sphere());
     const dist = sphere.radius / Math.sin((camera.fov * Math.PI) / 360) * 1.15;
@@ -62,6 +66,8 @@ export function createIconRenderer({ renderer, size = 192 }) {
       }
       return cache.get(def.id);
     },
+    /** Forget rendered pictures (after the real models arrive). */
+    reset() { cache.clear(); },
     dispose() { rt.dispose(); cache.clear(); },
   };
 }

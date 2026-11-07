@@ -50,9 +50,11 @@ export function createWallScreen(scene, { renderer, getScene, standTop = 0.35 })
     feedCamera.fov = Math.min(50, Math.max(26, stackHeight * 2.6));
     feedCamera.updateProjectionMatrix();
     const prev = renderer.getRenderTarget();
+    feed.visible = false; // the screen must not film itself (GPU feedback loop)
     renderer.setRenderTarget(rt);
     renderer.render(getScene(), feedCamera);
     renderer.setRenderTarget(prev);
+    feed.visible = true;
     frame += 1;
   }
 

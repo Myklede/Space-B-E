@@ -1,0 +1,140 @@
+{
+  "license": "NASA 3D Resources (https://github.com/nasa/NASA-3D-Resources): NASA material is generally not subject to copyright. Credit: NASA.",
+  "models": {
+    "shuttle_engines": {
+      "file": "shuttle_engines.glb",
+      "source": "Space Shuttle (D)/Space Shuttle (D) eng.glb",
+      "bytes": 480216
+    },
+    "shuttle_rcs": {
+      "file": "shuttle_rcs.glb",
+      "source": "Space Shuttle (D)/Space Shuttle (D) rcs.glb",
+      "bytes": 480224
+    },
+    "external_tank": {
+      "file": "external_tank.glb",
+      "source": "Space Shuttle Parts/External tank.glb",
+      "bytes": 848352
+    },
+    "srb": {
+      "file": "srb.glb",
+      "source": "Space Shuttle Parts/Solid Rocket Booster.glb",
+      "bytes": 2665460
+    },
+    "payload": {
+      "file": "payload.glb",
+      "source": "Space Shuttle Parts/Payload.glb",
+      "bytes": 516016
+    },
+    "docking_system": {
+      "file": "docking_system.glb",
+      "source": "Space Shuttle Parts/Orbiter Docking System.glb",
+      "bytes": 841040
+    },
+    "apollo_soyuz": {
+      "file": "apollo_soyuz.glb",
+      "source": "Apollo Soyuz/Apollo Soyuz.glb",
+      "bytes": 952608
+    },
+    "gemini": {
+      "file": "gemini.glb",
+      "source": "Gemini/Gemini.glb",
+      "bytes": 1387812
+    },
+    "stardust_capsule": {
+      "file": "stardust_capsule.glb",
+      "source": "Stardust/Stardust capsule.glb",
+      "bytes": 2282444
+    },
+    "esas_crew_module": {
+      "file": "esas_crew_module.glb",
+      "source": "ESAS Crew Module/ESAS Crew Module.glb",
+      "bytes": 7664
+    },
+    "lunar_module": {
+      "file": "lunar_module.glb",
+      "source": "Apollo Lunar Module/Apollo Lunar Module.glb",
+      "bytes": 716840
+    },
+    "viking_lander": {
+      "file": "viking_lander.glb",
+      "source": "Viking Lander/Viking Lander.glb",
+      "bytes": 1849384
+    },
+    "oru": {
+      "file": "oru.glb",
+      "source": "Orbital Replacement Unit/Orbital Replacement Unit.glb",
+      "bytes": 585684
+    },
+    "voyager_antenna": {
+      "file": "voyager_antenna.glb",
+      "source": "Voyager Probe (B)/Voyager Probe (B) (antenna).glb",
+      "bytes": 166352
+    },
+    "saturn_v": {
+      "file": "saturn_v.glb",
+      "source": "Saturn V/Saturn V.glb",
+      "bytes": 927212
+    },
+    "redstone": {
+      "file": "redstone.glb",
+      "source": "Redstone 3 (Freedom 7)/Redstone 3 (Freedom 7).glb",
+      "bytes": 1028400
+    },
+    "satkit_body1": {
+      "file": "satkit_body1.glb",
+      "source": "Satellite Kit/Satellite Kit body 1.glb",
+      "bytes": 2916
+    },
+    "satkit_body2": {
+      "file": "satkit_body2.glb",
+      "source": "Satellite Kit/Satellite Kit body 2.glb",
+      "bytes": 5256
+    },
+    "satkit_body3": {
+      "file": "satkit_body3.glb",
+      "source": "Satellite Kit/Satellite Kit body 3.glb",
+      "bytes": 4944
+    },
+    "satkit_radio1": {
+      "file": "satkit_radio1.glb",
+      "source": "Satellite Kit/Satellite Kit radio 1.glb",
+      "bytes": 8436
+    },
+    "satkit_radio2": {
+      "file": "satkit_radio2.glb",
+      "source": "Satellite Kit/Satellite Kit radio 2.glb",
+      "bytes": 8752
+    },
+    "satkit_radio3": {
+      "file": "satkit_radio3.glb",
+      "source": "Satellite Kit/Satellite Kit radio 3.glb",
+      "bytes": 9012
+    },
+    "satkit_wings1": {
+      "file": "satkit_wings1.glb",
+      "source": "Satellite Kit/Satellite Kit wings 1.glb",
+      "bytes": 4860
+    },
+    "satkit_wings2": {
+      "file": "satkit_wings2.glb",
+      "source": "Satellite Kit/Satellite Kit wings 2.glb",
+      "bytes": 8172
+    },
+    "satkit_wings3": {
+      "file": "satkit_wings3.glb",
+      "source": "Satellite Kit/Satellite Kit wings 3.glb",
+      "bytes": 14820
+    },
+    "parker": {
+      "file": "parker.glb",
+      "source": "Parker Solar Probe/Parker Solar Probe.glb",
+      "bytes": 443572
+    },
+    "sdo": {
+      "file": "sdo.glb",
+      "source": "Solar Dynamics Observatory/Solar Dynamics Observatory.glb",
+      "bytes": 497844
+    }
+  }
+}

@@ -91,7 +91,8 @@ The hangar is a round integration hall the engineer walks through in first perso
 | `bay/player.js` | first-person controller: WASD, mouse look through core `input`, collisions, a visible body and hands with a tablet (`setTablet`) |
 | `bay/screen.js` | the big curved wall screen: a render-to-texture camera feed of the stand (refreshed only when the vehicle changes) and a telemetry board |
 | `bay/teststand.js` | static fire + hold-down liftoff test with Role 3's engine VFX and sounds |
-| `bay/partArt.js` | 3D art for a part: Role 3's `rocketPart:` meshes for the stack, fins and legs; a sealed module for the rest |
+| `bay/partArt.js` | 3D art for a part: real NASA hardware (`bay/nasa.js`, 22 parts, Draco-compressed GLBs in `public/assets/nasa/`) → detailed procedural tanks, nose cones, heat shields, fins and modules (`bay/partMeshes.js`) → Role 3's `rocketPart:` meshes (legs) |
+| `bay/hologram.js` | the design hologram: a projector beside the console throws a scaled, turning, smoked-glass copy of the vehicle; its nodes carry the drag-and-drop markers; EXPLODE VIEW spreads the stack |
 | `bay/loader.js` | Poly Haven assets listed in `data/bayAssets.json` (HDRI, PBR sets, glTF props) with procedural fallbacks |
 | `hangarScene.js` | puts it together: `createHangarScene({ renderer })` → scene, camera, player, stations, wall, test, `setLayout`, `worldAnchors`, `nearestStation`, `placeAtStation` |
 | `hangarScreen.js` | the HUD (crosshair, prompt, chip, toasts) and the station panels: integration (markers on the real vehicle + palette + stats + Formula Lens), catalogues with pictures (`partIcons.js`) and plain-language roles, test console, range terminal, handbook (`handbook.js`, notes saved as `builderNotes`) |

@@ -2,13 +2,13 @@
 // Everything is optional: a missing file simply means a procedural fallback, never a broken scene.
 import * as THREE from 'three';
 import { GLTFLoader } from 'three/addons/loaders/GLTFLoader.js';
-import { RGBELoader } from 'three/addons/loaders/RGBELoader.js';
+import { HDRLoader } from 'three/addons/loaders/HDRLoader.js';
 import manifest from '../data/bayAssets.json';
 
 const BASE = '/assets/polyhaven/';
 const textureLoader = new THREE.TextureLoader();
 const gltfLoader = new GLTFLoader();
-const rgbeLoader = new RGBELoader();
+const rgbeLoader = new HDRLoader();
 const cache = new Map();
 
 const load = (loader, url) => new Promise((resolve) => loader.load(url, resolve, undefined, () => resolve(null)));

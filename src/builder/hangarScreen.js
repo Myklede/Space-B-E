@@ -10,6 +10,7 @@ const WARNING_LABELS = {
   LOW_O2: 'No spare O₂', NO_ANTENNA: 'No antenna', NO_SHELTER: 'No radiation shelter', COLD_SEALS: 'Seals not cold-rated', LOW_RELIABILITY: 'Low reliability',
   NO_CAPSULE: 'No capsule', NO_ENGINE: 'No engine', NO_FUEL: 'No usable fuel', NOT_CONNECTED: 'Parts not connected', OVER_BUDGET: 'Over budget',
 };
+export const DESIGN_STATIONS = ['integration', 'propulsion', 'structures', 'crew', 'warehouse']; // these project the hologram
 const STATION_FAMILIES = {
   propulsion: ['engines', 'tanks'],
   structures: ['structure', 'thermal', 'recovery', 'control'],
@@ -158,8 +159,10 @@ export function createHangarScreen({ assembly, catalog, launch, text, scene, get
       addAtNode(type);
     });
   }
+  // Markers sit on the hologram when a console projects one, otherwise on the real vehicle.
+  const liveAnchors = () => (scene.hologram?.visible ? scene.hologram.worldAnchors() : scene.worldAnchors());
   function renderMarkers() {
-    const anchors = scene.worldAnchors();
+    const anchors = liveAnchors();
     const keys = new Set();
     for (const a of anchors) {
       const key = a.kind === 'node' ? `n:${a.partId}:${a.node}` : `h:${a.partId}`;
@@ -191,7 +194,7 @@ export function createHangarScreen({ assembly, catalog, launch, text, scene, get
     const cam = scene.camera;
     cam.updateMatrixWorld();
     const W = window.innerWidth, H = window.innerHeight;
-    for (const a of scene.worldAnchors()) {
+    for (const a of liveAnchors()) {
       const key = a.kind === 'node' ? `n:${a.partId}:${a.node}` : `h:${a.partId}`;
       const m = markerEls.get(key);
       if (!m) continue;
@@ -288,8 +291,9 @@ export function createHangarScreen({ assembly, catalog, launch, text, scene, get
       tool('SLIDE ▲', () => { if (state.part && assembly.slide(state.part, 0.1)) changed(); }, { tool: 'slideup' }, !(part && part.node === 'radial')),
       tool('SLIDE ▼', () => { if (state.part && assembly.slide(state.part, -0.1)) changed(); }, { tool: 'slidedown' }, !(part && part.node === 'radial')),
       tool('WORKBENCH', () => { const e = (def?.engine && state.part) || assembly.parts.find((p) => catalog.get(p.type)?.engine)?.id; if (e) hooks.onWorkbench?.(e); }, { tool: 'workbench' }, !assembly.parts.some((p) => catalog.get(p.type)?.engine)),
-      tool('TURN STAND ⟲ [Q]', () => scene.rotateBy(-30), { tool: 'viewleft' }),
+      tool('TURN ⟲ [Q]', () => scene.rotateBy(-30), { tool: 'viewleft' }),
       tool('⟳ [E]', () => scene.rotateBy(30), { tool: 'viewright' }),
+      tool(scene.hologram?.exploded ? 'ASSEMBLE' : 'EXPLODE VIEW', () => { scene.hologram?.setExploded(!scene.hologram.exploded); renderIntegration(); }, { tool: 'explode' }),
       tool('CLEAR', () => openConfirm('Take the whole vehicle off the stand?', () => { assembly.clear(); state.part = null; state.node = null; changed(); }), { tool: 'clear' }, !assembly.parts.length),
     );
     const symmetry = h('div', 'bld-symmetry');
@@ -450,7 +454,7 @@ export function createHangarScreen({ assembly, catalog, launch, text, scene, get
     role.textContent = st.role;
     panel.hidden = false;
     panel.dataset.station = id;
-    markers.hidden = id !== 'integration';
+    markers.hidden = !DESIGN_STATIONS.includes(id);
     hud.classList.add('bay-hud--station');
     if (id === 'integration') renderIntegration();
     else if (id === 'teststand') renderTest();
@@ -458,6 +462,7 @@ export function createHangarScreen({ assembly, catalog, launch, text, scene, get
     else if (id === 'handbook') renderHandbook();
     else renderCatalog(id);
     hooks.onStationOpen?.(id);
+    if (!markers.hidden) renderMarkers();
   }
 
   function closeStation() {

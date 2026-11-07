@@ -17,11 +17,12 @@ import { computeShipSpec, engineStats } from './stats.js';
 import { evaluate } from './gonogo.js';
 import { fmtInt, fmtMoney } from './format.js';
 import { createHangarScene } from './hangarScene.js';
-import { createHangarScreen } from './hangarScreen.js';
+import { createHangarScreen, DESIGN_STATIONS } from './hangarScreen.js';
 import { createFormulaLens } from './formulaLens.js';
 import { createGonogoView } from './gonogoView.js';
 import { createWorkbench } from './workbench.js';
 import { createIconRenderer } from './partIcons.js';
+import { NASA_PARTS, hasNasaArt, nasaFailures, preloadNasaParts } from './bay/nasa.js';
 import { menu } from './menu.js';
 import { openPauseMenu, openSettings } from './settings.js';
 
@@ -64,9 +65,14 @@ function loadAssembly(json) {
   persistDraft();
 }
 
+let modelsPromise = null;
 function ensureBay() {
   if (!bay) bay = createHangarScene({ renderer: graphics.renderer });
   if (!icons) icons = createIconRenderer({ renderer: graphics.renderer });
+  if (!modelsPromise) {
+    // real NASA hardware arrives a moment after the bay opens; rebuild the vehicle and its pictures when it does
+    modelsPromise = preloadNasaParts(catalog).then((n) => { icons.reset(); if (n && screen?.refresh) screen.refresh(); });
+  }
   return bay;
 }
 
@@ -115,8 +121,16 @@ function enterHangar() {
       onBankrupt: declareBankruptcy,
       onGuidebook: (entryId) => events.emit('guidebook:open', { entryId }),
       onStartTest: startTest,
-      onStationOpen: (id) => { input.unlockPointer(); if (id === 'integration' || id === 'teststand') b.player.lookAt(0, 0); audio.play('ui.click'); },
-      onStationClose: () => audio.play('ui.click'),
+      onStationOpen: (id) => {
+        input.unlockPointer();
+        audio.play('ui.click');
+        if (DESIGN_STATIONS.includes(id)) {
+          // the console projects the vehicle as a hologram beside it; look at the projection
+          const at = b.showHologram(id);
+          if (at) b.player.lookAt(at.x, at.z, 0.08);
+        } else if (id === 'teststand') b.player.lookAt(0, 0);
+      },
+      onStationClose: () => { b.hideHologram(); audio.play('ui.click'); },
     },
   });
   ui.mount(hangar.el);
@@ -273,7 +287,7 @@ function enterHangar() {
   const invertY = () => !!save.load().invertY;
   // ?debug=1: let the console (and screenshot scripts) walk to a machine and open it: window.__game.builder.placeAt('propulsion')
   if (new URLSearchParams(location.search).get('debug') === '1' && window.__game) {
-    window.__game.builder = { openStation: hangar.openStation, closeStation: hangar.closeStation, placeAt: (id) => b.placeAtStation(id), startTest, bay: b, refresh };
+    window.__game.builder = { openStation: hangar.openStation, closeStation: hangar.closeStation, placeAt: (id) => b.placeAtStation(id), startTest, bay: b, refresh, nasa: { hasNasaArt, nasaFailures, NASA_PARTS } };
   }
   const lockOnClick = () => { if (!hangar.station && !b.test.active) input.lockPointer(); };
   window.addEventListener('click', lockOnClick);
@@ -299,6 +313,7 @@ function enterHangar() {
   input.onEscape(esc);
 
   screen = {
+    refresh,
     update: (dt) => {
       const frozen = !!hangar.station || b.test.active || !!closePause;
       const k = input.isDown;

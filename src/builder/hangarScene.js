@@ -7,6 +7,7 @@ import { createStations } from './bay/stations.js';
 import { createPlayer } from './bay/player.js';
 import { createWallScreen } from './bay/screen.js';
 import { createTestStand } from './bay/teststand.js';
+import { createHologram } from './bay/hologram.js';
 import { partArt } from './bay/partArt.js';
 import { DEG, disposeObject, polar } from './bay/util.js';
 
@@ -30,6 +31,7 @@ export function createHangarScene({ renderer }) {
   rocket.position.y = stand.standTop;
   scene.add(rocket);
   const test = createTestStand({ scene, rocket, standTop: stand.standTop, planets: PLANETS, g0: G0 });
+  const hologram = createHologram({ scene });
 
   const groups = new Map();
   const anchors = [];
@@ -85,6 +87,21 @@ export function createHangarScene({ renderer }) {
     const radius = layout.reduce((r, e) => (e.attach === 'axial' ? Math.max(r, e.radius) : r), 1.25);
     for (const arm of stand.arms) arm.position.x = radius - 1.83;
     applyGlow();
+    hologram.setLayout(layout, freeNodes);
+  }
+
+  /** Projects the vehicle as a hologram beside a station's console (or hides it). Returns where it stands. */
+  function showHologram(stationId) {
+    const s = stations.find((st) => st.id === stationId);
+    if (!s) { hologram.hide(); return null; }
+    // the projector stands just past the console, off to the player's right, so the projection hangs against the
+    // hall instead of over the bright vehicle on the stand
+    const inward = new THREE.Vector3(-s.position.x, 0, -s.position.z).normalize();
+    const right = new THREE.Vector3(-inward.z, 0, inward.x);
+    const pos = s.position.clone().addScaledVector(inward, 1.0).addScaledVector(right, 1.6);
+    pos.y = 1.0;
+    hologram.show({ position: pos, facing: Math.atan2(inward.x, inward.z) });
+    return pos;
   }
 
   function applyGlow() {
@@ -114,11 +131,13 @@ export function createHangarScene({ renderer }) {
     const until = performance.now() / 1000 + seconds;
     for (const id of ids) if (groups.has(id)) glows.set(id, { until, color });
     applyGlow();
+    hologram.highlight(ids);
   }
 
   function select(id) {
     selected = id;
     applyGlow();
+    hologram.select(id);
   }
 
   function worldAnchors() {
@@ -161,7 +180,8 @@ export function createHangarScene({ renderer }) {
     const now = performance.now() / 1000;
     let changed = false;
     for (const [id, glow] of glows) if (glow.until < now) { glows.delete(id); changed = true; }
-    if (changed) applyGlow();
+    if (changed) { applyGlow(); hologram.highlight([]); }
+    hologram.update(dt);
     for (const [id, holder] of groups) {
       const glow = glows.get(id);
       if (!glow && selected !== id) continue;
@@ -179,9 +199,10 @@ export function createHangarScene({ renderer }) {
   }
 
   return {
-    scene, camera, rocket, player, stations, stand, room, wall, test, hall: HALL,
-    setLayout, highlight, clearHighlight: () => { glows.clear(); applyGlow(); }, select, worldAnchors,
-    rotateBy: (deg) => { yaw += deg * DEG; },
+    scene, camera, rocket, player, stations, stand, room, wall, test, hologram, hall: HALL,
+    setLayout, highlight, clearHighlight: () => { glows.clear(); applyGlow(); hologram.highlight([]); }, select, worldAnchors,
+    showHologram, hideHologram: () => hologram.hide(),
+    rotateBy: (deg) => { yaw += deg * DEG; hologram.rotateBy(deg); },
     nearestStation, placeAtStation, update, dispose,
     get layout() { return layoutCache; },
     get planets() { return PLANETS; },
