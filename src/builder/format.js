@@ -5,7 +5,10 @@ export const fmtMoneyShort = (n) => {
   if (!Number.isFinite(n)) return '—';
   const sign = n < 0 ? '−' : '';
   const a = Math.abs(n);
-  if (a >= 1e6) return `${sign}$${(a / 1e6).toFixed(a % 1e6 === 0 ? 0 : 2).replace(/\.?0+$/, '')}M`;
+  // trailing zeros are dropped only after a decimal point (10M stays 10M); billions read as B
+  const short = (v) => v.toFixed(2).replace(/\.?0+$/, '');
+  if (a >= 1e9) return `${sign}$${short(a / 1e9)}B`;
+  if (a >= 1e6) return `${sign}$${short(a / 1e6)}M`;
   if (a >= 1e3) return `${sign}$${Math.round(a / 1e3)}k`;
   return `${sign}$${Math.round(a)}`;
 };

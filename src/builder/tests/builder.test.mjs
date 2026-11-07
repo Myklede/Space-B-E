@@ -262,10 +262,10 @@ for (const [key, json] of Object.entries(presets)) {
   const { spec, breakdown, blocks } = computeShipSpec(a, deps);
   for (const k of shapeKeys) if (!(k in spec.stats)) fail(`preset ${key}: spec.stats is missing ${k}`);
   for (const w of spec.warnings) if (!contract.WARNINGS.includes(w)) fail(`preset ${key}: unknown warning ${w}`);
-  const slot = launch.slots.find((s) => s.id === a.launch.slot);
-  const g = evaluate(spec, { blocks, money: balance.startMoney, fee: slot?.fee ?? 0, text, oneWay: breakdown.oneWay, roundTrip: breakdown.roundTrip });
+  const fee = breakdown.launchFee ?? 0; // complex + equipment + days of HOLD (sections/pad/effects.js)
+  const g = evaluate(spec, { blocks, money: balance.startMoney, fee, text, oneWay: breakdown.oneWay, roundTrip: breakdown.roundTrip });
   const s = spec.stats;
-  console.log(`\n${json.name}: cost $${Math.round(s.cost).toLocaleString('en-US')} (+ slot fee $${(slot?.fee ?? 0).toLocaleString('en-US')}), wet ${Math.round(s.wetMass)} kg, dry ${Math.round(s.dryMass)} kg, fuel ${Math.round(s.fuelMass)} kg`);
+  console.log(`\n${json.name}: cost $${Math.round(s.cost).toLocaleString('en-US')} (+ launch fees $${fee.toLocaleString('en-US')}), wet ${Math.round(s.wetMass)} kg, dry ${Math.round(s.dryMass)} kg, fuel ${Math.round(s.fuelMass)} kg`);
   console.log(`  thrust ${Math.round(s.thrust / 1000)} kN, Isp ${Math.round(s.ispSL)}/${Math.round(s.ispVac)} s, Δv ${Math.round(s.deltaV)} m/s (one-way ${Math.round(breakdown.oneWay)}, round trip ${Math.round(breakdown.roundTrip)}), TWR Earth ${s.twrEarth.toFixed(2)}, Mars ${s.twrMars.toFixed(2)}`);
   console.log(`  CoM ${breakdown.comY.toFixed(2)} m, CoP ${breakdown.copY.toFixed(2)} m of ${breakdown.stackHeight.toFixed(2)} m, reliability ${(s.reliability * 100).toFixed(0)} %, tempC ${spec.launch.tempC}`);
   console.log(`  blocks: ${g.blocks.join(', ') || 'none'} | warnings: ${g.warnings.join(', ') || 'none'}`);
