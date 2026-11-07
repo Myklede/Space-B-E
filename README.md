@@ -276,6 +276,12 @@ These are not decided yet. If your work touches one, raise it with your human in
 - **Economy (Role 1):** with the cheapest viable ship at $2.5–3M (§5.6), one failure leaves $1.15–1.75M. That can't pay for another ship, but it stays above $0, so the Bankrupt ending never fires. Surviving 2 failures needs a ship of about $1.3M or less.
 - **Δv (Roles 1, 2):** `src/core/balance.json` holds provisional Δv numbers per leg (ascent, transfer, landing, return) that still need the team's agreement. A rough estimate for the round trip is 8.9 km/s, about 92% fuel by mass on one stage, while staging is Tier 3 and Mars refuelling is Tier 2.
 
+## Problems for another role
+
+If you find something another role has to fix or decide, add it to `SHARE-PROBLEM.md` on the **`share-problem`** branch
+(`git switch share-problem`, add an item, commit, `git push origin share-problem`). That branch isn't checked by the
+pre-push hook, so every role can write to it. Owners answer under the item and move it to Closed when it's done.
+
 ## Getting work to `main`
 
 1. On your role branch, run `git merge origin/dev`, then `npm run check`, and fix everything it reports. Then push with `git push origin HEAD:dev`. If someone pushed first, git refuses: merge again and repeat. `npm install` also adds a pre-push hook that runs this check on every push to `dev` and refuses pushes to `main`. Never bypass it.
