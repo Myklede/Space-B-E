@@ -24,6 +24,7 @@ import { clearPhaseRatings, createPhaseTracker, getPhaseRatings } from './rating
 import { dot } from './vec.js';
 import { STARTS } from './presets.js';
 import { createFlightHUD } from './hud/createFlightHUD.js';
+import { createSteeringDisplay, createGuidanceReference } from './steering.js';
 import { createPhase0Ritual } from './phase0Ritual.js';
 import { stackParts } from './rocketStack.js';
 import { ZOOM_DEFAULT, ZOOM_PAD, applyMouse, createChaseState, createOrbit, horizonFrame, liftAboveGround, resetOrbit, stepZoom, updateChase } from './chaseCam.js';
@@ -372,7 +373,7 @@ export default {
       state, fc, view, surface: null, mode: null,
       look: { yaw: 0, pitch: 0 }, orbit: createOrbit(state === 'LAUNCH' ? ZOOM_PAD : ZOOM_DEFAULT), cam: createChaseState(), chase: false, pacer: createPacer(), events: createEventDetector(), warpInfo: { warp: 1 }, assist: true,
       corridor: fc.planetId === 'mars' && fc.altitude > atmosphereTop(fc.planet) ? computeCorridor(fc) : null,
-      sinceTelemetry: 0, engineSound: false, done: false,
+      sinceTelemetry: 0, engineSound: false, done: false, steering: createSteeringDisplay(), steeringPlan: createGuidanceReference(),
     };
     const hudLayer = document.createElement('div');
     hudLayer.style.cssText = 'position:absolute;inset:0;pointer-events:none';
@@ -456,6 +457,8 @@ export default {
 
     if (s.phase0?.active) {
       fc.holdDown = true; fc.throttle = 0;
+      s.steering.update(null, false, null, performance.now() / 1000);
+      s.hud.setSteeringVisible(false);
       s.controls.endFrame();
       s.phase0.update();
       s.hud.update(fc.telemetry, assistReadout(fc), true, { objective: s.phase0.objective });
@@ -681,10 +684,14 @@ export default {
       const p = world.add(v3(dir).multiplyScalar(1000)).project(cam);
       return p.z < 1 && Math.abs(p.x) < 1 && Math.abs(p.y) < 1 ? { x: (p.x + 1) * 50, y: (1 - p.y) * 50 } : null;
     };
+    const activeCockpit = s.mode === 'surface' ? s.surface.cockpit : s.mode === 'site' ? s.site.cockpit : view.cockpit;
+    const steering = s.steering.update(activeCockpit, s.assist && !fc.failed,
+      () => s.steeringPlan.readout(fc, { ...pilot, cutoff: false }, { corridor: s.corridor, countdown: s.countdown > 0 }), performance.now() / 1000);
+    s.hud.setSteeringVisible(steering.fallback);
     const toLocal = (d) => (d && s.mode === 'surface' ? v3(d).applyQuaternion(s.surface.toLocal) : d);
-    s.hud.marker('pro', project(toLocal(a.prograde)));
-    s.hud.marker('retro', project(toLocal(a.retrograde)));
-    s.hud.marker('guide', project(toLocal(guide?.direction)));
+    s.hud.marker('pro', steering.fallback ? project(toLocal(a.prograde)) : null);
+    s.hud.marker('retro', steering.fallback ? project(toLocal(a.retrograde)) : null);
+    s.hud.marker('guide', steering.fallback ? project(toLocal(guide?.direction)) : null);
     const danger = t.collisionWarning && fc.obstacles.find((o) => o.id === t.collisionWarning.id);
     s.hud.marker('collision', danger ? project(v3(danger.pos).sub(v3(fc.pos)).normalize()) : null);
   },
@@ -693,6 +700,7 @@ export default {
     if (!s) return;
     // graphics.camera is our flight camera now; hand it back un-parented and level so the next state's owner
     // (for example the ENDING screen) doesn't inherit the ship's attitude and look at the cockpit's rear wall.
+    s.steering.dispose();
     s.phase0?.dispose();
     const cam = graphics.camera;
     cam.removeFromParent();

@@ -117,6 +117,13 @@ function createFlightHUD({ parent = document.body } = {}) {
       }
       root.querySelector(".vignette").style.opacity = Math.min(0.85, Math.max(0, (t.gLoad - 3.5) / 4));
     },
+    setSteeringVisible(visible) {
+      root.querySelector('.reticle').style.display = visible ? 'block' : 'none';
+      if (!visible) for (const kind of ['pro', 'retro', 'guide']) {
+        const el = root.querySelector(`.${kind}`);
+        if (el) el.style.display = 'none';
+      }
+    },
     marker(kind, point) {
       const el = root.querySelector(`.${kind}`);
       el.style.display = point ? "block" : "none";

@@ -4,6 +4,7 @@
 //   assistReadout(fc)    → arrows, warnings, burn-now marker, formula cards (§6.4 MVP)
 
 import { v3, add, sub, scale, len, norm, dot } from './vec.js';
+import steeringData from './steering.json' with { type: 'json' };
 import { atmosphereTop } from './atmosphere.js';
 
 // Coast (gravity only) from the current state. Adaptive step: bigger steps when far/slow.
@@ -110,7 +111,7 @@ export function ascentGuide(fc, profile = ASCENT_PROFILE) {
   if (t.apoapsis < profile.targetApoapsis) {
     if (t.altitude < profile.turnStart) return { step: 'climb', direction: up, text: 'Climb straight up at full throttle (Q = more throttle)' };
     const deg = Math.min(89, (t.altitude - profile.turnStart) / profile.metresPerDegree);
-    return { step: 'turn', direction: tilt(deg), pitchDeg: deg, text: `Gravity turn: tip ${deg.toFixed(0)}° toward the horizon (follow ◎)` };
+    return { step: 'turn', direction: tilt(deg), pitchDeg: deg, text: steeringData.turnText.replace('{degrees}', deg.toFixed(0)) };
   }
   if (t.verticalSpeed > 15 && t.altitude < t.apoapsis - 3000) {
     return { step: 'coast', direction: east, text: `Engine off (X). Coast up to the apoapsis (${(t.apoapsis / 1000).toFixed(0)} km)` };
