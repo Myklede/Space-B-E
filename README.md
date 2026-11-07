@@ -225,7 +225,7 @@ These are not decided yet. If your work touches one, raise it with your human in
 
 ## Getting work to `main`
 
-1. On your role branch, run `git merge origin/dev`, then `npm run check`, and fix everything it reports. Then push with `git push origin HEAD:dev`. If someone pushed first, git refuses: merge again and repeat. If the check fails, do not push.
+1. On your role branch, run `git merge origin/dev`, then `npm run check`, and fix everything it reports. Then push with `git push origin HEAD:dev`. If someone pushed first, git refuses: merge again and repeat. `npm install` also adds a pre-push hook that runs this check on every push to `dev` and refuses pushes to `main`. Never bypass it.
 2. Tell your human. They ask the team to check `dev`.
 3. When everyone agrees and dtri confirms `dev` is healthy, dtri moves `dev` to `main`. Nobody else pushes to `main`.
 
