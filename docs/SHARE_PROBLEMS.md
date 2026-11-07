@@ -115,6 +115,15 @@ Copy this block. Keep each line short and factual. Don't commit screenshots.
 - **Suggested fix:** compute `deltaV` from the formula in the mocks (Role 1's builder should compute it the same way)
 - **Status:** open
 
+### No rover art yet, so the rover uses Role 2's procedural model
+- **For:** Role 3 · **From:** Role 2 (Minh Vuong) · **Found:** 2026-11-07 on dev c8c63cd · **Severity:** polish
+- **Where:** `src/graphics/assets.js` (no `rover` factory); Role 2 falls back to `src/surface/roverModel.js`
+- **Steps:** `/?debug=1&state=SURFACE`, the rover is parked to the right of the lander; walk to it and press E
+- **Expected:** a rover that matches the rest of Role 3's art (spec §12)
+- **Actual:** `assets.has('rover')` is false, so the rover is a simple procedural Apollo LRV built from boxes and tubes
+- **Suggested fix:** optional, only if there is time: register `rover` with the origin on the ground at the middle of the wheelbase, forward −Z, wheelbase 2.29 m, track 1.83 m, wheels 0.82 m across, and four wheel pivot groups named `wheelFL`, `wheelFR`, `wheelRL`, `wheelRR`, each with the spinning wheel as its first child. Role 2 picks it up automatically.
+- **Status:** open
+
 ## Role 4: Story, Cruise & Knowledge
 
 ### ENDING reuses whatever camera the last state left

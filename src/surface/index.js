@@ -5,6 +5,7 @@
 //   INTERIOR  stations: pilotSeat (→ LANDING cockpit, or → RETURN when Mars Exploration is 100 %), suitLocker,
 //             o2Station, commsConsole, sampleStorage, bunk, airlock (suit on → 3 s cycle → SURFACE).
 //   SURFACE   walk Jezero; O₂ drains (30/15/5 % cautions, 0 % → flight:failed outOfBreath); the hatch → INTERIOR.
+//             The crewed rover (Apollo LRV-style, RoverController) is parked by the lander: E to drive, E to get out.
 //
 // registerInteractable({ id, position, prompt, onUse, hold?, radius?, state? }) is the README/contract API for
 // Role 4's tasks. `state` ('SURFACE' or 'INTERIOR') limits where it can be used; positions are in that scene's
@@ -21,13 +22,16 @@ import { createShipInterior, CABIN } from './shipInterior.js';
 import { createSuitHUD } from './hud/createSuitHUD.js';
 import { astronaut } from './astronaut.js';
 import { getCabin, getMars, prepareScenes } from './scenes.js';
+import { RoverController } from './RoverController.js';
+import { createRoverModel } from './roverModel.js';
 
 const TELEMETRY_EVERY = 0.5;
 const LANDER_RADIUS = 3.2; // m, the lander's legs: you can't walk through them
-const HATCH = { x: 0, z: 3.6 };
-const MAX_MOUSE_STEP = 300;
+const HATCH = { x: 0, z: 3.6 }; // where you climb back in (in front of the lander)
+const MAX_MOUSE_STEP = 300; // px per frame: ignore the jump some browsers report right after pointer lock
+const ROVER_PARKING = { x: 6.5, z: 7, heading: -0.6 }; // unfolded next to the lander, like the Apollo LRVs
 // Crew-life props in the cabin open these Guidebook entries (Role 4 writes them; ids listed in the README).
-export const PROP_ENTRIES = { exerciseBike: 'crew-exercise', waterRecycler: 'crew-water', foodRack: 'crew-food', familyPhoto: 'family-photo' }; // px per frame: ignore the jump some browsers report right after pointer lock // where you climb back in (in front of the lander)
+export const PROP_ENTRIES = { exerciseBike: 'crew-exercise', waterRecycler: 'crew-water', foodRack: 'crew-food', familyPhoto: 'family-photo' };
 
 const registry = createInteractables();
 
@@ -46,12 +50,75 @@ registerInteractable({
   onUse: () => requestState('INTERIOR'),
 });
 
+// The rover keeps its place, battery and odometer across visits outside (module-level, like the astronaut).
+const roverSpot = { x: ROVER_PARKING.x, y: 0, z: ROVER_PARKING.z }; // interactable position, follows the rover
+const roverCollider = { x: ROVER_PARKING.x, z: ROVER_PARKING.z, r: 1.6 }; // the walker can't walk through it
+let rover = null;
+let roverModel = null;
+function getRover() {
+  if (!rover) {
+    rover = new RoverController({
+      gravity: PLANETS.mars.g, getGroundHeight: getTerrainHeight, start: ROVER_PARKING,
+      colliders: [{ x: 0, z: 0, r: LANDER_RADIUS }], onNotice: (type, d) => roverNotice(type, d),
+    });
+    roverModel = createRoverModel();
+  }
+  return rover;
+}
+registerInteractable({
+  id: 'rover', state: 'SURFACE', radius: 2.6, minFacing: 0.3, position: roverSpot,
+  prompt: () => (rover?.overturned ? 'The rover is on its side' : 'E: drive the rover'),
+  enabled: () => !s?.driving && !rover?.overturned,
+  onUse: () => boardRover(),
+});
+
 let s = null;
 let previous = null; // the surface state we just left (to spawn inside the airlock when coming back in)
+
+function roverNotice(type, d) {
+  if (!s) return;
+  if (type === 'rollover') {
+    audio.play('impact.small');
+    audio.play('alarm.master');
+    s.notice = { text: 'ROVER OVERTURNED: press E to climb out. Keep side slopes under 40° and slow down for crests.', t: 8 };
+  } else if (type === 'hard_landing') {
+    audio.play('impact.small');
+    s.notice = { text: `The suspension bottomed out (${d.impact.toFixed(1)} m/s). Low gravity means long hops: slow down over crests.`, t: 5 };
+  } else if (type === 'bump') {
+    audio.play('impact.small');
+  } else if (type === 'battery_empty') {
+    s.notice = { text: 'ROVER BATTERY EMPTY: walk back to the ship.', t: 8 };
+  }
+}
+
+function boardRover() {
+  if (!s || s.inside || s.driving) return;
+  s.driving = true;
+  s.look = { yaw: 0, pitch: -0.08 };
+  s.notice = { text: 'Driving: W/S throttle and reverse · A/D steer · SPACE brake · E get out', t: 6 };
+}
+
+function leaveRover() {
+  if (!s?.driving) return;
+  s.driving = false;
+  // step off on the driver's (left) side, facing the way the rover points
+  const r = rover.right;
+  const x = rover.x - r.x * 1.7, z = rover.z - r.z * 1.7;
+  s.walker.pos.x = x;
+  s.walker.pos.z = z;
+  s.walker.pos.y = getTerrainHeight(x, z);
+  s.walker.vel.x = s.walker.vel.y = s.walker.vel.z = 0;
+  s.walker.yaw = rover.heading;
+  s.walker.pitch = 0;
+}
 
 export default {
   init() {
     setTimeout(prepareScenes, 0); // build Mars + cabin in the background so entering them never freezes
+    // debug handle for automated checks (only with ?debug=1)
+    if (new URLSearchParams(location.search).get('debug') === '1') {
+      window.__role2 = { boardRover, leaveRover, get rover() { return rover; }, get driving() { return !!s?.driving; } };
+    }
   },
 
   enter(state) {
@@ -67,6 +134,10 @@ export default {
     s.noticeEl.className = 'hud-label';
     s.noticeEl.style.cssText = 'position:absolute;left:50%;top:13%;transform:translateX(-50%);color:var(--hud-red,#ff7f87);letter-spacing:.12em;text-align:center';
     hudLayer.append(s.noticeEl);
+    s.roverEl = document.createElement('div'); // rover readout while driving
+    s.roverEl.className = 'hud-label';
+    s.roverEl.style.cssText = 'position:absolute;left:50%;top:18%;transform:translateX(-50%);color:var(--hud-cyan,#67e8f9);letter-spacing:.1em;text-align:center';
+    hudLayer.append(s.roverEl);
 
     if (inside) {
       const { scene, art } = getCabin();
@@ -108,14 +179,17 @@ export default {
             s.notice = { text: `Hard landing (${d.impactSpeed.toFixed(1)} m/s). Mars gravity is weak, but a fall still hurts.`, t: 4 };
           }
         },
-        gravity: PLANETS.mars.g, getGroundHeight: getTerrainHeight, colliders: [{ x: 0, z: 0, r: LANDER_RADIUS }],
+        gravity: PLANETS.mars.g, getGroundHeight: getTerrainHeight, colliders: [{ x: 0, z: 0, r: LANDER_RADIUS }, roverCollider],
         mode: 'suit', start: { x: HATCH.x, z: HATCH.z + 2 }, yaw: Math.PI, // step out facing away from the ship
       });
+      getRover();
+      mars.scene.add(roverModel.object); // only while we are outside (the shared Mars scene is also the landing view)
+      roverModel.update(rover, 0);
       audio.play('ambience.mars', { loop: true });
       audio.play('suit.breath', { loop: true });
     }
 
-    input.onPress('KeyE', () => registry.press());
+    input.onPress('KeyE', () => (s?.driving ? leaveRover() : registry.press()));
     s.lockOnClick = () => input.lockPointer();
     window.addEventListener('click', s.lockOnClick);
 
@@ -123,7 +197,7 @@ export default {
     stubScreen({
       title: inside ? 'Ship cabin' : 'Mars surface',
       owner: 'Role 2 (Surface)',
-      notes: inside ? 'Walk with WASD, E to use stations. Suit up, then cycle the airlock.' : 'Watch your O₂. The hatch is in front of the lander.',
+      notes: inside ? 'Walk with WASD, E to use stations. Suit up, then cycle the airlock.' : 'Watch your O₂. The hatch is in front of the lander; the rover is parked beside it (E).',
       actions: inside
         ? [{ label: 'Go outside', key: 'KeyO', onClick: () => requestState('SURFACE') }, { label: 'Start return', key: 'KeyR', onClick: () => requestState('RETURN') }]
         : [{ label: 'Back in', key: 'KeyO', onClick: () => requestState('INTERIOR') }],
@@ -134,27 +208,69 @@ export default {
     if (!s) return;
     const { walker, camera, inside } = s;
     const mouse = input.mouseDelta();
-    if (Math.abs(mouse.x) < MAX_MOUSE_STEP && Math.abs(mouse.y) < MAX_MOUSE_STEP) walker.look(mouse.x, mouse.y);
+    const mouseOk = Math.abs(mouse.x) < MAX_MOUSE_STEP && Math.abs(mouse.y) < MAX_MOUSE_STEP;
     const k = input.isDown;
-    walker.update(dt, {
-      forward: (k('KeyW') ? 1 : 0) - (k('KeyS') ? 1 : 0),
-      right: (k('KeyD') ? 1 : 0) - (k('KeyA') ? 1 : 0),
-      run: k('ShiftLeft') || k('ShiftRight'),
-      jump: k('Space'),
-    });
-    s.cabin?.update(dt);
     const oxygen = astronaut.oxygen;
-    oxygen.update(dt, { inside, running: walker.running, suited: inside ? astronaut.suited : true });
-    astronaut.body.update(dt, { env: inside ? 'cabin_mars' : 'mars', heartRate: walker.heartRate });
-    const ui_ = registry.update(dt, walker.eye, walker.lookDir, k('KeyE'));
+    let ui_ = { focused: null };
+    let hudTelemetry, hudYaw;
 
-    // head bob: one bob per step; Mars steps are slower and floatier (step rate ∝ √g), suits bounce less
-    const speed = walker.telemetry.speed;
-    if (walker.onGround && speed > 0.2) s.stepPhase = (s.stepPhase ?? 0) + dt * speed * 2.2 * Math.sqrt(walker.gravity / PLANETS.earth.g);
-    const bob = walker.onGround ? Math.sin((s.stepPhase ?? 0) * Math.PI) ** 2 * Math.min(1, speed / 2) * (inside ? 0.035 : 0.05) : 0;
-    const eye = walker.eye;
-    camera.position.set(eye.x, eye.y - bob, eye.z);
-    camera.quaternion.setFromEuler(new THREE.Euler(walker.pitch, walker.yaw, 0, 'YXZ'));
+    if (s.driving) {
+      // ---- driving the rover: look around from the driver's seat ----
+      if (mouseOk) {
+        s.look.yaw = Math.max(-2.2, Math.min(2.2, s.look.yaw - mouse.x * 0.0022));
+        s.look.pitch = Math.max(-1.1, Math.min(0.9, s.look.pitch - mouse.y * 0.0022));
+      }
+      rover.update(dt, {
+        throttle: (k('KeyW') ? 1 : 0) - (k('KeyS') ? 1 : 0),
+        steer: (k('KeyA') ? 1 : 0) - (k('KeyD') ? 1 : 0),
+        brake: k('Space'),
+      });
+      roverModel.update(rover, dt);
+      roverModel.object.updateMatrixWorld(true);
+      const eye = roverModel.eye.clone().applyMatrix4(roverModel.object.matrixWorld);
+      camera.position.copy(eye);
+      camera.quaternion.copy(roverModel.object.quaternion).multiply(new THREE.Quaternion().setFromEuler(new THREE.Euler(s.look.pitch, s.look.yaw, 0, 'YXZ')));
+      walker.pos.x = rover.x; // the astronaut rides along (beacon, telemetry)
+      walker.pos.z = rover.z;
+      oxygen.update(dt, { inside: false, running: false, suited: true });
+      astronaut.body.update(dt, { env: 'mars', heartRate: walker.heartRate });
+      graphics.setEffects({ shake: rover.onGround ? Math.min(0.35, rover.telemetry.speed * 0.05 + rover.slip * 0.3) : 0.1 });
+      const rt = rover.telemetry;
+      hudTelemetry = { heartRate: Math.round(walker.heartRate), gravity: walker.gravity, pos: rt.pos, speed: rt.speed, running: false, onGround: rt.onGround };
+      hudYaw = rover.heading + s.look.yaw;
+      s.roverPanelText = `LRV · ${rt.speedKmh.toFixed(1)} km/h · battery ${(rt.batteryFrac * 100).toFixed(0)} % · slope ${rt.pitchDeg.toFixed(0)}° / roll ${rt.rollDeg.toFixed(0)}° · ${rt.odometerKm.toFixed(2)} km`
+        + (rt.overturned ? ' · OVERTURNED' : rt.slip > 0.15 ? ' · SLIDING' : !rt.onGround ? ' · AIRBORNE' : '');
+    } else {
+      // ---- on foot ----
+      if (mouseOk) walker.look(mouse.x, mouse.y);
+      walker.update(dt, {
+        forward: (k('KeyW') ? 1 : 0) - (k('KeyS') ? 1 : 0),
+        right: (k('KeyD') ? 1 : 0) - (k('KeyA') ? 1 : 0),
+        run: k('ShiftLeft') || k('ShiftRight'),
+        jump: k('Space'),
+      });
+      s.cabin?.update(dt);
+      oxygen.update(dt, { inside, running: walker.running, suited: inside ? astronaut.suited : true });
+      astronaut.body.update(dt, { env: inside ? 'cabin_mars' : 'mars', heartRate: walker.heartRate });
+      if (rover && !inside) {
+        roverModel.update(rover, dt);
+        roverSpot.x = roverCollider.x = rover.x;
+        roverSpot.z = roverCollider.z = rover.z;
+        roverSpot.y = rover.y + 1.0;
+      }
+      ui_ = registry.update(dt, walker.eye, walker.lookDir, k('KeyE'));
+
+      // head bob: one bob per step; Mars steps are slower and floatier (step rate ∝ √g), suits bounce less
+      const speed = walker.telemetry.speed;
+      if (walker.onGround && speed > 0.2) s.stepPhase = (s.stepPhase ?? 0) + dt * speed * 2.2 * Math.sqrt(walker.gravity / PLANETS.earth.g);
+      const bob = walker.onGround ? Math.sin((s.stepPhase ?? 0) * Math.PI) ** 2 * Math.min(1, speed / 2) * (inside ? 0.035 : 0.05) : 0;
+      const eye = walker.eye;
+      camera.position.set(eye.x, eye.y - bob, eye.z);
+      camera.quaternion.setFromEuler(new THREE.Euler(walker.pitch, walker.yaw, 0, 'YXZ'));
+      hudTelemetry = walker.telemetry;
+      hudYaw = walker.yaw;
+      s.roverPanelText = '';
+    }
 
     const level = inside ? 'ok' : oxygen.level;
     if (level !== s.lastLevel) {
@@ -163,21 +279,24 @@ export default {
       s.lastLevel = level;
     }
     graphics.setEffects({ vignette: level === 'critical' ? 0.8 : level === 'warning' ? 0.4 : 0 });
+    if (!s.driving) graphics.setEffects({ shake: 0 });
     s.hud.update(dt, {
-      telemetry: walker.telemetry, oxygen, suited: inside ? astronaut.suited : true, inside,
-      focused: ui_.focused, yaw: walker.yaw, shipPosition: { x: HATCH.x, z: HATCH.z },
+      telemetry: hudTelemetry, oxygen, suited: inside ? astronaut.suited : true, inside,
+      focused: ui_.focused, yaw: hudYaw, shipPosition: { x: HATCH.x, z: HATCH.z },
       bodyStats: astronaut.body.snapshot(), airlockProgress: s.cabin?.airlockProgress ?? 0,
     });
 
     if (s.notice?.t > 0) s.notice.t -= dt;
     const noticeText = s.notice?.t > 0 ? s.notice.text : !inside && oxygen.leaking ? 'SUIT BREACH: O₂ leaking' : '';
     if (s.noticeEl.textContent !== noticeText) s.noticeEl.textContent = noticeText;
+    if (s.roverEl.textContent !== s.roverPanelText) s.roverEl.textContent = s.roverPanelText;
 
     s.sinceTelemetry += dt;
     if (s.sinceTelemetry >= TELEMETRY_EVERY) {
       s.sinceTelemetry = 0;
       events.emit('flight:telemetry', {
-        t: performance.now() / 1000, phase: inside ? 'interior' : 'eva', o2Percent: oxygen.percent,
+        t: performance.now() / 1000, phase: inside ? 'interior' : s.driving ? 'rover' : 'eva', o2Percent: oxygen.percent,
+        speed: s.driving ? rover.telemetry.speed : walker.telemetry.speed,
         heartRate: Math.round(walker.heartRate), radiationMsv: astronaut.body.doseMSv,
       });
     }
@@ -186,6 +305,8 @@ export default {
   exit() {
     if (!s) return;
     previous = s.state;
+    if (!s.inside && roverModel) roverModel.object.removeFromParent();
+    graphics.setEffects({ shake: 0 });
     s.cabin?.dispose();
     s.hud.dispose();
     window.removeEventListener('click', s.lockOnClick);
