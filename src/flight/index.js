@@ -152,9 +152,24 @@ function syncDebris(view, fc, dt) {
   }
 }
 
-// Role 3's launch complex: our rocket stands at rocketBase; the site and Earth slide down as we climb (setAltitude).
+// Role 3's launch complex is big: build it once and compile its shaders in the background at boot, so entering
+// LAUNCH never freezes on the first frame. Until it's ready, LAUNCH shows the space view.
+const siteCache = { site: null, ready: false };
+function prepareLaunchSite() {
+  try {
+    siteCache.site = createLaunchSite();
+    const compile = graphics.renderer?.compileAsync?.(siteCache.site.scene, graphics.camera);
+    if (compile) compile.then(() => { siteCache.ready = true; }, () => { siteCache.ready = true; });
+    else siteCache.ready = true;
+  } catch (error) {
+    console.warn('[flight] launch site unavailable, using the space view:', error);
+  }
+}
+
+// Our rocket stands at rocketBase; the site and Earth slide down as we climb (setAltitude).
 function buildSiteView() {
-  const site = createLaunchSite();
+  const site = siteCache.site;
+  for (const old of site.scene.children.filter((o) => o.userData.role2)) site.scene.remove(old); // last flight's rocket
   const camera = new THREE.PerspectiveCamera(65, 1, 0.05, 1e10);
   const rig = new THREE.Group();
   const cockpit = assets.get('cockpit');
@@ -166,7 +181,9 @@ function buildSiteView() {
   const rocketRoot = new THREE.Group();
   rocketRoot.position.copy(site.rocketBase);
   rocketRoot.add(rocket);
+  rocketRoot.userData.role2 = rig.userData.role2 = true;
   site.scene.add(rocketRoot, rig);
+  site.setAltitude(0);
   return { ...site, camera, rig, cockpit, rocketRoot, flame, exhaust, eyeY };
 }
 
@@ -208,6 +225,10 @@ function transferBurn() {
 
 // ---------- module ----------
 export default {
+  init() {
+    setTimeout(prepareLaunchSite, 0); // after boot finished its own work
+  },
+
   enter(state) {
     const fc = controllerFor(state);
     const view = buildSpaceView(fc.planetId);
@@ -294,7 +315,7 @@ export default {
     const shipQ = new THREE.Quaternion(fc.orient.x, fc.orient.y, fc.orient.z, fc.orient.w);
     const lookQ = new THREE.Quaternion().setFromEuler(new THREE.Euler(s.look.pitch, s.look.yaw, 0, 'YXZ'));
     const lowMars = fc.planetId === 'mars' && t.altitude < LOW_MARS_ALTITUDE;
-    const atSite = fc.planetId === 'earth' && t.altitude < LAUNCH_SITE_TOP && state === 'LAUNCH';
+    const atSite = siteCache.ready && fc.planetId === 'earth' && t.altitude < LAUNCH_SITE_TOP && state === 'LAUNCH';
     if (atSite) {
       s.site ??= buildSiteView();
       const sv = s.site;
