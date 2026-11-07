@@ -138,6 +138,18 @@ test('colliders: you cannot walk through the lander', () => {
   assert.ok(w.pos.z > -5 + 3 + WALK_TUNING.radius - 1e-6 - 0.001 || Math.hypot(w.pos.x, w.pos.z + 5) >= 3.3 - 1e-6, `pos ${w.pos.x},${w.pos.z}`);
 });
 
+test('suit breach: a leak drains O₂ faster until the suit is serviced at the O₂ station', () => {
+  const o2 = createOxygen({ tankSeconds: 100, spareTanks: 1 });
+  o2.setLeak(3);
+  assert.equal(o2.leaking, true);
+  o2.update(10, {});
+  assert.ok(Math.abs(o2.percent - 70) < 1e-9, `${o2.percent}`);
+  o2.swapTank();
+  assert.equal(o2.leaking, false);
+  o2.update(10, {});
+  assert.ok(Math.abs(o2.percent - 90) < 1e-9);
+});
+
 let fails = 0;
 for (const [s, name, e] of results) { console.log(`${s === 'ok' ? '  ✓' : '  ✗'} ${name}`); if (e) { fails++; console.log('     ', e.message); } }
 console.log(`\n${results.length - fails}/${results.length} surface tests passed`);

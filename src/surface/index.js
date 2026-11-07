@@ -58,7 +58,12 @@ export default {
     const hudLayer = document.createElement('div');
     hudLayer.style.cssText = 'position:absolute;inset:0;pointer-events:none';
     ui.mount(hudLayer, { layer: 'hud' });
-    s = { state, inside, camera, cabin: null, sinceTelemetry: 0, hud: createSuitHUD({ parent: hudLayer }), offs: [] };
+    s = { state, inside, camera, cabin: null, sinceTelemetry: 0, hud: createSuitHUD({ parent: hudLayer }), offs: [], notice: null };
+    // short alert line under the helmet header (falls, suit breach)
+    s.noticeEl = document.createElement('div');
+    s.noticeEl.className = 'hud-label';
+    s.noticeEl.style.cssText = 'position:absolute;left:50%;top:13%;transform:translateX(-50%);color:var(--hud-red,#ff7f87);letter-spacing:.12em;text-align:center';
+    hudLayer.append(s.noticeEl);
 
     if (inside) {
       const { scene, art } = getCabin();
@@ -88,6 +93,17 @@ export default {
       graphics.setView(mars.scene, camera);
       astronaut.suited = true;
       s.walker = new WalkController({
+        onNotice: (type, d) => {
+          if (type !== 'fall') return;
+          audio.play('impact.small');
+          if (d.severity === 'severe') {
+            astronaut.oxygen.setLeak(3);
+            audio.play('alarm.o2');
+            s.notice = { text: 'SUIT BREACH: O₂ is leaking 3× faster. Get to the O₂ station in the ship.', t: 6 };
+          } else {
+            s.notice = { text: `Hard landing (${d.impactSpeed.toFixed(1)} m/s). Mars gravity is weak, but a fall still hurts.`, t: 4 };
+          }
+        },
         gravity: PLANETS.mars.g, getGroundHeight: getTerrainHeight, colliders: [{ x: 0, z: 0, r: LANDER_RADIUS }],
         mode: 'suit', start: { x: HATCH.x, z: HATCH.z + 2 }, yaw: Math.PI, // step out facing away from the ship
       });
@@ -148,6 +164,10 @@ export default {
       focused: ui_.focused, yaw: walker.yaw, shipPosition: { x: HATCH.x, z: HATCH.z },
       bodyStats: astronaut.body.snapshot(), airlockProgress: s.cabin?.airlockProgress ?? 0,
     });
+
+    if (s.notice?.t > 0) s.notice.t -= dt;
+    const noticeText = s.notice?.t > 0 ? s.notice.text : !inside && oxygen.leaking ? 'SUIT BREACH: O₂ leaking' : '';
+    if (s.noticeEl.textContent !== noticeText) s.noticeEl.textContent = noticeText;
 
     s.sinceTelemetry += dt;
     if (s.sinceTelemetry >= TELEMETRY_EVERY) {
