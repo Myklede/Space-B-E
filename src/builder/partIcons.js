@@ -4,7 +4,7 @@ import { assets } from '/src/graphics/index.js';
 import { partArt } from './bay/partArt.js';
 import { SIZE_SCALE, BASE_RADIUS } from './assembly.js';
 
-export function createIconRenderer({ renderer, size = 384 }) {
+export function createIconRenderer({ renderer, size = 512 }) {
   const cache = new Map();
   const rt = new THREE.WebGLRenderTarget(size, size, { depthBuffer: true });
   rt.texture.colorSpace = THREE.SRGBColorSpace;
@@ -58,6 +58,61 @@ export function createIconRenderer({ renderer, size = 384 }) {
     return canvas.toDataURL('image/png');
   }
 
+  // Side elevation for the vehicle diagram: orthographic, straight from the front, transparent, at a fixed
+  // pixels-per-metre so the stacked pictures line up like an engineering drawing.
+  const ortho = new THREE.OrthographicCamera(-1, 1, 1, -1, 0.01, 100);
+  const sideCache = new Map();
+  function renderSide(def, ppm) {
+    const entry = { type: def.id, attach: def.attach, height: def.height, def, radius: BASE_RADIUS * (SIZE_SCALE[def.size] ?? 1) };
+    const art = partArt(entry);
+    const holder = new THREE.Group();
+    holder.add(art);
+    scene.add(holder);
+    scene.environment = assets.environment?.() ?? null;
+    scene.environmentIntensity = 0.3;
+    const box = new THREE.Box3().setFromObject(holder);
+    const size = box.getSize(new THREE.Vector3());
+    const centre = box.getCenter(new THREE.Vector3());
+    const widthM = Math.max(size.x, 0.3) * 1.08, heightM = Math.max(size.y, 0.2) * 1.06;
+    const w = Math.min(size_, Math.max(32, Math.round(widthM * ppm))), hpx = Math.min(size_, Math.max(32, Math.round(heightM * ppm)));
+    ortho.left = -widthM / 2; ortho.right = widthM / 2; ortho.top = heightM / 2; ortho.bottom = -heightM / 2;
+    ortho.position.set(centre.x, centre.y, centre.z + 20);
+    ortho.lookAt(centre.x, centre.y, centre.z);
+    ortho.updateProjectionMatrix();
+    const prevTarget = renderer.getRenderTarget();
+    const prevClear = renderer.getClearColor(new THREE.Color());
+    const prevAlpha = renderer.getClearAlpha();
+    const prevViewport = renderer.getViewport(new THREE.Vector4());
+    const prevScissor = renderer.getScissor(new THREE.Vector4());
+    const prevScissorTest = renderer.getScissorTest();
+    renderer.setRenderTarget(rt);
+    renderer.setClearColor(0x000000, 0);
+    renderer.clear();
+    renderer.setViewport(0, 0, w, hpx);
+    renderer.setScissor(0, 0, w, hpx);
+    renderer.setScissorTest(true);
+    renderer.render(scene, ortho);
+    renderer.readRenderTargetPixels(rt, 0, 0, w, hpx, pixels);
+    renderer.setRenderTarget(prevTarget);
+    renderer.setViewport(prevViewport);
+    renderer.setScissor(prevScissor);
+    renderer.setScissorTest(prevScissorTest);
+    renderer.setClearColor(prevClear, prevAlpha);
+    scene.remove(holder);
+    holder.traverse((o) => { if (o.geometry) o.geometry.dispose(); if (o.material) (Array.isArray(o.material) ? o.material : [o.material]).forEach((m) => m.dispose?.()); });
+    const c = document.createElement('canvas');
+    c.width = w; c.height = hpx;
+    const cx = c.getContext('2d');
+    const image = cx.createImageData(w, hpx);
+    for (let y = 0; y < hpx; y++) {
+      const src = (hpx - 1 - y) * w * 4;
+      image.data.set(pixels.subarray(src, src + w * 4), y * w * 4);
+    }
+    cx.putImageData(image, 0, 0);
+    return { url: c.toDataURL('image/png'), widthM, heightM, size: { x: size.x, y: size.y } };
+  }
+  const size_ = size;
+
   return {
     /** Data URL of the part's picture (rendered on first use). */
     iconFor(def) {
@@ -66,8 +121,16 @@ export function createIconRenderer({ renderer, size = 384 }) {
       }
       return cache.get(def.id);
     },
+    /** { url, widthM, heightM } side elevation at `ppm` pixels per metre (cached per part and ppm). */
+    sideViewFor(def, ppm = 60) {
+      const key = `${def.id}@${ppm}`;
+      if (!sideCache.has(key)) {
+        try { sideCache.set(key, renderSide(def, ppm)); } catch { sideCache.set(key, { url: '', widthM: 1, heightM: def.height }); }
+      }
+      return sideCache.get(key);
+    },
     /** Forget rendered pictures (after the real models arrive). */
-    reset() { cache.clear(); },
-    dispose() { rt.dispose(); cache.clear(); },
+    reset() { cache.clear(); sideCache.clear(); },
+    dispose() { rt.dispose(); cache.clear(); sideCache.clear(); },
   };
 }

@@ -1,22 +1,11 @@
-// The engineering-bay UI layer (state HANGAR): the walking HUD (crosshair, prompt, status chip) and the station
-// panels that open when the player uses a machine. It edits the Assembly directly and tells index.js via hooks.
-import { SYMMETRIES } from './assembly.js';
-import { autoAttach } from './autoplace.js';
+// The engineering-bay UI layer (state HANGAR): the walking HUD (crosshair, prompt, status chip, toasts) and the
+// stations: the vehicle design page (any design machine), the test console, the range terminal and the handbook.
+import { createDesignPage } from './designPage.js';
 import { createHandbook } from './handbook.js';
 import { fmtInt, fmtKN, fmtMass, fmtMoney, fmtMoneyShort, fmtPct } from './format.js';
 
-const WARNING_LABELS = {
-  LOW_DV: 'Low Δv', LOW_TWR: 'Low TWR', NO_HEAT_SHIELD: 'No heat shield', NO_LEGS: 'No landing legs', UNSTABLE: 'Unstable',
-  LOW_O2: 'No spare O₂', NO_ANTENNA: 'No antenna', NO_SHELTER: 'No radiation shelter', COLD_SEALS: 'Seals not cold-rated', LOW_RELIABILITY: 'Low reliability',
-  NO_CAPSULE: 'No capsule', NO_ENGINE: 'No engine', NO_FUEL: 'No usable fuel', NOT_CONNECTED: 'Parts not connected', OVER_BUDGET: 'Over budget',
-};
-export const DESIGN_STATIONS = ['integration', 'propulsion', 'structures', 'crew', 'warehouse']; // these project the hologram
-const STATION_FAMILIES = {
-  propulsion: ['engines', 'tanks'],
-  structures: ['structure', 'thermal', 'recovery', 'control'],
-  crew: ['command', 'life', 'power', 'comms', 'protection', 'science', 'seals'],
-  warehouse: null, // all
-};
+export const DESIGN_STATIONS = ['integration', 'propulsion', 'structures', 'crew', 'warehouse'];
+const STATION_FAMILY = { propulsion: 'engines', structures: 'structure', crew: 'command', warehouse: null, integration: null };
 
 const h = (tag, className, text) => {
   const el = document.createElement(tag);
@@ -32,11 +21,11 @@ const btn = (className, label, onClick, attrs = {}) => {
   return b;
 };
 
-export function createHangarScreen({ assembly, catalog, launch, text, scene, getMoney, insolvencyFloor = 0, icons, stations, hooks }) {
+export function createHangarScreen({ assembly, catalog, materials, engines, launch, text, scene, getMoney, insolvencyFloor = 0, icons, stations, hooks }) {
   const el = h('div', 'bay-root hud');
   el.dataset.screen = 'hangar';
   el.dataset.stub = 'hangar'; // check:boot looks for [data-stub] in every state
-  const state = { family: null, node: null, part: null, station: null, detail: null, testResult: null, testStatus: '' };
+  const state = { station: null, testResult: null };
   let last = null;
 
   // ---------- walking HUD ----------
@@ -48,17 +37,13 @@ export function createHangarScreen({ assembly, catalog, launch, text, scene, get
   const chipStats = h('span', 'bay-chip-stats');
   const chipFunds = h('span', 'bay-chip-funds');
   chip.append(chipShip, chipStats, chipFunds);
-  const hint = h('div', 'bay-hint', 'Click to look around · WASD walk · Shift run · E use a machine · H handbook · Esc menu');
+  const hint = h('div', 'bay-hint', 'Click to look around · WASD walk · Shift run · Space jump · E use a machine · H handbook · Esc menu');
   const toast = h('div', 'bay-toast');
   const testStatus = h('div', 'bay-test-status hud-panel hud-caution');
   testStatus.hidden = true;
   hud.append(crosshair, prompt, chip, hint, toast, testStatus);
 
-  // ---------- markers (integration console) ----------
-  const markers = h('div', 'bld-markers');
-  markers.hidden = true;
-
-  // ---------- station panel ----------
+  // ---------- station panel (test, range, handbook) ----------
   const panel = h('section', 'bay-station hud-panel');
   panel.hidden = true;
   const head = h('header', 'bay-station-head');
@@ -68,7 +53,6 @@ export function createHangarScreen({ assembly, catalog, launch, text, scene, get
   head.append(title, role, closeBtn);
   const body = h('div', 'bay-station-body');
   panel.append(head, body);
-  const lensHost = h('div', 'bld-lens'); // the Formula Lens (index.js) lives here and moves into the integration panel
 
   // ---------- dialog ----------
   const backdrop = h('div', 'bld-dialog-backdrop');
@@ -77,7 +61,25 @@ export function createHangarScreen({ assembly, catalog, launch, text, scene, get
   backdrop.append(dialog);
   backdrop.addEventListener('click', (e) => { if (e.target === backdrop) closeDialog(); });
 
-  el.append(hud, markers, panel, backdrop);
+  // ---------- the design page ----------
+  const design = createDesignPage({
+    assembly, catalog, materials, engines, text, icons, getMoney,
+    hooks: {
+      onChange: () => hooks.onChange?.(),
+      onSound: (id) => hooks.onSound?.(id),
+      onToast: (m, kind) => say(m, kind),
+      onClose: () => closeStation(),
+      onGonogo: () => hooks.onGonogo?.(),
+      onTest: () => hooks.onStartTest?.(),
+      onPresets: () => hooks.onPresets?.(),
+      onWorkbench: (id) => hooks.onWorkbench?.(id),
+      onRename: () => openRename(),
+      onMore: () => openMore(),
+      compute: () => last,
+    },
+  });
+
+  el.append(hud, panel, design.el, backdrop);
 
   let toastTimer = null;
   function say(message, kind = 'ok') {
@@ -90,139 +92,7 @@ export function createHangarScreen({ assembly, catalog, launch, text, scene, get
   const sound = (id) => hooks.onSound?.(id);
   const changed = () => hooks.onChange?.();
 
-  // ---------- selection on the stand ----------
-  function selectNode(partId, node) {
-    state.node = partId ? { partId, node } : null;
-    state.part = null;
-    scene.select(null);
-    renderIntegration();
-  }
-  function selectPart(id) {
-    state.part = id;
-    state.node = null;
-    scene.select(id);
-    renderIntegration();
-  }
-  function removeSelected() {
-    if (!state.part) return;
-    const name = assembly.def(state.part)?.name;
-    if (assembly.remove(state.part).length) {
-      sound('ui.click');
-      say(`${name} removed.`);
-      state.part = null;
-      scene.select(null);
-      changed();
-    }
-  }
-  function addAtNode(typeId) {
-    const def = catalog.get(typeId);
-    if (!def) return;
-    let ids = [];
-    if (!assembly.parts.length) ids = assembly.attach(typeId);
-    else if (state.node) ids = assembly.attach(typeId, state.node.partId, state.node.node);
-    if (!ids.length) { sound('ui.error'); say('That part does not fit there.', 'bad'); return; }
-    sound('ui.snap');
-    if (def.attach === 'axial') {
-      const far = state.node?.node === 'top' ? 'top' : 'bottom';
-      state.node = def.nodes.includes(far) ? { partId: ids[0], node: far } : null;
-    }
-    say(`${def.name} attached.`);
-    changed();
-  }
-  function addAuto(typeId) {
-    const { ids, message } = autoAttach(assembly, typeId);
-    if (!ids.length) { sound('ui.error'); say(message, 'bad'); return; }
-    sound('ui.snap');
-    say(message);
-    changed();
-  }
-
-  // ---------- markers ----------
-  let dragging = null;
-  const markerEls = new Map();
-  function dropTarget(m, partId, node) {
-    m.addEventListener('dragover', (e) => {
-      if (!dragging || !assembly.canAttach(dragging, partId, node).ok) return;
-      e.preventDefault();
-      e.dataTransfer.dropEffect = 'copy';
-      m.classList.add('bld-node--target');
-    });
-    m.addEventListener('dragleave', () => m.classList.remove('bld-node--target'));
-    m.addEventListener('drop', (e) => {
-      e.preventDefault();
-      m.classList.remove('bld-node--target');
-      const type = e.dataTransfer.getData('text/plain') || dragging;
-      dragging = null;
-      if (!type) return;
-      state.node = { partId, node };
-      state.part = null;
-      addAtNode(type);
-    });
-  }
-  // Markers sit on the hologram when a console projects one, otherwise on the real vehicle.
-  const liveAnchors = () => (scene.hologram?.visible ? scene.hologram.worldAnchors() : scene.worldAnchors());
-  function renderMarkers() {
-    const anchors = liveAnchors();
-    const keys = new Set();
-    for (const a of anchors) {
-      const key = a.kind === 'node' ? `n:${a.partId}:${a.node}` : `h:${a.partId}`;
-      keys.add(key);
-      let m = markerEls.get(key);
-      if (!m) {
-        if (a.kind === 'node') {
-          m = btn('bld-node', '', () => { sound('ui.click'); selectNode(a.partId, a.node); }, { node: a.node, part: a.partId });
-          m.title = `${a.node} node of ${assembly.def(a.partId)?.name ?? a.partId}: click, or drop a part here`;
-          dropTarget(m, a.partId, a.node);
-        } else {
-          const name = assembly.def(a.partId)?.name ?? a.partId;
-          const radial = assembly.part(a.partId)?.node === 'radial';
-          m = btn(`bld-handle${radial ? ' bld-handle--radial' : ''}`, name, () => { sound('ui.click'); selectPart(a.partId); }, { part: a.partId });
-          m.title = `${name}: click to select`;
-        }
-        markers.append(m);
-        markerEls.set(key, m);
-      }
-      const pressed = a.kind === 'node' ? state.node?.partId === a.partId && state.node?.node === a.node : state.part === a.partId;
-      m.setAttribute('aria-pressed', String(pressed));
-    }
-    for (const [key, m] of markerEls) if (!keys.has(key)) { m.remove(); markerEls.delete(key); }
-  }
-  function projectMarkers() {
-    if (markers.hidden) return;
-    const rect = markers.getBoundingClientRect();
-    if (!rect.width) return;
-    const cam = scene.camera;
-    cam.updateMatrixWorld();
-    const W = window.innerWidth, H = window.innerHeight;
-    for (const a of liveAnchors()) {
-      const key = a.kind === 'node' ? `n:${a.partId}:${a.node}` : `h:${a.partId}`;
-      const m = markerEls.get(key);
-      if (!m) continue;
-      const p = a.world.project(cam);
-      const visible = p.z < 1 && Math.abs(p.x) < 1.1 && Math.abs(p.y) < 1.1;
-      m.classList.toggle('bld-marker-hidden', !visible);
-      if (!visible) continue;
-      m.style.left = `${((p.x + 1) / 2 * W - rect.left).toFixed(1)}px`;
-      m.style.top = `${((1 - p.y) / 2 * H - rect.top).toFixed(1)}px`;
-    }
-  }
-
   // ---------- shared pieces ----------
-  function partCard(def, { onClick, pressed = false } = {}) {
-    const card = btn('bay-card', null, onClick, { part: def.id });
-    card.setAttribute('aria-pressed', String(pressed));
-    const img = h('img', 'bay-card-img');
-    img.alt = def.name;
-    img.src = icons?.iconFor(def) || '';
-    img.draggable = false;
-    const cost = def.engine ? 'engine: configure in the workshop' : fmtMoneyShort(def.cost);
-    card.append(img, h('div', 'bay-card-name', def.name), h('div', 'bay-card-role', def.role ?? def.desc ?? ''), h('div', 'bay-card-meta', `${fmtMass(def.mass + (def.fuel?.mass ?? 0))} · ${cost}`));
-    card.draggable = assembly.parts.length > 0;
-    card.addEventListener('dragstart', (e) => { e.dataTransfer.setData('text/plain', def.id); e.dataTransfer.effectAllowed = 'copy'; dragging = def.id; card.classList.add('bld-part--dragging'); });
-    card.addEventListener('dragend', () => { card.classList.remove('bld-part--dragging'); dragging = null; });
-    return card;
-  }
-
   function statsGrid(result) {
     const { spec, breakdown, blocks } = result;
     const s = spec.stats;
@@ -236,7 +106,7 @@ export function createHangarScreen({ assembly, catalog, launch, text, scene, get
     };
     stat('Cost', `${fmtMoney(s.cost)}${fee ? ` + ${fmtMoneyShort(fee)} pad` : ''}`, s.cost + fee > getMoney() ? 'bad' : 'ok');
     stat('Mass wet / dry', `${fmtMass(s.wetMass)} / ${fmtMass(s.dryMass)}`);
-    stat('Propellant', `${fmtMass(s.fuelMass)}${breakdown.deadFuel ? ` (+${fmtMass(breakdown.deadFuel)} unusable)` : ''}`, s.fuelMass > 0 ? (breakdown.deadFuel ? 'warn' : 'ok') : 'bad');
+    stat('Propellant', fmtMass(s.fuelMass), s.fuelMass > 0 ? 'ok' : 'bad');
     stat('Thrust at sea level', fmtKN(s.thrust * (s.ispVac ? s.ispSL / s.ispVac : 1)), s.thrust > 0 ? 'ok' : 'bad');
     stat('Δv', `${fmtInt(s.deltaV)} m/s`, s.deltaV >= breakdown.roundTrip ? 'good' : s.deltaV >= breakdown.oneWay ? 'ok' : 'bad');
     stat('TWR on Earth', s.twrEarth.toFixed(2), s.twrEarth >= 1.2 ? 'ok' : s.twrEarth >= 1 ? 'warn' : 'bad');
@@ -244,155 +114,15 @@ export function createHangarScreen({ assembly, catalog, launch, text, scene, get
     stat('Stability', breakdown.copY < breakdown.comY ? 'Stable' : 'Unstable', breakdown.copY < breakdown.comY ? 'ok' : 'bad');
     const warnings = h('div', 'bld-warnings');
     warnings.append(
-      ...blocks.map((id) => h('div', 'bld-warning hud-alert', `BLOCK: ${WARNING_LABELS[id] ?? id}`)),
-      ...spec.warnings.map((id) => h('div', 'bld-warning hud-caution', WARNING_LABELS[id] ?? id)),
+      ...blocks.map((id) => h('div', 'bld-warning hud-alert', `BLOCK: ${id.replace(/_/g, ' ')}`)),
+      ...spec.warnings.map((id) => h('div', 'bld-warning hud-caution', id.replace(/_/g, ' '))),
     );
     const wrap = h('div', 'bay-stats');
     wrap.append(grid, warnings);
     return wrap;
   }
 
-  function installedList(families) {
-    const list = h('div', 'bay-installed');
-    const parts = assembly.layout().filter((e) => !families || families.includes(e.def.family));
-    list.append(h('div', 'hud-label', `On the vehicle (${parts.length})`));
-    if (!parts.length) list.append(h('div', 'bld-list-meta', 'Nothing from this trade yet.'));
-    const seen = new Set();
-    for (const e of parts) {
-      if (e.group && seen.has(e.group)) continue;
-      if (e.group) seen.add(e.group);
-      const row = h('div', 'bay-installed-row');
-      const twins = e.group ? assembly.parts.filter((p) => p.group === e.group).length : 1;
-      row.append(h('span', 'bay-installed-name', `${e.def.name}${twins > 1 ? ` ×${twins}` : ''}${e.engine ? ` · ${e.engine.fuel} ${e.engine.nozzle} ${e.engine.pump}` : ''}`));
-      if (e.def.engine) row.append(btn('bld-tool', 'WORKBENCH', () => hooks.onWorkbench?.(e.id), { tool: 'workbench' }));
-      row.append(btn('bld-tool', 'REMOVE', () => { assembly.remove(e.id); sound('ui.click'); say(`${e.def.name} removed.`); changed(); }, { tool: 'remove' }));
-      list.append(row);
-    }
-    return list;
-  }
-
   // ---------- station bodies ----------
-  function renderIntegration() {
-    if (state.station !== 'integration' || !last) return;
-    body.replaceChildren();
-    body.className = 'bay-station-body bay-station-body--integration';
-    const left = h('div', 'bay-col bay-col--left');
-    const right = h('div', 'bay-col bay-col--right');
-    // toolbar
-    const toolbar = h('div', 'bld-toolbar bay-toolbar');
-    const part = state.part ? assembly.part(state.part) : null;
-    const def = part ? catalog.get(part.type) : null;
-    const tool = (label, fn, attrs, disabled = false) => { const b = btn('bld-tool', label, fn, attrs); b.disabled = disabled; return b; };
-    toolbar.append(
-      tool('UNDO [Z]', () => { if (assembly.undo()) { sound('ui.click'); changed(); } }, { tool: 'undo' }, !assembly.canUndo),
-      tool('REDO [Y]', () => { if (assembly.redo()) { sound('ui.click'); changed(); } }, { tool: 'redo' }, !assembly.canRedo),
-      tool('REMOVE [Del]', removeSelected, { tool: 'remove' }, !part),
-      tool('ROTATE 30°', () => { if (state.part && assembly.rotate(state.part, 30)) changed(); }, { tool: 'rotate' }, !(part && part.node === 'radial')),
-      tool('SLIDE ▲', () => { if (state.part && assembly.slide(state.part, 0.1)) changed(); }, { tool: 'slideup' }, !(part && part.node === 'radial')),
-      tool('SLIDE ▼', () => { if (state.part && assembly.slide(state.part, -0.1)) changed(); }, { tool: 'slidedown' }, !(part && part.node === 'radial')),
-      tool('WORKBENCH', () => { const e = (def?.engine && state.part) || assembly.parts.find((p) => catalog.get(p.type)?.engine)?.id; if (e) hooks.onWorkbench?.(e); }, { tool: 'workbench' }, !assembly.parts.some((p) => catalog.get(p.type)?.engine)),
-      tool('TURN ⟲ [Q]', () => scene.rotateBy(-30), { tool: 'viewleft' }),
-      tool('⟳ [E]', () => scene.rotateBy(30), { tool: 'viewright' }),
-      tool(scene.hologram?.exploded ? 'ASSEMBLE' : 'EXPLODE VIEW', () => { scene.hologram?.setExploded(!scene.hologram.exploded); renderIntegration(); }, { tool: 'explode' }),
-      tool('CLEAR', () => openConfirm('Take the whole vehicle off the stand?', () => { assembly.clear(); state.part = null; state.node = null; changed(); }), { tool: 'clear' }, !assembly.parts.length),
-    );
-    const symmetry = h('div', 'bld-symmetry');
-    symmetry.append(h('span', 'hud-label', 'Symmetry'));
-    for (const n of SYMMETRIES) {
-      const b = btn('bld-sym', `×${n}`, () => { assembly.setSymmetry(n); renderIntegration(); }, { sym: String(n) });
-      b.setAttribute('aria-pressed', String(assembly.symmetry === n));
-      symmetry.append(b);
-    }
-    toolbar.append(symmetry);
-    const selection = h('div', 'bld-selection', part ? `Selected: ${def?.name ?? part.type}${part.group ? ' (symmetry group)' : ''}` : state.node ? `Node: ${state.node.node} of ${assembly.def(state.node.partId)?.name}` : 'Click a glowing node on the vehicle, then a part.');
-    toolbar.append(selection);
-    // quick-add palette
-    const palette = h('div', 'bay-palette');
-    const tabs = h('div', 'bld-family-tabs');
-    state.family ??= catalog.families[0]?.id;
-    for (const f of catalog.families) {
-      const b = btn('bld-family-tab', f.name, () => { state.family = f.id; renderIntegration(); });
-      b.setAttribute('aria-pressed', String(state.family === f.id));
-      tabs.append(b);
-    }
-    const list = h('div', 'bld-part-list');
-    const empty = assembly.parts.length === 0;
-    for (const p of catalog.parts.filter((x) => x.family === state.family)) {
-      const b = btn('bld-part', null, () => addAtNode(p.id), { part: p.id });
-      b.append(h('span', 'bld-part-name', p.name), h('span', 'bld-part-meta', `${fmtMass(p.mass + (p.fuel?.mass ?? 0))} · ${p.engine ? 'workshop' : fmtMoneyShort(p.cost)}`));
-      let reason = '';
-      if (empty) reason = p.attach === 'axial' ? '' : 'Start with a capsule';
-      else if (!state.node) reason = 'Select a node first, or drag me onto one';
-      else reason = assembly.canAttach(p.id, state.node.partId, state.node.node).reason;
-      b.disabled = !!reason && !reason.startsWith('Select a node');
-      b.title = reason ? `${p.desc} (${reason})` : p.desc;
-      b.draggable = !empty;
-      b.addEventListener('dragstart', (e) => { e.dataTransfer.setData('text/plain', p.id); dragging = p.id; b.classList.add('bld-part--dragging'); });
-      b.addEventListener('dragend', () => { b.classList.remove('bld-part--dragging'); dragging = null; });
-      list.append(b);
-    }
-    palette.append(tabs, list);
-    left.append(toolbar, palette, statsGrid(last));
-    // right: ship tools + lens
-    const tools = h('div', 'bay-ship-tools');
-    tools.append(
-      btn('bld-tool', 'RENAME', () => openRename(), { tool: 'rename' }),
-      btn('bld-tool', 'PRESETS', () => hooks.onPresets?.(), { tool: 'presets' }),
-      btn('bld-tool', 'BLUEPRINTS', () => hooks.onBlueprints?.(), { tool: 'blueprints' }),
-      btn('bld-tool', 'SHARE CODE', () => hooks.onShare?.(), { tool: 'share' }),
-      btn('hud-button bld-go', 'READINESS POLL →', () => hooks.onGonogo?.(), { tool: 'gonogo' }),
-    );
-    right.append(tools, lensHost);
-    body.append(left, right);
-    renderMarkers();
-  }
-
-  function renderCatalog(stationId) {
-    const families = STATION_FAMILIES[stationId];
-    body.replaceChildren();
-    body.className = 'bay-station-body bay-station-body--catalog';
-    const left = h('div', 'bay-col bay-col--catalog');
-    const right = h('div', 'bay-col bay-col--detail');
-    const fams = catalog.families.filter((f) => !families || families.includes(f.id));
-    if (!fams.some((f) => f.id === state.family)) state.family = fams[0]?.id;
-    const tabs = h('div', 'bld-family-tabs');
-    for (const f of fams) {
-      const b = btn('bld-family-tab', f.name, () => { state.family = f.id; renderCatalog(stationId); });
-      b.setAttribute('aria-pressed', String(state.family === f.id));
-      tabs.append(b);
-    }
-    const grid = h('div', 'bay-card-grid');
-    const parts = catalog.parts.filter((p) => p.family === state.family);
-    if (!state.detail || !parts.some((p) => p.id === state.detail)) state.detail = parts[0]?.id ?? null;
-    for (const p of parts) grid.append(partCard(p, { onClick: () => { state.detail = p.id; renderCatalog(stationId); }, pressed: state.detail === p.id }));
-    left.append(tabs, grid);
-    // detail pane
-    const def = catalog.get(state.detail);
-    if (def) {
-      const detail = h('div', 'bay-detail');
-      const img = h('img', 'bay-detail-img');
-      img.src = icons?.iconFor(def) || '';
-      img.alt = def.name;
-      detail.append(img, h('h3', 'bay-detail-name', def.name), h('div', 'bay-detail-role', def.role ?? ''), h('p', 'bay-detail-text', def.detail ?? def.desc ?? ''));
-      const facts = h('div', 'bay-detail-facts');
-      const fact = (k, v) => { const r = h('div', 'bay-fact'); r.append(h('span', 'bay-fact-k', k), h('span', 'bay-fact-v', v)); facts.append(r); };
-      fact('Mass', fmtMass(def.mass));
-      if (def.fuel) fact('Propellant', `${fmtMass(def.fuel.mass)} ${def.fuel.type}`);
-      fact('Cost', def.engine ? 'pump + chamber + nozzle' : fmtMoney(def.cost));
-      fact('Reliability', fmtPct(def.reliability));
-      fact('Mounts', def.attach === 'axial' ? `in the stack (${def.nodes.join(', ')})` : 'on the side of a body');
-      if (def.size) fact('Size', def.size.toUpperCase());
-      detail.append(facts);
-      const actions = h('div', 'bay-detail-actions');
-      actions.append(btn('hud-button hud-good', 'ADD TO VEHICLE', () => { addAuto(def.id); renderCatalog(stationId); }, { tool: 'add' }));
-      if (def.guidebook) actions.append(btn('bld-tool', 'GUIDEBOOK', () => hooks.onGuidebook?.(def.guidebook), { tool: 'guidebook' }));
-      detail.append(actions, h('div', 'bld-list-meta', 'Drag a card onto a glowing node at the integration console to place it by hand.'));
-      right.append(detail);
-    }
-    right.append(installedList(families));
-    body.append(left, right);
-  }
-
   function renderTest() {
     body.replaceChildren();
     body.className = 'bay-station-body bay-station-body--test';
@@ -450,19 +180,21 @@ export function createHangarScreen({ assembly, catalog, launch, text, scene, get
     const st = stations.find((s) => s.id === id);
     if (!st) return;
     state.station = id;
-    title.textContent = st.name;
-    role.textContent = st.role;
-    panel.hidden = false;
-    panel.dataset.station = id;
-    markers.hidden = !DESIGN_STATIONS.includes(id);
     hud.classList.add('bay-hud--station');
-    if (id === 'integration') renderIntegration();
-    else if (id === 'teststand') renderTest();
-    else if (id === 'launchwindow') renderLaunchWindow();
-    else if (id === 'handbook') renderHandbook();
-    else renderCatalog(id);
+    if (DESIGN_STATIONS.includes(id)) {
+      panel.hidden = true;
+      design.show({ family: STATION_FAMILY[id] ?? null });
+    } else {
+      design.hide();
+      title.textContent = st.name;
+      role.textContent = st.role;
+      panel.hidden = false;
+      panel.dataset.station = id;
+      if (id === 'teststand') renderTest();
+      else if (id === 'launchwindow') renderLaunchWindow();
+      else if (id === 'handbook') renderHandbook();
+    }
     hooks.onStationOpen?.(id);
-    if (!markers.hidden) renderMarkers();
   }
 
   function closeStation() {
@@ -470,7 +202,7 @@ export function createHangarScreen({ assembly, catalog, launch, text, scene, get
     const id = state.station;
     state.station = null;
     panel.hidden = true;
-    markers.hidden = true;
+    design.hide();
     hud.classList.remove('bay-hud--station');
     handbook?.dispose();
     handbook = null;
@@ -507,6 +239,22 @@ export function createHangarScreen({ assembly, catalog, launch, text, scene, get
     input.focus();
     input.select();
   }
+  function openMore() {
+    openDialog({
+      title: 'More',
+      body: (b) => {
+        const list = h('div', 'bld-list');
+        const item = (label, meta, fn) => { const r = btn('bld-list-item', null, () => { closeDialog(); fn(); }); r.append(h('span', null, label), h('span', 'bld-list-meta', meta)); list.append(r); };
+        item('Blueprints', 'save and load your designs', () => hooks.onBlueprints?.());
+        item('Share code', 'copy a code for a friend, or paste one', () => hooks.onShare?.());
+        item('Launch window', `${launch.slots.find((s) => s.id === assembly.launch.slot)?.name ?? ''} · change the date and the weather`, () => openStation('launchwindow'));
+        item('Redo', 'put back what you undid', () => { if (assembly.redo()) { sound('ui.click'); changed(); } });
+        item('Clear the stand', 'start again from nothing', () => openConfirm('Take the whole vehicle off the stand?', () => { assembly.clear(); changed(); }));
+        b.append(list);
+      },
+      actions: [{ label: 'CLOSE' }],
+    });
+  }
 
   // ---------- refresh ----------
   function renderMoney() {
@@ -529,17 +277,13 @@ export function createHangarScreen({ assembly, catalog, launch, text, scene, get
   function refresh(result) {
     last = result;
     scene.setLayout(assembly.layout(), assembly.freeNodes());
-    if (state.part && !assembly.part(state.part)) state.part = null;
-    if (state.node && !assembly.freeNodes().some((n) => n.partId === state.node.partId && n.node === state.node.node)) state.node = null;
-    scene.select(state.part);
     const s = result.spec.stats;
     chipShip.textContent = assembly.name;
     chipStats.textContent = `${fmtMoney(s.cost)} · Δv ${fmtInt(s.deltaV)} · TWR ${s.twrEarth.toFixed(2)} · ${result.blocks.length ? `${result.blocks.length} block(s)` : result.spec.warnings.length ? `${result.spec.warnings.length} warning(s)` : 'ready'}`;
     renderMoney();
     renderInsolvency();
-    if (state.station === 'integration') renderIntegration();
-    else if (state.station === 'teststand') renderTest();
-    else if (state.station && STATION_FAMILIES[state.station] !== undefined) renderCatalog(state.station);
+    design.refresh(result);
+    if (state.station === 'teststand') renderTest();
   }
 
   function update(dt, { prompt: p = null } = {}) {
@@ -547,11 +291,10 @@ export function createHangarScreen({ assembly, catalog, launch, text, scene, get
     if (!state.station) {
       prompt.textContent = p ? `E · ${p}` : '';
       prompt.classList.toggle('bay-prompt--show', !!p);
-    } else projectMarkers();
+    }
   }
 
   function setTestStatus(txt) {
-    state.testStatus = txt;
     testStatus.hidden = !txt;
     testStatus.textContent = txt;
   }
@@ -565,13 +308,13 @@ export function createHangarScreen({ assembly, catalog, launch, text, scene, get
     clearTimeout(toastTimer);
     handbook?.dispose();
     el.remove();
-    markerEls.clear();
   }
 
   return {
-    el, lensHost, update, refresh, openStation, closeStation, openDialog, closeDialog, openConfirm, dispose, renderMoney, say, setTestStatus, showTestResult,
+    el, lensHost: design.lensHost, update, refresh, openStation, closeStation, openDialog, closeDialog, openConfirm, dispose, renderMoney, say, setTestStatus, showTestResult,
     get station() { return state.station; },
-    get selectedPart() { return state.part; },
-    removeSelected,
+    get dialogOpen() { return !backdrop.hidden; },
+    get pickerOpen() { return design.pickerOpen; },
+    closePicker: () => design.closePicker(),
   };
 }

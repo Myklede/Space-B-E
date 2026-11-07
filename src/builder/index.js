@@ -8,6 +8,7 @@ import { G0, PLANETS, contract, economy, events, input, requestState, save, setS
 import partsJson from './data/parts.json';
 import engines from './data/engines.json';
 import launch from './data/launch.json';
+import materials from './data/materials.json';
 import text from './data/text.json';
 import reliable from './data/presets/reliable.json';
 import coldMorning from './data/presets/coldMorning.json';
@@ -30,7 +31,7 @@ export { openPauseMenu, openSettings }; // other roles may open the Esc menu and
 
 const catalog = createCatalog(partsJson);
 const PRESETS = { reliable, coldMorning, thinSkin };
-const deps = { catalog, engines, launch, balance: economy.balance, planets: PLANETS, g0: G0 };
+const deps = { catalog, engines, launch, balance: economy.balance, planets: PLANETS, g0: G0, materials };
 
 let assembly = null; // the vehicle being built, kept across states
 let bay = null; // the engineering bay scene, built once
@@ -71,7 +72,7 @@ function ensureBay() {
   if (!icons) icons = createIconRenderer({ renderer: graphics.renderer });
   if (!modelsPromise) {
     // real NASA hardware arrives a moment after the bay opens; rebuild the vehicle and its pictures when it does
-    modelsPromise = preloadNasaParts(catalog).then((n) => { icons.reset(); if (n && screen?.refresh) screen.refresh(); });
+    modelsPromise = preloadNasaParts(catalog).then((n) => { icons.reset(); bay.decorate(catalog); if (n && screen?.refresh) screen.refresh(); });
   }
   return bay;
 }
@@ -109,7 +110,7 @@ function enterHangar() {
   audio.play('ambience.ship', { loop: true, volume: 0.3 });
 
   const hangar = createHangarScreen({
-    assembly: a, catalog, launch, text, scene: b, icons, stations: b.stations, getMoney: () => economy.getMoney(), insolvencyFloor: economy.balance.insolvencyFloor ?? 0,
+    assembly: a, catalog, materials, engines, launch, text, scene: b, icons, stations: b.stations, getMoney: () => economy.getMoney(), insolvencyFloor: economy.balance.insolvencyFloor ?? 0,
     hooks: {
       onChange: refresh,
       onSound: (id) => audio.play(id),
@@ -124,13 +125,9 @@ function enterHangar() {
       onStationOpen: (id) => {
         input.unlockPointer();
         audio.play('ui.click');
-        if (DESIGN_STATIONS.includes(id)) {
-          // the console projects the vehicle as a hologram beside it; look at the projection
-          const at = b.showHologram(id);
-          if (at) b.player.lookAt(at.x, at.z, 0.08);
-        } else if (id === 'teststand') b.player.lookAt(0, 0);
+        if (id === 'teststand' || DESIGN_STATIONS.includes(id)) b.player.lookAt(0, 0, 0.1);
       },
-      onStationClose: () => { b.hideHologram(); audio.play('ui.click'); },
+      onStationClose: () => audio.play('ui.click'),
     },
   });
   ui.mount(hangar.el);
@@ -294,19 +291,18 @@ function enterHangar() {
 
   const offs = [
     input.onPress('KeyE', () => {
-      if (hangar.station === 'integration') { b.rotateBy(30); return; }
       if (hangar.station || b.test.active) return;
       const s = b.nearestStation();
       if (s) hangar.openStation(s.id);
     }),
-    input.onPress('KeyQ', () => { if (hangar.station === 'integration') b.rotateBy(-30); }),
     input.onPress('KeyH', () => { if (hangar.station === 'handbook') hangar.closeStation(); else if (!b.test.active) { hangar.openStation('handbook'); } }),
-    input.onPress('KeyZ', () => { if (hangar.station === 'integration' && a.undo()) { audio.play('ui.click'); refresh(); } }),
-    input.onPress('KeyY', () => { if (hangar.station === 'integration' && a.redo()) { audio.play('ui.click'); refresh(); } }),
-    input.onPress('Delete', () => { if (hangar.station === 'integration') hangar.removeSelected(); }),
+    input.onPress('KeyZ', () => { if (DESIGN_STATIONS.includes(hangar.station) && a.undo()) { audio.play('ui.click'); refresh(); } }),
+    input.onPress('KeyY', () => { if (DESIGN_STATIONS.includes(hangar.station) && a.redo()) { audio.play('ui.click'); refresh(); } }),
     events.on('economy:changed', () => hangar.renderMoney()),
   ];
   const esc = () => {
+    if (hangar.dialogOpen) { hangar.closeDialog(); return; }
+    if (hangar.station && hangar.pickerOpen) { hangar.closePicker(); return; }
     if (hangar.station) { hangar.closeStation(); return; }
     closePause = openPauseMenu({ onResume: () => { closePause = null; input.onEscape(esc); } });
   };
@@ -322,6 +318,7 @@ function enterHangar() {
         forward: (k('KeyW') ? 1 : 0) - (k('KeyS') ? 1 : 0),
         right: (k('KeyD') ? 1 : 0) - (k('KeyA') ? 1 : 0),
         run: k('ShiftLeft') || k('ShiftRight'),
+        jump: k('Space'),
         lookDelta: frozen || !input.isLocked() ? { x: 0, y: 0 } : delta,
         sensitivity: sensitivity(), invertY: invertY(), frozen,
       });

@@ -28,16 +28,25 @@ export function engineStats(def, engines, g0) {
   };
 }
 
-const sum = (xs, f) => xs.reduce((acc, x) => acc + f(x), 0);
+const sum = (xs, f) => xs.reduce((acc, x, i) => acc + f(x, i), 0);
 
 /**
  * computeShipSpec(assembly, { catalog, engines, launch, balance, planets, g0 })
  * → { spec, breakdown, blocks } where blocks are the hard blocks that need no money check (OVER_BUDGET is added by gonogo.js).
  */
-export function computeShipSpec(assembly, { catalog, engines, launch, balance, planets, g0 }) {
+export function computeShipSpec(assembly, { catalog, engines, launch, balance, planets, g0, materials = null }) {
   const layout = assembly.layout();
   const slot = (launch.slots ?? []).find((s) => s.id === assembly.launch.slot) ?? launch.slots?.[0] ?? { id: 'mild', tempC: 15, fee: 0 };
   const flags = (e) => e.def.flags ?? {};
+  // material of a part: factors on dry mass, cost and reliability (data/materials.json); the first option is the default
+  const materialOf = (e) => {
+    const fam = materials?.families?.[e.def.materialFamily];
+    if (!fam) return null;
+    return fam.options.find((o) => o.id === e.material) ?? fam.options[0];
+  };
+  const massFactor = (e) => materialOf(e)?.mass ?? 1;
+  const costFactor = (e) => materialOf(e)?.cost ?? 1;
+  const reliabilityDelta = (e) => materialOf(e)?.reliability ?? 0;
 
   // Engines
   const engineDefOf = (e) => e.engine ?? { fuel: 'methalox', nozzle: 'vac', pump: String(e.def.size).toUpperCase() };
@@ -49,14 +58,15 @@ export function computeShipSpec(assembly, { catalog, engines, launch, balance, p
   const ispSL = thrust > 0 ? sum(engineSpecs, (s) => s.ispSL * s.thrust) / thrust : 0;
   const mainFuel = engineSpecs[0]?.fuel ?? null;
 
-  // Masses
-  const partMass = sum(layout, (e) => e.def.mass) + sum(engineSpecs, (s) => s.mass);
+  // Masses (engine hardware mass and cost scale with the chamber material)
+  const engineFactor = (e) => (e.def.engine ? { m: massFactor(e), c: costFactor(e) } : { m: 1, c: 1 });
+  const partMass = sum(layout, (e) => e.def.mass * massFactor(e)) + sum(engineEntries, (e, i) => engineSpecs[i].mass * engineFactor(e).m);
   const usableFuel = sum(layout, (e) => (e.def.fuel && e.def.fuel.type === mainFuel ? e.def.fuel.mass : 0));
   const deadFuel = sum(layout, (e) => (e.def.fuel && e.def.fuel.type !== mainFuel ? e.def.fuel.mass : 0));
   const dryMass = partMass + deadFuel; // fuel the engine can't burn is just weight
   const fuelMass = usableFuel;
   const wetMass = dryMass + fuelMass;
-  const cost = sum(layout, (e) => e.def.cost) + sum(engineSpecs, (s) => s.cost);
+  const cost = sum(layout, (e) => e.def.cost * costFactor(e)) + sum(engineEntries, (e, i) => engineSpecs[i].cost * engineFactor(e).c);
 
   // Performance
   const deltaV = fuelMass > 0 && dryMass > 0 ? ispVac * g0 * Math.log(wetMass / dryMass) : 0;
@@ -65,7 +75,7 @@ export function computeShipSpec(assembly, { catalog, engines, launch, balance, p
 
   // Centre of mass and pressure (metres from the stack base)
   // Full mass of one part: structure + any fuel inside (usable or not) + the engine hardware.
-  const massOf = (e) => e.def.mass + (e.def.fuel?.mass ?? 0) + (e.def.engine ? engineStats(engineDefOf(e), engines, g0).mass : 0);
+  const massOf = (e) => e.def.mass * massFactor(e) + (e.def.fuel?.mass ?? 0) + (e.def.engine ? engineStats(engineDefOf(e), engines, g0).mass * massFactor(e) : 0);
   const totalMass = sum(layout, massOf);
   const comY = totalMass > 0 ? sum(layout, (e) => massOf(e) * e.centerY) / totalMass : 0;
   const totalArea = sum(layout, (e) => e.def.aero.sideArea);
@@ -77,7 +87,7 @@ export function computeShipSpec(assembly, { catalog, engines, launch, balance, p
   // Flags
   const has = (key) => layout.some((e) => flags(e)[key]);
   const count = (key) => sum(layout, (e) => Number(flags(e)[key]) || 0);
-  const reliability = layout.reduce((r, e) => r * (e.def.reliability ?? 1), 1);
+  const reliability = layout.reduce((r, e) => r * Math.min(1, (e.def.reliability ?? 1) + reliabilityDelta(e)), 1);
   const hasHeatShield = has('heatShield');
   const noseCdA = layout.find((e) => e.def.aero.cdA != null)?.def.aero.cdA;
   const shieldCdA = layout.find((e) => e.def.aero.entryCdA != null)?.def.aero.entryCdA;
@@ -118,7 +128,7 @@ export function computeShipSpec(assembly, { catalog, engines, launch, balance, p
     name: assembly.name,
     parts: layout.map((e) => ({
       id: e.id, type: e.type, x: round(e.x), y: round(e.y), z: round(e.z), rotation: e.angle,
-      variant: e.engine ? `${e.engine.fuel}-${e.engine.nozzle}` : e.def.fuel ? e.def.fuel.type : flags(e).fragileShield ? 'tiles' : flags(e).cheapSeals ? 'cheap_seals' : null,
+      variant: e.engine ? `${e.engine.fuel}-${e.engine.nozzle}` : e.def.fuel ? e.def.fuel.type : flags(e).fragileShield ? 'tiles' : flags(e).cheapSeals ? 'cheap_seals' : (materialOf(e)?.id ?? null),
     })),
     engines: engineSpecs.map((s) => ({ fuel: s.fuel, nozzle: s.nozzle, pump: s.pump })),
     stats,
@@ -127,7 +137,7 @@ export function computeShipSpec(assembly, { catalog, engines, launch, balance, p
   };
 
   const breakdown = {
-    parts: layout.map((e) => ({ id: e.id, type: e.type, name: e.def.name, family: e.def.family, mass: massOf(e), fuel: e.def.fuel?.mass ?? 0, y: e.y, height: e.height, sideArea: e.def.aero.sideArea, attach: e.attach })),
+    parts: layout.map((e) => ({ id: e.id, type: e.type, name: e.def.name, family: e.def.family, mass: massOf(e), fuel: e.def.fuel?.mass ?? 0, y: e.y, height: e.height, sideArea: e.def.aero.sideArea, attach: e.attach, material: materialOf(e)?.name ?? null })),
     fuelPartIds: layout.filter((e) => e.def.fuel).map((e) => e.id),
     enginePartIds: engineEntries.map((e) => e.id),
     finPartIds: layout.filter((e) => /fin/.test(e.type)).map((e) => e.id),

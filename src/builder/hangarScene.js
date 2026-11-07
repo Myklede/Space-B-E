@@ -7,9 +7,10 @@ import { createStations } from './bay/stations.js';
 import { createPlayer } from './bay/player.js';
 import { createWallScreen } from './bay/screen.js';
 import { createTestStand } from './bay/teststand.js';
-import { createHologram } from './bay/hologram.js';
 import { partArt } from './bay/partArt.js';
 import { DEG, disposeObject, polar } from './bay/util.js';
+import { BASE_RADIUS, SIZE_SCALE } from './assembly.js';
+import { box, std } from './bay/util.js';
 
 const HIGHLIGHT = new THREE.Color(0x67e8f9);
 const SELECTED = new THREE.Color(0xfbbf24);
@@ -22,7 +23,8 @@ export function createHangarScene({ renderer }) {
   const room = createRoom(scene);
   const stand = createStand(scene);
   const stations = createStations(scene);
-  const player = createPlayer(scene, camera, { stations, start: polar(HALL.doorAngle, HALL.radius - 2.6, 0) });
+  renderer.localClippingEnabled = true; // the engineer's body is clipped at the neck so the camera never sits inside the head
+  const player = createPlayer(scene, camera, { stations, obstacles: room.obstacles, start: polar(HALL.doorAngle, HALL.radius - 2.6, 0), gravity: PLANETS.earth.g });
   player.lookAt(0, 0);
   const wall = createWallScreen(scene, { renderer, getScene: () => scene, standTop: stand.standTop });
 
@@ -31,7 +33,6 @@ export function createHangarScene({ renderer }) {
   rocket.position.y = stand.standTop;
   scene.add(rocket);
   const test = createTestStand({ scene, rocket, standTop: stand.standTop, planets: PLANETS, g0: G0 });
-  const hologram = createHologram({ scene });
 
   const groups = new Map();
   const anchors = [];
@@ -87,21 +88,6 @@ export function createHangarScene({ renderer }) {
     const radius = layout.reduce((r, e) => (e.attach === 'axial' ? Math.max(r, e.radius) : r), 1.25);
     for (const arm of stand.arms) arm.position.x = radius - 1.83;
     applyGlow();
-    hologram.setLayout(layout, freeNodes);
-  }
-
-  /** Projects the vehicle as a hologram beside a station's console (or hides it). Returns where it stands. */
-  function showHologram(stationId) {
-    const s = stations.find((st) => st.id === stationId);
-    if (!s) { hologram.hide(); return null; }
-    // the projector stands just past the console, off to the player's right, so the projection hangs against the
-    // hall instead of over the bright vehicle on the stand
-    const inward = new THREE.Vector3(-s.position.x, 0, -s.position.z).normalize();
-    const right = new THREE.Vector3(-inward.z, 0, inward.x);
-    const pos = s.position.clone().addScaledVector(inward, 1.0).addScaledVector(right, 1.6);
-    pos.y = 1.0;
-    hologram.show({ position: pos, facing: Math.atan2(inward.x, inward.z) });
-    return pos;
   }
 
   function applyGlow() {
@@ -131,13 +117,11 @@ export function createHangarScene({ renderer }) {
     const until = performance.now() / 1000 + seconds;
     for (const id of ids) if (groups.has(id)) glows.set(id, { until, color });
     applyGlow();
-    hologram.highlight(ids);
   }
 
   function select(id) {
     selected = id;
     applyGlow();
-    hologram.select(id);
   }
 
   function worldAnchors() {
@@ -150,6 +134,35 @@ export function createHangarScene({ renderer }) {
       out.push({ ...a, world: local.applyMatrix4(rocket.matrixWorld) });
     }
     return out;
+  }
+
+  // ---------- spare hardware on pallets: real part art, placed once the NASA models are in ----------
+  let decorated = false;
+  function decorate(catalog) {
+    if (decorated) return;
+    decorated = true;
+    const spares = [
+      { id: 'capsule_s', deg: 246, r: 12.6, yaw: 0.4, collider: 0.9 }, // a return capsule by the warehouse
+      { id: 'battery', deg: 236, r: 11.8, yaw: 0.2, collider: 0.6 },
+      { id: 'o2_bottle', deg: 212, r: 13.4, yaw: 0, collider: 0.5 },
+      { id: 'nose_pointed_m', deg: 118, r: 12.6, yaw: 0, collider: 0.9 }, // a nose cone waiting at the structures bay
+      { id: 'heat_shield_m', deg: 86, r: 13.6, yaw: 0, collider: 0.9 },
+    ];
+    const wood = std(0x8a6a3f, { roughness: 0.9, metalness: 0 });
+    for (const s of spares) {
+      const def = catalog.get(s.id);
+      if (!def) continue;
+      const p = polar(s.deg, s.r, 0);
+      const pallet = box(1.4, 0.14, 1.1, wood, { x: p.x, y: 0.07, z: p.z });
+      pallet.rotation.y = -s.deg * DEG + Math.PI / 2 + s.yaw;
+      pallet.castShadow = pallet.receiveShadow = true;
+      const art = partArt({ type: def.id, attach: def.attach, height: def.height, def, radius: BASE_RADIUS * (SIZE_SCALE[def.size] ?? 1) });
+      art.traverse((o) => { if (o.isMesh) o.castShadow = o.receiveShadow = true; });
+      art.position.set(p.x, 0.14, p.z);
+      art.rotation.y = pallet.rotation.y;
+      scene.add(pallet, art);
+      room.obstacles.push({ x: p.x, z: p.z, r: s.collider });
+    }
   }
 
   // ---------- stations ----------
@@ -180,8 +193,7 @@ export function createHangarScene({ renderer }) {
     const now = performance.now() / 1000;
     let changed = false;
     for (const [id, glow] of glows) if (glow.until < now) { glows.delete(id); changed = true; }
-    if (changed) { applyGlow(); hologram.highlight([]); }
-    hologram.update(dt);
+    if (changed) applyGlow();
     for (const [id, holder] of groups) {
       const glow = glows.get(id);
       if (!glow && selected !== id) continue;
@@ -199,10 +211,10 @@ export function createHangarScene({ renderer }) {
   }
 
   return {
-    scene, camera, rocket, player, stations, stand, room, wall, test, hologram, hall: HALL,
-    setLayout, highlight, clearHighlight: () => { glows.clear(); applyGlow(); hologram.highlight([]); }, select, worldAnchors,
-    showHologram, hideHologram: () => hologram.hide(),
-    rotateBy: (deg) => { yaw += deg * DEG; hologram.rotateBy(deg); },
+    scene, camera, rocket, player, stations, stand, room, wall, test, hall: HALL,
+    setLayout, highlight, clearHighlight: () => { glows.clear(); applyGlow(); }, select, worldAnchors,
+    decorate,
+    rotateBy: (deg) => { yaw += deg * DEG; },
     nearestStation, placeAtStation, update, dispose,
     get layout() { return layoutCache; },
     get planets() { return PLANETS; },

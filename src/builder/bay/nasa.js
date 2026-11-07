@@ -18,9 +18,9 @@ loader.setDRACOLoader(draco);
  * untextured models; `fit` scales by 'height' (default) or 'width'.
  */
 export const NASA_PARTS = {
-  engine_s: { model: 'saturn_v', nodes: ['pCone2 gro', 'polySurfa2'], up: 'y', tint: 0x6f757b, forceTint: true, metalness: 0.55, roughness: 0.5 },
-  engine_m: { model: 'saturn_v', nodes: ['pCone2 gro', 'polySurfa2'], up: 'y', tint: 0x6f757b, forceTint: true, metalness: 0.55, roughness: 0.5 },
-  engine_l: { model: 'saturn_v', nodes: ['pCone2 gro', 'polySurfa2'], up: 'y', tint: 0x6f757b, forceTint: true, metalness: 0.55, roughness: 0.5 },
+  engine_s: { model: 'shuttle_engines', up: 'x', tint: 0x8d9399, forceTint: true, metalness: 0.7, roughness: 0.42 }, // a Space Shuttle main engine
+  engine_m: { model: 'shuttle_engines', up: 'x', tint: 0x8d9399, forceTint: true, metalness: 0.7, roughness: 0.42 }, // a Space Shuttle main engine
+  engine_l: { model: 'shuttle_engines', up: 'x', tint: 0x8d9399, forceTint: true, metalness: 0.7, roughness: 0.42 }, // a Space Shuttle main engine
   capsule_s: { model: 'stardust_capsule', up: 'short', tint: 0xe6e3dc, roughness: 0.5 },
   capsule_m: { model: 'esas_crew_module', up: 'z', flip: true, tint: 0xd3d1cb, roughness: 0.6, metalness: 0.15 },
   capsule_l: { model: 'esas_crew_module', up: 'z', flip: true, tint: 0xd3d1cb, roughness: 0.6, metalness: 0.15 },
@@ -158,4 +158,19 @@ export function nasaPartArt(partId) {
   const copy = proto.clone(true);
   copy.traverse((o) => { if (o.isMesh) o.material = Array.isArray(o.material) ? o.material.map((m) => m.clone()) : o.material.clone(); });
   return copy;
+}
+
+/**
+ * A real NASA model as hall equipment: loaded and normalised like a part (standing on y = 0, centred, `height`
+ * metres tall, or `fit: 'width'` metres wide). Resolves to null when the file is missing, never throws.
+ */
+export async function nasaProp(slug, cfg = {}, height = 1) {
+  const scene = await loadFile(slug);
+  if (!scene) return null;
+  try {
+    return normalise(scene, { ...cfg, model: slug }, height);
+  } catch (error) {
+    console.warn(`[nasa] could not prepare prop ${slug}:`, error);
+    return null;
+  }
 }

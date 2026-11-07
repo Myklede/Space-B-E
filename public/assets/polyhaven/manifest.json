@@ -30,6 +30,20 @@
     "metal_tool_chest": "models/metal_tool_chest/metal_tool_chest.gltf",
     "old_military_crate": "models/old_military_crate/old_military_crate.gltf",
     "korean_fire_extinguisher_01": "models/korean_fire_extinguisher_01/korean_fire_extinguisher_01.gltf",
-    "metal_office_desk": "models/metal_office_desk/metal_office_desk.gltf"
+    "metal_office_desk": "models/metal_office_desk/metal_office_desk.gltf",
+    "portable_welding_cart": "models/portable_welding_cart/portable_welding_cart.gltf",
+    "portable_generator": "models/portable_generator/portable_generator.gltf",
+    "industrial_storage_cart": "models/industrial_storage_cart/industrial_storage_cart.gltf",
+    "tool_cart": "models/tool_cart/tool_cart.gltf",
+    "bench_vice_01": "models/bench_vice_01/bench_vice_01.gltf",
+    "ladder_sectioned_01": "models/ladder_sectioned_01/ladder_sectioned_01.gltf",
+    "propane_tank": "models/propane_tank/propane_tank.gltf",
+    "modular_industrial_pipes_01": "models/modular_industrial_pipes_01/modular_industrial_pipes_01.gltf",
+    "pipe_wrench": "models/pipe_wrench/pipe_wrench.gltf",
+    "drawer_cabinet": "models/drawer_cabinet/drawer_cabinet.gltf",
+    "plastic_crate_01": "models/plastic_crate_01/plastic_crate_01.gltf",
+    "barrel_03": "models/barrel_03/barrel_03.gltf",
+    "metal_stool_01": "models/metal_stool_01/metal_stool_01.gltf",
+    "industrial_pipe_lamp": "models/industrial_pipe_lamp/industrial_pipe_lamp.gltf"
   }
 }

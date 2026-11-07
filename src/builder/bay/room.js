@@ -2,6 +2,7 @@
 // Geometry is procedural; surfaces use the Poly Haven PBR sets when present (bay/loader.js), plain colours otherwise.
 import * as THREE from 'three';
 import { loadEnvironment, loadProp, pbrMaterial } from './loader.js';
+import { nasaProp } from './nasa.js';
 import { DEG, box, canvasTexture, cylinder, glow, polar, shadowed, std, tube } from './util.js';
 
 export const HALL = Object.freeze({
@@ -266,6 +267,7 @@ export function createRoom(scene) {
 
   // ----- async: PBR materials, environment, props -----
   const props = { shelves: [], desk: null, toolChest: null, extinguisher: null, crates: [] };
+  const obstacles = []; // { x, z, r } the player walks around (read live by bay/player.js)
   const ready = (async () => {
     const [floorMat, platMat, wallMat, walkMat, env] = await Promise.all([
       pbrMaterial('hangar_concrete_floor', { repeat: [9, 9], fallbackColor: 0x6b6d6b, roughness: 0.9 }),
@@ -305,10 +307,83 @@ export function createRoom(scene) {
     props.desk = await place('metal_office_desk', 150, R - 2.3, { yaw: Math.PI });
     props.toolChest = await place('metal_tool_chest', 66, R - 2.2, { yaw: Math.PI });
     props.extinguisher = await place('korean_fire_extinguisher_01', 165, R - 0.75);
+    // the trades' real equipment: welding and tool carts by propulsion, a vice bench and ladder by structures,
+    // a generator and gas bottles by the test console, storage carts and barrels by the warehouse
+    await place('portable_welding_cart', 46, R - 3.0, { yaw: 0.6 });
+    await place('tool_cart', 58, R - 3.6, { yaw: -0.4 });
+    await place('bench_vice_01', 110, R - 2.4, { yaw: Math.PI });
+    await place('ladder_sectioned_01', 98, R - 1.2, { yaw: 0.2 });
+    await place('portable_generator', 296, R - 3.2, { yaw: 0.9 });
+    await place('propane_tank', 312, R - 2.4, { yaw: 0 });
+    await place('industrial_storage_cart', 250, R - 3.0, { yaw: 0.3 });
+    await place('barrel_03', 204, R - 2.2, { yaw: 0 });
+    await place('plastic_crate_01', 238, R - 4.4, { yaw: 0.8 });
+    await place('drawer_cabinet', 160, R - 1.4, { yaw: Math.PI });
+    await place('metal_stool_01', 146, R - 3.4, { yaw: 1.2 });
+
+    // ----- real NASA hardware around the stations (public domain, github.com/nasa/NASA-3D-Resources) -----
+    // Models are normalised to stand on y = 0 at a real-world height; their fronts face -z, so yaw 0 looks at the hall centre.
+    const pedestal = (deg, r, w, hgt, d, material = DARK_STEEL) => {
+      const m = box(w, hgt, d, material, { y: hgt / 2 });
+      m.position.add(polar(deg, r, 0));
+      m.rotation.y = -deg * DEG + Math.PI / 2;
+      m.castShadow = m.receiveShadow = true;
+      group.add(m);
+      return m;
+    };
+    const placeNasa = async (slug, cfg, height, deg, r, { yaw = 0, y = 0, collider = 0 } = {}) => {
+      const obj = await nasaProp(slug, cfg, height);
+      if (!obj) return null;
+      obj.position.copy(polar(deg, r, y));
+      obj.rotation.y = -deg * DEG + Math.PI / 2 + yaw;
+      group.add(obj);
+      if (collider) obstacles.push({ x: obj.position.x, z: obj.position.z, r: collider });
+      return obj;
+    };
+    // propulsion workshop: a Space Shuttle main engine on a yellow transport dolly
+    {
+      const deg = 78, r = 13.0;
+      pedestal(deg, r, 2.3, 0.22, 2.3, YELLOW);
+      for (const [dx, dz] of [[-0.9, -0.9], [0.9, -0.9], [-0.9, 0.9], [0.9, 0.9]]) {
+        const wheel = cylinder(0.14, 0.14, 0.1, std(0x1b1d1f, { roughness: 0.9 }), { x: dx, y: 0.14, z: dz });
+        wheel.rotation.z = Math.PI / 2;
+        const p = polar(deg, r, 0);
+        wheel.position.applyAxisAngle(new THREE.Vector3(0, 1, 0), -deg * DEG + Math.PI / 2).add(p);
+        group.add(wheel);
+      }
+      await placeNasa('shuttle_engines', { up: 'x', tint: 0x9aa0a6, forceTint: true, metalness: 0.75, roughness: 0.38 }, 3.2, deg, r, { y: 0.22, collider: 1.4 });
+    }
+    // crew systems lab: Robonaut 2 and the suits the crew will wear
+    pedestal(167, 9.7, 1.0, 0.12, 1.0);
+    await placeNasa('robonaut', { up: 'y', roughness: 0.45, metalness: 0.3 }, 2.2, 167, 9.7, { y: 0.12, collider: 0.7 });
+    await placeNasa('mark3_suit', { up: 'y' }, 1.95, 141, R - 1.4, { collider: 0.5 });
+    await placeNasa('astronaut', { up: 'y' }, 1.9, 134, R - 1.4, { yaw: Math.PI, collider: 0.5 });
+    await placeNasa('aces_suit', { up: 'y', roughness: 0.6 }, 1.85, 127, R - 1.4, { collider: 0.5 });
+    // the Mars helicopter on a work table near the structures bay
+    {
+      const deg = 136, r = 12.4;
+      pedestal(deg, r, 1.5, 0.78, 0.9, std(0x3a4046, { roughness: 0.5, metalness: 0.7 }));
+      await placeNasa('ingenuity', { up: 'y' }, 0.5, deg, r, { y: 0.78, collider: 0.9 });
+    }
+    // warehouse: the RASSOR mining robot and cubesats on the crates
+    await placeNasa('rassor', { up: 'y', tint: 0x8f969c, forceTint: true, metalness: 0.5, roughness: 0.5 }, 0.9, 214, 11.6, { yaw: 0.5, collider: 1.0 });
+    for (const [i, slug] of [['0', 'cubesat2'], ['1', 'cubesat1']]) {
+      const crate = props.crates[+i];
+      if (!crate) continue;
+      const top = new THREE.Box3().setFromObject(crate).max.y;
+      const sat = await nasaProp(slug, { up: 'y', tint: 0xb9bec4 }, 0.3);
+      if (!sat) continue;
+      sat.position.set(crate.position.x, top, crate.position.z);
+      sat.rotation.y = crate.rotation.y + 0.4;
+      group.add(sat);
+    }
+    // test conductor: a scale model of the mobile launcher on a display stand
+    pedestal(318, R - 2.0, 1.1, 0.5, 1.1);
+    await placeNasa('mobile_launcher', { up: 'y' }, 1.8, 318, R - 2.0, { y: 0.5, collider: 0.8 });
     return props;
   })();
 
-  return { group, ready, props, platformHeight, hall: HALL };
+  return { group, ready, props, obstacles, platformHeight, hall: HALL };
 }
 
 /** The hold-down stand and service tower the vehicle sits on. */

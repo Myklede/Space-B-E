@@ -65,6 +65,7 @@ export class Assembly {
     this.parts = (json?.parts ?? []).map((p) => ({
       id: p.id, type: p.type, parent: p.parent ?? null, node: p.node ?? null,
       angle: Number(p.angle) || 0, yFrac: p.yFrac == null ? 0.5 : Number(p.yFrac), variant: p.variant ?? null, group: p.group ?? null,
+      material: p.material ?? null,
       ...(p.engine ? { engine: { fuel: p.engine.fuel, nozzle: p.engine.nozzle, pump: p.engine.pump } } : {}),
     }));
     this.#dropInvalid();
@@ -91,14 +92,20 @@ export class Assembly {
     return this.parts.filter((p) => p.parent === id && (node === null || p.node === node));
   }
 
-  /** Nodes a new part could hang on: [{ partId, node }]. top/bottom hold one child, radial holds many. */
+  /** The node of `p` that its own parent connection uses (a part hanging under its parent is joined at its top). */
+  #usedByParent(p) {
+    return p.parent === null ? null : p.node === 'bottom' ? 'top' : p.node === 'top' ? 'bottom' : null;
+  }
+
+  /** Nodes a new part could hang on: [{ partId, node }]. top/bottom hold one part, radial holds many. */
   freeNodes() {
     const out = [];
     for (const p of this.parts) {
       const def = this.catalog.get(p.type);
       if (!def || def.attach !== 'axial') continue;
+      const taken = this.#usedByParent(p);
       for (const node of def.nodes) {
-        if (node === 'radial' || this.children(p.id, node).length === 0) out.push({ partId: p.id, node });
+        if (node === 'radial' || (node !== taken && this.children(p.id, node).length === 0)) out.push({ partId: p.id, node });
       }
     }
     return out;
@@ -115,7 +122,7 @@ export class Assembly {
     if (!parentDef.nodes.includes(node)) return { ok: false, reason: `No ${node} node there` };
     if (node === 'radial') return def.attach === 'radial' ? { ok: true, reason: '' } : { ok: false, reason: 'Only side-mounted parts fit a radial node' };
     if (def.attach !== 'axial') return { ok: false, reason: 'Side-mounted parts need a radial node' };
-    if (this.children(parentId, node).length) return { ok: false, reason: 'Node already used' };
+    if (this.children(parentId, node).length || this.#usedByParent(parent) === node) return { ok: false, reason: 'Node already used' };
     const needs = node === 'top' ? 'bottom' : 'top';
     if (!def.nodes.includes(needs)) return { ok: false, reason: `That part has no ${needs} connector` };
     return { ok: true, reason: '' };
@@ -264,6 +271,41 @@ export class Assembly {
     return true;
   }
 
+  /** Choose the material of one part (an id from data/materials.json). Symmetry twins change together. */
+  setMaterial(id, materialId) {
+    const p = this.part(id);
+    if (!p) return false;
+    this.#begin();
+    const twins = p.group ? this.parts.filter((q) => q.group === p.group) : [p];
+    for (const q of twins) q.material = materialId;
+    this.#commit();
+    return true;
+  }
+
+  /** Swap a part for another type in the same place (same parent, node, angle). Children stay. Returns true if swapped. */
+  replace(id, typeId) {
+    const p = this.part(id);
+    const from = p && this.catalog.get(p.type);
+    const to = this.catalog.get(typeId);
+    if (!p || !from || !to || from.attach !== to.attach) return false;
+    if (to.attach === 'axial') {
+      // the new part must offer the nodes the neighbours use
+      if (p.parent !== null && !to.nodes.includes(p.node === 'top' ? 'bottom' : 'top')) return false;
+      for (const c of this.children(id)) if (!to.nodes.includes(c.node)) return false;
+    }
+    this.#begin();
+    const twins = p.group ? this.parts.filter((q) => q.group === p.group) : [p];
+    for (const q of twins) {
+      q.type = typeId;
+      q.material = null;
+      if (to.engine) q.engine = q.engine ?? defaultEngine(to);
+      else delete q.engine;
+      if (to.engine && q.engine) q.engine.pump = String(to.size ?? 'm').toUpperCase();
+    }
+    this.#commit();
+    return true;
+  }
+
   rotate(id, degrees) {
     const p = this.part(id);
     if (!p || p.node !== 'radial') return false;
@@ -314,7 +356,7 @@ export class Assembly {
       if (!def) return;
       const entry = {
         id: p.id, type: p.type, def, attach: def.attach, parentId: p.parent, node: p.node, angle: p.angle, yFrac: p.yFrac,
-        y: base, height: def.height, radius: partRadius(def), x: 0, z: 0, centerY: base + def.height / 2, engine: p.engine ?? null, group: p.group,
+        y: base, height: def.height, radius: partRadius(def), x: 0, z: 0, centerY: base + def.height / 2, engine: p.engine ?? null, group: p.group, material: p.material ?? null,
       };
       byId.set(p.id, entry);
       out.push(entry);
@@ -329,7 +371,7 @@ export class Assembly {
           const a = (c.angle * Math.PI) / 180;
           const e = {
             id: c.id, type: c.type, def: cdef, attach: 'radial', parentId: p.id, node: 'radial', angle: c.angle, yFrac: c.yFrac,
-            y, height: cdef.height, radius: r, x: r * Math.cos(a), z: -r * Math.sin(a), centerY: y, engine: null, group: c.group,
+            y, height: cdef.height, radius: r, x: r * Math.cos(a), z: -r * Math.sin(a), centerY: y, engine: null, group: c.group, material: c.material ?? null,
           };
           byId.set(c.id, e);
           out.push(e);
