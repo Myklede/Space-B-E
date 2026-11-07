@@ -9,9 +9,9 @@
     "vac": { "name": "Vacuum nozzle", "mass": 180, "cost": 40000, "note": "Long bell tuned for vacuum. Efficient in space, weak and unstable at sea level.", "real": "RL10B-2: expansion ratio 250, Merlin Vacuum: 165" }
   },
   "pumps": {
-    "S": { "name": "Small turbopump", "thrust": 100000, "mass": 500, "cost": 200000, "heatRate": 0.0015, "real": "RL10 class (110 kN, 300 kg)" },
-    "M": { "name": "Medium turbopump", "thrust": 300000, "mass": 1200, "cost": 500000, "heatRate": 0.002, "real": "RD-0124 class (294 kN, 480 kg)" },
-    "L": { "name": "Large turbopump", "thrust": 1000000, "mass": 3000, "cost": 1000000, "heatRate": 0.004, "real": "Merlin 1D / Vulcain 2 class (845–1,350 kN)" }
+    "S": { "name": "Small turbopump", "thrust": 100000, "mass": 500, "cost": 200000, "chamberScale": 0.35, "heatRate": 0.0015, "real": "RL10 class (110 kN, 300 kg)" },
+    "M": { "name": "Medium turbopump", "thrust": 300000, "mass": 1200, "cost": 500000, "chamberScale": 0.6, "heatRate": 0.002, "real": "RD-0124 class (294 kN, 480 kg)" },
+    "L": { "name": "Large turbopump", "thrust": 1000000, "mass": 3000, "cost": 1000000, "chamberScale": 1, "heatRate": 0.004, "real": "Merlin 1D / Vulcain 2 class (845–1,350 kN)" }
   },
   "references": [
     { "id": "merlin", "name": "Merlin 1D", "maker": "SpaceX, Falcon 9", "fuel": "kerolox", "nozzle": "sl", "pump": "L", "options": { "cycle": "gg", "injector": "pintle", "nozzleExt": "regen", "igniter": "tea_teb" }, "facts": "845 kN sea level / 914 kN vacuum · Isp 282 / 311 s · 470 kg · gas generator · pintle injector · TEA-TEB ignition · 97 bar · first flight 2013" },

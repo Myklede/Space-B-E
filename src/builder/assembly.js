@@ -495,7 +495,7 @@ export class Assembly {
           const a = (c.angle * Math.PI) / 180;
           const e = {
             id: c.id, type: c.type, def: cdef, attach: 'radial', parentId: p.id, node: 'radial', angle: c.angle, yFrac: c.yFrac,
-            y, height: cdef.height, radius: r, x: r * Math.cos(a), z: -r * Math.sin(a), centerY: y, engine: null, group: c.group, material: c.material ?? null,
+            y, height: cdef.height, radius: r, x: r * Math.cos(a), z: -r * Math.sin(a), centerY: cdef.booster ? y + cdef.height * 0.5 : y, engine: null, group: c.group, material: c.material ?? null,
             options: c.options ?? null,
           };
           byId.set(c.id, e);

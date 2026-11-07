@@ -173,7 +173,7 @@ export function createDesignScene() {
 
   // ----- vehicle -----
   function setLayout(layout) {
-    const keyNow = layout.map((e) => `${e.id}:${e.type}:${e.angle}:${e.yFrac}:${e.y.toFixed(2)}:${e.material ?? ''}:${JSON.stringify(e.options ?? null)}:${e.cluster?.count ?? 1}`).join('|');
+    const keyNow = layout.map((e) => `${e.id}:${e.type}:${e.angle}:${e.yFrac}:${e.y.toFixed(2)}:${e.material ?? ''}:${JSON.stringify(e.options ?? null)}:${e.cluster?.count ?? 1}:${e.engine ? `${e.engine.fuel}-${e.engine.nozzle}` : ''}`).join('|');
     layoutCache = layout;
     stackHeight = 0; stackRadius = 1.25;
     for (const e of layout) if (e.attach === 'axial') { stackHeight = Math.max(stackHeight, e.y + e.height); stackRadius = Math.max(stackRadius, e.radius); }

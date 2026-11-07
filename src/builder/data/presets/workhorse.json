@@ -22,8 +22,8 @@
     { "id": "p9", "type": "legs_l", "parent": "p8", "node": "radial", "angle": 45, "yFrac": 0.3, "variant": null, "group": null },
     { "id": "p10", "type": "srb_s", "parent": "p7", "node": "radial", "angle": 0, "yFrac": 0.1, "variant": null, "group": "g1" },
     { "id": "p11", "type": "srb_s", "parent": "p7", "node": "radial", "angle": 180, "yFrac": 0.1, "variant": null, "group": "g1" },
-    { "id": "p12", "type": "fin_l", "parent": "p7", "node": "radial", "angle": 90, "yFrac": 0.1, "variant": null, "group": "g2" },
-    { "id": "p13", "type": "fin_l", "parent": "p7", "node": "radial", "angle": 270, "yFrac": 0.1, "variant": null, "group": "g2" },
+    { "id": "p12", "type": "fin_l", "parent": "p7", "node": "radial", "angle": 90, "yFrac": 0.1, "variant": null, "group": "g2", "origin": "tail" },
+    { "id": "p13", "type": "fin_l", "parent": "p7", "node": "radial", "angle": 270, "yFrac": 0.1, "variant": null, "group": "g2", "origin": "tail" },
     { "id": "p14", "type": "parachute", "parent": "p2", "node": "radial", "angle": 180, "yFrac": 0.55, "variant": null, "group": null },
     { "id": "p15", "type": "drogue_chute", "parent": "p2", "node": "radial", "angle": 220, "yFrac": 0.62, "variant": null, "group": null },
     { "id": "p16", "type": "antenna_medium", "parent": "p2", "node": "radial", "angle": 90, "yFrac": 0.55, "variant": null, "group": null },
@@ -38,7 +38,7 @@
     { "id": "p25", "type": "drill", "parent": "p5", "node": "radial", "angle": 330, "yFrac": 0.35, "variant": null, "group": null },
     { "id": "p26", "type": "wiring_tunnel", "parent": "p5", "node": "radial", "angle": 100, "yFrac": 0.5, "variant": null, "group": null },
     { "id": "p27", "type": "helium_copv", "parent": "p6", "node": "radial", "angle": 140, "yFrac": 0.5, "variant": null, "group": null },
-    { "id": "p31", "type": "fin_l", "parent": "p7", "node": "radial", "angle": 0, "yFrac": 0.1, "variant": null, "group": "g2" },
-    { "id": "p32", "type": "fin_l", "parent": "p7", "node": "radial", "angle": 180, "yFrac": 0.1, "variant": null, "group": "g2" }
+    { "id": "p31", "type": "fin_l", "parent": "p7", "node": "radial", "angle": 0, "yFrac": 0.1, "variant": null, "group": "g2", "origin": "tail" },
+    { "id": "p32", "type": "fin_l", "parent": "p7", "node": "radial", "angle": 180, "yFrac": 0.1, "variant": null, "group": "g2", "origin": "tail" }
   ]
 }

@@ -22,8 +22,9 @@ export function engineStats(def, engines, g0, mods = null) {
     fuel: def.fuel, nozzle: def.nozzle, pump: def.pump,
     thrust, // N in vacuum
     thrustSL: thrust * (ispSL / ispVac), // N at sea level (same mass flow, lower exhaust speed)
-    mass: (pump.mass + fuel.chamberMass + nozzle.mass + m.massD) * m.massF,
-    cost: (pump.cost + fuel.chamberCost + nozzle.cost + m.costD) * m.costF,
+    // the chamber and nozzle scale with the pump (pump.chamberScale, 1 for the large pump)
+    mass: (pump.mass + (fuel.chamberMass + nozzle.mass) * (pump.chamberScale ?? 1) + m.massD) * m.massF,
+    cost: (pump.cost + (fuel.chamberCost + nozzle.cost) * (pump.chamberScale ?? 1) + m.costD) * m.costF,
     ispSL, ispVac, veSL, veVac,
     mdotVac: thrust / veVac, // kg/s
     mdotSL: thrust / veVac, // the pump moves the same mass; the sea-level thrust is what drops
