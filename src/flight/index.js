@@ -14,7 +14,7 @@ import { stubScreen } from '/src/core/stubScreen.js';
 import { astronaut } from '/src/surface/astronaut.js';
 import { FlightController } from './FlightController.js';
 import { createCockpitControls } from './cockpitControls.js';
-import { ascentGuide, assistReadout, predictPath } from './flightAssist.js';
+import { ascentGuide, assistReadout, landingGuide, predictPath } from './flightAssist.js';
 import { createDebrisField } from './debris.js';
 import { pressureRatio } from './atmosphere.js';
 import { STARTS } from './presets.js';
@@ -415,7 +415,7 @@ export default {
     if (fc.landed) a.warnings.push({ level: 'amber', text: 'LANDED: press E to stand up' });
     if (s.debrisWarning > 0) a.warnings.unshift({ level: 'red', text: 'ORBITAL DEBRIS AHEAD: steer and burn sideways to dodge' });
     if (state === 'ORBIT' && t.phase === 'orbit') a.warnings.push({ level: 'amber', text: `IN ORBIT: press T for the transfer burn (${fmt((economy.balance.deltaVKmS?.transfer ?? 2.1) * 1000)} m/s)` });
-    const guide = s.assist ? ascentGuide(fc) : null;
+    const guide = s.assist ? ascentGuide(fc) ?? landingGuide(fc) : null;
     if (guide) a.warnings.unshift({ level: 'amber', text: guide.text });
     s.hud.update(t, a, s.assist);
     const cam = s.mode === 'surface' ? s.surface.camera : s.mode === 'site' ? s.site.camera : view.camera;

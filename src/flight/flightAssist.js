@@ -118,3 +118,24 @@ export function ascentGuide(fc, profile = ASCENT_PROFILE) {
   if (t.periapsis < top) return { step: 'circularise', direction: east, text: 'At the apoapsis: burn sideways (prograde) to round the orbit' };
   return null;
 }
+
+const TOUCHDOWN_HINT = 3; // m/s, matches FlightController TUNING.touchdownLimit.legs
+
+// Entry + landing guide (Flight Assist), the real Mars "7 minutes of terror" sequence:
+// heat shield → supersonic chute → retro burn at the last moment (BURN NOW) → gentle touchdown.
+export function landingGuide(fc) {
+  const t = fc.telemetry;
+  if (fc.failed || fc.landed || fc.onGround || !fc.planet.seaLevelDensity) return null;
+  if (t.phase !== 'entry' && t.phase !== 'landing') return null;
+  const a = assistReadout(fc);
+  if (t.heatFlux > 0 && !fc.chuteOpen && t.altitude > 15000) {
+    return { step: 'entry', text: 'Entry: the heat shield takes the heat. Keep your hands off and ride it down' };
+  }
+  if (!fc.chuteOpen && t.speed > 500) return { step: 'slowing', text: 'Too fast for the parachute yet: the air is slowing you down' };
+  if (t.altitude < 200 && t.verticalSpeed > -12) {
+    return { step: 'touchdown', text: `Ease the throttle (Q/E): touch down under ${TOUCHDOWN_HINT} m/s, nose up` };
+  }
+  if (a.burnNow) return { step: 'burn', text: 'BURN NOW: hold SPACE for the retro burn' };
+  if (fc.chuteOpen) return { step: 'chute', text: `Parachute out. Wait for BURN NOW (${Number.isFinite(a.stoppingDistance) ? a.stoppingDistance.toFixed(0) : '—'} m to stop)` };
+  return { step: 'wait', text: 'Falling: wait for BURN NOW' };
+}

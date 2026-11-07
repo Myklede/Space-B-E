@@ -8,7 +8,7 @@ const coreJson = (rel) => JSON.parse(readFileSync(new URL(`../../core/${rel}`, i
 import { MOCK_SHIPS, STARTS } from '../presets.js';
 const MOCK_PLANETS = PLANETS;
 class FlightController extends RawFC { constructor(o) { super({ g0: G0, ...o }); } }
-import { predictPath, stoppingDistance, assistReadout, ascentGuide } from '../flightAssist.js';
+import { predictPath, stoppingDistance, assistReadout, ascentGuide, landingGuide } from '../flightAssist.js';
 import { len, dot, v3, scale, qFromTo, LOCAL_FORWARD, norm, add } from '../vec.js';
 import { createDebrisField, closestApproach } from '../debris.js';
 import { stackParts } from '../rocketStack.js';
@@ -396,6 +396,25 @@ test('ascent guide: straight up on the pad, ~45° at 20 km, coast once the apoap
   const R = PLANETS.earth.radius;
   const orbit = new FlightController({ planets: PLANETS, shipSpec: MOCK_SHIPS.reliable, start: { altitude: 200000, speed: Math.sqrt((PLANETS.earth.g * R * R) / (R + 200000)) } });
   assert.equal(ascentGuide(orbit), null);
+});
+
+test('landing guide walks through entry → chute → BURN NOW → touchdown on Mars', () => {
+  const m = new FlightController({ planets: PLANETS, planetId: 'mars', shipSpec: MOCK_SHIPS.marsArrival, start: STARTS.marsEntry });
+  const steps = new Set();
+  for (let t = 0; t < 900 && !m.failed && !m.landed; t += FIXED_DT) {
+    const g = landingGuide(m);
+    if (g) steps.add(g.step);
+    const tel = m.telemetry;
+    if (tel.altitude > 3000) { m.update(FIXED_DT, {}); continue; }
+    const a = assistReadout(m);
+    if ((a.burnNow || tel.horizontalSpeed > 2) && tel.verticalSpeed < -4) { m.update(FIXED_DT, { brake: true }); continue; }
+    m.orient = qFromTo(LOCAL_FORWARD, m.up);
+    m.throttle = tel.altitude < 60 || tel.verticalSpeed > -4 ? Math.max(0, Math.min(1, (tel.gravity + ((tel.altitude > 15 ? -4 : -1.5) - tel.verticalSpeed) * 3) / (m.thrustNow() / m.mass))) : 0;
+    m.update(FIXED_DT, {});
+  }
+  assert.equal(m.landed, true, JSON.stringify(m.failed));
+  for (const step of ['entry', 'chute', 'burn', 'touchdown']) assert.ok(steps.has(step), `missing step ${step}: ${[...steps]}`);
+  assert.equal(landingGuide(m), null, 'no guide once landed');
 });
 
 let fails = 0;
