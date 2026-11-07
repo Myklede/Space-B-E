@@ -23,6 +23,9 @@ export const sharedUniforms = {
   uSunDir: { value: new THREE.Vector3(0.82, 0.25, 0.52).normalize() },
 };
 
+// Written by the Earth planet each frame (planets.js), read by the star field (sky.js): 1 when the camera sits in a bright daytime sky.
+export const skyState = { daylight: 0, stamp: -1e9 };
+
 export const GLSL_NOISE = /* glsl */ `
 float hash13(vec3 p) {
   p = fract(p * .1031);

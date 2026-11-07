@@ -17,7 +17,7 @@
     "comOffset": 0.0, "copOffset": 0.0, "reliability": 0.93,
     "hasHeatShield": true, "heatShieldDamaged": false, "hasLegs": true, "hasRCS": true,
     "hasParachute": true, "hasAntenna": true, "hasShelter": true, "coldRatedSeals": true,
-    "armorHits": 0, "spareO2Tanks": 2, "power": 4000
+    "armorHits": 1, "spareO2Tanks": 2, "power": 4000
   },
   "warnings": [],
   "launch": { "tempC": 22 }

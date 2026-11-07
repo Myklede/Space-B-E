@@ -4,17 +4,25 @@
 import * as THREE from 'three';
 import { assets, createMarsScene, getTerrainHeight, graphics } from '/src/graphics/index.js';
 
-const cache = { mars: null, lander: null, cabin: null, cabinArt: null };
+const cache = { mars: null, marsSky: null, lander: null, cabin: null, cabinArt: null };
 
 /** Role 3's Mars surface with our landed ship (the lander) at the landing site, the origin. */
 export function getMars() {
   if (!cache.mars) {
-    cache.mars = createMarsScene({ sunElevation: 26 }).scene;
+    const handle = createMarsScene({ sunElevation: 26 });
+    cache.mars = handle.scene;
+    cache.marsSky = handle.setSunElevation;
     cache.lander = assets.get('lander');
     cache.lander.position.set(0, getTerrainHeight(0, 0), 0);
     cache.mars.add(cache.lander);
   }
   return { scene: cache.mars, lander: cache.lander };
+}
+
+/** Role 3's setSunElevation(degrees, azimuthDegrees) for the shared Mars scene (the sol clock drives it). */
+export function getMarsSunSetter() {
+  getMars();
+  return cache.marsSky;
 }
 
 /** Role 3's cabin art in its own scene. */
