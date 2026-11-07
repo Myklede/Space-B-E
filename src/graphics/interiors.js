@@ -224,23 +224,43 @@ export function createCockpit() {
     mesh.add(bezel);
   }
 
-  // Rows of small lit buttons on both side walls and overhead.
+  // Recessed dark switch panels on both side walls, with small lamps sitting flush in a grid.
   const lamps = [glow('#22d3ee', 2.4), glow('#fbbf24', 2.4), glow('#34d399', 2.2), glow('#f87171', 2.6)];
   const blinkers = [];
-  const button = new THREE.BoxGeometry(0.018, 0.018, 0.018);
+  const button = new THREE.BoxGeometry(0.01, 0.01, 0.01);
+  const darkPanel = pbr(0x090c0f, 0.9, 0.1, { envMapIntensity: 0.05 });
   [-1, 1].forEach((side) => {
+    group.add(box(0.012, 0.3, 0.9, pbr(0x1b2026, 0.9, 0.1, { envMapIntensity: 0.1 }), side * 0.964, -0.71, -0.79, 0.004)); // bezel
+    group.add(box(0.014, 0.27, 0.87, darkPanel, side * 0.96, -0.71, -0.79, 0.003)); // the recessed panel
     for (let row = 0; row < 3; row++) {
       for (let col = 0; col < 9; col++) {
         const seed = (row * 7 + col * 3 + (side > 0 ? 5 : 0)) % 11;
         if (seed === 2) continue;
         const material = seed < 7 ? lamps[0] : lamps[1 + (seed % 3)];
         const lamp = new THREE.Mesh(button, material.clone());
-        lamp.position.set(side * 0.965, -0.62 - row * 0.09, -1.15 + col * 0.09);
+        lamp.position.set(side * 0.951, -0.65 - row * 0.06, -1.15 + col * 0.09);
         group.add(lamp);
         if (seed === 5 || seed === 9) blinkers.push(lamp);
       }
     }
   });
+
+  // Detail on the dash hood: seams, raised switch guards and a grab bar. All dark, so the HUD stays readable over it.
+  const seam = pbr(0x050709, 0.9, 0.1, { envMapIntensity: 0.05 });
+  const guard = pbr(0x1b2026, 0.85, 0.2, { envMapIntensity: 0.1 });
+  const hoodZ = -0.95;
+  [-0.7, -0.35, 0, 0.35, 0.7].forEach((x) => group.add(box(0.006, 0.5, 0.006, seam, x, -0.77, hoodZ + 0.003, 0)));
+  [-0.62, -0.92].forEach((y) => group.add(box(2.06, 0.006, 0.006, seam, 0, y, hoodZ + 0.003, 0)));
+  for (let i = 0; i < 12; i++) {
+    const x = -0.96 + i * 0.175 + (i > 5 ? 0.1 : 0);
+    group.add(box(0.05, 0.05, 0.035, guard, x, -0.7, hoodZ + 0.018, 0.008));
+    group.add(box(0.012, 0.012, 0.03, trim, x, -0.7, hoodZ + 0.05, 0.004));
+  }
+  const bar = new THREE.Mesh(new THREE.CylinderGeometry(0.011, 0.011, 1.5, 10), guard);
+  bar.rotation.z = Math.PI / 2;
+  bar.position.set(0, -0.84, hoodZ + 0.06);
+  group.add(bar);
+  [-0.7, 0.7].forEach((x) => group.add(box(0.02, 0.02, 0.06, guard, x, -0.84, hoodZ + 0.03, 0.004)));
   for (let i = 0; i < 12; i++) {
     const lamp = new THREE.Mesh(button, lamps[(i * 5) % 3].clone());
     lamp.position.set(-0.55 + i * 0.1, 0.835, -0.95);
