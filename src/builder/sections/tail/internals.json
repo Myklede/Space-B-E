@@ -93,6 +93,42 @@
               "costF": 0.6,
               "rel": 0.015,
               "real": "AJ10 (Delta II second stage), Apollo SPS"
+            },
+            {
+              "id": "ffsc",
+              "name": "Full-flow staged combustion",
+              "note": "Two preburners, one fuel-rich and one oxygen-rich, each drive their own pump, and every gram of propellant then burns in the main chamber. The highest pressure and Isp there is, and the hardest engine to build.",
+              "pros": [
+                "+16 s of Isp",
+                "Cooler turbines than ordinary staged combustion"
+              ],
+              "cons": [
+                "+60 % cost",
+                "Mass ×1.15",
+                "Two preburners to go wrong"
+              ],
+              "isp": 16,
+              "massF": 1.15,
+              "costF": 1.6,
+              "rel": -0.008,
+              "real": "Raptor (SpaceX), the only full-flow engine ever flown"
+            },
+            {
+              "id": "tapoff",
+              "name": "Combustion tap-off",
+              "note": "A little hot gas is bled from the edge of the main chamber to spin the turbine. No separate gas generator, so fewer parts, but the turbine sees chamber-hot gas.",
+              "pros": [
+                "No gas generator to build",
+                "−10 % cost"
+              ],
+              "cons": [
+                "Thrust −5 %",
+                "Hot turbine"
+              ],
+              "thrustF": 0.95,
+              "costF": 0.9,
+              "rel": -0.004,
+              "real": "BE-3 (New Shepard), J-2S (tested 1960s)"
             }
           ]
         },
@@ -215,6 +251,23 @@
               "costD": 120000,
               "rel": -0.01,
               "real": "RL10B-2 (Delta IV)"
+            },
+            {
+              "id": "ablative",
+              "name": "Ablative liner",
+              "note": "A nozzle lined with resin and silica that chars and wears away slowly, carrying the heat off with it. No cooling plumbing at all: cheap, heavy, good for one long burn.",
+              "pros": [
+                "−$40k",
+                "No cooling plumbing"
+              ],
+              "cons": [
+                "+30 kg",
+                "Wears away: one long burn only"
+              ],
+              "massD": 30,
+              "costD": -40000,
+              "rel": -0.002,
+              "real": "RS-68 (Delta IV), LR87 nozzle extension (Titan II)"
             }
           ]
         },
@@ -320,6 +373,22 @@
               "isp": 3,
               "rel": 0.002,
               "real": "Star 48 long-burn"
+            },
+            {
+              "id": "finocyl",
+              "name": "Finocyl grain",
+              "note": "A round bore with long fins cut into the aft end: high thrust at liftoff that tapers off through the sound barrier, when the stack is under the most strain.",
+              "pros": [
+                "+5 % thrust",
+                "Gentler through max-Q"
+              ],
+              "cons": [
+                "+$20k"
+              ],
+              "thrustF": 1.05,
+              "costD": 20000,
+              "rel": 0.001,
+              "real": "Ariane 5 P241, Vega P80"
             }
           ]
         },
@@ -357,6 +426,23 @@
               "costD": 60000,
               "rel": 0.003,
               "real": "Shuttle SRB, Vega"
+            },
+            {
+              "id": "lit",
+              "name": "Liquid-injection steering",
+              "note": "A fixed nozzle with a tank of nitrogen tetroxide: squirting it into one side of the exhaust bends the jet. No moving nozzle, but the tank and valves weigh a lot.",
+              "pros": [
+                "Steers with no moving nozzle",
+                "Reliability +0.2 %"
+              ],
+              "cons": [
+                "+120 kg",
+                "+$40k"
+              ],
+              "massD": 120,
+              "costD": 40000,
+              "rel": 0.002,
+              "real": "Titan IIIC UA1205 boosters"
             }
           ]
         }
@@ -399,6 +485,23 @@
               "costD": 30000,
               "rel": 0.003,
               "real": "Falcon 9"
+            },
+            {
+              "id": "telescope",
+              "name": "Telescoping pistons + crush cores",
+              "note": "Each leg is a telescoping piston with a cartridge of aluminium honeycomb inside: the honeycomb takes the hit, and a fresh cartridge resets the leg for the next flight.",
+              "pros": [
+                "Reusable with fresh cartridges",
+                "Reliability +0.4 %"
+              ],
+              "cons": [
+                "+20 kg",
+                "+$40k"
+              ],
+              "massD": 20,
+              "costD": 40000,
+              "rel": 0.004,
+              "real": "Falcon 9 landing legs"
             }
           ]
         },
@@ -435,6 +538,284 @@
               "costD": 8000,
               "rel": 0.003,
               "real": "Apollo LM 94 cm pads"
+            },
+            {
+              "id": "dish",
+              "name": "Wide dish feet",
+              "note": "Big shallow dishes with crushable rims: they spread the weight on loose sand and slide instead of digging in on a sideways touchdown.",
+              "pros": [
+                "Lands on soft or sloping ground",
+                "Reliability +0.5 %"
+              ],
+              "cons": [
+                "+45 kg"
+              ],
+              "massD": 45,
+              "costD": 15000,
+              "rel": 0.005,
+              "real": "Viking lander (1976) footpads"
+            }
+          ]
+        },
+        {
+          "key": "probes",
+          "name": "Touchdown sensors",
+          "role": "How the ship knows its feet are on the ground, so the engine cuts at the right moment.",
+          "art": "probe",
+          "options": [
+            {
+              "id": "none",
+              "name": "Radar altimeter only",
+              "note": "The computer cuts the engine on the radar height. A gust or a rock can fool it by half a metre.",
+              "pros": [
+                "Nothing extra"
+              ],
+              "cons": [
+                "The engine may cut a little high or a little late"
+              ],
+              "real": ""
+            },
+            {
+              "id": "probes",
+              "name": "Contact probes",
+              "note": "Long thin rods hang below the feet. The moment one touches the ground a light comes on and the engine shuts down: \"Contact light!\"",
+              "pros": [
+                "Engine cuts at the right moment",
+                "Reliability +0.3 %"
+              ],
+              "cons": [
+                "+8 kg",
+                "+$15k"
+              ],
+              "massD": 8,
+              "costD": 15000,
+              "rel": 0.003,
+              "real": "Apollo Lunar Module (1.7 m probes)"
+            },
+            {
+              "id": "loadcells",
+              "name": "Load cells in every leg",
+              "note": "Strain gauges in each leg weigh the ship as it settles. The computer cuts the engine only when all four legs carry weight, so it never shuts down on one foot.",
+              "pros": [
+                "Never cuts on one foot",
+                "Reliability +0.5 %"
+              ],
+              "cons": [
+                "+12 kg",
+                "+$35k"
+              ],
+              "massD": 12,
+              "costD": 35000,
+              "rel": 0.005,
+              "real": "Modern propulsive landers (Falcon 9, Nova-C)"
+            }
+          ]
+        }
+      ]
+    },
+    "thrust": {
+      "name": "Inside the thrust structure",
+      "slots": [
+        {
+          "key": "baseShield",
+          "name": "Base heat shield",
+          "role": "What protects the engine bay from the glowing exhaust that swirls back up under the engines.",
+          "art": "baseShield",
+          "options": [
+            {
+              "id": "curtains",
+              "name": "Flexible thermal curtains",
+              "note": "Quilted boots of glass and ceramic fabric around the top of each engine let it swivel while closing the gap to the hot outside.",
+              "pros": [
+                "Light",
+                "Lets the engines swivel freely"
+              ],
+              "cons": [],
+              "real": "Saturn V S-IC flexible curtains, Shuttle RS-25 heat-shield blankets"
+            },
+            {
+              "id": "rigid",
+              "name": "Rigid base heat shield",
+              "note": "A plate of heat-resistant metal and ceramic across the whole base, with a sealed hole for each engine. Under a cluster the jets heat each other, so this is where it matters most.",
+              "pros": [
+                "Reliability +0.4 %",
+                "Best for big clusters"
+              ],
+              "cons": [
+                "+80 kg",
+                "+$30k"
+              ],
+              "massD": 80,
+              "costD": 30000,
+              "rel": 0.004,
+              "real": "Saturn V S-IC base heat shield, Falcon 9 Block 5 Octaweb heat shield"
+            },
+            {
+              "id": "none",
+              "name": "No base shield",
+              "note": "Bare beams and plumbing. A single engine in thin air gets away with it; a cluster cooks its own wiring.",
+              "pros": [
+                "−40 kg",
+                "−$10k"
+              ],
+              "cons": [
+                "Reliability −0.6 %"
+              ],
+              "massD": -40,
+              "costD": -10000,
+              "rel": -0.006,
+              "real": "Early sounding rockets; N1 lost flights to fires in its open engine bay"
+            }
+          ]
+        },
+        {
+          "key": "feed",
+          "name": "Propellant feed",
+          "role": "The pipes that bring fuel and oxygen from the tanks to each engine.",
+          "art": "feed",
+          "options": [
+            {
+              "id": "lines",
+              "name": "Separate feed lines",
+              "note": "One pipe of each propellant to each engine, opened at ignition and closed at the end.",
+              "pros": [
+                "Simple"
+              ],
+              "cons": [
+                "A leaking engine cannot be cut off from its tank"
+              ],
+              "real": "Most single-engine stages"
+            },
+            {
+              "id": "prevalves",
+              "name": "Manifold with prevalves",
+              "note": "A ring manifold feeds every engine through its own shut-off valve, so the computer can isolate a failing engine and the rest fly on.",
+              "pros": [
+                "Reliability +0.5 %",
+                "Isolates a failed engine"
+              ],
+              "cons": [
+                "+60 kg",
+                "+$40k"
+              ],
+              "massD": 60,
+              "costD": 40000,
+              "rel": 0.005,
+              "real": "Saturn V S-IC prevalves, Falcon 9 engine-out shutdowns"
+            }
+          ]
+        },
+        {
+          "key": "pogo",
+          "name": "POGO suppressor",
+          "role": "Stops the engines and the feed lines from shaking each other like a pogo stick.",
+          "art": "pogo",
+          "options": [
+            {
+              "id": "none",
+              "name": "Plain feed lines",
+              "note": "Nothing in the lines. If the thrust shake and the sloshing in the pipes fall in step, the whole stack bounces along its length.",
+              "pros": [
+                "Nothing extra"
+              ],
+              "cons": [
+                "The stack can shake itself (POGO)"
+              ],
+              "real": ""
+            },
+            {
+              "id": "accumulator",
+              "name": "Gas-filled accumulators",
+              "note": "Small helium-filled chambers on the oxygen lines act as shock absorbers and break the rhythm. Fitted to the Saturn V after Apollo 6 shook at 5 Hz and Apollo 13 nearly tore an engine loose.",
+              "pros": [
+                "Reliability +0.4 %",
+                "Smoother ride for the crew"
+              ],
+              "cons": [
+                "+35 kg",
+                "+$25k"
+              ],
+              "massD": 35,
+              "costD": 25000,
+              "rel": 0.004,
+              "real": "Saturn V S-IC and S-II (after Apollo 6 and 13), Titan II for Gemini"
+            }
+          ]
+        }
+      ]
+    },
+    "strapon": {
+      "name": "Inside the liquid booster",
+      "slots": [
+        {
+          "key": "chambers",
+          "name": "Chambers",
+          "role": "How the booster engine burns its kerosene and oxygen.",
+          "art": "chambers",
+          "options": [
+            {
+              "id": "four",
+              "name": "Four chambers, one pump",
+              "note": "Four small chambers fed by one turbopump, plus two swivelling verniers. Korolev chose four small chambers because big ones shook themselves apart.",
+              "pros": [
+                "Smooth, stable combustion"
+              ],
+              "cons": [],
+              "real": "RD-107A (Soyuz boosters)"
+            },
+            {
+              "id": "single",
+              "name": "One big chamber",
+              "note": "One large chamber and nozzle: lighter and cheaper, but big chambers are prone to combustion instability, which took the F-1 years of tests to cure.",
+              "pros": [
+                "−100 kg",
+                "−$30k"
+              ],
+              "cons": [
+                "Reliability −0.6 %"
+              ],
+              "massD": -100,
+              "costD": -30000,
+              "rel": -0.006,
+              "real": "Atlas sustainer-style single chamber"
+            }
+          ]
+        },
+        {
+          "key": "turbine",
+          "name": "Turbine drive",
+          "role": "What spins the turbopump.",
+          "art": "turbine",
+          "options": [
+            {
+              "id": "peroxide",
+              "name": "Hydrogen peroxide steam",
+              "note": "Concentrated hydrogen peroxide flows over a silver catalyst and turns into hot steam that spins the turbine. Separate from the main propellants, so it starts easily.",
+              "pros": [
+                "Easy, reliable start"
+              ],
+              "cons": [
+                "Carries a separate peroxide tank"
+              ],
+              "real": "RD-107A / RD-108A (Soyuz)"
+            },
+            {
+              "id": "gasgen",
+              "name": "Gas generator",
+              "note": "A small burner on the main kerosene and oxygen spins the turbine. No peroxide tank to carry.",
+              "pros": [
+                "−60 kg",
+                "+2 s of Isp"
+              ],
+              "cons": [
+                "+$20k",
+                "Harder start"
+              ],
+              "massD": -60,
+              "isp": 2,
+              "costD": 20000,
+              "rel": -0.002,
+              "real": "Atlas MA-5 boosters, Merlin"
             }
           ]
         }

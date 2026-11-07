@@ -1,12 +1,12 @@
 {
   "name": "Tail",
   "short": "Tail",
-  "blurb": "The bottom of the ship: the thrust structure, the engines, fins, landing legs and strap-on solids.",
+  "blurb": "The bottom of the ship: the thrust structure, the engines, steering, strap-on boosters, fins and landing legs.",
   "rows": [
     {
       "id": "thrust",
       "name": "Thrust structure",
-      "role": "The frame the engines push on. It sets how many engines there are.",
+      "role": "The frame the engines push on. It sets how many engines there are and how they are arranged.",
       "mode": "stack",
       "pick": {
         "has": [
@@ -27,8 +27,8 @@
     },
     {
       "id": "gimbal",
-      "name": "Engine gimbal",
-      "role": "Swivels the engines to steer.",
+      "name": "Steering",
+      "role": "How the engine thrust is pointed: swivelling the engine, small vernier chambers, or vanes in the jet.",
       "mode": "radial",
       "host": "engine",
       "pick": {
@@ -39,11 +39,10 @@
     },
     {
       "id": "boosters",
-      "name": "Strap-on solid motors",
-      "role": "Extra thrust off the pad.",
+      "name": "Strap-on boosters",
+      "role": "Solid or liquid boosters clamped to the side: extra thrust off the pad.",
       "mode": "radial",
       "host": "thrust",
-      "symmetry": 2,
       "pick": {
         "has": [
           "booster"
@@ -52,13 +51,15 @@
     },
     {
       "id": "fins",
-      "name": "Fins",
-      "role": "Keep the ship pointing nose-first in thick air.",
+      "name": "Fins & fairings",
+      "role": "Keep the ship pointing nose-first in thick air; fairings smooth the air over outer engines.",
       "mode": "radial",
       "host": "thrust",
-      "symmetry": 4,
       "pick": {
-        "match": "^fin_"
+        "match": "^fin_",
+        "ids": [
+          "aft_fairing_m"
+        ]
       }
     },
     {
@@ -66,7 +67,6 @@
       "name": "Landing gear",
       "role": "Legs or airbags for the touchdown on Mars.",
       "mode": "radial",
-      "host": "engine",
       "pick": {
         "flags": [
           "legs"
@@ -78,15 +78,20 @@
     {
       "id": "single_engine",
       "name": "One big engine",
-      "real": "Delta II (RS-27A), Atlas V (RD-180)",
-      "desc": "One large engine on a conical thrust frame, four fins and landing legs.",
+      "real": "Redstone, Delta II core (one main engine, four fins)",
+      "desc": "One large engine on a conical thrust frame, four fins and four graphite jet vanes in the exhaust to steer, as on the Redstone: the classic layout of the first rockets, and still the cheapest way to lift a ship. Real tails carry no landing legs: add them in the Landing gear row.",
       "pros": [
-        "Simple",
+        "Simplest and cheapest tail",
         "Light"
       ],
       "cons": [
-        "No engine-out"
+        "No engine-out: one failure ends the flight"
       ],
+      "diameter": "m",
+      "engine": {
+        "fuel": "methalox",
+        "nozzle": "sl"
+      },
       "stack": [
         "thrust_single_m",
         "engine_l"
@@ -96,53 +101,35 @@
           "type": "fin_m",
           "on": 0,
           "angle": 0,
-          "yFrac": 0.2,
+          "yFrac": 0.25,
           "symmetry": 4
         },
         {
-          "type": "legs_m",
+          "type": "jet_vanes",
           "on": 1,
-          "angle": 45,
-          "yFrac": 0.35
-        }
-      ]
-    },
-    {
-      "id": "octaweb",
-      "name": "Nine engines (Octaweb)",
-      "real": "Falcon 9",
-      "desc": "Nine small engines in a ring of eight around one, landing legs folded along the side.",
-      "pros": [
-        "Engine-out capable",
-        "Cheap engines"
-      ],
-      "cons": [
-        "Heavier frame"
-      ],
-      "stack": [
-        "thrust_octaweb_m",
-        "engine_s"
-      ],
-      "radial": [
-        {
-          "type": "legs_m",
-          "on": 1,
-          "angle": 45,
-          "yFrac": 0.35
+          "angle": 0
         }
       ]
     },
     {
       "id": "single_solids",
-      "name": "One engine + strap-on solids",
-      "real": "Delta II 7925 (one RS-27A, nine GEM-40)",
-      "desc": "One large engine helped off the pad by solid boosters around the base.",
+      "name": "One engine + three solids",
+      "real": "Delta II 7320 (one RS-27A, three GEM-40)",
+      "desc": "One large engine helped off the pad by three solid motors around the base. Delta II flew 155 times with three, four or nine of them; this is the three-solid version.",
       "pros": [
-        "Huge thrust off the pad"
+        "Huge thrust off the pad",
+        "Cheap solids"
       ],
       "cons": [
-        "Solid casings stay on as dead mass"
+        "Falls about 170 m/s short of Mars with the Reliable body: add a tank",
+        "Solid casings stay on as dead mass",
+        "No engine-out"
       ],
+      "diameter": "m",
+      "engine": {
+        "fuel": "kerolox",
+        "nozzle": "sl"
+      },
       "stack": [
         "thrust_single_m",
         "engine_l"
@@ -152,21 +139,352 @@
           "type": "srb_s",
           "on": 0,
           "angle": 0,
-          "yFrac": 0.1,
+          "yFrac": 0.9,
           "symmetry": 3
         },
         {
-          "type": "fin_m",
-          "on": 0,
-          "angle": 60,
-          "yFrac": 0.2,
-          "symmetry": 3
-        },
-        {
-          "type": "legs_m",
+          "type": "gimbal_ring",
           "on": 1,
+          "angle": 0
+        }
+      ]
+    },
+    {
+      "id": "atlas_v",
+      "name": "Boattail + two big solids",
+      "real": "Atlas V 521 (one RD-180, two GEM-63)",
+      "desc": "One big kerosene engine whose top hides in a tapering boattail skirt, with two large graphite solids. Atlas V flies with none to five solids; this is the two-solid version; Boeing's Starliner flies the two-solid N22.",
+      "pros": [
+        "Engine plumbing shielded from the airflow",
+        "Strong liftoff"
+      ],
+      "cons": [
+        "Falls about 130 m/s short of Mars with the Reliable body: add a tank",
+        "Solid casings stay on as dead mass",
+        "No engine-out"
+      ],
+      "diameter": "m",
+      "engine": {
+        "fuel": "kerolox",
+        "nozzle": "sl"
+      },
+      "stack": [
+        "thrust_boattail_m",
+        "engine_l"
+      ],
+      "radial": [
+        {
+          "type": "srb_m",
+          "on": 0,
+          "angle": 0,
+          "yFrac": 0.9,
+          "symmetry": 2
+        },
+        {
+          "type": "gimbal_ring",
+          "on": 1,
+          "angle": 0
+        }
+      ]
+    },
+    {
+      "id": "ariane_5",
+      "name": "Wide core + two big solids",
+      "real": "Ariane 5 (one Vulcain 2, two P241 boosters)",
+      "desc": "A wide core with one hydrogen engine between two huge segmented solid boosters, which do most of the lifting for the first two minutes. Ariane 5 flew 117 times, including the James Webb Space Telescope.",
+      "pros": [
+        "Very strong liftoff",
+        "One efficient main engine"
+      ],
+      "cons": [
+        "Falls about 140 m/s short of Mars with the Reliable body: add a tank",
+        "Two 3.2 t booster casings stay on as dead mass",
+        "No engine-out"
+      ],
+      "diameter": "l",
+      "engine": {
+        "fuel": "hydrolox",
+        "nozzle": "sl"
+      },
+      "stack": [
+        "thrust_single_l",
+        "engine_l"
+      ],
+      "radial": [
+        {
+          "type": "srb_l",
+          "on": 0,
+          "angle": 0,
+          "yFrac": 0.9,
+          "symmetry": 2
+        },
+        {
+          "type": "gimbal_ring",
+          "on": 1,
+          "angle": 0
+        }
+      ]
+    },
+    {
+      "id": "titan_ii",
+      "name": "Two engines side by side",
+      "real": "Titan II GLV (LR87: two chambers), the Gemini launcher",
+      "desc": "Two large engines on one cross-beam: twice the thrust of the single-engine tail without boosters. Titan II launched all ten crewed Gemini missions.",
+      "pros": [
+        "Twice the thrust, no boosters to carry",
+        "Simple"
+      ],
+      "cons": [
+        "Falls about 510 m/s short of Mars with the Reliable body: add a tank; two heavy engines eat Δv",
+        "No engine-out: either failure ends the flight"
+      ],
+      "diameter": "m",
+      "engine": {
+        "fuel": "kerolox",
+        "nozzle": "sl"
+      },
+      "stack": [
+        "thrust_twin_m",
+        "engine_l"
+      ],
+      "radial": [
+        {
+          "type": "gimbal_ring",
+          "on": 1,
+          "angle": 0
+        }
+      ]
+    },
+    {
+      "id": "vulcan",
+      "name": "Two engines + two solids",
+      "real": "Vulcan VC2 (two BE-4, two GEM-63XL)",
+      "desc": "Two methane engines side by side with a pair of big solids. Vulcan can fly with none, two, four or six; this is the two-solid version.",
+      "pros": [
+        "Strong, affordable liftoff",
+        "Medium engines keep the price down"
+      ],
+      "cons": [
+        "Falls about 220 m/s short of Mars with the Reliable body: add a tank",
+        "Solid casings stay on as dead mass",
+        "No engine-out"
+      ],
+      "diameter": "m",
+      "engine": {
+        "fuel": "methalox",
+        "nozzle": "sl"
+      },
+      "stack": [
+        "thrust_twin_m",
+        "engine_m"
+      ],
+      "radial": [
+        {
+          "type": "srb_m",
+          "on": 0,
+          "angle": 90,
+          "yFrac": 0.9,
+          "symmetry": 2
+        },
+        {
+          "type": "gimbal_ring",
+          "on": 1,
+          "angle": 0
+        }
+      ]
+    },
+    {
+      "id": "space_shuttle",
+      "name": "Three engines + two big solids",
+      "real": "Space Shuttle (three RS-25, two four-segment SRBs)",
+      "desc": "Three hydrogen engines in a triangle between two huge segmented solid boosters, scaled down to fit. The boosters do most of the lifting; the three engines can lose one and still fly.",
+      "pros": [
+        "Can lose one engine",
+        "Very strong liftoff"
+      ],
+      "cons": [
+        "Falls about 240 m/s short of Mars with the Reliable body: add a tank",
+        "Two 3.2 t booster casings stay on as dead mass",
+        "Three engines to buy"
+      ],
+      "diameter": "m",
+      "engine": {
+        "fuel": "hydrolox",
+        "nozzle": "sl"
+      },
+      "stack": [
+        "thrust_triad_m",
+        "engine_s"
+      ],
+      "radial": [
+        {
+          "type": "srb_l",
+          "on": 0,
+          "angle": 0,
+          "yFrac": 0.9,
+          "symmetry": 2
+        },
+        {
+          "type": "gimbal_ring",
+          "on": 1,
+          "angle": 0
+        }
+      ]
+    },
+    {
+      "id": "soyuz",
+      "name": "Four chambers + four liquid boosters",
+      "real": "Soyuz (R-7 family: core RD-108A, four RD-107A boosters)",
+      "desc": "A core with four chambers and steering verniers, ringed by four cone-topped liquid boosters: the R-7 cross that launched Gagarin and every Soyuz since.",
+      "pros": [
+        "Liquid boosters: far better Isp than solids, reaches Mars with the Reliable body",
+        "Proven: the R-7 family has flown more than 1,900 times"
+      ],
+      "cons": [
+        "Reliability only about 81 %: four boosters and four chambers must all work",
+        "Four booster shells stay on as dead mass",
+        "Only just fits the budget with the Reliable body"
+      ],
+      "diameter": "m",
+      "engine": {
+        "fuel": "kerolox",
+        "nozzle": "sl"
+      },
+      "stack": [
+        "thrust_quad_m",
+        "engine_s"
+      ],
+      "radial": [
+        {
+          "type": "booster_liquid_m",
+          "on": 0,
+          "angle": 0,
+          "yFrac": 0.9,
+          "symmetry": 4
+        },
+        {
+          "type": "verniers",
+          "on": 1,
+          "angle": 0
+        }
+      ]
+    },
+    {
+      "id": "saturn_sic",
+      "name": "Five engines, fairings and fins",
+      "real": "Saturn V first stage S-IC (five F-1)",
+      "desc": "Four steering engines at the corners of a square around a fixed fifth, each outer engine under a fairing with a big fin. The tail of the Moon rocket, scaled down.",
+      "pros": [
+        "Can lose one engine",
+        "Very stable: four big fins low down"
+      ],
+      "cons": [
+        "Five medium engines cost about $3.0M: about $0.5M over budget with the Reliable body",
+        "Small pumps are affordable but cannot lift a full ship (TWR 0.7)",
+        "Falls about 850 m/s short of Mars with the Reliable body: add a tank"
+      ],
+      "diameter": "l",
+      "engine": {
+        "fuel": "kerolox",
+        "nozzle": "sl"
+      },
+      "stack": [
+        "thrust_five_l",
+        "engine_m"
+      ],
+      "radial": [
+        {
+          "type": "aft_fairing_m",
+          "on": 0,
           "angle": 45,
-          "yFrac": 0.35
+          "yFrac": 0.4,
+          "symmetry": 4
+        },
+        {
+          "type": "fin_l",
+          "on": 0,
+          "angle": 45,
+          "yFrac": 0.4,
+          "symmetry": 4
+        },
+        {
+          "type": "gimbal_ring",
+          "on": 1,
+          "angle": 0
+        }
+      ]
+    },
+    {
+      "id": "new_glenn",
+      "name": "Seven engines",
+      "real": "New Glenn (seven BE-4)",
+      "desc": "Six methane engines in a ring around a seventh under a wide base, on folding legs. Seven medium engines push like two large ones and survive the loss of one.",
+      "pros": [
+        "Can lose one engine",
+        "Fine thrust in small steps"
+      ],
+      "cons": [
+        "Seven medium engines cost about $4.3M: about $1.6M over budget with the Reliable body",
+        "Small pumps cannot lift a full ship (TWR 0.9)",
+        "Falls about 1,080 m/s short of Mars with the Reliable body: add a tank"
+      ],
+      "diameter": "l",
+      "engine": {
+        "fuel": "methalox",
+        "nozzle": "sl"
+      },
+      "stack": [
+        "thrust_seven_l",
+        "engine_m"
+      ],
+      "radial": [
+        {
+          "type": "legs_falcon_m",
+          "on": 0,
+          "angle": 45,
+          "yFrac": 0.15
+        },
+        {
+          "type": "gimbal_ring",
+          "on": 1,
+          "angle": 0
+        }
+      ]
+    },
+    {
+      "id": "octaweb",
+      "name": "Nine engines (Octaweb)",
+      "real": "Falcon 9 (nine Merlin 1D)",
+      "desc": "Nine engines, eight in a ring around one, under a base heat shield, with carbon legs folded along the tail. Nine small engines push like one large one; on a light ship (as on Rocket Lab's Electron) they lift briskly.",
+      "pros": [
+        "Nine small engines cost about $2.4M: the Reliable ship stays under budget",
+        "Can lose one engine and fly on",
+        "Folding legs double as strakes"
+      ],
+      "cons": [
+        "Nine small engines (850 kN at sea level) only just lift the Reliable ship: TWR 1.18, under the 1.2 needed. Medium pumps lift it at TWR 3.2, but the ship then costs about $7.7M",
+        "Falls about 410 m/s short of Mars with the Reliable body: add a tank"
+      ],
+      "diameter": "m",
+      "engine": {
+        "fuel": "kerolox",
+        "nozzle": "sl"
+      },
+      "stack": [
+        "thrust_octaweb_m",
+        "engine_s"
+      ],
+      "radial": [
+        {
+          "type": "legs_falcon_m",
+          "on": 0,
+          "angle": 45,
+          "yFrac": 0.15
+        },
+        {
+          "type": "gimbal_ring",
+          "on": 1,
+          "angle": 0
         }
       ]
     }
