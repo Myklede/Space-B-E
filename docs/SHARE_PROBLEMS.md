@@ -86,7 +86,7 @@ Copy this block. Keep each line short and factual. Don't commit screenshots.
 - **Expected:** every teammate can run the check that the pre-push hook requires
 - **Actual:** `FAILED check:boot: Chrome could not start (... 'chrome' is not found at /opt/google/chrome/chrome)`, so the push is refused. Role 2 runs the unmodified check with Playwright's Chromium mounted at that path in a user namespace.
 - **Suggested fix:** accept an `executablePath` from an env var (for example `CHROME_PATH`), or fall back to Playwright's bundled Chromium when the Chrome channel is missing
-- **Status:** open
+- **Status:** fixed in b89fffd, Role 2 (Minh Vuong) please verify
 
 ### `check:boot` needs a stub panel in every state, so real screens must keep one
 - **For:** Role 3 · **From:** Role 2 (Minh Vuong) · **Found:** 2026-11-07 on dev 691ae19 · **Severity:** polish
@@ -95,7 +95,7 @@ Copy this block. Keep each line short and factual. Don't commit screenshots.
 - **Expected:** a real screen passes the boot walk
 - **Actual:** `no stub screen is mounted in <STATE>`, so Role 2's real flight and surface screens still show a small "dev shortcut" stub panel, which must be gone for the demo
 - **Suggested fix:** also accept a marker real screens can set (for example any element with `data-screen`), then each role drops its stub panel
-- **Status:** open
+- **Status:** fixed in b89fffd, Role 2 (Minh Vuong) please verify
 
 ### Rocket part `antenna_s` has no art and shows a hologram box
 - **For:** Role 3 · **From:** Role 2 (Minh Vuong) · **Found:** 2026-11-07 on dev 691ae19 · **Severity:** polish
@@ -104,7 +104,7 @@ Copy this block. Keep each line short and factual. Don't commit screenshots.
 - **Expected:** an antenna on top of the capsule
 - **Actual:** a cyan hologram box, because `antenna_s` (in `src/core/mocks/ship.reliable.json`) matches no part word
 - **Suggested fix:** add an antenna part, or drop `antenna_s` from the mocks if Role 1's builder supplies its own art through `assets.setRocketPartArt`
-- **Status:** open
+- **Status:** fixed in b89fffd, Role 2 (Minh Vuong) please verify
 
 ### Mock ships list a `deltaV` their masses can't give
 - **For:** Role 3 · **From:** Role 2 (Minh Vuong) · **Found:** 2026-11-07 on dev 691ae19 · **Severity:** bug
@@ -113,7 +113,7 @@ Copy this block. Keep each line short and factual. Don't commit screenshots.
 - **Expected:** `deltaV = ispVac · G0 · ln(wetMass / dryMass)` = 380 · 9.80665 · ln(42000 / 9000) ≈ 5741 m/s, which is what flight actually gets
 - **Actual:** `deltaV: 8900`, so anything that reads it (the Δv budget, Go/No-Go) promises about 3 km/s the ship doesn't have
 - **Suggested fix:** compute `deltaV` from the formula in the mocks (Role 1's builder should compute it the same way)
-- **Status:** open
+- **Status:** fixed in b89fffd, Role 2 (Minh Vuong) please verify
 
 ### No rover art yet, so the rover uses Role 2's procedural model
 - **For:** Role 3 · **From:** Role 2 (Minh Vuong) · **Found:** 2026-11-07 on dev c8c63cd · **Severity:** polish
