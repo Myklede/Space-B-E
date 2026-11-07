@@ -43,7 +43,7 @@ void main() {
 
 let detailTexture = null;
 
-function regolithMaterial({ rock = 0, roughness = 0.96 } = {}) {
+export function regolithMaterial({ rock = 0, roughness = 0.96 } = {}) {
   detailTexture ??= bakeTexture({ width: 1024, height: 1024, fragment: DETAIL, wrap: THREE.RepeatWrapping });
   const material = new THREE.MeshStandardMaterial({ roughness, metalness: 0, flatShading: rock > 0 });
   material.onBeforeCompile = (shader) => {

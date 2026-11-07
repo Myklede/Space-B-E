@@ -110,7 +110,7 @@ Models, textures and audio go in `public/assets/`, and everything used is credit
 **You also keep `src/core/`** (the game loop, state machine, events, input, UI layer, save, economy, contract and the `?debug=1` panel) and `npm run check`. You review any change to it that another role asks for, and confirm `dev` is healthy before it moves to `main`.
 
 **Next tasks:**
-1. Art pass on the rocket parts and mission props, then real audio.
+1. Art pass on the rocket parts, then real audio.
 2. Measure frame rate on a mid-range laptop.
 
 **You use:** nothing blocking. Work in `/sandbox/role3.html`.
@@ -142,7 +142,7 @@ Update your row whenever you push to `dev`.
 |---|---|
 | 1 | Stubs in `src/builder/`: menu, and a hangar with 3 preset buttons and a text Go/No-Go. No real builder yet, and Confirm charges money on every press. |
 | 2 | Stubs in `src/flight/` and `src/surface/`: fixed cameras and Next buttons, with no physics or walking yet. `registerInteractable` stores stations, and E uses the nearest one with no range limit or prompt. |
-| 3 | All hour-3 APIs below. See every view at `/sandbox/role3.html`. Earth and Mars use real maps; the rest of the art is generated in code. The cabin is a full art pass and the VFX exist; parts, props and sounds are still placeholders. |
+| 3 | All hour-3 APIs below. See every view at `/sandbox/role3.html`. Earth and Mars use real maps; the rest of the art is generated in code. The cabin is a full art pass and the VFX exist; the launch site (`createLaunchSite`) and the mission props are built; rocket parts and sounds are still placeholders. |
 | 4 | Stubs in `src/cruise/`, `src/story/`, `src/missions/`, `src/guidebook/` and `src/report/`: a day counter and Next button for cruise, a plain ending screen, and a report showing event counts. No story text yet. |
 
 The full game loop plays with these stubs at `/`.
@@ -190,6 +190,7 @@ Units are metres and +Y is up.
 | `getTerrainHeight(x, z)` | Mars ground height. The landing site is at the origin, and walking is accurate within ±900 m. |
 | `createMarsScene({ sunElevation, sunAzimuth })` | `{ scene, sun, setSunElevation(degrees, azimuth) }` |
 | `createSpaceScene()` | A scene with stars, Milky Way and Sun. Add planets yourself. |
+| `createLaunchSite()` | `{ scene, root, rocketBase, setAltitude(metres) }`. A coastal launch complex with the pad at the origin, Earth below with its sky. Stand your rocket at `rocketBase` (add it to `root`). Call `setAltitude(m)` as it climbs, and keep the camera near the origin: the site and planet slide down instead. The detail hides above 40 km. Set the Sun with `graphics.setSunDirection`. |
 | `graphics.setSunDirection(vector)` | The direction towards the Sun, for planets and the space sky |
 | `graphics.setEffects({ vignette, blackout, shake })` | Screen effects from 0 to 1, for g-force and low O₂ |
 | `graphics.fade({ to, duration, color })` | Fades the screen and returns a Promise |
@@ -210,7 +211,7 @@ Units are metres and +Y is up.
 | `planet:earth`, `planet:mars` | Radius 1, so set `planet.scale.setScalar(radius)`. To spin it, rotate `userData.surface`, not the group. Call `await assets.preload(['planet:earth', 'planet:mars'])` during loading so no placeholder shows. |
 | `rocketPart:<id>` | The look comes from words in the id: `capsule`, `tank`, `engine`, `nose`, `fin`, `leg`, `heat`. Size comes from `_s`, `_m` or `_l`. `userData.height` is the stacking height. |
 | `lander`, `halcyonLander` | Your ship and the lost crew's wreck |
-| `scanPoint`, `sampleRock`, `discoveryRock`, `solarPanel`, `iceDeposit`, `dataLog` | Mission props, holograms for now |
+| `scanPoint`, `sampleRock`, `discoveryRock`, `solarPanel`, `iceDeposit`, `dataLog`, `halcyonLander` | Mission props (the last one is the wreck). The origin is on the ground, `userData.height` is in metres, and `userData.setState('idle' \| 'active' \| 'done')` turns the light amber, cyan or green. `discoveryRock` only shows a ring when active. |
 
 **HUD classes:** `.hud`, `.hud-panel`, `.hud-label`, `.hud-value`, `.hud-bar` (set `--value` from 0 to 1), `.hud-button`, and the states `.hud-ok`, `.hud-good`, `.hud-caution`, `.hud-alert`.
 
