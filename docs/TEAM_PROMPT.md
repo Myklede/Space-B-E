@@ -16,7 +16,7 @@ You are a senior game developer on a **4-person hackathon team** building a 3D b
 
 ### Working rules
 1. **Stay inside your role's folders** (§15). Don't edit other roles' files. Use the shared contracts (§14) or ask your human to coordinate.
-2. **Never break `main`.** `npm run dev` must always start the game with no console errors. Commit small, working steps.
+2. **Never break `dev` or `main`.** Finished work goes to `dev`. Never push to `main`: dtri moves `dev` to `main` once the whole team has checked it. `npm run dev` must always start the game with no console errors. Commit small, working steps.
 3. **Every feature must be testable alone** through `?debug=1` (skip to any scene, spawn a preset ship, infinite fuel/O₂, give money).
 4. **Visual quality matters a lot** (§12). No grey placeholder boxes in the final demo.
 5. **Science must be correct.** This is an educational game. Use NASA/ESA values and cite sources in the Guidebook. If unsure about a fact, mark it `// TODO verify` and tell your human.
@@ -492,7 +492,7 @@ docs/          DECISIONS.md, DEMO_SCRIPT.md
 
 | Role | Owns | Provides to others (by hour 3 as stubs!) | Uses from others |
 |---|---|---|---|
-| **1. Rocket Builder + core keeper** | Builder, engine workbench, Formula Lens, Go/No-Go, economy, save, presets, `core/` + debug panel, merges to `main` | `ShipSpec` (+ 3 preset JSONs in `core/mocks/`), `economy` API, `builder:highlightPart` | Theme CSS (R3), guidebook text (R4) |
+| **1. Rocket Builder + core keeper** | Builder, engine workbench, Formula Lens, Go/No-Go, economy, save, presets, `core/` + debug panel, checks that `dev` boots | `ShipSpec` (+ 3 preset JSONs in `core/mocks/`), `economy` API, `builder:highlightPart` | Theme CSS (R3), guidebook text (R4) |
 | **2. Flight & Astronaut** | Flight controller, Flight Assist, launch/orbit + entry/landing scenes, Max-Q/G, walking controller, interactable system, stations, airlock, O₂ | `FlightController` class, `registerInteractable({id, position, prompt, onUse})`, `flight:*` / `eva:*` events | ShipSpec (mock), `getTerrainHeight` (R3), models by name (R3) |
 | **3. Graphics & Audio** | Every visual and sound, HUD theme, cinematic API, performance settings | `graphics.init()`, `assets.get('cockpit'\|'cabin'\|'rocketPart:<id>'\|...)`, `getTerrainHeight(x,z)`, `cinematic.play({cameraPath, fades, duration})`, `audio.play(id)` | Nothing blocking: builds scenes in a **visual sandbox** page |
 | **4. Story, Cruise & Knowledge** | Cruise scene, story, tasks, ending screens + sequences, blackbox + Flight Report, Guidebook, all narrative/educational text, demo script | Text JSONs (tips, Go/No-Go lines, analogies), task placement data, `guidebook:open` | `registerInteractable` (R2), `cinematic.play` (R3), `FlightController` (R2) |
@@ -504,7 +504,7 @@ docs/          DECISIONS.md, DEMO_SCRIPT.md
 4. **Visuals behind names:** gameplay code asks `assets.get('cockpit')` and gets a placeholder at first. Role 3 swaps in beautiful models/materials later **without touching anyone else's code**.
 5. **Talk only through events + public APIs**: never import another role's internal files.
 6. **Each role has its own branch** (`role1-builder`, `role2-flight`, `role3-graphics`, `role4-story`) and one sandbox page (`/sandbox/<role>.html`) to work in isolation.
-7. **Merge checkpoints:** hours **12, 18, 24, 30, 36, 42**. Role 1 merges to `main` and checks that the game still boots. Small, frequent merges beat one huge merge.
+7. **Merge checkpoints:** hours **12, 18, 24, 30, 36, 42**. Everyone merges finished work into `dev`, and Role 1 checks that the game still boots. The team then checks `dev`, and dtri moves it to `main` once everyone agrees. Small, frequent merges beat one huge merge.
 8. **Data over code:** text, numbers, task placement, and parts live in JSON, so balancing doesn't create merge conflicts.
 
 ## 16. Priority tiers (cut from the bottom when time runs out)
@@ -571,7 +571,7 @@ Keep the code friendly to this (separate profiles in the save, ShipSpec as JSON,
 
 | # | Role | You build | Your folders | Hand off to others by hour 3 (as stubs) |
 |---|---|---|---|---|
-| **1** | **Rocket Builder + Core Keeper** | Hangar computer, LEGO builder, engine workbench, Formula Lens, Go/No-Go, economy, save, preset ships, debug panel. You merge to `main` at every checkpoint | `core/`, `builder/` | `ShipSpec` + 3 preset JSONs, economy API, debug panel, `builder:highlightPart` |
+| **1** | **Rocket Builder + Core Keeper** | Hangar computer, LEGO builder, engine workbench, Formula Lens, Go/No-Go, economy, save, preset ships, debug panel. You check that `dev` boots at every checkpoint | `core/`, `builder/` | `ShipSpec` + 3 preset JSONs, economy API, debug panel, `builder:highlightPart` |
 | **2** | **Flight & Astronaut** | Flight controller (physics + cockpit controls), Flight Assist, launch/orbit scene, entry/landing scene, Max-Q & G meters, first-person walking (ship interior + Mars EVA), interactable system, stations, airlock, suit, oxygen | `flight/`, `surface/` | `FlightController`, `registerInteractable(...)`, `flight:*` / `eva:*` events |
 | **3** | **Graphics & Audio** | Renderer + post-processing, skybox, Earth/Mars + atmosphere shaders, cockpit/cabin/Mars visuals, VFX (flame, plasma, dust), HUD theme, cinematic API, all sound, Low/High settings | `graphics/`, `audio/`, `ui/` | `graphics.init()`, `assets.get(name)`, `getTerrainHeight(x,z)`, `cinematic.play(...)`, `audio.play(id)`, theme CSS |
 | **4** | **Story, Cruise & Knowledge** | Cruise scene (map, time-warp, solar storm, malfunction, messages), story + Halcyon-1 logs, Mars tasks & progress, ending screens & sequences (incl. Adrift), black box + Flight Report, Guidebook, all educational/narrative text, demo script | `cruise/`, `story/`, `missions/`, `guidebook/`, `report/` | Text JSONs, task placement data, `guidebook:open`, black-box report |
