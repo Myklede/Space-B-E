@@ -21,6 +21,14 @@
   },
 
   "radio": {
+    "go": {"from": "CAPCOM", "delayMin": 0, "text": "All stations GO. You are cleared for launch."},
+    "liftoff": {"from": "CAPCOM", "delayMin": 0, "text": "Liftoff. You'll feel the whole ship push you into your seat. That is thrust, and it is working."},
+    "maxq": {"from": "CAPCOM", "delayMin": 0, "text": "Max-Q. The air is pushing hardest on your ship right now. Hold steady, it eases in a few seconds."},
+    "orbit": {"from": "CAPCOM", "delayMin": 0, "text": "Orbit achieved. Nothing is holding you up but speed. You are falling around the Earth, and missing it."},
+    "transfer": {"from": "CAPCOM", "delayMin": 0, "text": "Transfer burn complete. You are coasting to Mars on a path the Sun's gravity bends. Use time warp, but stay alert."},
+    "entry": {"from": "CAPCOM", "delayMin": 11, "text": "Entry interface. Our signal is eleven minutes old by the time you read this, so the next seven minutes are yours alone."},
+    "blackout": {"from": "CAPCOM", "kind": "static", "text": "NO SIGNAL"},
+    "afterBlackout": {"from": "CAPCOM", "text": "…copy, we have you. Chute is out."},
     "landed": { "from": "HQ", "delayMin": 11, "text": "Touchdown confirmed. We heard it eleven minutes after you did. Welcome to Jezero. Suit up when you're ready." },
     "firstEva": { "from": "HQ", "delayMin": 11, "text": "Halcyon-1's lander should be about 170 metres north-west of you. First: scan the ground and get power running. Then go find them." },
     "scan": { "from": "HQ", "delayMin": 11, "text": "Scan data received. The radar shows layers under you: this crater floor was once the bottom of a lake." },
