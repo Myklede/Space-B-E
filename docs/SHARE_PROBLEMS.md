@@ -77,24 +77,6 @@ Copy this block. Keep each line short and factual. Don't commit screenshots.
 
 ## Role 2: Flight & Astronaut
 
-### The cockpit's joystick and throttle lever never move
-- **For:** Role 2 · **From:** Role 3 (dtri) · **Found:** 2026-11-07 on dev 8e9af5c · **Severity:** polish
-- **Where:** `src/flight/index.js`, where the cockpit is created (`assets.get('cockpit')`) and the flight update loop
-- **Steps:** `/?debug=1&state=LAUNCH`, look down (the gloved hands sit on a joystick at the right and a throttle lever at the left), then throttle up with Q and pitch with W/S
-- **Expected:** the stick tilts with pitch/yaw input and the throttle lever slides with the throttle
-- **Actual:** they stay still, because nothing calls the new cockpit API
-- **Suggested fix:** every frame call `cockpit.userData.setControls({ pitch: state.pitch, yaw: state.yaw, throttle: fc.throttle })` (pitch and yaw -1…1, W = nose down = -1; throttle 0…1; motion is smoothed inside the cockpit). See the `cockpit` row in README "Role 3 APIs".
-- **Status:** fixed in 057a5f2 (setControls every flight frame, LAUNCH/ORBIT/ENTRY/LANDING), Role 3 (dtri) please verify
-
-### Check your Mars positions on the new terrain
-- **For:** Role 2 · **From:** Role 3 (dtri) · **Found:** 2026-11-07 on dev 8e9af5c · **Severity:** polish
-- **Where:** `getTerrainHeight` (`src/graphics/terrain.js`) now has about 480 craters, a river channel, buttes and dunes; anything you place on Mars by coordinates
-- **Steps:** `/?debug=1&state=SURFACE`, walk or drive to each task / interactable / prop you place outside the cabin
-- **Expected:** every position stays on walkable ground (Role 3 kept the landing zone flat within 60 m and crater-free within 150 m, and measured the lander, hatch, rover parking and the Halcyon wreck)
-- **Actual:** Role 3 only measured the positions it could find. The Halcyon wreck at (430, -320) now sits on a levelled 40 m bench (the delta scarp under it was 24°); anything else you placed far out may now be in a crater or on a bank.
-- **Suggested fix:** if a position is bad, move it (or tell Role 3 and we'll flatten a spot like the wreck bench)
-- **Status:** fixed in 057a5f2: Role 2 measured every position it places (lander, hatch, walker start, LRV parking (6.5, 7), MR-01 parking (-7, 7): slopes ≤ 0.7°, nothing had to move) and drove 1.3 km over the new craters and dunes with no rollover; Role 4's tasks and wreck measured too (max 10° at the hematite sample). Role 3 (dtri) please verify
-
 ## Role 3: Graphics, Audio & Core
 
 ### New cockpit: please include the CUT-OFF, RETRO and ASSIST controls
@@ -146,15 +128,6 @@ Copy this block. Keep each line short and factual. Don't commit screenshots.
 - **Status:** fixed in a5c2f8c, Role 2 (Minh Vuong) please verify. The five ids are synthesised in `src/audio/index.js`; `audio.play('suit.o2flow')` loops until `audio.stop('suit.o2flow')`.
 
 ## Role 4: Story, Cruise & Knowledge
-
-### ENDING reuses whatever camera the last state left
-- **For:** Role 4 · **From:** Role 3 (dtri) · **Found:** 2026-11-07 on dev d728a61 · **Severity:** bug
-- **Where:** `src/story/index.js:25-27` (`earthView`)
-- **Steps:** `/?debug=1`, launch and fail, read the ENDING screen
-- **Expected:** the ending's own view
-- **Actual:** it assumes `graphics.camera` is fresh, but it is the camera the last state set. Role 2 now hands it back level, so it no longer shows a black wall, but the ending still shows the cockpit facing Earth from orbit after a failed launch.
-- **Suggested fix:** create the ending's own camera and pass it to `graphics.setView`
-- **Status:** fixed on `role4-story` (story, cruise and report each use their own camera; the ending view hides the cockpit), Role 3 please verify
 
 ### Reset money on the bankrupt ending
 - **For:** Role 4 · **From:** Role 1 (in `docs/DECISIONS.md`) · **Found:** 2026-11-07 on dev 0722c4e · **Severity:** bug
