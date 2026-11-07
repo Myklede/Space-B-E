@@ -1,0 +1,38 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <title>Role 3 Sandbox</title>
+    <link rel="icon" href="data:," />
+    <style>
+      html, body { margin: 0; height: 100%; overflow: hidden; background: #000; }
+      #stage { position: fixed; inset: 0; }
+      #views { position: fixed; top: 14px; left: 14px; z-index: 40; display: flex; flex-wrap: wrap; gap: 6px; max-width: min(760px, calc(100vw - 300px)); }
+      #fps { position: fixed; left: 14px; bottom: 14px; z-index: 40; }
+      #hudSample { position: fixed; right: 14px; bottom: 14px; z-index: 20; display: grid; gap: 8px; width: 220px; }
+      #hudSample[hidden] { display: none; }
+      .row { display: flex; justify-content: space-between; align-items: baseline; margin-bottom: 6px; }
+    </style>
+  </head>
+  <body class="hud">
+    <div id="stage"></div>
+    <nav id="views" aria-label="Views"></nav>
+    <output id="fps" class="hud-label"></output>
+    <aside id="hudSample" hidden>
+      <div class="hud-panel hud-ok">
+        <div class="row"><span class="hud-label">Suit O₂</span><span class="hud-value hud-flicker">72<small>%</small></span></div>
+        <div class="hud-bar" style="--value: 0.72"></div>
+      </div>
+      <div class="hud-panel hud-caution">
+        <div class="row"><span class="hud-label">Radiation</span><span class="hud-value">0.67<small> mSv/sol</small></span></div>
+        <div class="hud-bar" style="--value: 0.45"></div>
+      </div>
+      <div class="hud-panel hud-alert">
+        <div class="row"><span class="hud-label">Heart rate</span><span class="hud-value">148<small> bpm</small></span></div>
+        <div class="hud-bar" style="--value: 0.9"></div>
+      </div>
+    </aside>
+    <script type="module" src="/sandbox/role3.js"></script>
+  </body>
+</html>
