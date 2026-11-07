@@ -213,7 +213,7 @@ export function computeShipSpec(assembly, { catalog, engines, launch, balance, p
   };
 
   const breakdown = {
-    parts: layout.map((e) => ({ id: e.id, type: e.type, name: e.def.name, family: e.def.family, mass: massOf(e), dry: dryOf(e) + (e.def.engine ? engineStats(engineDefOf(e), engines, g0, mod(e)).mass * massFactor(e) : 0), cost: (e.def.cost * costFactor(e) + mod(e).costD) * mod(e).costF + (e.def.engine ? engineStats(engineDefOf(e), engines, g0, mod(e)).cost * costFactor(e) : 0), fuel: (e.def.fuel?.mass ?? 0) + (e.def.booster?.propellant ?? 0), y: e.y, height: e.height, sideArea: e.def.aero.sideArea, attach: e.attach, material: materialOf(e)?.name ?? null, reliability: Math.min(1, (e.def.reliability ?? 1) + reliabilityDelta(e) + mod(e).rel) })),
+    parts: layout.map((e) => ({ id: e.id, type: e.type, name: e.def.name, family: e.def.family, mass: massOf(e), dry: dryOf(e) + (e.def.engine ? engineStats(engineDefOf(e), engines, g0, mod(e)).mass * massFactor(e) * countOf(e) : 0), cost: (e.def.cost * costFactor(e) + mod(e).costD) * mod(e).costF + (e.def.engine ? engineStats(engineDefOf(e), engines, g0, mod(e)).cost * costFactor(e) * countOf(e) : 0), fuel: (e.def.fuel?.mass ?? 0) + (e.def.booster?.propellant ?? 0), y: e.y, height: e.height, sideArea: e.def.aero.sideArea, attach: e.attach, material: materialOf(e)?.name ?? null, reliability: Math.min(1, (e.def.reliability ?? 1) + reliabilityDelta(e) + mod(e).rel) })),
     fuelPartIds: layout.filter((e) => e.def.fuel || e.def.booster).map((e) => e.id),
     enginePartIds: [...engineEntries, ...boosterEntries].map((e) => e.id),
     finPartIds: layout.filter((e) => /fin/.test(e.type)).map((e) => e.id),

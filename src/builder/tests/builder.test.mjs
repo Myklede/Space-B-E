@@ -222,6 +222,8 @@ ok(`text.json: ${contract.HARD_BLOCKS.length} blocks and ${contract.WARNINGS.len
     const single = new Assembly(presets.reliable, catalog);
     SEC.applyShape(single, sections.tail, { ...octa, stack: [octa.stack[0], octa.stack[1]] });
     check(r.spec.stats.thrust === n * engineStats(r.spec.engines[0], engines, G0).thrust, 'cluster thrust is engines × one engine');
+    const partsCost = r.breakdown.parts.reduce((t, p) => t + p.cost, 0);
+    check(Math.abs(partsCost - r.spec.stats.cost) < 1, 'the cost per part adds up to the ship cost with a cluster (section cards sum it)');
   }
   // rows: add and clear
   const c = new Assembly(presets.reliable, catalog);

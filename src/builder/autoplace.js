@@ -34,7 +34,7 @@ export function autoAttach(assembly, typeId, { symmetry = null } = {}) {
   if (def.attach === 'axial') {
     const low = lowestAxial(assembly);
     const high = highestAxial(assembly);
-    const isNose = def.nodes.includes('bottom') && !def.nodes.includes('top');
+    const isNose = def.family === 'fairing' || (def.nodes.includes('bottom') && !def.nodes.includes('top')); // covers now take a tower on top
     if (isNose) {
       if (high && assembly.canAttach(typeId, high.id, 'top').ok) return { ids: assembly.attach(typeId, high.id, 'top'), message: `${def.name} fitted on top.` };
       return { ids: [], message: 'The top of the stack is taken. Remove the part up there first.' };

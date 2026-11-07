@@ -33,7 +33,7 @@ Cập nhật file này sau mỗi lần trao đổi có quyết định mới. Gh
 | 4 | Trang sơ đồ Dawn 2D, thẻ to | Thẻ chiếm chỗ, không xoay được |
 | 5 | Studio 3D xoay được + dải thẻ nhỏ + bảng phải + nhãn có đường dẫn (commit `7e17832`) | 3D xoay **tốt**; nhãn và mảnh nhỏ **lộn xộn**, chưa ưng |
 
-## 4. Yêu cầu mới (2026-11-07, ĐANG BÀN, chưa code)
+## 4. Trang thiết kế 4 thẻ (2026-11-07, ĐÃ LÀM XONG)
 
 Người dùng muốn làm lại giao diện trang thiết kế:
 
@@ -74,9 +74,42 @@ Người dùng muốn làm lại giao diện trang thiết kế:
 - Bệ phóng không phải linh kiện của tàu: lưu trong `assembly.launch` (địa điểm, cửa sổ, thiết bị), cộng vào phí phóng và độ tin cậy.
 - Giao diện: không còn nhãn quanh tàu; cột phải có 4 thẻ dạng accordion, mở ra danh sách dọc (hình dáng → thành phần → lựa chọn → bên trong); tàu 3D tô sáng phần đang mở.
 
+### Tiến độ
+
+- 2026-11-07: **Bước 0 xong** (commit `4b14585`, `78ee088`): khung 4 thẻ, `sections.js`, dữ liệu tách theo phần, cụm động cơ, bệ phóng, adapter tự động, động cơ tự khớp nhiên liệu với bồn. Test + `npm run check` qua.
+- 2026-11-07: **4 agent thực thi đang chạy** (Mũi 5191, Thân 5192, Đít 5193, Bệ 5194), mỗi agent chỉ sửa `sections/<id>/`. Đề bài chung: scratchpad `brief-common.md`; đề bài kiểm tra: `brief-review.md`. Sau mỗi agent thực thi, một agent kiểm tra soát lại; AI tổng hợp, chạy check, commit, báo người dùng.
+
+- 2026-11-07: người dùng muốn **xem game chạy trong lúc làm**, trang tự tải lại khi có thay đổi. Server dev của người dùng ở `http://localhost:5173` (Vite tự reload khi file đổi). Link mở thẳng bàn thiết kế: `http://localhost:5173/?debug=1&state=HANGAR&station=integration` (tham số `station` mới, commit `72113d6`).
+
+- 2026-11-07: **4 agent thực thi đã xong** (chưa commit, đang chờ kiểm tra):
+  - Thân: 11 hình dáng, 15 linh kiện mới.
+  - Bệ phóng: 9 bãi phóng, 8 nhóm thiết bị.
+  - Đít: 11 hình dáng, 16 linh kiện mới, động cơ vẽ lại.
+  - Mũi: 9 hình dáng, 15 linh kiện mới, tháp thoát hiểm, capsule vẽ lại.
+  AI đã sửa code chung theo đề nghị của các agent (commit `11c7cee`, `ffdbafb`): bệ vẽ lại theo kích thước tàu, bỏ bảng Range cũ, động cơ vẽ lại khi đổi vòi, booster tính trọng tâm ở giữa, buồng đốt và vòi theo cỡ bơm, vây của preset có `origin: tail`. 4 agent kiểm tra đang chạy (cổng 5195–5198).
+
+- 2026-11-07: **4 agent kiểm tra xong, cả 4 đều "chấp nhận kèm lỗi cần sửa"**, không có lỗi chặn. Đã gửi danh sách lỗi cho 4 agent thực thi sửa. AI sửa code chung (`4bbbfbc`, `b1a2e3f`, `e8c5759`):
+  - Hình vẽ biết bộ phận trên/dưới; shape mang sẵn lựa chọn và vật liệu; bỏ ánh xanh.
+  - Có bộ lái thì chịu được mất ổn định nhẹ (6 %); bonus cùng nhóm chỉ tính một lần.
+  - Shape thay đồ cũ trong các hàng nó lắp (hết trùng chân, dù, ăng-ten).
+  - Trọng tâm booster tại +0.25 H; vây Workhorse xoay khỏi góc booster.
+- 2026-11-07: **4 agent thực thi sửa xong theo kiểm tra; AI tự soát (test, ảnh chụp) rồi commit từng phần**: Thân `7aff784`, Đít `4dc9bca`, Mũi `b208b7e`, Bệ phóng `cd1d279`. Không chạy lại agent kiểm tra.
+  - Thân: kit bồn hydro (mặc định bọc foam), bồn hydro vách chung, một băng intertank giữa hai bồn kề nhau, ống dẫn ET đúng chỗ, bồn thép rẻ, tuỳ chọn tổ ong.
+  - Đít: mọi cụm động cơ có gimbal; bộ lái (gimbal, verniers, jet vanes) chung nhóm bonus; Saturn V động cơ góc nằm dưới fairing; booster lỏng đắt hơn. Trên thân Reliable: chỉ One big engine và Soyuz không cảnh báo; các kiểu có solid thiếu 130–510 m/s; Octaweb TWR 1,18; Saturn V và New Glenn quá $5M; Soyuz chỉ dư ~$10k.
+  - Mũi: fairing và nắp nhận tháp thoát hiểm ở trên; fairing trùm capsule có váy trong suốt; hệ thoát hiểm chung nhóm bonus; Apollo và Orion vừa $5M (khi thêm bồn + 2 solid + gimbal); ăng-ten vẽ phẳng trên vỏ.
+  - Bệ phóng: giá bãi so với chờ ở Cape; Baikonur, Plesetsk miễn phí nhưng dưới 0 °C cả tuần; tháp lùi tránh vây, chân, booster; tay với chạm đúng vỏ; kẹp móc dưới bồn thấp nhất; tuyết khi dưới 0 °C. `pad/art.js` đọc `surfaceRadius` từ `nose/art.js` (cùng Role 1).
+- 2026-11-07: **tích hợp**: vẽ lại 320 ảnh thẻ; `autoplace.js` coi fairing là mũi; tổng tiền trên thẻ phần tính đủ cụm động cơ (test mới); `npm run check` qua; cập nhật `README.md`, `README-ARCH.md`, `docs/DECISIONS.md`; SHARE_PROBLEMS: Role 3 thêm ~80 mã linh kiện chưa có hình bay, Role 2 `stats.reliability` không dùng khi bay (severity decision). Chưa push lên dev.
+
+## 4b. Đang bàn: có cảnh báo cho người chơi hay để tai nạn xảy ra? (2026-11-07)
+
+- Người dùng hỏi: nên báo "No spare oxygen", "Not enough Δv…" hay giấu đi để người chơi tự trải nghiệm tai nạn.
+- AI đề xuất hướng giữa: (1) trong trang thiết kế chỉ hiện con số (Δv / cần), bỏ câu chỉ cách sửa, thêm "Why?" mở Formula Lens; (2) Go/No-Go vẫn đọc NO-GO kèm lý do, người chơi được OVERRIDE (spec §5.5 và contract đã chốt, các ending dựa vào đây; bài học Challenger/Columbia là cảnh báo có nhưng bị bỏ qua); (3) không cảnh báo những gì phụ thuộc cách lái và độ tin cậy ẩn; (4) màn kết thúc nối lại nguyên nhân (Role 4); (5) tuỳ chọn chế độ "Veteran" trong Settings.
+- **Chờ người dùng chốt.**
+
 ## 5. Việc tồn đọng
 
 - Khoảng 58 model NASA không dùng (35 MB) còn trong repo; lệnh xoá hàng loạt từng bị chặn, cần người dùng cho phép.
-- Menu MORE chưa có Presets (hiện chỉ chọn mẫu khi bệ trống).
+- Model không còn dùng: `satkit_radio1.glb` (ăng-ten giờ vẽ tay), `shuttle_engines.glb` cho động cơ (vẫn đứng trong hangar).
+- Tuỳ chọn: hook `surfaceRadius` cho designScene/hangarScene; thêm shape Super Heavy / N1; bước đường kính M ở Delta/Workhorse.
 - Chưa có nút chọn đối xứng, chưa xoay/trượt đồ gắn hông.
 - Linh kiện mới hiện hologram trong cảnh bay của Role 3 (đã ghi SHARE_PROBLEMS).
