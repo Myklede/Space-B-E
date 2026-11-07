@@ -11,13 +11,13 @@ A first-person space-mission game for the browser, built by 4 people in 48 hours
 Do these steps in order before writing any code.
 
 1. **Find your role.** Ask your human which role they have, or match `git config user.name` to the table below. Work only on that role.
-2. **Read the spec sections listed for your role** in [`docs/TEAM_PROMPT.md`](docs/TEAM_PROMPT.md). Everyone also reads §0, §14 and §15, and [`src/core/contract.js`](src/core/contract.js). For names and data shapes, `src/core/contract.js` wins. For everything else the spec wins, then this README.
+2. **Read the spec sections listed for your role** in [`docs/TEAM_PROMPT.md`](docs/TEAM_PROMPT.md). Everyone also reads §0, §14 and §15, and [`src/core/contract.js`](src/core/contract.js). You don't need the rest of the spec. For names and data shapes, `src/core/contract.js` wins. For everything else the spec wins, then this README.
 3. **Check [Status](#status)** to see what already exists. Use what's there, and use a local mock for anything that doesn't exist yet. Never wait for another role.
 4. **Set up your branch:**
    ```bash
    git switch dev && git pull
    npm install
-   git switch -c <your-role-branch>   # or: git switch <your-role-branch> && git merge dev
+   git switch -c <your-role-branch>   # first time; later: git switch <your-role-branch> && git merge origin/dev
    npm run dev
    ```
 5. **Do your role's next tasks**, in order, inside your own folders.
@@ -31,9 +31,9 @@ Before you start, tell your human in a few lines which role you took, what you w
 - **Never push to `main`.** Finished work goes to `dev`.
 - **Edit only your own folders.** Talk to other roles only through events and public APIs (spec §14), and never import another role's internal files. If you need a change in someone else's area, tell your human.
 - **Keep `dev` running:** `npm run dev` starts the game with no console errors.
-- **`npm run check` must pass before you push to `dev`.** It checks the contract rules and walks the whole game loop in Chrome.
+- **`npm run check` must pass before you push to `dev`.** It checks the contract rules and walks the whole game loop in Google Chrome. If Chrome isn't installed the check fails, so ask your human to install it.
 - **Changes to `src/core/`, `index.html`, `scripts/` or npm packages go through dtri (Role 3).** Only `src/core/balance.json` is open to everyone, because balancing numbers is everyone's job.
-- **Make every feature testable alone** through `?debug=1` and your sandbox page, `/sandbox/<role>.html`.
+- **Make every feature testable alone.** `/?debug=1&state=INTERIOR` opens the game directly in any state with a mock ship, plus a debug panel to fire events and set money. If you want a separate test page, create `sandbox/role<N>.html`.
 - **Keep text, numbers, parts and task placement in JSON,** so balancing doesn't cause merge conflicts.
 - **Science must be correct.** Use NASA/ESA values. If unsure, mark it `// TODO verify` and tell your human.
 - **When the spec is unclear,** pick the simplest option and write it in `docs/DECISIONS.md`.
@@ -98,7 +98,8 @@ Models, textures and audio go in `public/assets/`, and everything used is credit
 
 **Next tasks:**
 1. Replace the stubs in `src/flight/` and `src/surface/` with the real thing, keeping every export in `PUBLIC_EXPORTS` (`FlightController`, `registerInteractable({id, position, prompt, onUse})`) and the `flight:*` and `eva:*` events.
-2. Tier 0: launch to orbit, entry to landing, interior with seat, suit, airlock and O₂ station, EVA with oxygen.
+2. Build the first-person walking controller. None exists yet: the stubs hold the camera still, and the camera is yours to move. Eye height is about 1.65 m. Pick an interaction range and write it in `docs/DECISIONS.md`.
+3. Tier 0: launch to orbit, entry to landing, interior with seat, suit, airlock and O₂ station, EVA with oxygen.
 
 **You use:** `getShip()` from `src/core/` (it returns the Reliable mock until the builder works), and from Role 3 `getTerrainHeight`, `createMarsScene`, `createSpaceScene`, `assets.get('cockpit')` and `assets.get('cabin')`.
 
@@ -139,10 +140,32 @@ Update your row whenever you push to `dev`.
 
 | Role | On `dev` now |
 |---|---|
-| 1 | Stubs exist in `src/builder/` (menu, hangar, Go/No-Go) and the full loop runs with them. `/` now works. |
-| 2 | Stubs exist in `src/flight/` and `src/surface/` and the full loop runs with them. `/` now works. |
+| 1 | Stubs in `src/builder/`: menu, and a hangar with 3 preset buttons and a text Go/No-Go. No real builder yet, and Confirm charges money on every press. |
+| 2 | Stubs in `src/flight/` and `src/surface/`: fixed cameras and Next buttons, with no physics or walking yet. `registerInteractable` stores stations, and E uses the nearest one with no range limit or prompt. |
 | 3 | All hour-3 APIs below. See every view at `/sandbox/role3.html`. Earth and Mars use real maps; the rest of the art is generated in code. The cabin is a full art pass and the VFX exist; parts, props and sounds are still placeholders. |
-| 4 | Stubs exist in `src/cruise/`, `src/story/`, `src/missions/`, `src/guidebook/` and `src/report/` and the full loop runs with them. `/` now works. |
+| 4 | Stubs in `src/cruise/`, `src/story/`, `src/missions/`, `src/guidebook/` and `src/report/`: a day counter and Next button for cruise, a plain ending screen, and a report showing event counts. No story text yet. |
+
+The full game loop plays with these stubs at `/`.
+
+## Core APIs
+
+```js
+import { events, getState, requestState, input, ui, economy, save, getShip, setShip, PLANETS, G0, contract } from '/src/core/index.js';
+```
+
+Stubs and tests may also import `/src/core/stubScreen.js` and `/src/core/mocks/*.json`, and anyone may import `three`.
+
+| API | What it does |
+|---|---|
+| `events.on(name, fn)`, `once`, `off`, `emit(name, payload)` | Talk to other roles. `on` returns a function that unsubscribes. Unknown names and missing keys log an error. |
+| `getState()`, `requestState(to, data)` | Current state, and asking to change it. `data` is passed to the next module's `enter(state, data)`. Invalid changes are refused and logged. |
+| `input.isDown(code)`, `onPress(code, fn)`, `onEscape(fn)`, `mouseDelta()` | Keys use `KeyboardEvent.code`, such as `KeyW`. Handlers are removed on every state change, so register them in `enter`. |
+| `input.lockPointer()`, `unlockPointer()`, `isLocked()` | Mouse look. Browsers only allow locking from a click or key press. |
+| `ui.mount(element, { layer })`, `mountPersistent`, `unmount` | Puts your HTML on screen, using the HUD classes below. `layer` is `'hud'` or `'menu'` (default). Mounted elements are removed on every state change; persistent ones stay until you unmount them. Position them with your own CSS. |
+| `economy.getMoney()`, `canAfford(cost)`, `spend(cost, reason)`, `reward(amount, reason)`, `chargeFailure(shipCost)`, `isBankrupt()`, `reset()` | The only way to change money. Numbers come from `src/core/balance.json`. |
+| `save.load()`, `save.update(partial)`, `save.reset()` | The only way to use `localStorage`. |
+| `getShip()`, `setShip(spec)` | The current ship. `getShip` returns the Reliable mock until a ship is built. |
+| `PLANETS.earth.g`, `PLANETS.mars.radius`, `G0` | The only source of gravity and planet numbers. |
 
 ## Role 3 APIs you can use now
 
@@ -179,7 +202,7 @@ Units are metres and +Y is up.
 | Name | Notes |
 |---|---|
 | `cockpit` | The origin is the pilot's eye and forward is -Z. `userData.setAlarm(true)` turns on the red alarm. |
-| `cabin` | 4 × 8 m, with the origin at the middle of the floor. `userData.stations` holds positions for `pilotSeat`, `o2Station`, `suitLocker`, `commsConsole`, `sampleStorage`, `airlock` and `bunk`. `userData.props` holds `foodRack`, `waterRecycler`, `exerciseBike` and `familyPhoto`. `userData.setAlarm(true)` dims the lights and pulses a red one. |
+| `cabin` | 4 × 8 m, with the origin at the middle of the floor. `userData.stations` holds positions for `pilotSeat`, `o2Station`, `suitLocker`, `commsConsole`, `sampleStorage`, `airlock` and `bunk`, in the cabin's local coordinates, so add the cabin's position if you move it. `userData.props` holds `foodRack`, `waterRecycler`, `exerciseBike` and `familyPhoto`. `userData.setAlarm(true)` dims the lights and pulses a red one. |
 | `vfx:engineFlame` | Origin at the nozzle exit, plume down -Y, built for a 0.95 m nozzle (scale it for others). `userData.set({ throttle: 0..1, airDensity: 0..1, fuel: 'kerolox' \| 'methalox' \| 'hydrolox' })`. Sea-level plume has shock diamonds, vacuum balloons wider and fainter. Carries a point light. |
 | `vfx:exhaust` | Origin at the nozzle exit, smoke falls down -Y. `userData.set({ throttle: 0..1, airDensity: 0..1 })`. Invisible in vacuum. |
 | `vfx:entryPlasma` | Add it to the cockpit group (its coordinates). `userData.set({ intensity: 0..1 })`. Streaks outside the window, and an orange light inside. |

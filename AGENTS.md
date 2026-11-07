@@ -8,8 +8,8 @@ Four people are building this game at the same time, each with their own AI. Do 
    - Role 2: Flight & Astronaut
    - Role 3: Graphics, Audio & Core
    - Role 4: Story, Cruise & Knowledge
-3. **Read `README.md`** from "For AI agents: start here", then `src/core/contract.js`. Follow them.
-4. **Work on your role's branch,** named in the README. Replace the stubs in your own folders and keep their exports.
+3. **Read `README.md`** from "For AI agents: start here", then `src/core/contract.js`. Follow them. In `docs/TEAM_PROMPT.md`, read only the sections the README lists for your role.
+4. **Work on your role's branch,** named in the README. It may not exist yet, so create it from `dev` the first time. Replace the stubs in your own folders and keep their exports. To test, run `npm run dev` and open `/?debug=1&state=<STATE>` to start in any state.
 5. **To put finished work on `dev`:** on your role branch, run `git merge origin/dev`, then `npm run check`, fix anything it reports, and then `git push origin HEAD:dev`. Do not push until it passes.
 
 ## Never do these
