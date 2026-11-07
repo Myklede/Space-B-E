@@ -26,7 +26,10 @@ const fmt = (n, d = 0) => (Number.isFinite(n) ? n.toFixed(d) : '∞');
 
 export { FlightController };
 
-const LOW_MARS_ALTITUDE = 6000;
+const ENTRY_TO_LANDING = 6000; // m: ENTRY hands over to LANDING here
+// m: below this the view switches to Role 3's detailed Mars terrain. That patch is about ±900 m wide, so higher up
+// the window would look past its edge at empty sky; the textured globe shows the ground better until then.
+const LOW_MARS_ALTITUDE = 800;
 const LAUNCH_SITE_TOP = 40000; // m: Role 3's launch site shows its detail below this
 const DEBRIS_AFTER_ORBIT = 20; // s in orbit before the orbital-debris encounter (TEAM_PROMPT §6.3)
 const COUNTDOWN = 10; // s: T-10 … ignition at T-3 … clamps release at T-0
@@ -76,7 +79,7 @@ function controllerFor(state) {
   const marsFuel = mission.fuelForMars ?? getShip().stats.fuelMass * 0.25;
   if (state === 'ENTRY') return newController('mars', STARTS.marsEntry, marsFuel);
   // LANDING: keep the Mars controller from ENTRY, or the landed one when coming back to the seat.
-  if (fc && mission.planetId === 'mars' && !fc.failed && (fc.landed || fc.altitude < LOW_MARS_ALTITUDE + 1000)) return fc;
+  if (fc && mission.planetId === 'mars' && !fc.failed && (fc.landed || fc.altitude < ENTRY_TO_LANDING + 1000)) return fc;
   return newController('mars', STARTS.marsLanding, marsFuel);
 }
 
@@ -100,6 +103,41 @@ function faceTheLimb(fc) {
   fc.omega = { x: 0, y: 0, z: 0 };
 }
 
+// The physics starts every flight at the top of the planet (+Y). Turn the textured surface so the real site is
+// there: Cape Canaveral under the launch, Jezero Crater under the Mars entry and landing. Role 3's globes spin through
+// userData.surface; rotation.y = -90° - longitude brings a longitude to +Z, then rotation.x = latitude - 90° lifts it to +Y.
+const SITES = { earth: { lat: 28.6, lon: -80.6 }, mars: { lat: 18.4, lon: 77.5 } };
+function faceSiteUp(planet, planetId) {
+  const site = SITES[planetId];
+  const surface = planet.userData.surface;
+  if (!site || !surface) return;
+  surface.rotation.set(THREE.MathUtils.degToRad(site.lat - 90), THREE.MathUtils.degToRad(-90 - site.lon), 0, 'XYZ');
+}
+
+// Show or hide a model WITHOUT changing the scene's light count: hiding a group that holds lights makes three.js
+// recompile every lit material (a visible hitch). Lights stay; only meshes, lines and points are toggled.
+function showModel(object, on) {
+  object.traverse((o) => {
+    if (o.isMesh || o.isLine || o.isPoints || o.isSprite) o.visible = on;
+  });
+}
+
+// Under the parachute the ship hangs nose-up, so the window shows only sky. Tip the nose forward and 35° down so
+// the ground and horizon are in view; BURN NOW (hold Space) still turns it retrograde for the burn.
+function faceTheGround(fc) {
+  const up = v3(fc.up);
+  const along = v3(fc.vel).projectOnPlane(up);
+  if (along.lengthSq() < 0.01) along.set(1, 0, 0).projectOnPlane(up);
+  along.normalize();
+  const tilt = THREE.MathUtils.degToRad(35);
+  const nose = along.multiplyScalar(Math.cos(tilt)).addScaledVector(up, -Math.sin(tilt)).normalize();
+  const top = up.clone().addScaledVector(nose, -up.dot(nose)).normalize();
+  const right = new THREE.Vector3().crossVectors(nose, top);
+  const q = new THREE.Quaternion().setFromRotationMatrix(new THREE.Matrix4().makeBasis(right, nose, top));
+  fc.orient = { x: q.x, y: q.y, z: q.z, w: q.w };
+  fc.omega = { x: 0, y: 0, z: 0 };
+}
+
 // ---------- views ----------
 function buildSpaceView(planetId) {
   const scene = createSpaceScene();
@@ -109,6 +147,7 @@ function buildSpaceView(planetId) {
   scene.add(sunLight, new THREE.AmbientLight(0x8ea4c8, 0.25));
   const planet = assets.get(`planet:${planetId}`);
   planet.scale.setScalar(PLANETS[planetId].radius);
+  faceSiteUp(planet, planetId);
   scene.add(planet);
 
   const rig = new THREE.Group();
@@ -267,6 +306,7 @@ export default {
   enter(state) {
     const fc = controllerFor(state);
     if ((state === 'ORBIT' || state === 'ENTRY') && fc.throttle === 0) faceTheLimb(fc);
+    if (state === 'LANDING' && !fc.landed && fc.throttle === 0) faceTheGround(fc);
     const view = buildSpaceView(fc.planetId);
     s = {
       state, fc, view, surface: null, mode: null,
@@ -361,7 +401,7 @@ export default {
     // automatic state moves
     if (!s.done && !fc.failed) {
       if (state === 'LAUNCH' && t.phase === 'orbit') { s.done = true; requestState('ORBIT'); return; }
-      if (state === 'ENTRY' && t.altitude < LOW_MARS_ALTITUDE) { s.done = true; requestState('LANDING'); return; }
+      if (state === 'ENTRY' && t.altitude < ENTRY_TO_LANDING) { s.done = true; requestState('LANDING'); return; }
     }
 
     // camera + views
@@ -374,8 +414,7 @@ export default {
       const sv = s.site;
       sv.setAltitude(Math.max(0, t.altitude));
       sv.rocketRoot.quaternion.copy(shipQ);
-      sv.rocketRoot.visible = s.chase;
-      sv.cockpit.visible = !s.chase;
+      if (s.siteChase !== s.chase) { s.siteChase = s.chase; showModel(sv.rocketRoot, s.chase); showModel(sv.cockpit, !s.chase); }
       const eye = new THREE.Vector3(0, sv.eyeY, 0).applyQuaternion(shipQ).add(sv.rocketBase);
       if (s.chase) {
         sv.rig.quaternion.identity();
@@ -411,7 +450,7 @@ export default {
       view.frame.position.copy(view.planet.position);
       syncDebris(view, fc, dt);
       s.pathTimer = (s.pathTimer ?? 0) - dt;
-      view.path.visible = s.assist && !fc.onGround;
+      view.path.visible = s.assist && s.chase && !fc.onGround; // seen edge-on from the cockpit: outside camera only
       if (view.path.visible && s.pathTimer <= 0) {
         s.pathTimer = 0.5;
         const pts = predictPath(fc, { seconds: t.phase === 'orbit' ? 3500 : 600 });
@@ -419,8 +458,7 @@ export default {
         view.path.geometry = new THREE.BufferGeometry().setFromPoints(pts.map(v3));
       }
       view.rocketRoot.quaternion.copy(shipQ);
-      view.rocketRoot.visible = s.chase;
-      view.cockpit.visible = !s.chase;
+      if (s.spaceChase !== s.chase) { s.spaceChase = s.chase; showModel(view.rocketRoot, s.chase); showModel(view.cockpit, !s.chase); }
       if (s.chase) {
         view.rig.quaternion.identity();
         const up = v3(fc.up);
@@ -439,7 +477,7 @@ export default {
     // VFX, screen effects, sound
     const heatFrac = t.heatLimit ? t.heatFlux / t.heatLimit : 0;
     const throttle = t.thrust > 0 ? fc.throttle : 0;
-    view.plasma.userData.set({ intensity: Math.min(1, heatFrac * 1.4) });
+    view.plasma.userData.set({ intensity: heatFrac > 0.05 ? Math.min(1, heatFrac * 1.4) : 0 }); // no faint streaks under the chute
     view.flame.userData.set({ throttle, airDensity: air });
     view.exhaust.userData.set({ throttle, airDensity: air });
     graphics.setEffects({

@@ -137,6 +137,6 @@ export function landingGuide(fc) {
     return { step: 'touchdown', text: `Ease the throttle (Q/E): touch down under ${TOUCHDOWN_HINT} m/s, nose up` };
   }
   if (a.burnNow) return { step: 'burn', text: 'BURN NOW: hold SPACE for the retro burn' };
-  if (fc.chuteOpen) return { step: 'chute', text: `Parachute out. Wait for BURN NOW (${Number.isFinite(a.stoppingDistance) ? a.stoppingDistance.toFixed(0) : '—'} m to stop)` };
+  if (fc.chuteOpen) return { step: 'chute', text: `Parachute out. Wait for BURN NOW (${Number.isFinite(a.stoppingDistance) ? a.stoppingDistance.toFixed(0) : '—'} m to stop) · C = outside view` };
   return { step: 'wait', text: 'Falling: wait for BURN NOW' };
 }
