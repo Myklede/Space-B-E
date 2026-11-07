@@ -115,13 +115,46 @@ Copy this block. Keep each line short and factual. Don't commit screenshots.
 - **Suggested fix:** compute `deltaV` from the formula in the mocks (Role 1's builder should compute it the same way)
 - **Status:** fixed in b89fffd, Role 2 (Minh Vuong) please verify
 
-### No rover art yet, so the rover uses Role 2's procedural model
+### Rover art: build assets.get('rover') to replace Role 2's procedural LRV
 - **For:** Role 3 · **From:** Role 2 (Minh Vuong) · **Found:** 2026-11-07 on dev c8c63cd · **Severity:** polish
-- **Where:** `src/graphics/assets.js` (no `rover` factory); Role 2 falls back to `src/surface/roverModel.js`
-- **Steps:** `/?debug=1&state=SURFACE`, the rover is parked to the right of the lander; walk to it and press E
-- **Expected:** a rover that matches the rest of Role 3's art (spec §12)
-- **Actual:** `assets.has('rover')` is false, so the rover is a simple procedural Apollo LRV built from boxes and tubes
-- **Suggested fix:** optional, only if there is time: register `rover` with the origin on the ground at the middle of the wheelbase, forward −Z, wheelbase 2.29 m, track 1.83 m, wheels 0.82 m across, and four wheel pivot groups named `wheelFL`, `wheelFR`, `wheelRL`, `wheelRR`, each with the spinning wheel as its first child. Role 2 picks it up automatically.
+- **Where:** `src/graphics/assets.js` (no `rover` factory yet); Role 2's fallback is `src/surface/roverModel.js` (`createRoverModel()`, `buildLrv()`); sizes come from `ROVER` in `src/surface/RoverController.js`
+- **Steps:** `npm run dev`, open `/?debug=1&state=SURFACE`, the rover is parked to the right of the lander; walk to it and press E to drive
+- **Expected:** a rover that matches the rest of Role 3's art (spec §12), built to the brief below
+- **Actual:** `assets.has('rover')` is false, so the rover is a simple procedural model of boxes and tubes
+- **Suggested fix:** build the crewed Mars rover as a model of NASA's Apollo Lunar Roving Vehicle (LRV), using this brief:
+  - **API:** register a factory so `assets.has('rover')` is true and `assets.get('rover')` returns a NEW `Object3D` on each call. Role 2 picks it up automatically (see `createRoverModel()` in `src/surface/roverModel.js`). No Role 2 change is needed, except the optional `userData.eye` below.
+  - **Coordinates and size** (metres, +Y up): origin on the ground at the centre of the wheelbase and track, wheels resting on y = 0. Forward is −Z, +X is the rover's right. Wheelbase 2.29 m, track 1.83 m, wheel diameter 0.82 m (radius 0.41), wheel width about 0.23 m, overall length about 3.1 m, ground clearance about 0.36 m, chassis deck about 0.53 m high (`deckY` in the code is `wheelRadius + 0.12`; use that value if the two differ). Real scale; don't scale the root.
+  - **Hierarchy Role 2 animates:** root, then a static body plus four wheel pivot groups named exactly `wheelFL`, `wheelFR`, `wheelRL`, `wheelRR`.
+    - Place the pivots at the wheel centres: x = ±0.915, y = 0.41, z = ∓1.145 (front is −Z, so `wheelFL` is x = −0.915, z = −1.145).
+    - Role 2 sets each pivot's `rotation.y` for four-wheel steering (the rear wheels turn opposite to the front).
+    - Role 2 sets the pivot's FIRST CHILD's `rotation.x` for wheel spin around the axle (X axis). The spinning wheel must be `children[0]` and must be symmetric around its axle.
+    - Fenders, motors and suspension arms stay on the body (not in the pivots), unless they should steer with the wheel.
+    - Role 2 sets the root's position and rotation (`'YXZ'` order: heading, pitch, roll) every frame, so the root itself must have no transform baked in.
+  - **Driver's view (very important):** the player drives from the LEFT seat in first person. The camera eye is at `(-0.32, 1.48, 0.22)` in rover coordinates (the `eye` vector in `roverModel.js`) and looks toward −Z.
+    - Keep a clear sight cone ahead: nothing taller than about y = 1.1 m in front of the driver (z < 0) between x = −1.0 and x = +0.35, except thin parts near the edges.
+    - Put the high-gain antenna mast on the front RIGHT, as the fallback does.
+    - Keep the TV camera and the comms relay low at the front centre.
+    - Keep the console and hand controller below the sight line, between the seats.
+    - Optional: if the seat ends up somewhere else, set `userData.eye` (a `THREE.Vector3`); Role 2 will read it.
+  - **Parts to model, from the real LRV:**
+    - [ ] three-part aluminium chassis with floor panels
+    - [ ] four wire-mesh wheels: woven zinc-coated piano-wire mesh, titanium chevron treads covering about half the tread, aluminium hub with the traction drive motor
+    - [ ] four grey fenders, with the extensions
+    - [ ] two tubular aluminium seats with nylon webbing, seat belts and footrests
+    - [ ] control and display console (attitude, heading, speed, range, power and temperature readouts) with the T-shaped hand controller between the seats
+    - [ ] Lunar Communications Relay Unit (gold-foil box) at the front
+    - [ ] umbrella high-gain antenna (gold mesh) on a mast
+    - [ ] helical low-gain antenna
+    - [ ] TV camera on its mast
+    - [ ] batteries with thermal covers and dust mirrors at the front
+    - [ ] rear payload pallet with tool carrier and sample bags
+  - **Materials:** anodised aluminium, gold Mylar foil on the relay unit and antennas, grey fibreglass fenders, dark seats. Use PBR materials like Role 3's other art. Optional: `userData.setDust(0..1)` to make the rover look dustier over time; Role 2 would call it as the odometer grows.
+  - **Rules:**
+    - No `THREE.Light` anywhere in the model. Adding or hiding lights changes the scene's light count and makes three.js recompile every lit material (see the light-count entry in this file). Use emissive materials for the console instead.
+    - Major parts have `castShadow = true`.
+  - **Budget:** aim under about 40 k triangles. Share geometries and materials between the four wheels. The wire mesh can be an alpha-tested texture instead of real wires.
+  - **Reference:** NASA's LRV Operations Handbook and Apollo 15 to 17 surface photos. Check NASA 3D Resources for a public-domain LRV model as a base (NASA media is generally not copyrighted). Credit it in `CREDITS.md`, like the NASA models Role 1 uses in `public/assets/nasa/`.
+  - **How to check it in the game:** `npm run dev`, open `/?debug=1&state=SURFACE`. The rover is parked to the right of the lander; walk to it and press E to drive (W/S, A/D, Space brake, E to get out). Check that the wheels steer and spin the right way, that the rover sits on the ground (not floating or sunk), and that the driver's view ahead is clear.
 - **Status:** open
 
 ## Role 4: Story, Cruise & Knowledge
