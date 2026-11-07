@@ -76,8 +76,28 @@ function controllerFor(state) {
   const marsFuel = mission.fuelForMars ?? getShip().stats.fuelMass * 0.25;
   if (state === 'ENTRY') return newController('mars', STARTS.marsEntry, marsFuel);
   // LANDING: keep the Mars controller from ENTRY, or the landed one when coming back to the seat.
-  if (fc && mission.planetId === 'mars' && !fc.failed) return fc;
+  if (fc && mission.planetId === 'mars' && !fc.failed && (fc.landed || fc.altitude < LOW_MARS_ALTITUDE + 1000)) return fc;
   return newController('mars', STARTS.marsLanding, marsFuel);
+}
+
+// The best view in orbit and during entry is the planet's limb, but along the orbit (or tail-first) the window shows
+// only stars. Turn the ship (attitude only, no velocity change) so its nose points along the motion and tilted
+// down to just below the horizon: the planet fills the lower part of the window.
+function faceTheLimb(fc) {
+  const up = v3(fc.up);
+  const along = v3(fc.vel).projectOnPlane(up);
+  if (along.lengthSq() < 1) return;
+  along.normalize();
+  const r = fc.pos ? v3(fc.pos).length() : fc.planet.radius;
+  const horizonDip = Math.acos(Math.min(1, fc.planet.radius / r)); // how far below level the horizon is from here
+  const tilt = horizonDip + THREE.MathUtils.degToRad(8);
+  const nose = along.multiplyScalar(Math.cos(tilt)).addScaledVector(up, -Math.sin(tilt)).normalize();
+  // ship axes: +Y nose, +Z cockpit "up" (toward the sky, so the planet sits at the bottom of the window), +X right
+  const top = up.clone().addScaledVector(nose, -up.dot(nose)).normalize();
+  const right = new THREE.Vector3().crossVectors(nose, top);
+  const q = new THREE.Quaternion().setFromRotationMatrix(new THREE.Matrix4().makeBasis(right, nose, top));
+  fc.orient = { x: q.x, y: q.y, z: q.z, w: q.w };
+  fc.omega = { x: 0, y: 0, z: 0 };
 }
 
 // ---------- views ----------
@@ -246,6 +266,7 @@ export default {
 
   enter(state) {
     const fc = controllerFor(state);
+    if ((state === 'ORBIT' || state === 'ENTRY') && fc.throttle === 0) faceTheLimb(fc);
     const view = buildSpaceView(fc.planetId);
     s = {
       state, fc, view, surface: null, mode: null,
@@ -255,6 +276,7 @@ export default {
     const hudLayer = document.createElement('div');
     hudLayer.style.cssText = 'position:absolute;inset:0;pointer-events:none';
     ui.mount(hudLayer, { layer: 'hud' });
+    hudLayer.style.pointerEvents = 'none'; // ui.mount enables clicks; the HUD must never block buttons under it
     s.hud = createFlightHUD({ parent: hudLayer });
     const guideMark = document.createElement('span');
     guideMark.className = 'marker guide';
@@ -475,6 +497,14 @@ export default {
 
   exit() {
     if (!s) return;
+    // graphics.camera is our flight camera now; hand it back un-parented and level so the next state's owner
+    // (for example the ENDING screen) doesn't inherit the ship's attitude and look at the cockpit's rear wall.
+    const cam = graphics.camera;
+    cam.removeFromParent();
+    cam.position.set(0, 0, 0);
+    cam.quaternion.identity();
+    cam.up.set(0, 1, 0);
+    cam.updateMatrixWorld();
     if (s.surface) s.surface.scene.remove(s.surface.rig, s.surface.dust); // the shared Mars scene is walked on next
     s.controls.dispose();
     window.removeEventListener('click', s.lockOnClick);

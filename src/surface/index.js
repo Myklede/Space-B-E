@@ -60,6 +60,7 @@ export default {
     const hudLayer = document.createElement('div');
     hudLayer.style.cssText = 'position:absolute;inset:0;pointer-events:none';
     ui.mount(hudLayer, { layer: 'hud' });
+    hudLayer.style.pointerEvents = 'none'; // ui.mount enables clicks; the HUD must never block buttons under it
     s = { state, inside, camera, cabin: null, sinceTelemetry: 0, hud: createSuitHUD({ parent: hudLayer }), offs: [], notice: null };
     // short alert line under the helmet header (falls, suit breach)
     s.noticeEl = document.createElement('div');
