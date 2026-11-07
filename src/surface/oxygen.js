@@ -6,7 +6,7 @@
 // each frame: o2.update(dt, { inside, running, suited })
 //
 // Emits: eva:oxygen { percent, level, spareTanks }   (on every whole-percent or level change)
-//        flight:failed { endingId: 'out_of_breath', cause: 'suit_o2_depleted' }
+//        flight:failed { endingId: 'outOfBreath', cause }   (contract ENDINGS)
 
 export const O2_LEVELS = [
   { id: 'critical', below: 5 },
@@ -47,7 +47,7 @@ export function createOxygen({ bus, tankSeconds = 300, spareTanks = 2, runMultip
       publish();
       if (state.remaining === 0) {
         state.depleted = true;
-        bus.emit('flight:failed', { endingId: 'out_of_breath', cause: 'suit_o2_depleted' });
+        bus.emit('flight:failed', { endingId: 'outOfBreath', cause: 'The suit ran out of oxygen before you got back to the ship.', causeId: 'suit_o2_depleted' });
       }
     },
 

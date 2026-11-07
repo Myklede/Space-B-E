@@ -7,7 +7,8 @@
 //    On Mars (g = 3.71) you can't start/stop/turn as fast → slightly "slidey" movement.
 //  - Fall damage depends on impact speed (v = √(2gh)), so you can drop ~2.6× higher on Mars.
 //
-// const walker = new WalkController({ bus, gravity: planets.mars.g, getGroundHeight: (x, z) => h, bounds });
+// const walker = new WalkController({ gravity: PLANETS.mars.g, getGroundHeight: (x, z) => h, bounds, onNotice });
+// onNotice(type, data): 'landed' { impactSpeed, airTime, height }, 'fall' { impactSpeed, severity } (local, not on the bus).
 // each frame: walker.update(dt, { forward, right, run, jump }); walker.look(dx, dy) from mouse movement.
 
 export const WALK_TUNING = {
@@ -17,8 +18,8 @@ export const WALK_TUNING = {
   runSpeed: { suit: 2.8, cabin: 2.6 },
   legAccel: 8, // m/s² the legs can deliver with perfect grip
   friction: 0.6, // μ boot ↔ ground
-  jumpSpeed: Math.sqrt(2 * 9.81 * 0.45), // ≈ 2.97 m/s: a 45 cm jump on Earth
-  cabinJumpSpeed: Math.sqrt(2 * 9.81 * 0.15), // small hop indoors (low ceiling)
+  jumpSpeed: 2.97, // m/s, the same legs everywhere: a 45 cm jump on Earth (v = √(2·g·h))
+  cabinJumpSpeed: 1.72, // m/s, small hop indoors (15 cm on Earth; low ceiling)
   airControl: 0.4, // m/s² while airborne
   hurtImpact: 6, // m/s ≈ falling 1.8 m on Earth, 4.9 m on Mars
   severeImpact: 10, // m/s ≈ 5.1 m on Earth, 13.5 m on Mars
@@ -26,8 +27,9 @@ export const WALK_TUNING = {
 };
 
 export class WalkController {
-  constructor({ bus, gravity = 3.71, getGroundHeight = () => 0, bounds = null, colliders = [], mode = 'suit', start = { x: 0, z: 0 }, yaw = 0 } = {}) {
-    this.bus = bus ?? { emit() {} };
+  constructor({ onNotice, gravity, getGroundHeight = () => 0, bounds = null, colliders = [], mode = 'suit', start = { x: 0, z: 0 }, yaw = 0 } = {}) {
+    if (!(gravity > 0)) throw new Error('WalkController: pass gravity (PLANETS.<planet>.g from core)');
+    this.onNotice = onNotice ?? (() => {});
     this.gravity = gravity;
     this.getGroundHeight = getGroundHeight;
     this.bounds = bounds; // { minX, maxX, minZ, maxZ, ceiling? } for the cabin
@@ -157,9 +159,9 @@ export class WalkController {
 
   _land(impactSpeed) {
     const T = WALK_TUNING;
-    this.bus.emit('eva:landed', { impactSpeed, airTime: this.airTime, height: this.lastJumpApex - this.pos.y });
+    this.onNotice('landed', { impactSpeed, airTime: this.airTime, height: this.lastJumpApex - this.pos.y });
     if (impactSpeed > T.hurtImpact) {
-      this.bus.emit('eva:fall', { impactSpeed, severity: impactSpeed > T.severeImpact ? 'severe' : 'hurt' });
+      this.onNotice('fall', { impactSpeed, severity: impactSpeed > T.severeImpact ? 'severe' : 'hurt' });
       this.heartRate = Math.min(170, this.heartRate + 25);
     }
   }
@@ -177,7 +179,6 @@ export class WalkController {
       running: this.running,
       heartRate: Math.round(this.heartRate),
       gravity: this.gravity,
-      gEarth: this.gravity / 9.80665,
     };
   }
 }

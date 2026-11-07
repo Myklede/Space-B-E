@@ -1,124 +1,109 @@
 // Walkable ship cabin (Role 2). TEAM_PROMPT §7.1.
-// Registers the cabin stations on the shared interactable system and runs the suit/airlock logic.
-// The 3D cabin is Role 3's `assets.get('cabin')`: pass its `userData.stations` / `userData.props`
-// so the interaction points sit exactly on the art. CABIN below mirrors that layout as a fallback.
+// Registers the cabin stations on the interactable system and runs the suit/airlock logic.
+// Station ids are contract.js STATIONS: pilotSeat, o2Station, suitLocker, commsConsole, sampleStorage, airlock, bunk.
+// Positions come from Role 3's cabin art (assets.get('cabin').userData.stations / .props); CABIN is the fallback.
 //
 // Cabin (Role 3 interiors.js): 4 m wide (x −2..2) × 8 m long (z −4..4), origin = middle of the floor,
 // pilot seat at −Z, airlock at +Z, height 2.6 m (walls 2.15 m, then a chamfer).
 //
-// const cabinArt = assets.get('cabin');
-// const cabin = createShipInterior({ bus, interactables, oxygen, stations: cabinArt.userData.stations, props: cabinArt.userData.props });
-// Emits: interior:interact { stationId }            — every station use (Role 4 listens for 'comms', 'storage', 'prop:*')
-//        interior:suit { suited }                    — suit HUD on/off (Role 3)
-//        interior:airlock { stage, progress }        — 'cycling' (lights/sound) | 'open'
-//        state:request { to, reason }                — PROPOSED contract: ask core to switch state
+// const cabin = createShipInterior({ bus: events, interactables, oxygen, stations: art.userData.stations, props: art.userData.props,
+//                                    onSeat, onExit, onNotice });
+// On the bus: interior:interact { stationId }   (every station use; Role 4 listens for commsConsole, sampleStorage, bunk)
+// Callbacks:  onSeat() when the unsuited player sits in the pilot seat; onExit() when the airlock cycle finishes.
+// Local notices (onNotice): 'suit' { suited }, 'airlock' { stage: 'cycling' | 'open', progress }, 'o2Empty', 'prop' { id }.
 
-// Role 3 station names → our station ids (ids are what events carry)
-export const ROLE3_STATION_NAMES = {
-  seat: 'pilotSeat',
-  suit: 'suitLocker',
-  o2: 'o2Station',
-  comms: 'commsConsole',
-  storage: 'sampleStorage',
-  airlock: 'airlock',
-};
+export const STATION_IDS = ['pilotSeat', 'o2Station', 'suitLocker', 'commsConsole', 'sampleStorage', 'airlock', 'bunk'];
 
 export const CABIN = {
   bounds: { minX: -2, maxX: 2, minZ: -4, maxZ: 4, ceiling: 2.5 },
   spawn: { x: 0, z: -2.4 }, // standing behind the pilot seat, facing the airlock (+Z)
   spawnYaw: Math.PI, // yaw π = looking toward +Z
   stations: {
-    seat: { x: 0, y: 1.2, z: -3.3 },
-    suit: { x: -1.7, y: 1.2, z: 0.7 },
-    o2: { x: -1.72, y: 1.2, z: -1.1 },
-    comms: { x: 1.7, y: 1.2, z: -1.3 },
-    storage: { x: 1.72, y: 1.2, z: 0.9 },
+    pilotSeat: { x: 0, y: 1.2, z: -3.3 },
+    suitLocker: { x: -1.7, y: 1.2, z: 0.7 },
+    o2Station: { x: -1.72, y: 1.2, z: -1.1 },
+    commsConsole: { x: 1.7, y: 1.2, z: -1.3 },
+    sampleStorage: { x: 1.72, y: 1.2, z: 0.9 },
     airlock: { x: 0, y: 1.2, z: 3.86 },
+    bunk: { x: -1.55, y: 1.2, z: -2.75 },
   },
-  // crew-life props: Role 4 shows a real fact for each ('prop:<id>')
   props: {
-    bunk: { x: -1.55, y: 1.0, z: -2.75 },
-    familyPhoto: { x: -1.2, y: 1.2, z: -2.9 },
+    familyPhoto: { x: -0.95, y: 1.2, z: -3.08 },
   },
 };
 
+export const AIRLOCK_CYCLE_SECONDS = 3;
+
 const xyz = (v) => ({ x: v.x, y: v.y, z: v.z });
 
-// Accepts Role 3's userData.stations ({ pilotSeat: Vector3, ... }) or our own { seat: {x,y,z}, ... }.
 export function resolveStations(stations) {
-  if (!stations) return CABIN.stations;
   const out = {};
-  for (const [id, role3Name] of Object.entries(ROLE3_STATION_NAMES)) {
-    const p = stations[role3Name] ?? stations[id] ?? CABIN.stations[id];
-    out[id] = xyz(p);
-  }
+  for (const id of STATION_IDS) out[id] = xyz(stations?.[id] ?? CABIN.stations[id]);
   return out;
 }
 
-export const AIRLOCK_CYCLE_SECONDS = 3;
-
-export function createShipInterior({ bus, interactables, oxygen, canExit = () => true, stations, props } = {}) {
+export function createShipInterior({ bus, interactables, oxygen, stations, props, canExit = () => true, onSeat, onExit, onNotice } = {}) {
   bus = bus ?? { emit() {} };
+  const notify = onNotice ?? (() => {});
   const st = { suited: false, airlock: null, offs: [] }; // airlock: null | { t }
   const S = resolveStations(stations);
-  const P = props ? Object.fromEntries(Object.entries(props).map(([k, v]) => [k, xyz(v)])) : CABIN.props;
+  const P = Object.fromEntries(Object.entries(props ?? CABIN.props).map(([k, v]) => [k, xyz(v)]));
   const reg = (def) => st.offs.push(interactables.register(def));
-  const ping = (stationId) => bus.emit('interior:interact', { stationId });
+  const use = (stationId) => bus.emit('interior:interact', { stationId });
 
   reg({
-    id: 'seat', position: S.seat, prompt: () => (st.suited ? 'Take off the suit before flying' : 'E: sit down (pilot seat)'),
+    id: 'pilotSeat', position: S.pilotSeat, prompt: () => (st.suited ? 'Take off the suit before flying' : 'E: sit in the pilot seat'),
     onUse: () => {
-      ping('seat');
-      if (!st.suited) bus.emit('state:request', { to: 'LANDING', reason: 'seat' });
+      use('pilotSeat');
+      if (!st.suited) onSeat?.();
     },
   });
   reg({
-    id: 'suit', position: S.suit, prompt: () => (st.suited ? 'E: take off suit' : 'E: put on spacesuit'),
+    id: 'suitLocker', position: S.suitLocker, prompt: () => (st.suited ? 'E: take off the suit' : 'E: put on the spacesuit'),
     onUse: () => {
       st.suited = !st.suited;
-      ping('suit');
-      bus.emit('interior:suit', { suited: st.suited });
+      use('suitLocker');
+      notify('suit', { suited: st.suited });
     },
   });
   reg({
-    id: 'o2', position: S.o2,
-    prompt: () => (oxygen ? `E: swap O₂ tank (${oxygen.spareTanks} spare)` : 'O₂ station'),
-    enabled: () => !!oxygen,
+    id: 'o2Station', position: S.o2Station,
+    prompt: () => (oxygen ? `E: swap the O₂ tank (${oxygen.spareTanks} spare)` : 'O₂ station'),
     onUse: () => {
-      ping('o2');
-      if (oxygen && !oxygen.swapTank()) bus.emit('interior:interact', { stationId: 'o2:empty' });
+      use('o2Station');
+      if (oxygen && !oxygen.swapTank()) notify('o2Empty');
     },
   });
-  reg({ id: 'comms', position: S.comms, prompt: 'E: comms console (HQ, family, upload data)', onUse: () => ping('comms') });
-  reg({ id: 'storage', position: S.storage, prompt: 'E: sample storage', onUse: () => ping('storage') });
+  reg({ id: 'commsConsole', position: S.commsConsole, prompt: 'E: comms console', onUse: () => use('commsConsole') });
+  reg({ id: 'sampleStorage', position: S.sampleStorage, prompt: 'E: sample storage', onUse: () => use('sampleStorage') });
+  reg({ id: 'bunk', position: S.bunk, prompt: 'E: bunk', onUse: () => use('bunk') });
   reg({
     id: 'airlock', position: S.airlock,
-    prompt: () => (!st.suited ? 'Suit up before using the airlock' : st.airlock ? 'Cycling…' : 'E: cycle airlock → Mars'),
+    prompt: () => (!st.suited ? 'Put on the suit before using the airlock' : st.airlock ? 'Cycling…' : 'E: cycle the airlock'),
     onUse: () => {
-      ping('airlock');
+      use('airlock');
       if (!st.suited || st.airlock || !canExit()) return;
       st.airlock = { t: 0 };
     },
   });
-  // the bunk is a station in Role 3's art; treat it as a crew-life prop here
-  const bunk = stations?.bunk ? { bunk: xyz(stations.bunk) } : {};
-  for (const [id, position] of Object.entries({ ...bunk, ...P })) {
-    reg({ id: `prop:${id}`, position, radius: 1.4, prompt: 'E: look', onUse: () => ping(`prop:${id}`) });
+  // Crew-life props that are not contract stations: local notice only (e.g. the family photo).
+  for (const [id, position] of Object.entries(P)) {
+    reg({ id: `prop:${id}`, position, radius: 1.4, prompt: 'E: look', onUse: () => notify('prop', { id }) });
   }
 
   return {
     stations: S,
     get suited() { return st.suited; },
-    set suited(v) { st.suited = !!v; bus.emit('interior:suit', { suited: st.suited }); },
+    set suited(v) { st.suited = !!v; notify('suit', { suited: st.suited }); },
     get airlockProgress() { return st.airlock ? Math.min(1, st.airlock.t / AIRLOCK_CYCLE_SECONDS) : 0; },
     update(dt) {
       if (!st.airlock) return;
       st.airlock.t += dt;
       const progress = Math.min(1, st.airlock.t / AIRLOCK_CYCLE_SECONDS);
-      bus.emit('interior:airlock', { stage: progress < 1 ? 'cycling' : 'open', progress });
+      notify('airlock', { stage: progress < 1 ? 'cycling' : 'open', progress });
       if (progress >= 1) {
         st.airlock = null;
-        bus.emit('state:request', { to: 'SURFACE', reason: 'airlock' });
+        onExit?.();
       }
     },
     dispose() { st.offs.forEach((off) => off()); st.offs = []; },

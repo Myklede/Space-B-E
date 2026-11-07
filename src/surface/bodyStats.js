@@ -1,6 +1,6 @@
 // Astronaut body stats (Role 2 logic) → HUD + black box (TEAM_PROMPT §8, §11 "Fragility").
 //
-// const body = createBodyStats({ bus });
+// const body = createBodyStats({ onNotice });
 // each frame: body.update(dt, { env, gLoad, heartRate, inShelter, solarStorm, daysPerSecond });
 //   env: 'earth' | 'earth_orbit' | 'cruise' | 'mars_orbit' | 'mars' | 'cabin_mars'
 //   daysPerSecond: game days that pass per real second (time-warp in the cruise), default: 1 real s = 1 game s
@@ -14,8 +14,8 @@
 // "storm shelter" cuts that several-fold. The storm numbers below are GAMEPLAY values, marked TODO tune.
 // NASA's career limit (2022 standard) is 600 mSv. Acute radiation sickness starts around 1 Sv (1000 mSv).
 //
-// Emits: body:stats { doseMSv, rateMSvPerDay, peakG, fatigue, heartRate }  (about twice per second)
-//        body:alert { type: 'radiation_high' | 'radiation_career_limit' | 'g_peak', ... }  (one-shot)
+// Local notices (onNotice, not on the bus): 'alert' { type: 'radiation_high' | 'radiation_career_limit' | 'g_peak', ... }.
+// The module that owns the state puts doseMSv / heartRate into contract's flight:telemetry for the black box.
 
 export const DOSE_RATE_MSV_PER_DAY = {
   earth: 0.0066,
@@ -37,14 +37,14 @@ export const BODY_TUNING = {
 
 const SECONDS_PER_DAY = 86400;
 
-export function createBodyStats({ bus } = {}) {
-  bus = bus ?? { emit() {} };
+export function createBodyStats({ onNotice } = {}) {
+  const notify = onNotice ?? (() => {});
   const st = { dose: 0, rate: 0, peakG: 0, fatigue: 0, heartRate: 72, timer: 0, alerts: new Set() };
 
   const alert = (type, data = {}) => {
     if (st.alerts.has(type)) return;
     st.alerts.add(type);
-    bus.emit('body:alert', { type, ...data });
+    notify('alert', { type, ...data });
   };
 
   return {
@@ -71,11 +71,6 @@ export function createBodyStats({ bus } = {}) {
       if (st.dose > BODY_TUNING.careerLimitMSv) alert('radiation_career_limit', { doseMSv: st.dose });
       if (gLoad > BODY_TUNING.gPeakAlert) alert('g_peak', { g: gLoad });
 
-      st.timer += dt;
-      if (st.timer >= BODY_TUNING.publishEvery) {
-        st.timer = 0;
-        bus.emit('body:stats', { doseMSv: st.dose, rateMSvPerDay: rate, peakG: st.peakG, fatigue: st.fatigue, heartRate });
-      }
     },
 
     snapshot() { return { doseMSv: st.dose, peakG: st.peakG, fatigue: st.fatigue, heartRate: st.heartRate }; },

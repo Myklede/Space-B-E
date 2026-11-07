@@ -62,7 +62,7 @@ export function assistReadout(fc) {
     pointingVsMovingDeg: speed > 0.1 ? (Math.acos(Math.max(-1, Math.min(1, dot(fc.forward, norm(fc.vel))))) * 180) / Math.PI : 0,
     burnNow,
     stoppingDistance: stopDist,
-    burnTimeLeft: t.thrust > 0 ? fc.fuel / (t.thrust / (t.isp * 9.80665)) : fc.fuel / (fc.thrustNow() / (t.isp * 9.80665) || Infinity),
+    burnTimeLeft: t.thrust > 0 ? fc.fuel / (t.thrust / (t.isp * fc.g0)) : fc.fuel / (fc.thrustNow() / (t.isp * fc.g0) || Infinity),
     aboveAtmosphere: t.altitude > atmosphereTop(fc.planet),
     warnings,
     // Formula cards (§6.4 MVP): show the formula, the numbers, the result.

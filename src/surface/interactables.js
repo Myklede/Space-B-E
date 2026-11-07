@@ -69,7 +69,3 @@ export function createInteractables() {
   };
 }
 
-// One shared instance for the whole game, so Role 4's tasks and Role 2's stations live in the same system.
-// README contract: registerInteractable({ id, position, prompt, onUse }) → returns an unregister function.
-export const interactables = createInteractables();
-export const registerInteractable = (def) => interactables.register(def);

@@ -5,7 +5,8 @@ import { createFlightHUD } from '../../flight/hud/createFlightHUD.js';
 import { createOxygen } from '../oxygen.js';
 import { FlightController } from '../../flight/FlightController.js';
 import { assistReadout } from '../../flight/flightAssist.js';
-import { MOCK_PLANETS, MOCK_SHIPS } from '../../flight/presets.js';
+import { MOCK_SHIPS } from '../../flight/presets.js';
+import { PLANETS as MOCK_PLANETS, G0 } from '../../core/planets.js';
 
 // Minimal DOM fixture tests state decisions and teardown. Browser layout/WebGL is separate.
 class Element {
@@ -49,7 +50,7 @@ const suitState = oxygen => ({
 
 try {
   await test('orbit card remains orbital during a slight descent; collision warning survives assist off', () => {
-    const fc = new FlightController({ planets: MOCK_PLANETS, shipSpec: MOCK_SHIPS.reliable });
+    const fc = new FlightController({ g0: G0, planets: MOCK_PLANETS, shipSpec: MOCK_SHIPS.reliable });
     const telemetry = { ...fc.telemetry, phase: 'orbit', verticalSpeed: -0.01, ignitionsLeft: 2, armorLeft: 1 };
     const assist = assistReadout(fc);
     const hud = createFlightHUD();

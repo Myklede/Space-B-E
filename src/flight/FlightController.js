@@ -3,18 +3,21 @@
 // Pure JS, no three.js, testable in node. Units inside: m, s, kg, N, rad.
 // Position/velocity are relative to the CURRENT planet's center (one planet per scene).
 //
-// Usage:
-//   const fc = new FlightController({ bus, planets, planetId: 'earth', shipSpec, start: 'pad' });
-//   every frame: fc.update(dt, input)   // input from cockpitControls.js
+// Usage (src/flight/index.js does this with core's events, PLANETS and G0):
+//   const fc = new FlightController({ bus: events, planets: PLANETS, g0: G0, planetId: 'earth', shipSpec, start: 'pad' });
+//   every frame: fc.update(dt, controls.input)   // controls from cockpitControls.js
 //   read: fc.telemetry  (HUD / Flight Assist / black box)
+//   fc.onNotice = (type, data) => {...}            // EVERY flight notice, for HUD/sound (not on the bus)
 //
-// Emits (through the injected bus, TEAM_PROMPT §14):
-//   flight:phase  { phase }                       'prelaunch'|'ascent'|'orbit'|'coast'|'entry'|'landing'|'landed'
-//   flight:event  { type, t, data }               'liftoff','fairing_sep','parachute','maxq_warning','heat_warning',
-//                                                 'engine_hot','g_high','blackout','orbit_achieved','fuel_empty',
-//                                                 'ignition','no_ignition','debris_near_miss','debris_hit'
+// ShipSpec units follow src/core/contract.js: masses in kg, thrust in N. shipSpec.launch.tempC = launch weather.
+//
+// On the bus (only names from contract.js):
+//   flight:phase  { phase }                 'prelaunch'|'ascent'|'orbit'|'coast'|'entry'|'landing'|'landed'
+//   flight:event  { type, t, data }         only FLIGHT_EVENT_TYPES: 'maxq', 'debris_hit', 'blackout', 'skip_off'
 //   flight:landed { touchdownSpeed }
-//   flight:failed { endingId, cause, historyHint } endingId: 'rud'|'burnup'|'adrift'
+//   flight:failed { endingId, cause, causeId, historyHint }   endingId is a key of ENDINGS, cause is one sentence
+// Local notices (fc.onNotice) also include: liftoff, fairing_sep, parachute, maxq_warning, heat_warning, engine_hot,
+//   g_high, orbit_achieved, fuel_empty, ignition, no_ignition, debris_near_miss.
 
 import {
   v3, add, sub, scale, dot, cross, len, norm, clone,
@@ -26,8 +29,26 @@ import {
 } from './atmosphere.js';
 import { closestApproach } from './debris.js';
 
-export const G0 = 9.80665;
 export const FIXED_DT = 1 / 120;
+
+// Local notice → contract flight:event type (contract.js FLIGHT_EVENT_TYPES). Others stay local.
+const BUS_FLIGHT_EVENTS = { maxq_warning: 'maxq', debris_hit: 'debris_hit', blackout: 'blackout', skip_off: 'skip_off' };
+
+// Plain-sentence causes for flight:failed (contract: "cause is one plain sentence").
+const CAUSES = {
+  engine_overheat: 'The engine ran too hot for too long and blew apart.',
+  max_q_exceeded: 'The rocket went too fast in thick air and the aerodynamic load tore it apart.',
+  g_force_blackout: 'The g-force was so high that the pilot blacked out and lost the ship.',
+  no_heat_shield: 'With no heat shield, the ship burned up on atmospheric entry.',
+  heat_shield_damaged: 'The damaged heat shield let hot plasma in during entry.',
+  heat_overload: 'The entry was too fast and steep, and the heat shield could not take it.',
+  seal_failure_cold: 'The cheap seals went stiff in the cold, leaked hot gas, and the rocket broke up.',
+  crash_landing: 'The ship hit the ground too fast.',
+  tipped_over: 'The ship landed tilted and fell over.',
+  debris_impact: 'A piece of space debris hit the ship.',
+  out_of_fuel: 'Out of fuel on a path that never comes back: the ship drifts forever.',
+  skipped_off: 'The entry was too shallow, so the ship skipped off the atmosphere into deep space.',
+};
 
 // Tunables (TODO tune in playtests). Heat limits are in GAME units (see atmosphere.js).
 export const TUNING = {
@@ -55,17 +76,14 @@ export const TUNING = {
   collisionWarnTime: 20, // s: warn when a piece will pass closer than its danger radius within this time
 };
 
-const TONNE = 1000;
-const KN = 1000;
-
-// Convert a ShipSpec (tonnes, kN) into internal physics params with safe defaults.
+// Convert a ShipSpec (contract units: kg, N) into internal physics params with safe defaults.
 export function shipParams(spec = {}) {
   const s = spec.stats ?? {};
   const pump = spec.engines?.[0]?.pump ?? 'M';
   return {
-    dryMass: (s.dryMass ?? 6) * TONNE,
-    fuelMass: (s.fuelMass ?? 14) * TONNE,
-    thrustVac: (s.thrust ?? 300) * KN,
+    dryMass: s.dryMass ?? 6000,
+    fuelMass: s.fuelMass ?? 14000,
+    thrustVac: s.thrust ?? 300000,
     ispSL: s.ispSL ?? 300,
     ispVac: s.ispVac ?? 330,
     // m² (drag coefficient × reference area). A heat shield is a wide aeroshell: Mars air is so thin
@@ -90,17 +108,20 @@ export function shipParams(spec = {}) {
 }
 
 export class FlightController {
-  constructor({ bus, planets, planetId = 'earth', shipSpec, start = 'pad', scenario = {}, rng = Math.random } = {}) {
+  constructor({ bus, planets, g0, planetId = 'earth', shipSpec, start = 'pad', scenario, fuel, rng = Math.random } = {}) {
     if (!planets?.[planetId]) throw new Error(`FlightController: unknown planet "${planetId}"`);
+    if (!(g0 > 0)) throw new Error('FlightController: pass g0 (standard gravity G0 from core)');
+    this.g0 = g0;
     this.bus = bus ?? { emit() {} };
+    this.onNotice = null;
     this.planetId = planetId;
     this.planet = planets[planetId];
     this.mu = this.planet.g * this.planet.radius ** 2; // GM = g·R²
     this.ship = shipParams(shipSpec);
-    this.scenario = scenario; // e.g. { tempC: 2 } for the Challenger demo
+    this.scenario = scenario ?? { tempC: shipSpec?.launch?.tempC ?? 15 }; // launch weather (Cold Morning ending)
     this.rng = rng;
 
-    this.fuel = this.ship.fuelMass;
+    this.fuel = fuel ?? this.ship.fuelMass; // carry leftover fuel between scenes
     this.throttle = 0;
     this.engineLit = false;
     this.ignitionsLeft = this.ship.ignitions;
@@ -172,7 +193,7 @@ export class FlightController {
   }
 
   deltaVLeft() {
-    return this.ship.ispVac * G0 * Math.log(this.mass / this.ship.dryMass);
+    return this.ship.ispVac * this.g0 * Math.log(this.mass / this.ship.dryMass);
   }
 
   orbit() {
@@ -222,7 +243,7 @@ export class FlightController {
       airDensity: rho,
       dynamicPressure: dynamicPressure(rho, speed),
       maxQ: TUNING.maxQ,
-      gLoad: this._lastNonGravAccel / G0,
+      gLoad: this._lastNonGravAccel / this.g0,
       heatFlux: hf,
       heatFluxRealEq: hf * HEAT_REAL_SCALE,
       heatLimit: this._heatLimit(),
@@ -317,7 +338,7 @@ export class FlightController {
 
     // fuel burn: mdot = F / (Isp · g0)
     if (thrustN > 0) {
-      this.fuel = Math.max(0, this.fuel - (thrustN / (this.isp(alt) * G0)) * dt);
+      this.fuel = Math.max(0, this.fuel - (thrustN / (this.isp(alt) * this.g0)) * dt);
       if (this.fuel === 0) this._event('fuel_empty');
     }
 
@@ -495,7 +516,7 @@ export class FlightController {
     else if (q < T.maxQ * 0.6) this._flags.maxq_warning = false;
     if (q > T.maxQ) return this._fail('rud', 'max_q_exceeded', { q });
 
-    const g = this._lastNonGravAccel / G0;
+    const g = this._lastNonGravAccel / this.g0;
     if (g > T.gWarn) this._event('g_high', { g });
     else if (g < T.gWarn * 0.8) this._flags.g_high = false;
     this._timers.g = g > T.gSustainedLimit ? this._timers.g + dt : 0;
@@ -512,14 +533,14 @@ export class FlightController {
       this._timers.heat = hf > this._heatLimit() ? this._timers.heat + dt : 0;
       if (this._timers.heat > T.heatGrace) {
         if (!this.ship.hasHeatShield) return this._fail('burnup', 'no_heat_shield');
-        if (this.ship.heatShieldDamaged) return this._fail('burnup', 'heat_shield_damaged', {}, 'columbia');
+        if (this.ship.heatShieldDamaged) return this._fail('theFoam', 'heat_shield_damaged', {}, 'columbia');
         return this._fail('burnup', 'heat_overload');
       }
     }
 
     // Challenger demo: cheap seals + cold launch → failure a minute into flight.
     if (this._coldSealFailAt !== null && this.t >= this._coldSealFailAt) {
-      return this._fail('rud', 'seal_failure_cold', { tempC: this.scenario.tempC }, 'challenger');
+      return this._fail('coldMorning', 'seal_failure_cold', { tempC: this.scenario.tempC }, 'challenger');
     }
   }
 
@@ -559,7 +580,9 @@ export class FlightController {
     const neverReturns = escaping || orb.periapsis > top;
     this._timers.stranded = neverReturns ? this._timers.stranded + dt : 0;
     if (this._timers.stranded > TUNING.strandedGrace) {
-      this._fail('adrift', this._wasInAtmosphere && orb.e >= 1 ? 'skipped_off' : 'out_of_fuel');
+      const skipped = this._wasInAtmosphere && orb.e >= 1;
+      if (skipped) this._event('skip_off');
+      this._fail('adrift', skipped ? 'skipped_off' : 'out_of_fuel');
     }
   }
 
@@ -589,14 +612,18 @@ export class FlightController {
   _event(type, data = {}) {
     if (this._flags[type]) return;
     this._flags[type] = true;
-    this.bus.emit('flight:event', { type, t: this.t, data });
+    this.onNotice?.(type, data);
+    const busType = BUS_FLIGHT_EVENTS[type];
+    if (busType) this.bus.emit('flight:event', { type: busType, t: this.t, data });
   }
 
-  _fail(endingId, cause, data = {}, historyHint = null) {
+  _fail(endingId, causeId, data = {}, historyHint = null) {
     if (this.failed) return;
-    this.failed = { endingId, cause, historyHint, t: this.t, ...data };
+    const cause = CAUSES[causeId] ?? causeId;
+    this.failed = { endingId, cause, causeId, historyHint, t: this.t, ...data };
     this.throttle = 0;
-    this.bus.emit('flight:failed', { endingId, cause, historyHint, t: this.t, ...data });
+    this.onNotice?.('failed', this.failed);
+    this.bus.emit('flight:failed', { endingId, cause, causeId, historyHint, t: this.t, ...data });
   }
 
   // Snapshot for the predicted trajectory / save / scene hand-over.

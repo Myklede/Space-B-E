@@ -27,13 +27,11 @@ test('solar storm multiplies the dose; the shelter cuts it by the shelter factor
   assert.ok(Math.abs(surface.doseMSv - DOSE_RATE_MSV_PER_DAY.mars) < 1e-9);
 });
 
-test('alerts fire once: high dose, career limit, g peak; stats are published', () => {
-  const bus = mkBus();
-  const b = createBodyStats({ bus });
+test('alerts fire once: high dose, career limit, g peak', () => {
+  const alerts = [];
+  const b = createBodyStats({ onNotice: (type, p) => alerts.push(p.type) });
   for (let i = 0; i < 10; i++) b.update(1, { env: 'cruise', solarStorm: true, gLoad: 6, daysPerSecond: 1 });
-  const alerts = bus.log.filter(([n]) => n === 'body:alert').map(([, p]) => p.type);
   assert.deepEqual(alerts.sort(), ['g_peak', 'radiation_career_limit', 'radiation_high']);
-  assert.ok(bus.log.some(([n]) => n === 'body:stats'));
   assert.equal(b.peakG, 6);
 });
 

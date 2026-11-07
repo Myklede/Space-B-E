@@ -1,85 +1,177 @@
-// STUB: Role 2 replaces this. Keep every export listed in contract.js (PUBLIC_EXPORTS).
+// Role 2 surface module: owns INTERIOR (walkable cabin) and SURFACE (Mars EVA) (contract.js STATE_OWNERS).
+// First-person walking with Mars gravity, suit O₂, cabin stations, airlock, Role 3's cabin and Mars terrain,
+// and the suit HUD (helmet frame + life support panel).
+//
+//   INTERIOR  stations: pilotSeat (→ LANDING cockpit, or → RETURN when Mars Exploration is 100 %), suitLocker,
+//             o2Station, commsConsole, sampleStorage, bunk, airlock (suit on → 3 s cycle → SURFACE).
+//   SURFACE   walk Jezero; O₂ drains (30/15/5 % cautions, 0 % → flight:failed outOfBreath); the hatch → INTERIOR.
+//
+// registerInteractable({ id, position, prompt, onUse, hold?, radius?, state? }) is the README/contract API for
+// Role 4's tasks. `state` ('SURFACE' or 'INTERIOR') limits where it can be used; positions are in that scene's
+// metres (SURFACE: Role 3 terrain, landing site at the origin, y from getTerrainHeight). Returns an unregister function.
 import * as THREE from 'three';
 import { assets, createMarsScene, getTerrainHeight, graphics } from '/src/graphics/index.js';
-import { contract, events, input, requestState } from '/src/core/index.js';
+import { audio } from '/src/audio/index.js';
+import { PLANETS, events, getState, input, requestState, ui } from '/src/core/index.js';
 import { stubScreen } from '/src/core/stubScreen.js';
+import { getProgress } from '/src/missions/index.js';
+import { WalkController } from './WalkController.js';
+import { createInteractables } from './interactables.js';
+import { createShipInterior, CABIN } from './shipInterior.js';
+import { createSuitHUD } from './hud/createSuitHUD.js';
+import { astronaut } from './astronaut.js';
 
-const interactables = new Map();
-let cabin = null;
-let cabinModel = null;
-let mars = null;
-let oxygen = 100;
-let sinceOxygen = 0;
+const TELEMETRY_EVERY = 0.5;
+const LANDER_RADIUS = 3.2; // m, the lander's legs: you can't walk through them
+const HATCH = { x: 0, z: 3.6 }; // where you climb back in (in front of the lander)
 
-/** Register something the player can use with E: { id, position, prompt, onUse }. Cleared on every state change. */
-export function registerInteractable({ id, position, prompt, onUse }) {
-  interactables.set(id, { id, position: new THREE.Vector3().copy(position), prompt, onUse });
+const registry = createInteractables();
+
+export function registerInteractable(def) {
+  const allowed = def.enabled;
+  return registry.register({
+    ...def,
+    enabled: () => (!def.state || def.state === getState()) && (typeof allowed === 'function' ? allowed() : allowed !== false),
+  });
 }
 
-function useNearest() {
-  const eye = graphics.camera.position;
-  let best = null;
-  for (const item of interactables.values()) {
-    if (!best || item.position.distanceTo(eye) < best.position.distanceTo(eye)) best = item;
+// The hatch on the landed ship (always there on the surface).
+registerInteractable({
+  id: 'hatch', state: 'SURFACE', radius: 3, minFacing: 0.3, prompt: 'E: climb back into the airlock',
+  position: { x: HATCH.x, y: getTerrainHeight(HATCH.x, HATCH.z) + 1.5, z: HATCH.z },
+  onUse: () => requestState('INTERIOR'),
+});
+
+const cache = { cabin: null, cabinArt: null, mars: null };
+let s = null;
+let previous = null; // the surface state we just left (to spawn inside the airlock when coming back in)
+
+function cabinScene() {
+  if (!cache.cabin) {
+    cache.cabin = new THREE.Scene();
+    cache.cabinArt = assets.get('cabin');
+    cache.cabin.add(cache.cabinArt);
   }
-  best?.onUse();
+  return cache.cabin;
+}
+
+function marsScene() {
+  if (!cache.mars) {
+    cache.mars = createMarsScene({ sunElevation: 26 }).scene;
+    const lander = assets.get('lander');
+    lander.position.set(0, getTerrainHeight(0, 0), 0);
+    cache.mars.add(lander);
+  }
+  return cache.mars;
 }
 
 export default {
   enter(state) {
-    interactables.clear();
-    input.onPress('KeyE', useNearest);
+    const inside = state === 'INTERIOR';
+    const camera = new THREE.PerspectiveCamera(70, 1, 0.03, 2e5);
+    const hudLayer = document.createElement('div');
+    hudLayer.style.cssText = 'position:absolute;inset:0;pointer-events:none';
+    ui.mount(hudLayer, { layer: 'hud' });
+    s = { state, inside, camera, cabin: null, sinceTelemetry: 0, hud: createSuitHUD({ parent: hudLayer }), offs: [] };
 
-    if (state === 'INTERIOR') {
-      if (!cabin) {
-        cabin = new THREE.Scene();
-        cabinModel = assets.get('cabin');
-        cabin.add(cabinModel);
-      }
-      graphics.camera.position.set(0.2, 1.65, 3.2);
-      graphics.camera.lookAt(-0.2, 1.3, -3);
-      graphics.setView(cabin, graphics.camera);
-      for (const stationId of contract.STATIONS) {
-        const spot = cabinModel.userData.stations?.[stationId];
-        registerInteractable({
-          id: stationId,
-          position: spot ?? new THREE.Vector3(0, 1, 0),
-          prompt: `Use ${stationId}`,
-          onUse: () => events.emit('interior:interact', { stationId }),
-        });
-      }
-      stubScreen({
-        title: 'Ship interior',
-        owner: 'Role 2 (Surface)',
-        notes: 'Press E to use the nearest station (a stub).',
-        actions: [
-          { label: 'Go outside', key: 'KeyO', onClick: () => requestState('SURFACE') },
-          { label: 'Start return', key: 'KeyR', onClick: () => requestState('RETURN') },
-        ],
+    if (inside) {
+      graphics.setView(cabinScene(), camera);
+      const art = cache.cabinArt;
+      // coming in from Mars: start just inside the airlock, facing the cabin
+      const fromOutside = previous === 'SURFACE';
+      s.walker = new WalkController({
+        gravity: PLANETS.mars.g, bounds: CABIN.bounds, mode: 'cabin',
+        start: fromOutside ? { x: 0, z: 3.0 } : CABIN.spawn, yaw: fromOutside ? 0 : CABIN.spawnYaw,
       });
+      s.cabin = createShipInterior({
+        bus: events, interactables: registry, oxygen: astronaut.oxygen,
+        stations: art.userData.stations, props: art.userData.props,
+        onSeat: () => requestState(getProgress().percent >= 100 ? 'RETURN' : 'LANDING'),
+        onExit: () => requestState('SURFACE'),
+        onNotice: (type, d) => {
+          if (type === 'suit') astronaut.suited = d.suited;
+          if (type === 'airlock') art.userData.setAlarm?.(d.stage === 'cycling');
+          if (type === 'o2Empty') audio.play('ui.error');
+        },
+      });
+      s.cabin.suited = astronaut.suited;
+      audio.play('ambience.ship', { loop: true });
     } else {
-      if (!mars) mars = createMarsScene().scene;
-      oxygen = 100;
-      sinceOxygen = 0;
-      graphics.camera.position.set(8, getTerrainHeight(8, 6) + 1.7, 6);
-      graphics.camera.lookAt(0, getTerrainHeight(0, 0) + 2, 0);
-      graphics.setView(mars, graphics.camera);
-      stubScreen({
-        title: 'Mars surface',
-        owner: 'Role 2 (Surface)',
-        notes: 'Oxygen drains slowly while you are outside.',
-        actions: [{ label: 'Back in', key: 'KeyO', onClick: () => requestState('INTERIOR') }],
+      graphics.setView(marsScene(), camera);
+      astronaut.suited = true;
+      s.walker = new WalkController({
+        gravity: PLANETS.mars.g, getGroundHeight: getTerrainHeight, colliders: [{ x: 0, z: 0, r: LANDER_RADIUS }],
+        mode: 'suit', start: { x: HATCH.x, z: HATCH.z + 2 }, yaw: Math.PI, // step out facing away from the ship
+      });
+      audio.play('ambience.mars', { loop: true });
+      audio.play('suit.breath', { loop: true });
+    }
+
+    input.onPress('KeyE', () => registry.press());
+    s.lockOnClick = () => input.lockPointer();
+    window.addEventListener('click', s.lockOnClick);
+
+    // Dev shortcuts panel (also what check:boot looks for). Remove before the demo build.
+    stubScreen({
+      title: inside ? 'Ship cabin' : 'Mars surface',
+      owner: 'Role 2 (Surface)',
+      notes: inside ? 'Walk with WASD, E to use stations. Suit up, then cycle the airlock.' : 'Watch your O₂. The hatch is in front of the lander.',
+      actions: inside
+        ? [{ label: 'Go outside', key: 'KeyO', onClick: () => requestState('SURFACE') }, { label: 'Start return', key: 'KeyR', onClick: () => requestState('RETURN') }]
+        : [{ label: 'Back in', key: 'KeyO', onClick: () => requestState('INTERIOR') }],
+    });
+  },
+
+  update(dt, state) {
+    if (!s) return;
+    const { walker, camera, inside } = s;
+    const mouse = input.mouseDelta();
+    walker.look(mouse.x, mouse.y);
+    const k = input.isDown;
+    walker.update(dt, {
+      forward: (k('KeyW') ? 1 : 0) - (k('KeyS') ? 1 : 0),
+      right: (k('KeyD') ? 1 : 0) - (k('KeyA') ? 1 : 0),
+      run: k('ShiftLeft') || k('ShiftRight'),
+      jump: k('Space'),
+    });
+    s.cabin?.update(dt);
+    const oxygen = astronaut.oxygen;
+    oxygen.update(dt, { inside, running: walker.running, suited: inside ? astronaut.suited : true });
+    astronaut.body.update(dt, { env: inside ? 'cabin_mars' : 'mars', heartRate: walker.heartRate });
+    const ui_ = registry.update(dt, walker.eye, walker.lookDir, k('KeyE'));
+
+    const eye = walker.eye;
+    camera.position.set(eye.x, eye.y, eye.z);
+    camera.quaternion.setFromEuler(new THREE.Euler(walker.pitch, walker.yaw, 0, 'YXZ'));
+
+    const level = inside ? 'ok' : oxygen.level;
+    graphics.setEffects({ vignette: level === 'critical' ? 0.8 : level === 'warning' ? 0.4 : 0 });
+    s.hud.update(dt, {
+      telemetry: walker.telemetry, oxygen, suited: inside ? astronaut.suited : true, inside,
+      focused: ui_.focused, yaw: walker.yaw, shipPosition: { x: HATCH.x, z: HATCH.z },
+      bodyStats: astronaut.body.snapshot(), airlockProgress: s.cabin?.airlockProgress ?? 0,
+    });
+
+    s.sinceTelemetry += dt;
+    if (s.sinceTelemetry >= TELEMETRY_EVERY) {
+      s.sinceTelemetry = 0;
+      events.emit('flight:telemetry', {
+        t: performance.now() / 1000, phase: inside ? 'interior' : 'eva', o2Percent: oxygen.percent,
+        heartRate: Math.round(walker.heartRate), radiationMsv: astronaut.body.doseMSv,
       });
     }
   },
 
-  update(dt, state) {
-    if (state !== 'SURFACE') return;
-    oxygen = Math.max(0, oxygen - dt * 0.5);
-    sinceOxygen += dt;
-    if (sinceOxygen >= 0.5) {
-      sinceOxygen = 0;
-      events.emit('eva:oxygen', { percent: oxygen });
-    }
+  exit() {
+    if (!s) return;
+    previous = s.state;
+    s.cabin?.dispose();
+    s.hud.dispose();
+    window.removeEventListener('click', s.lockOnClick);
+    graphics.setEffects({ vignette: 0 });
+    audio.stop('ambience.ship');
+    audio.stop('ambience.mars');
+    audio.stop('suit.breath');
+    s = null;
   },
 };

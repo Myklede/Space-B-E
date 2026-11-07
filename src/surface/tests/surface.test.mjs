@@ -4,6 +4,8 @@ import { WalkController, WALK_TUNING } from '../WalkController.js';
 import { createOxygen, levelFor } from '../oxygen.js';
 import { createInteractables } from '../interactables.js';
 import { createShipInterior, CABIN, AIRLOCK_CYCLE_SECONDS } from '../shipInterior.js';
+import { PLANETS } from '../../core/planets.js';
+const gE = PLANETS.earth.g, gM = PLANETS.mars.g;
 
 const results = [];
 const test = (name, fn) => { try { fn(); results.push(['ok', name]); } catch (e) { results.push(['FAIL', name, e]); } };
@@ -19,8 +21,8 @@ function jump(gravity) {
 }
 
 test('Mars jump goes ~2.64× higher and lasts ~2.64× longer than on Earth (same legs)', () => {
-  const e = jump(9.81), m = jump(3.71);
-  const ratio = 9.81 / 3.71;
+  const e = jump(gE), m = jump(gM);
+  const ratio = gE / gM;
   assert.ok(Math.abs(m.apex / e.apex - ratio) < 0.05, `height ratio ${(m.apex / e.apex).toFixed(2)}`);
   assert.ok(Math.abs(m.air / e.air - ratio) < 0.05, `airtime ratio ${(m.air / e.air).toFixed(2)}`);
   assert.ok(Math.abs(e.apex - 0.45) < 0.02, `earth jump ${e.apex.toFixed(2)} m`);
@@ -28,27 +30,27 @@ test('Mars jump goes ~2.64× higher and lasts ~2.64× longer than on Earth (same
 
 test('grip = μ·g: you need longer to reach walking speed on Mars (mass same, weight lower)', () => {
   const time = (g) => { const w = new WalkController({ gravity: g }); let t = 0; while (w.telemetry.speed < WALK_TUNING.walkSpeed.suit * 0.99 && t < 5) { w.update(1 / 120, { forward: 1 }); t += 1 / 120; } return t; };
-  const te = time(9.81), tm = time(3.71);
+  const te = time(gE), tm = time(gM);
   assert.ok(tm > te * 2, `earth ${te.toFixed(2)} s, mars ${tm.toFixed(2)} s`);
 });
 
 test('walking forward with yaw 0 moves toward −z; cabin walls stop you', () => {
-  const w = new WalkController({ gravity: 3.71, bounds: CABIN.bounds, mode: 'cabin', start: { x: 0, z: 0 } });
+  const w = new WalkController({ gravity: gM, bounds: CABIN.bounds, mode: 'cabin', start: { x: 0, z: 0 } });
   step(w, 10, { forward: 1 });
   assert.ok(Math.abs(w.pos.z - (CABIN.bounds.minZ + WALK_TUNING.radius)) < 1e-6, `z=${w.pos.z}`);
 });
 
 test('fall damage uses impact speed: a 4 m drop hurts on Earth but not on Mars', () => {
   const drop = (g) => {
-    const bus = mkBus();
+    const notes = [];
     let ground = 4;
-    const w = new WalkController({ bus, gravity: g, getGroundHeight: () => ground });
+    const w = new WalkController({ onNotice: (type) => notes.push(type), gravity: g, getGroundHeight: () => ground });
     ground = 0; // the ledge disappears under you
     step(w, 5, {});
-    return bus.names().includes('eva:fall');
+    return notes.includes('fall');
   };
-  assert.equal(drop(9.81), true);
-  assert.equal(drop(3.71), false);
+  assert.equal(drop(gE), true);
+  assert.equal(drop(gM), false);
 });
 
 test('oxygen: drains outside only, cautions at 30/15/5 %, running drains faster, 0 % = out_of_breath', () => {
@@ -62,7 +64,7 @@ test('oxygen: drains outside only, cautions at 30/15/5 %, running drains faster,
   for (let i = 0; i < 100; i++) o2.update(1, {});
   const levels = bus.log.filter(([n]) => n === 'eva:oxygen').map(([, p]) => p.level);
   for (const l of ['caution', 'warning', 'critical']) assert.ok(levels.includes(l), l);
-  assert.ok(bus.log.some(([n, p]) => n === 'flight:failed' && p.endingId === 'out_of_breath'));
+  assert.ok(bus.log.some(([n, p]) => n === 'flight:failed' && p.endingId === 'outOfBreath'));
 });
 
 test('oxygen: swapping uses a spare tank, fails when none left', () => {
@@ -86,12 +88,12 @@ test('interactables: must be near AND looking at it; hold items need the full ho
   assert.equal(ia.update(0.1, { x: 0, y: 1.6, z: 5 }, { x: 0, y: 0, z: -1 }).focused, null); // too far
 });
 
-test('cabin: airlock needs the suit, cycles for 3 s, then requests SURFACE; seat requests LANDING', () => {
+test('cabin: airlock needs the suit, cycles for 3 s, then onExit; seat calls onSeat only without the suit', () => {
   const bus = mkBus();
   const ia = createInteractables();
   const o2 = createOxygen({ bus, spareTanks: 2 });
-  const cabin = createShipInterior({ bus, interactables: ia, oxygen: o2 });
-  // stand 0.8 m from a station, on the room side, and look at it
+  let exits = 0, seats = 0;
+  const cabin = createShipInterior({ bus, interactables: ia, oxygen: o2, onExit: () => exits++, onSeat: () => seats++ });
   const lookAt = (pos) => {
     const eye = { x: pos.x * 0.6, y: pos.y, z: Math.abs(pos.x) > 1 ? pos.z : pos.z - Math.sign(pos.z) * 0.8 };
     const d = { x: pos.x - eye.x, y: 0, z: pos.z - eye.z };
@@ -100,27 +102,25 @@ test('cabin: airlock needs the suit, cycles for 3 s, then requests SURFACE; seat
   };
   const useAt = (pos) => { const [eye, dir] = lookAt(pos); ia.press(); return ia.update(0.016, eye, dir); };
   const S = CABIN.stations;
-  // airlock without suit: nothing happens
   useAt(S.airlock); cabin.update(5);
-  assert.ok(!bus.log.some(([n, p]) => n === 'state:request' && p.to === 'SURFACE'));
-  // suit up (look at the locker from the cabin side)
-  useAt(S.suit);
+  assert.equal(exits, 0, 'no exit without the suit');
+  useAt(S.suitLocker);
   assert.equal(cabin.suited, true);
   useAt(S.airlock);
   cabin.update(AIRLOCK_CYCLE_SECONDS / 2);
   assert.ok(cabin.airlockProgress > 0.4 && cabin.airlockProgress < 0.6);
   cabin.update(AIRLOCK_CYCLE_SECONDS);
-  assert.ok(bus.log.some(([n, p]) => n === 'state:request' && p.to === 'SURFACE'));
-  // O₂ station swaps a tank
+  assert.equal(exits, 1);
   o2.update(100, {});
-  useAt(S.o2);
+  useAt(S.o2Station);
   assert.equal(o2.percent, 100); assert.equal(o2.spareTanks, 1);
-  // seat while suited: blocked; unsuited: LANDING
-  useAt(S.seat);
-  assert.ok(!bus.log.some(([n, p]) => n === 'state:request' && p.to === 'LANDING'));
+  useAt(S.pilotSeat);
+  assert.equal(seats, 0, 'suited: cannot sit and fly');
   cabin.suited = false;
-  useAt(S.seat);
-  assert.ok(bus.log.some(([n, p]) => n === 'state:request' && p.to === 'LANDING'));
+  useAt(S.pilotSeat);
+  assert.equal(seats, 1);
+  const ids = bus.log.filter(([n]) => n === 'interior:interact').map(([, p]) => p.stationId);
+  for (const id of ids) assert.ok(['pilotSeat', 'o2Station', 'suitLocker', 'commsConsole', 'sampleStorage', 'airlock', 'bunk'].includes(id), id);
 });
 
 test('cabin uses Role 3 station positions (userData.stations names) when given', () => {
@@ -129,11 +129,11 @@ test('cabin uses Role 3 station positions (userData.stations names) when given',
     commsConsole: { x: 1.7, y: 1.2, z: -1.3 }, sampleStorage: { x: 1.72, y: 1.2, z: 0.9 }, airlock: { x: 0, y: 1.2, z: 3.86 }, bunk: { x: -1.55, y: 1.2, z: -2.75 } };
   const cabin = createShipInterior({ interactables: ia, stations: role3, props: { familyPhoto: { x: -1, y: 1.2, z: -3 } } });
   assert.deepEqual(cabin.stations.airlock, { x: 0, y: 1.2, z: 3.86 });
-  assert.ok(ia.get('prop:bunk') && ia.get('prop:familyPhoto') && ia.get('seat'));
+  assert.ok(ia.get('bunk') && ia.get('prop:familyPhoto') && ia.get('pilotSeat'));
 });
 
 test('colliders: you cannot walk through the lander', () => {
-  const w = new WalkController({ gravity: 3.71, colliders: [{ x: 0, z: -5, r: 3 }], start: { x: 0, z: 0 } });
+  const w = new WalkController({ gravity: gM, colliders: [{ x: 0, z: -5, r: 3 }], start: { x: 0, z: 0 } });
   step(w, 10, { forward: 1 });
   assert.ok(w.pos.z > -5 + 3 + WALK_TUNING.radius - 1e-6 - 0.001 || Math.hypot(w.pos.x, w.pos.z + 5) >= 3.3 - 1e-6, `pos ${w.pos.x},${w.pos.z}`);
 });
