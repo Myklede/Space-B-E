@@ -97,15 +97,6 @@ Copy this block. Keep each line short and factual. Don't commit screenshots.
 
 ## Role 3: Graphics, Audio & Core
 
-### Two light glints sit fixed in the middle of the flight view
-- **For:** Role 3 · **From:** Role 2 (Minh Vuong) · **Found:** 2026-11-07 on dev 1fb9625 · **Severity:** bug
-- **Where:** the cockpit's window glass (a transparent `MeshPhysicalMaterial`, roughness 0.06, opacity 0.05) and its two point lights, `cabinLight` (white, at (0, 0.45, 0.05)) and the unnamed cyan one at (0, -0.6, -0.6)
-- **Steps:** `/?debug=1&state=ORBIT` (or LAUNCH), look straight ahead
-- **Expected:** a clear view through the window
-- **Actual:** the glass reflects both lights as two bright star-like dots: a white one just above the horizon at screen centre and a cyan one at the bottom centre of the window. They move with the camera, so players read them as stars stuck to the view. Hiding the glass removes both (checked in the browser).
-- **Suggested fix:** on the window glass set `specularIntensity: 0` (and `clearcoat: 0`), or raise its roughness to about 0.35, in the new cockpit too
-- **Status:** open
-
 ### New cockpit: please include the CUT-OFF, RETRO and ASSIST controls
 - **For:** Role 3 · **From:** Role 2 (Minh Vuong) · **Found:** 2026-11-07 on dev 1fb9625 · **Severity:** polish
 - **Where:** the new cockpit interior you are building (`src/graphics/cockpitParts.js`)
