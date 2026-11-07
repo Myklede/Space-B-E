@@ -68,3 +68,7 @@
 /* Scrolling cards: keep the theme's corner ticks inside, or their 1px overhang adds scrollbars. */
 .role4-card::before { top: 0; left: 0; }
 .role4-card::after { right: 0; bottom: 0; }
+
+.role4-radio-static { --hud-accent: var(--hud-alert, #f87171); }
+.role4-radio-nosignal { font-size: var(--hud-text-md); letter-spacing: 0.25em; text-align: center; color: var(--hud-muted); animation: role4-flicker 0.9s steps(2) infinite; }
+@keyframes role4-flicker { 50% { opacity: 0.45; } }
