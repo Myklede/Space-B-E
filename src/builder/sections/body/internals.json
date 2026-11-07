@@ -74,6 +74,40 @@
               "costF": 1.1,
               "rel": -0.003,
               "real": "Starship, Shuttle ET"
+            },
+            {
+              "id": "heated",
+              "name": "Heated helium",
+              "note": "Helium from cold bottles is warmed in a heat exchanger on the engine before it enters the tank. Warm gas fills more volume, so fewer bottles do the job.",
+              "pros": [
+                "−1.5 % mass",
+                "Less helium to carry"
+              ],
+              "cons": [
+                "+4 % cost",
+                "One more heat exchanger on the engine"
+              ],
+              "massF": 0.985,
+              "costF": 1.04,
+              "rel": -0.001,
+              "real": "Falcon 9 (heated helium), Saturn V S-IC fuel tank"
+            },
+            {
+              "id": "nitrogen",
+              "name": "Nitrogen gas",
+              "note": "Plain nitrogen instead of helium: cheap and easy to get, but seven times heavier per litre, and useless with hydrogen, which would freeze it solid.",
+              "pros": [
+                "−10 % cost",
+                "Simple ground equipment"
+              ],
+              "cons": [
+                "+2 % mass",
+                "No good for hydrogen tanks"
+              ],
+              "massF": 1.02,
+              "costF": 0.9,
+              "rel": 0.001,
+              "real": "Delta II first stage; Soyuz boils liquid nitrogen to pressurise its tanks"
             }
           ]
         },
@@ -109,6 +143,22 @@
               "costF": 0.97,
               "rel": -0.006,
               "real": "Falcon 1 flight 2 (2007)"
+            },
+            {
+              "id": "antivortex",
+              "name": "Ring baffles and anti-vortex vanes",
+              "note": "As well as the rings, crossed vanes over each outlet stop the draining propellant swirling into a whirlpool, which would suck gas into the pump.",
+              "pros": [
+                "Reliability +0.2 %"
+              ],
+              "cons": [
+                "+0.5 % mass",
+                "+2 % cost"
+              ],
+              "massF": 1.005,
+              "costF": 1.02,
+              "rel": 0.002,
+              "real": "Saturn V S-IC LOX outlets; every modern stage"
             }
           ]
         },
@@ -197,6 +247,23 @@
               "costF": 1.08,
               "rel": 0.004,
               "real": "Saturn V S-IC (five feed lines)"
+            },
+            {
+              "id": "tunnel",
+              "name": "Through-tank tunnel",
+              "note": "The upper tank's line drops straight down through the middle of the lower tank inside an insulated tunnel: no bends, the fastest flow, but one more hole in every dome.",
+              "pros": [
+                "Reliability +0.2 %",
+                "Shortest path to the engine"
+              ],
+              "cons": [
+                "+1 % mass",
+                "+5 % cost"
+              ],
+              "massF": 1.01,
+              "costF": 1.05,
+              "rel": 0.002,
+              "real": "Saturn V S-IC (five LOX tunnels through the fuel tank), Falcon 9 LOX transfer tube, Super Heavy methane downcomer"
             }
           ]
         }
@@ -256,7 +323,7 @@
                 "Proven"
               ],
               "cons": [
-                "Heavy, dear"
+                "Heavy and expensive"
               ],
               "real": "Delta II, Atlas V"
             },
@@ -326,6 +393,97 @@
               "costD": 40000,
               "rel": 0.005,
               "real": "Delta II, Atlas V"
+            }
+          ]
+        },
+        {
+          "key": "navaid",
+          "name": "Navigation aids",
+          "role": "What corrects the gyros as they slowly drift.",
+          "art": "navaid",
+          "options": [
+            {
+              "id": "inertial",
+              "name": "Inertial only",
+              "note": "The gyros and accelerometers alone. They drift a little every minute and nothing corrects them.",
+              "pros": [
+                "Nothing outside the vehicle needed"
+              ],
+              "cons": [
+                "Drift adds up on a long flight"
+              ],
+              "real": "Saturn V (ST-124-M platform), Delta II"
+            },
+            {
+              "id": "gps",
+              "name": "GPS-aided inertial",
+              "note": "A GPS receiver checks the position every second during the climb and trims the drift away.",
+              "pros": [
+                "Reliability +0.3 %"
+              ],
+              "cons": [
+                "+3 kg",
+                "+$25k",
+                "No GPS beyond Earth orbit"
+              ],
+              "massD": 3,
+              "costD": 25000,
+              "rel": 0.003,
+              "real": "Falcon 9, Atlas V, Electron"
+            },
+            {
+              "id": "stellar",
+              "name": "Star-tracker aided",
+              "note": "A small camera recognises the stars and resets the gyros. It works anywhere, including on the way to Mars.",
+              "pros": [
+                "Reliability +0.4 %",
+                "Works far from Earth"
+              ],
+              "cons": [
+                "+6 kg",
+                "+$60k"
+              ],
+              "massD": 6,
+              "costD": 60000,
+              "rel": 0.004,
+              "real": "Trident missiles (stellar-inertial), deep-space probes"
+            }
+          ]
+        },
+        {
+          "key": "fts",
+          "name": "Flight termination",
+          "role": "What ends the flight safely if the vehicle strays off course.",
+          "art": "fts",
+          "options": [
+            {
+              "id": "commanded",
+              "name": "Commanded destruct",
+              "note": "A range safety officer on the ground watches the track and sends the destruct command if the vehicle strays. A radio link and a person in the loop.",
+              "pros": [
+                "Proven for sixty years"
+              ],
+              "cons": [
+                "Needs the radio link to the ground"
+              ],
+              "real": "Saturn V, Space Shuttle, Delta II"
+            },
+            {
+              "id": "autonomous",
+              "name": "Autonomous flight termination (AFTS)",
+              "note": "The vehicle's own computers check the track against the safety rules and decide for themselves. No radio link to lose, no needless destruct when the link drops.",
+              "pros": [
+                "Reliability +0.2 %",
+                "Fewer people on the range"
+              ],
+              "cons": [
+                "+5 kg",
+                "+$15k"
+              ],
+              "massD": 5,
+              "costD": 15000,
+              "rel": 0.002,
+              "real": "Falcon 9 (first used 2017), Electron"
             }
           ]
         }
@@ -402,6 +560,1168 @@
               "costD": 25000,
               "rel": -0.003,
               "real": "ISS SARJ, Dawn"
+            }
+          ]
+        }
+      ]
+    },
+    "tank_common": {
+      "name": "Inside the common-bulkhead tank",
+      "slots": [
+        {
+          "key": "bulkhead",
+          "name": "Common bulkhead",
+          "role": "The single wall shared by the two propellants.",
+          "art": "dome",
+          "options": [
+            {
+              "id": "as_built",
+              "name": "Common bulkhead, as designed",
+              "note": "The single shared dome this tank was designed with, between the kerosene or methane and the oxygen. Its mass and price are already in the tank's numbers.",
+              "pros": [
+                "Saves a dome and the intertank"
+              ],
+              "cons": [
+                "A leak mixes fuel and oxidizer"
+              ],
+              "real": "Falcon 9, Starship and Super Heavy, Electron"
+            },
+            {
+              "id": "honeycomb",
+              "name": "Extra-insulated honeycomb sandwich",
+              "note": "Two skins glued to a thicker honeycomb core. Each liquid stays at its own temperature, so neither boils nor freezes the other, and the bond is inspected cell by cell.",
+              "pros": [
+                "Reliability +0.3 %"
+              ],
+              "cons": [
+                "+2 % mass",
+                "+12 % cost"
+              ],
+              "massF": 1.02,
+              "costF": 1.12,
+              "rel": 0.003,
+              "real": "Saturn V S-II (phenolic honeycomb, saved 3.6 t), Centaur III (fibreglass honeycomb)"
+            },
+            {
+              "id": "thin",
+              "name": "Thin-gauge, chemically milled",
+              "note": "Acid baths eat the metal away wherever the loads are low. Lighter, with less margin left for a bad day.",
+              "pros": [
+                "−3 % mass"
+              ],
+              "cons": [
+                "+5 % cost",
+                "Reliability −0.4 %"
+              ],
+              "massF": 0.97,
+              "costF": 1.05,
+              "rel": -0.004,
+              "real": "Chemical milling, used on rocket tank skins and dome gores since the Saturn stages"
+            }
+          ]
+        },
+        {
+          "key": "pressurisation",
+          "name": "Pressurisation",
+          "role": "What fills the space as propellant drains.",
+          "art": "spheres",
+          "options": [
+            {
+              "id": "helium",
+              "name": "Helium bottles inside",
+              "note": "Cold helium bottles sit inside the oxygen tank, where they stay dense. Proven; the bottles are a hazard.",
+              "pros": [
+                "Proven"
+              ],
+              "cons": [
+                "Bottles inside the tank (AMOS-6)"
+              ],
+              "real": "Falcon 9, Delta II"
+            },
+            {
+              "id": "autogenous",
+              "name": "Autogenous (hot propellant gas)",
+              "note": "A little propellant is heated by the engine and piped back as gas. No helium at all.",
+              "pros": [
+                "−3 % mass",
+                "No helium to run out of"
+              ],
+              "cons": [
+                "+10 % cost",
+                "Only works once the engine runs"
+              ],
+              "massF": 0.97,
+              "costF": 1.1,
+              "rel": -0.003,
+              "real": "Starship, Shuttle ET"
+            },
+            {
+              "id": "heated",
+              "name": "Heated helium",
+              "note": "Helium from cold bottles is warmed in a heat exchanger on the engine before it enters the tank. Warm gas fills more volume, so fewer bottles do the job.",
+              "pros": [
+                "−1.5 % mass",
+                "Less helium to carry"
+              ],
+              "cons": [
+                "+4 % cost",
+                "One more heat exchanger on the engine"
+              ],
+              "massF": 0.985,
+              "costF": 1.04,
+              "rel": -0.001,
+              "real": "Falcon 9 (heated helium), Saturn V S-IC fuel tank"
+            },
+            {
+              "id": "nitrogen",
+              "name": "Nitrogen gas",
+              "note": "Plain nitrogen instead of helium: cheap and easy to get, but seven times heavier per litre, and useless with hydrogen, which would freeze it solid.",
+              "pros": [
+                "−10 % cost",
+                "Simple ground equipment"
+              ],
+              "cons": [
+                "+2 % mass",
+                "No good for hydrogen tanks"
+              ],
+              "massF": 1.02,
+              "costF": 0.9,
+              "rel": 0.001,
+              "real": "Delta II first stage; Soyuz boils liquid nitrogen to pressurise its tanks"
+            }
+          ]
+        },
+        {
+          "key": "baffles",
+          "name": "Slosh baffles",
+          "role": "Rings inside the tank that stop the propellant sloshing.",
+          "art": "baffles",
+          "options": [
+            {
+              "id": "baffled",
+              "name": "Ring baffles",
+              "note": "Rings welded inside the wall break up the waves when the ship turns.",
+              "pros": [
+                "Steady propellant"
+              ],
+              "cons": [
+                "+2 % mass"
+              ],
+              "real": "Every crewed launcher"
+            },
+            {
+              "id": "none",
+              "name": "No baffles",
+              "note": "Save the mass and hope. Sloshing propellant knocked Falcon 1 flight 2 into a spin.",
+              "pros": [
+                "−2 % mass"
+              ],
+              "cons": [
+                "Reliability −0.6 %"
+              ],
+              "massF": 0.98,
+              "costF": 0.97,
+              "rel": -0.006,
+              "real": "Falcon 1 flight 2 (2007)"
+            },
+            {
+              "id": "antivortex",
+              "name": "Ring baffles and anti-vortex vanes",
+              "note": "As well as the rings, crossed vanes over each outlet stop the draining propellant swirling into a whirlpool, which would suck gas into the pump.",
+              "pros": [
+                "Reliability +0.2 %"
+              ],
+              "cons": [
+                "+0.5 % mass",
+                "+2 % cost"
+              ],
+              "massF": 1.005,
+              "costF": 1.02,
+              "rel": 0.002,
+              "real": "Saturn V S-IC LOX outlets; every modern stage"
+            }
+          ]
+        },
+        {
+          "key": "insulation",
+          "name": "Insulation",
+          "role": "What keeps cold propellant from boiling off.",
+          "art": "skin",
+          "options": [
+            {
+              "id": "bare",
+              "name": "Bare metal",
+              "note": "Fine for kerosene; cryogenic propellant boils off in the hours on the pad.",
+              "pros": [
+                "Lightest"
+              ],
+              "cons": [
+                "Cryogenic propellant boils off"
+              ],
+              "real": "Falcon 9 (kerosene stage)"
+            },
+            {
+              "id": "foam",
+              "name": "Spray-on foam",
+              "note": "The orange foam of the Shuttle tank. Keeps hydrogen and oxygen liquid for hours; a piece of it struck Columbia.",
+              "pros": [
+                "Cryogenic propellant stays liquid"
+              ],
+              "cons": [
+                "+3 % mass",
+                "Can shed pieces on ascent"
+              ],
+              "massF": 1.03,
+              "costF": 1.05,
+              "rel": 0.002,
+              "real": "Shuttle External Tank, SLS"
+            },
+            {
+              "id": "mli",
+              "name": "Multilayer blankets",
+              "note": "Gold foil layers for the long cruise: the only insulation that works in vacuum for weeks.",
+              "pros": [
+                "Weeks in space without boil-off"
+              ],
+              "cons": [
+                "+15 % cost",
+                "Useless in air"
+              ],
+              "massF": 1.01,
+              "costF": 1.15,
+              "rel": 0.001,
+              "real": "Centaur, lunar landers"
+            }
+          ]
+        },
+        {
+          "key": "feedline",
+          "name": "Feed lines",
+          "role": "The pipes that carry propellant from the tank to the engine.",
+          "art": "pipe",
+          "options": [
+            {
+              "id": "single",
+              "name": "Single feed line",
+              "note": "One big pipe per propellant.",
+              "pros": [
+                "Light"
+              ],
+              "cons": [
+                "One valve failure stops the engine"
+              ],
+              "real": "Most stages"
+            },
+            {
+              "id": "dual",
+              "name": "Redundant feed lines",
+              "note": "Two pipes and two valves per propellant, so one can fail.",
+              "pros": [
+                "Reliability +0.4 %"
+              ],
+              "cons": [
+                "+1.5 % mass",
+                "+8 % cost"
+              ],
+              "massF": 1.015,
+              "costF": 1.08,
+              "rel": 0.004,
+              "real": "Saturn V S-IC (five feed lines)"
+            },
+            {
+              "id": "tunnel",
+              "name": "Through-tank tunnel",
+              "note": "The upper tank's line drops straight down through the middle of the lower tank inside an insulated tunnel: no bends, the fastest flow, but one more hole in every dome.",
+              "pros": [
+                "Reliability +0.2 %",
+                "Shortest path to the engine"
+              ],
+              "cons": [
+                "+1 % mass",
+                "+5 % cost"
+              ],
+              "massF": 1.01,
+              "costF": 1.05,
+              "rel": 0.002,
+              "real": "Saturn V S-IC (five LOX tunnels through the fuel tank), Falcon 9 LOX transfer tube, Super Heavy methane downcomer"
+            }
+          ]
+        }
+      ]
+    },
+    "tank_balloon": {
+      "name": "Inside the balloon tank",
+      "slots": [
+        {
+          "key": "pressure",
+          "name": "Keeping it rigid",
+          "role": "What stops the thin steel from crumpling when the tank is not full of propellant.",
+          "art": "regulator",
+          "options": [
+            {
+              "id": "ground_watch",
+              "name": "Always pressurised, crew on watch",
+              "note": "From the factory to lift-off the tank is never without gas inside: nitrogen on the ground, propellant pressure in flight. A gauge and a crew watch it around the clock.",
+              "pros": [
+                "Proven on every Atlas"
+              ],
+              "cons": [
+                "One bad valve and the tank folds"
+              ],
+              "real": "Atlas: 5 psi (34 kPa) of nitrogen even when empty"
+            },
+            {
+              "id": "stretch",
+              "name": "Stretch cradle and twin regulators",
+              "note": "A cradle holds the empty tank in tension whenever it is moved, and two pressure regulators share the flight job, each able to do it alone.",
+              "pros": [
+                "Reliability +0.6 %"
+              ],
+              "cons": [
+                "+1 % mass",
+                "+8 % cost"
+              ],
+              "massF": 1.01,
+              "costF": 1.08,
+              "rel": 0.006,
+              "real": "Atlas and Centaur transport and handling fixtures"
+            },
+            {
+              "id": "thin",
+              "name": "Thinner skin",
+              "note": "Roll the steel thinner still. Centaur's walls are 0.51 mm, thinner than a coin: every gram saved is margin lost.",
+              "pros": [
+                "−8 % mass"
+              ],
+              "cons": [
+                "+5 % cost",
+                "Reliability −0.8 %"
+              ],
+              "massF": 0.92,
+              "costF": 1.05,
+              "rel": -0.008,
+              "real": "Centaur III: 0.51 mm stainless walls"
+            }
+          ]
+        },
+        {
+          "key": "bulkhead",
+          "name": "Intermediate bulkhead",
+          "role": "The single wall shared by the two propellants.",
+          "art": "dome",
+          "options": [
+            {
+              "id": "as_built",
+              "name": "Common bulkhead, as designed",
+              "note": "The shared wall this balloon tank was designed with: a single thin steel dome where kerosene meets oxygen, two steel skins on a fibreglass honeycomb where hydrogen does. Its mass and price are already in the tank's numbers.",
+              "pros": [
+                "Saves a dome and the intertank"
+              ],
+              "cons": [
+                "A leak mixes fuel and oxidizer"
+              ],
+              "real": "Atlas (single steel intermediate bulkhead), Centaur (two steel skins on a fibreglass honeycomb)"
+            },
+            {
+              "id": "honeycomb",
+              "name": "Extra-insulated honeycomb sandwich",
+              "note": "Two skins glued to a thicker honeycomb core. Each liquid stays at its own temperature, so neither boils nor freezes the other, and the bond is inspected cell by cell.",
+              "pros": [
+                "Reliability +0.3 %"
+              ],
+              "cons": [
+                "+2 % mass",
+                "+12 % cost"
+              ],
+              "massF": 1.02,
+              "costF": 1.12,
+              "rel": 0.003,
+              "real": "Saturn V S-II (phenolic honeycomb, saved 3.6 t), Centaur III (fibreglass honeycomb)"
+            },
+            {
+              "id": "thin",
+              "name": "Thin-gauge, chemically milled",
+              "note": "Acid baths eat the metal away wherever the loads are low. Lighter, with less margin left for a bad day.",
+              "pros": [
+                "−3 % mass"
+              ],
+              "cons": [
+                "+5 % cost",
+                "Reliability −0.4 %"
+              ],
+              "massF": 0.97,
+              "costF": 1.05,
+              "rel": -0.004,
+              "real": "Chemical milling, used on rocket tank skins and dome gores since the Saturn stages"
+            }
+          ]
+        },
+        {
+          "key": "insulation",
+          "name": "Insulation",
+          "role": "What keeps cold propellant from boiling off.",
+          "art": "skin",
+          "options": [
+            {
+              "id": "bare",
+              "name": "Bare metal",
+              "note": "Fine for kerosene; cryogenic propellant boils off in the hours on the pad.",
+              "pros": [
+                "Lightest"
+              ],
+              "cons": [
+                "Cryogenic propellant boils off"
+              ],
+              "real": "Falcon 9 (kerosene stage)"
+            },
+            {
+              "id": "foam",
+              "name": "Spray-on foam",
+              "note": "The orange foam of the Shuttle tank. Keeps hydrogen and oxygen liquid for hours; a piece of it struck Columbia.",
+              "pros": [
+                "Cryogenic propellant stays liquid"
+              ],
+              "cons": [
+                "+3 % mass",
+                "Can shed pieces on ascent"
+              ],
+              "massF": 1.03,
+              "costF": 1.05,
+              "rel": 0.002,
+              "real": "Shuttle External Tank, SLS"
+            },
+            {
+              "id": "mli",
+              "name": "Multilayer blankets",
+              "note": "Gold foil layers for the long cruise: the only insulation that works in vacuum for weeks.",
+              "pros": [
+                "Weeks in space without boil-off"
+              ],
+              "cons": [
+                "+15 % cost",
+                "Useless in air"
+              ],
+              "massF": 1.01,
+              "costF": 1.15,
+              "rel": 0.001,
+              "real": "Centaur, lunar landers"
+            }
+          ]
+        },
+        {
+          "key": "feedline",
+          "name": "Feed lines",
+          "role": "The pipes that carry propellant from the tank to the engine.",
+          "art": "pipe",
+          "options": [
+            {
+              "id": "single",
+              "name": "Single feed line",
+              "note": "One big pipe per propellant.",
+              "pros": [
+                "Light"
+              ],
+              "cons": [
+                "One valve failure stops the engine"
+              ],
+              "real": "Most stages"
+            },
+            {
+              "id": "dual",
+              "name": "Redundant feed lines",
+              "note": "Two pipes and two valves per propellant, so one can fail.",
+              "pros": [
+                "Reliability +0.4 %"
+              ],
+              "cons": [
+                "+1.5 % mass",
+                "+8 % cost"
+              ],
+              "massF": 1.015,
+              "costF": 1.08,
+              "rel": 0.004,
+              "real": "Saturn V S-IC (five feed lines)"
+            },
+            {
+              "id": "tunnel",
+              "name": "Through-tank tunnel",
+              "note": "The upper tank's line drops straight down through the middle of the lower tank inside an insulated tunnel: no bends, the fastest flow, but one more hole in every dome.",
+              "pros": [
+                "Reliability +0.2 %",
+                "Shortest path to the engine"
+              ],
+              "cons": [
+                "+1 % mass",
+                "+5 % cost"
+              ],
+              "massF": 1.01,
+              "costF": 1.05,
+              "rel": 0.002,
+              "real": "Saturn V S-IC (five LOX tunnels through the fuel tank), Falcon 9 LOX transfer tube, Super Heavy methane downcomer"
+            }
+          ]
+        }
+      ]
+    },
+    "stage_structure": {
+      "name": "How the section is built",
+      "slots": [
+        {
+          "key": "construction",
+          "name": "Construction",
+          "role": "How the shell is made stiff enough to carry the stack above it.",
+          "art": "shell",
+          "options": [
+            {
+              "id": "skin_stringer",
+              "name": "Skin and stringers",
+              "note": "Thin aluminium skin riveted to long stiffeners (stringers) and ring frames: the aircraft way. Easy to inspect and repair.",
+              "pros": [
+                "Proven",
+                "Easy to repair"
+              ],
+              "cons": [
+                "Thousands of fasteners"
+              ],
+              "real": "Shuttle External Tank intertank, Falcon 9 fuel tank"
+            },
+            {
+              "id": "isogrid",
+              "name": "Isogrid",
+              "note": "Thick plate machined into a web of equilateral triangles. Equally stiff in every direction, so equipment can bolt to any node. Most of the metal ends up as chips on the floor.",
+              "pros": [
+                "−10 % mass"
+              ],
+              "cons": [
+                "+15 % cost"
+              ],
+              "massF": 0.9,
+              "costF": 1.15,
+              "rel": 0.001,
+              "real": "Delta II first stage (isogrid aluminium panels), Atlas V booster"
+            },
+            {
+              "id": "orthogrid",
+              "name": "Orthogrid",
+              "note": "The same idea with a square grid: simpler to machine and to weld into big panels, a little less efficient than triangles.",
+              "pros": [
+                "−7 % mass"
+              ],
+              "cons": [
+                "+8 % cost"
+              ],
+              "massF": 0.93,
+              "costF": 1.08,
+              "rel": 0.001,
+              "real": "SLS core stage, Delta IV common booster core"
+            },
+            {
+              "id": "corrugated",
+              "name": "Corrugated skin",
+              "note": "Skin pressed into ridges like a tin roof, with stringers on the outside. Very stiff against squashing and cheap to make; a little heavier and draggier.",
+              "pros": [
+                "−10 % cost",
+                "Reliability +0.2 %"
+              ],
+              "cons": [
+                "+3 % mass"
+              ],
+              "massF": 1.03,
+              "costF": 0.9,
+              "rel": 0.002,
+              "real": "Saturn V S-IC forward skirt, thrust structure and interstage (7075 aluminium)"
+            },
+            {
+              "id": "composite",
+              "name": "Honeycomb sandwich",
+              "note": "Two thin skins bonded to a honeycomb core and baked in an autoclave: very stiff for its weight. The skins are whatever material you chose: aluminium, or carbon fibre as on the Falcon 9 interstage. A dent can hide a broken core under an intact skin.",
+              "pros": [
+                "−12 % mass"
+              ],
+              "cons": [
+                "+30 % cost",
+                "Reliability −0.3 %"
+              ],
+              "massF": 0.88,
+              "costF": 1.3,
+              "rel": -0.003,
+              "real": "Falcon 9 interstage (carbon skins on aluminium honeycomb), Ariane payload adapters, most fairings"
+            }
+          ]
+        },
+        {
+          "key": "joints",
+          "name": "Joints",
+          "role": "How the panels are joined to each other.",
+          "art": "joint",
+          "options": [
+            {
+              "id": "riveted",
+              "name": "Riveted and bolted",
+              "note": "Panels riveted together, flanges bolted to the next section. Every joint can be inspected and redone.",
+              "pros": [
+                "Easy to inspect and repair"
+              ],
+              "cons": [
+                "Heavy fasteners"
+              ],
+              "real": "Saturn V, Shuttle External Tank intertank"
+            },
+            {
+              "id": "fsw",
+              "name": "Friction-stir welded",
+              "note": "A spinning tool stirs the two edges together without melting them: welds nearly as strong as the plate itself and no rivets at all.",
+              "pros": [
+                "−4 % mass",
+                "Reliability +0.2 %"
+              ],
+              "cons": [
+                "+10 % cost",
+                "Big, expensive welding machines"
+              ],
+              "massF": 0.96,
+              "costF": 1.1,
+              "rel": 0.002,
+              "real": "Falcon 9, SLS core stage, Shuttle super-lightweight tank"
+            },
+            {
+              "id": "bonded",
+              "name": "Adhesive-bonded",
+              "note": "Glued joints: smooth, light and cheap, but a bond that lets go looks exactly like one that holds.",
+              "pros": [
+                "−5 % mass",
+                "−5 % cost"
+              ],
+              "cons": [
+                "Reliability −0.4 %"
+              ],
+              "massF": 0.95,
+              "costF": 0.95,
+              "rel": -0.004,
+              "real": "Composite interstages and fairings"
+            }
+          ]
+        }
+      ]
+    },
+    "tank_h2": {
+      "name": "Inside the hydrogen tank",
+      "slots": [
+        {
+          "key": "bulkhead",
+          "name": "Bulkhead between fuel and oxidizer",
+          "role": "How the two propellants are kept apart.",
+          "art": "dome",
+          "options": [
+            {
+              "id": "separate",
+              "name": "Separate domes",
+              "note": "Two tanks, two domes, a short section between them. Simple and safe.",
+              "pros": [
+                "Simple",
+                "Safe"
+              ],
+              "cons": [
+                "Heavier: two domes and a gap"
+              ],
+              "real": "Delta II, Atlas V"
+            },
+            {
+              "id": "common",
+              "name": "Common bulkhead",
+              "note": "One insulated wall shared by both propellants. Saves a dome and a metre of skin; the hardest thing to build in the tank.",
+              "pros": [
+                "−8 % tank mass"
+              ],
+              "cons": [
+                "+25 % cost",
+                "A leak mixes fuel and oxidizer"
+              ],
+              "massF": 0.92,
+              "costF": 1.25,
+              "rel": -0.004,
+              "real": "Saturn S-II, Falcon 9, Starship"
+            }
+          ]
+        },
+        {
+          "key": "pressurisation",
+          "name": "Pressurisation",
+          "role": "What fills the space as propellant drains.",
+          "art": "spheres",
+          "options": [
+            {
+              "id": "helium",
+              "name": "Helium bottles inside",
+              "note": "Cold helium bottles sit inside the oxygen tank, where they stay dense. Proven; the bottles are a hazard.",
+              "pros": [
+                "Proven"
+              ],
+              "cons": [
+                "Bottles inside the tank (AMOS-6)"
+              ],
+              "real": "Falcon 9, Delta II"
+            },
+            {
+              "id": "autogenous",
+              "name": "Autogenous (hot propellant gas)",
+              "note": "A little propellant is heated by the engine and piped back as gas. No helium at all.",
+              "pros": [
+                "−3 % mass",
+                "No helium to run out of"
+              ],
+              "cons": [
+                "+10 % cost",
+                "Only works once the engine runs"
+              ],
+              "massF": 0.97,
+              "costF": 1.1,
+              "rel": -0.003,
+              "real": "Starship, Shuttle ET"
+            },
+            {
+              "id": "heated",
+              "name": "Heated helium",
+              "note": "Helium from cold bottles is warmed in a heat exchanger on the engine before it enters the tank. Warm gas fills more volume, so fewer bottles do the job.",
+              "pros": [
+                "−1.5 % mass",
+                "Less helium to carry"
+              ],
+              "cons": [
+                "+4 % cost",
+                "One more heat exchanger on the engine"
+              ],
+              "massF": 0.985,
+              "costF": 1.04,
+              "rel": -0.001,
+              "real": "Falcon 9 (heated helium), Saturn V S-IC fuel tank"
+            }
+          ]
+        },
+        {
+          "key": "baffles",
+          "name": "Slosh baffles",
+          "role": "Rings inside the tank that stop the propellant sloshing.",
+          "art": "baffles",
+          "options": [
+            {
+              "id": "baffled",
+              "name": "Ring baffles",
+              "note": "Rings welded inside the wall break up the waves when the ship turns.",
+              "pros": [
+                "Steady propellant"
+              ],
+              "cons": [
+                "+2 % mass"
+              ],
+              "real": "Every crewed launcher"
+            },
+            {
+              "id": "none",
+              "name": "No baffles",
+              "note": "Save the mass and hope. Sloshing propellant knocked Falcon 1 flight 2 into a spin.",
+              "pros": [
+                "−2 % mass"
+              ],
+              "cons": [
+                "Reliability −0.6 %"
+              ],
+              "massF": 0.98,
+              "costF": 0.97,
+              "rel": -0.006,
+              "real": "Falcon 1 flight 2 (2007)"
+            },
+            {
+              "id": "antivortex",
+              "name": "Ring baffles and anti-vortex vanes",
+              "note": "As well as the rings, crossed vanes over each outlet stop the draining propellant swirling into a whirlpool, which would suck gas into the pump.",
+              "pros": [
+                "Reliability +0.2 %"
+              ],
+              "cons": [
+                "+0.5 % mass",
+                "+2 % cost"
+              ],
+              "massF": 1.005,
+              "costF": 1.02,
+              "rel": 0.002,
+              "real": "Saturn V S-IC LOX outlets; every modern stage"
+            }
+          ]
+        },
+        {
+          "key": "insulation",
+          "name": "Insulation",
+          "role": "What keeps liquid hydrogen from boiling away.",
+          "art": "skin",
+          "options": [
+            {
+              "id": "foam",
+              "name": "Spray-on foam, as designed",
+              "note": "The orange foam of the Shuttle tank, sprayed on and trimmed by hand. Without it, hydrogen at −253 °C boils off in minutes and air freezes onto the skin. Its mass and price are already in the tank's numbers.",
+              "pros": [
+                "Hydrogen stays liquid on the pad and in the climb"
+              ],
+              "cons": [
+                "Can shed pieces on ascent: a piece struck Columbia"
+              ],
+              "real": "Shuttle External Tank, SLS core stage, Delta IV"
+            },
+            {
+              "id": "bare",
+              "name": "Bare metal",
+              "note": "Leave the foam off. Lighter and cheaper, but the hydrogen boils away fast, ice builds on the skin, and the engines start on warmer, thinner propellant.",
+              "pros": [
+                "−3 % mass",
+                "−5 % cost"
+              ],
+              "cons": [
+                "Reliability −0.2 %",
+                "Ice and boil-off on the pad"
+              ],
+              "massF": 0.97,
+              "costF": 0.95,
+              "rel": -0.002,
+              "real": "Only short-lived test tanks"
+            },
+            {
+              "id": "mli",
+              "name": "Foam under multilayer blankets",
+              "note": "Foam for the pad and the climb, gold foil blankets on top for the long cruise: in vacuum the blankets stop the Sun's heat almost completely.",
+              "pros": [
+                "Reliability +0.2 %",
+                "Weeks in space with little boil-off"
+              ],
+              "cons": [
+                "+2 % mass",
+                "+12 % cost"
+              ],
+              "massF": 1.02,
+              "costF": 1.12,
+              "rel": 0.002,
+              "real": "Long-coast hydrogen upper stages and NASA cryogenic storage tests"
+            }
+          ]
+        },
+        {
+          "key": "feedline",
+          "name": "Feed lines",
+          "role": "The pipes that carry propellant from the tank to the engine.",
+          "art": "pipe",
+          "options": [
+            {
+              "id": "single",
+              "name": "Single feed line",
+              "note": "One big pipe per propellant.",
+              "pros": [
+                "Light"
+              ],
+              "cons": [
+                "One valve failure stops the engine"
+              ],
+              "real": "Most stages"
+            },
+            {
+              "id": "dual",
+              "name": "Redundant feed lines",
+              "note": "Two pipes and two valves per propellant, so one can fail.",
+              "pros": [
+                "Reliability +0.4 %"
+              ],
+              "cons": [
+                "+1.5 % mass",
+                "+8 % cost"
+              ],
+              "massF": 1.015,
+              "costF": 1.08,
+              "rel": 0.004,
+              "real": "Saturn V S-IC (five feed lines)"
+            },
+            {
+              "id": "tunnel",
+              "name": "Through-tank tunnel",
+              "note": "The upper tank's line drops straight down through the middle of the lower tank inside an insulated tunnel: no bends, the fastest flow, but one more hole in every dome.",
+              "pros": [
+                "Reliability +0.2 %",
+                "Shortest path to the engine"
+              ],
+              "cons": [
+                "+1 % mass",
+                "+5 % cost"
+              ],
+              "massF": 1.01,
+              "costF": 1.05,
+              "rel": 0.002,
+              "real": "Saturn V S-IC (five LOX tunnels through the fuel tank), Falcon 9 LOX transfer tube, Super Heavy methane downcomer"
+            }
+          ]
+        }
+      ]
+    },
+    "tank_common_h2": {
+      "name": "Inside the common-bulkhead hydrogen tank",
+      "slots": [
+        {
+          "key": "bulkhead",
+          "name": "Common bulkhead",
+          "role": "The single wall shared by the two propellants.",
+          "art": "dome",
+          "options": [
+            {
+              "id": "as_built",
+              "name": "Common bulkhead, as designed",
+              "note": "The shared wall this tank was designed with: two metal skins glued to a honeycomb core, so the hydrogen does not freeze the oxygen. Its mass and price are already in the tank's numbers.",
+              "pros": [
+                "Saves a dome and the intertank"
+              ],
+              "cons": [
+                "A leak mixes fuel and oxidizer"
+              ],
+              "real": "Saturn V S-II and S-IVB (phenolic honeycomb)"
+            },
+            {
+              "id": "honeycomb",
+              "name": "Extra-insulated honeycomb sandwich",
+              "note": "Two skins glued to a thicker honeycomb core. Each liquid stays at its own temperature, so neither boils nor freezes the other, and the bond is inspected cell by cell.",
+              "pros": [
+                "Reliability +0.3 %"
+              ],
+              "cons": [
+                "+2 % mass",
+                "+12 % cost"
+              ],
+              "massF": 1.02,
+              "costF": 1.12,
+              "rel": 0.003,
+              "real": "Thicker cores were studied for long-coast hydrogen stages; Centaur III uses fibreglass honeycomb"
+            },
+            {
+              "id": "thin",
+              "name": "Thin-gauge, chemically milled",
+              "note": "Acid baths eat the metal away wherever the loads are low. Lighter, with less margin left for a bad day.",
+              "pros": [
+                "−3 % mass"
+              ],
+              "cons": [
+                "+5 % cost",
+                "Reliability −0.4 %"
+              ],
+              "massF": 0.97,
+              "costF": 1.05,
+              "rel": -0.004,
+              "real": "Chemical milling, used on rocket tank skins and dome gores since the Saturn stages"
+            }
+          ]
+        },
+        {
+          "key": "pressurisation",
+          "name": "Pressurisation",
+          "role": "What fills the space as propellant drains.",
+          "art": "spheres",
+          "options": [
+            {
+              "id": "helium",
+              "name": "Helium bottles inside",
+              "note": "Cold helium bottles sit inside the oxygen tank, where they stay dense. Proven; the bottles are a hazard.",
+              "pros": [
+                "Proven"
+              ],
+              "cons": [
+                "Bottles inside the tank (AMOS-6)"
+              ],
+              "real": "Falcon 9, Delta II"
+            },
+            {
+              "id": "autogenous",
+              "name": "Autogenous (hot propellant gas)",
+              "note": "A little propellant is heated by the engine and piped back as gas. No helium at all.",
+              "pros": [
+                "−3 % mass",
+                "No helium to run out of"
+              ],
+              "cons": [
+                "+10 % cost",
+                "Only works once the engine runs"
+              ],
+              "massF": 0.97,
+              "costF": 1.1,
+              "rel": -0.003,
+              "real": "Starship, Shuttle ET"
+            },
+            {
+              "id": "heated",
+              "name": "Heated helium",
+              "note": "Helium from cold bottles is warmed in a heat exchanger on the engine before it enters the tank. Warm gas fills more volume, so fewer bottles do the job.",
+              "pros": [
+                "−1.5 % mass",
+                "Less helium to carry"
+              ],
+              "cons": [
+                "+4 % cost",
+                "One more heat exchanger on the engine"
+              ],
+              "massF": 0.985,
+              "costF": 1.04,
+              "rel": -0.001,
+              "real": "Falcon 9 (heated helium), Saturn V S-IC fuel tank"
+            }
+          ]
+        },
+        {
+          "key": "baffles",
+          "name": "Slosh baffles",
+          "role": "Rings inside the tank that stop the propellant sloshing.",
+          "art": "baffles",
+          "options": [
+            {
+              "id": "baffled",
+              "name": "Ring baffles",
+              "note": "Rings welded inside the wall break up the waves when the ship turns.",
+              "pros": [
+                "Steady propellant"
+              ],
+              "cons": [
+                "+2 % mass"
+              ],
+              "real": "Every crewed launcher"
+            },
+            {
+              "id": "none",
+              "name": "No baffles",
+              "note": "Save the mass and hope. Sloshing propellant knocked Falcon 1 flight 2 into a spin.",
+              "pros": [
+                "−2 % mass"
+              ],
+              "cons": [
+                "Reliability −0.6 %"
+              ],
+              "massF": 0.98,
+              "costF": 0.97,
+              "rel": -0.006,
+              "real": "Falcon 1 flight 2 (2007)"
+            },
+            {
+              "id": "antivortex",
+              "name": "Ring baffles and anti-vortex vanes",
+              "note": "As well as the rings, crossed vanes over each outlet stop the draining propellant swirling into a whirlpool, which would suck gas into the pump.",
+              "pros": [
+                "Reliability +0.2 %"
+              ],
+              "cons": [
+                "+0.5 % mass",
+                "+2 % cost"
+              ],
+              "massF": 1.005,
+              "costF": 1.02,
+              "rel": 0.002,
+              "real": "Saturn V S-IC LOX outlets; every modern stage"
+            }
+          ]
+        },
+        {
+          "key": "insulation",
+          "name": "Insulation",
+          "role": "What keeps liquid hydrogen from boiling away.",
+          "art": "skin",
+          "options": [
+            {
+              "id": "foam",
+              "name": "Spray-on foam, as designed",
+              "note": "The orange foam of the Shuttle tank, sprayed on and trimmed by hand. Without it, hydrogen at −253 °C boils off in minutes and air freezes onto the skin. Its mass and price are already in the tank's numbers.",
+              "pros": [
+                "Hydrogen stays liquid on the pad and in the climb"
+              ],
+              "cons": [
+                "Can shed pieces on ascent: a piece struck Columbia"
+              ],
+              "real": "Shuttle External Tank, SLS core stage, Delta IV"
+            },
+            {
+              "id": "bare",
+              "name": "Bare metal",
+              "note": "Leave the foam off. Lighter and cheaper, but the hydrogen boils away fast, ice builds on the skin, and the engines start on warmer, thinner propellant.",
+              "pros": [
+                "−3 % mass",
+                "−5 % cost"
+              ],
+              "cons": [
+                "Reliability −0.2 %",
+                "Ice and boil-off on the pad"
+              ],
+              "massF": 0.97,
+              "costF": 0.95,
+              "rel": -0.002,
+              "real": "Only short-lived test tanks"
+            },
+            {
+              "id": "mli",
+              "name": "Foam under multilayer blankets",
+              "note": "Foam for the pad and the climb, gold foil blankets on top for the long cruise: in vacuum the blankets stop the Sun's heat almost completely.",
+              "pros": [
+                "Reliability +0.2 %",
+                "Weeks in space with little boil-off"
+              ],
+              "cons": [
+                "+2 % mass",
+                "+12 % cost"
+              ],
+              "massF": 1.02,
+              "costF": 1.12,
+              "rel": 0.002,
+              "real": "Long-coast hydrogen upper stages and NASA cryogenic storage tests"
+            }
+          ]
+        },
+        {
+          "key": "feedline",
+          "name": "Feed lines",
+          "role": "The pipes that carry propellant from the tank to the engine.",
+          "art": "pipe",
+          "options": [
+            {
+              "id": "single",
+              "name": "Single feed line",
+              "note": "One big pipe per propellant.",
+              "pros": [
+                "Light"
+              ],
+              "cons": [
+                "One valve failure stops the engine"
+              ],
+              "real": "Most stages"
+            },
+            {
+              "id": "dual",
+              "name": "Redundant feed lines",
+              "note": "Two pipes and two valves per propellant, so one can fail.",
+              "pros": [
+                "Reliability +0.4 %"
+              ],
+              "cons": [
+                "+1.5 % mass",
+                "+8 % cost"
+              ],
+              "massF": 1.015,
+              "costF": 1.08,
+              "rel": 0.004,
+              "real": "Saturn V S-IC (five feed lines)"
+            },
+            {
+              "id": "tunnel",
+              "name": "Through-tank tunnel",
+              "note": "The upper tank's line drops straight down through the middle of the lower tank inside an insulated tunnel: no bends, the fastest flow, but one more hole in every dome.",
+              "pros": [
+                "Reliability +0.2 %",
+                "Shortest path to the engine"
+              ],
+              "cons": [
+                "+1 % mass",
+                "+5 % cost"
+              ],
+              "massF": 1.01,
+              "costF": 1.05,
+              "rel": 0.002,
+              "real": "Saturn V S-IC (five LOX tunnels through the fuel tank), Falcon 9 LOX transfer tube, Super Heavy methane downcomer"
             }
           ]
         }

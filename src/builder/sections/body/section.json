@@ -1,7 +1,7 @@
 {
   "name": "Body",
   "short": "Body",
-  "blurb": "The middle of the ship: the propellant tanks, the structure that joins them and the guidance electronics.",
+  "blurb": "The middle of the ship: the propellant tanks, the structure that joins them, the guidance electronics and everything clamped to the tank walls.",
   "rows": [
     {
       "id": "avionics",
@@ -17,7 +17,7 @@
     {
       "id": "structure",
       "name": "Stage structure",
-      "role": "Truss, interstage and centerbody: the skeleton between tanks.",
+      "role": "Interstages, intertanks, centerbodies and trusses: the skeleton between the tanks.",
       "mode": "stack",
       "pick": {
         "families": [
@@ -28,7 +28,7 @@
     {
       "id": "tanks",
       "name": "Propellant tanks",
-      "role": "Fuel and oxidizer for the engines. Match the engine fuel.",
+      "role": "Fuel and oxidizer for the engines. The engines switch to whatever the tanks hold most of.",
       "mode": "stack",
       "pick": {
         "has": [
@@ -49,13 +49,16 @@
     },
     {
       "id": "plumbing",
-      "name": "Plumbing & pressure",
-      "role": "Cable tunnels and the gas that keeps the tanks pressurised.",
+      "name": "Lines, cables & pressure",
+      "role": "Feed lines, cable raceways and the gas bottles that keep the tanks pressurised.",
       "mode": "radial",
       "pick": {
         "ids": [
+          "feedline_external",
+          "cable_raceway",
           "wiring_tunnel",
           "helium_copv",
+          "copv_rack",
           "nitrogen_sphere"
         ]
       }
@@ -113,14 +116,16 @@
       "id": "methalox_core",
       "name": "Methane core",
       "real": "Starship-style methane and oxygen tanks",
-      "desc": "A big and a medium methalox tank: refillable on Mars.",
+      "desc": "A big and a medium methalox tank, the big one on top: methane can be made on Mars from ice and air, so the ship can refuel for the trip home.",
       "pros": [
-        "Refillable on Mars"
+        "Refillable on Mars",
+        "Good all-rounder"
       ],
       "cons": [
-        "Long stack"
+        "Steps in from large to medium inside the body"
       ],
       "diameter": "l",
+      "icon": "tank_l_methalox",
       "stack": [
         "tank_l_methalox",
         "tank_m_methalox"
@@ -144,52 +149,349 @@
       "id": "delta_core",
       "name": "Fuel tank, centerbody, oxidizer tank",
       "real": "Delta II first stage",
-      "desc": "Two kerosene tanks joined by a stiff centerbody, with the guidance ring on top.",
+      "desc": "The guidance ring on top, then the kerosene tank, a stiff isogrid centerbody and the oxygen tank. Delta II put its kerosene on top, unusually; the solid boosters clamped around the oxygen tank below.",
       "pros": [
         "Dense, cheap kerosene",
         "Strong centerbody for strap-on boosters"
       ],
       "cons": [
-        "Heavy structure"
+        "Heavy structure",
+        "90 t of propellant needs strong engines or solids"
       ],
       "diameter": "l",
+      "icon": "tank_l_kerolox",
       "stack": [
         "avionics_ring_m",
         "tank_l_kerolox",
-        "centerbody_m",
+        {
+          "type": "centerbody_m",
+          "options": {
+            "construction": "isogrid"
+          }
+        },
         "tank_l_kerolox"
       ],
       "radial": [
         {
           "type": "wiring_tunnel",
           "on": 1,
-          "angle": 100,
+          "angle": 300,
           "yFrac": 0.5
         }
       ]
     },
     {
       "id": "hydrolox_core",
-      "name": "Hydrogen core",
-      "real": "Space Shuttle External Tank, Delta IV",
-      "desc": "Two huge insulated hydrogen tanks: the best Isp, the bulkiest ship.",
+      "name": "Shuttle External Tank",
+      "real": "Space Shuttle External Tank (also Delta IV, SLS core stage)",
+      "desc": "A short oxygen tank on top, the intertank, and a long hydrogen tank below, all under orange foam, with the big oxygen feed line running down the outside of the hydrogen tank.",
       "pros": [
-        "Best Isp"
+        "Best Isp with a hydrolox engine",
+        "Reaches Mars with a single large engine",
+        "Feed line outside: easy to inspect"
       ],
       "cons": [
-        "Huge and expensive",
+        "Huge, tall and expensive",
         "Little propellant mass for the size"
       ],
       "diameter": "l",
+      "icon": "tank_l_hydrolox_stretch",
       "stack": [
         "tank_l_hydrolox",
-        "tank_l_hydrolox"
+        "intertank_l",
+        "tank_l_hydrolox_stretch"
+      ],
+      "radial": [
+        {
+          "type": "feedline_external",
+          "on": 2,
+          "angle": 300,
+          "yFrac": 0.56
+        },
+        {
+          "type": "cable_raceway",
+          "on": 2,
+          "angle": 225,
+          "yFrac": 0.5
+        },
+        {
+          "type": "wiring_tunnel",
+          "on": 0,
+          "angle": 225,
+          "yFrac": 0.5
+        }
+      ]
+    },
+    {
+      "id": "falcon9_s1",
+      "name": "Falcon 9 first stage",
+      "real": "SpaceX Falcon 9 (Full Thrust)",
+      "desc": "A black carbon interstage on top, then one long aluminium-lithium tank: liquid oxygen over kerosene with a single common dome between them, and a raceway down the side.",
+      "pros": [
+        "67 t of kerosene and oxygen for little structure",
+        "Cold-gas thrusters on the interstage"
+      ],
+      "cons": [
+        "Needs a cluster of engines: one large kerolox engine cannot lift it",
+        "Tall and light at the top: needs fins low on the tail",
+        "Common dome: one wall between fuel and oxidizer"
+      ],
+      "diameter": "l",
+      "icon": "tank_l_kerolox_common",
+      "stack": [
+        "interstage_l_composite",
+        "tank_l_kerolox_common"
+      ],
+      "radial": [
+        {
+          "type": "cable_raceway",
+          "on": 1,
+          "angle": 315,
+          "yFrac": 0.5
+        },
+        {
+          "type": "nitrogen_sphere",
+          "on": 0,
+          "angle": 210,
+          "yFrac": 0.25
+        }
+      ]
+    },
+    {
+      "id": "saturn_sic",
+      "name": "Saturn V S-IC",
+      "real": "Saturn V first stage (S-IC)",
+      "desc": "The biggest layout here: a long oxygen tank on top, an intertank, and the kerosene tank below, with a systems tunnel down the side. The real one was 10 m wide and fed five F-1 engines.",
+      "pros": [
+        "108 t of kerosene and oxygen",
+        "Separate tanks: robust and simple"
+      ],
+      "cons": [
+        "Very heavy: needs strap-on solids or a big engine cluster",
+        "Long stack"
+      ],
+      "diameter": "l",
+      "icon": "tank_l_kerolox_stretch",
+      "stack": [
+        "tank_l_kerolox_stretch",
+        "intertank_l",
+        "tank_l_kerolox"
+      ],
+      "radial": [
+        {
+          "type": "cable_raceway",
+          "on": 0,
+          "angle": 300,
+          "yFrac": 0.5
+        },
+        {
+          "type": "wiring_tunnel",
+          "on": 2,
+          "angle": 300,
+          "yFrac": 0.5
+        }
+      ]
+    },
+    {
+      "id": "saturn_sivb",
+      "name": "Saturn S-IVB with Instrument Unit",
+      "real": "Saturn V third stage (S-IVB) and its Instrument Unit; the S-II used the same tank layout",
+      "desc": "The Instrument Unit ring on top, then hydrogen over oxygen in one tank with a single insulated common bulkhead, helium spheres at the base and a tunnel down the side.",
+      "pros": [
+        "Best Isp with a hydrolox engine",
+        "Guidance ring built in: reliability +3.5 %"
+      ],
+      "cons": [
+        "An upper stage: 26 t will not reach Mars on its own, add a second tank",
+        "Very expensive",
+        "Light at the top: needs fins low on the tail"
+      ],
+      "diameter": "l",
+      "icon": "tank_l_hydrolox_common",
+      "stack": [
+        "avionics_iu_l",
+        "tank_l_hydrolox_common"
       ],
       "radial": [
         {
           "type": "wiring_tunnel",
+          "on": 1,
+          "angle": 300,
+          "yFrac": 0.55
+        },
+        {
+          "type": "helium_copv",
+          "on": 1,
+          "angle": 40,
+          "yFrac": 0.06,
+          "symmetry": 2
+        }
+      ]
+    },
+    {
+      "id": "atlas_balloon",
+      "name": "Atlas balloon tank",
+      "real": "Atlas (SM-65 and the Mercury-Atlas that flew John Glenn)",
+      "desc": "One stainless steel tube thinner than a coin, oxygen over kerosene, held rigid only by the pressure inside. A long cable conduit runs down the side and helium bottles sit at the base.",
+      "pros": [
+        "Lightest kerolox structure: 57.5 t of propellant for under 2 t",
+        "Reaches Mars with a single large engine"
+      ],
+      "cons": [
+        "Must stay pressurised every minute: reliability 98.8 %",
+        "Long and slender"
+      ],
+      "diameter": "m",
+      "icon": "tank_m_kerolox_balloon",
+      "stack": [
+        "tank_m_kerolox_balloon"
+      ],
+      "radial": [
+        {
+          "type": "cable_raceway",
           "on": 0,
-          "angle": 100,
+          "angle": 315,
+          "yFrac": 0.5
+        },
+        {
+          "type": "helium_copv",
+          "on": 0,
+          "angle": 200,
+          "yFrac": 0.05,
+          "symmetry": 2
+        }
+      ]
+    },
+    {
+      "id": "soyuz_blok_a",
+      "name": "Soyuz core stage (Blok A)",
+      "real": "Soyuz core stage, Blok A (R-7 family)",
+      "desc": "A narrow kerosene core: the open lattice truss on top (the stage above fires its engine through it), the instrument ring, the long oxygen tank, the intertank where the four boosters push, and the kerosene tank. Nitrogen pressurises the tanks.",
+      "pros": [
+        "The most-flown layout in history",
+        "62.5 t at the medium diameter"
+      ],
+      "cons": [
+        "Heavy structure: 62.5 t falls a little short of Mars, stretch the lower tank",
+        "Long and narrow"
+      ],
+      "diameter": "m",
+      "icon": "tank_m_kerolox_stretch",
+      "stack": [
+        "truss_m",
+        "avionics_ring_m",
+        "tank_m_kerolox_stretch",
+        "intertank_m",
+        "tank_m_kerolox"
+      ],
+      "radial": [
+        {
+          "type": "nitrogen_sphere",
+          "on": 3,
+          "angle": 250,
+          "yFrac": 0.2
+        },
+        {
+          "type": "wiring_tunnel",
+          "on": 2,
+          "angle": 300,
+          "yFrac": 0.5
+        }
+      ]
+    },
+    {
+      "id": "starship_steel",
+      "name": "Starship stainless steel",
+      "real": "SpaceX Starship and Super Heavy",
+      "desc": "Welded rings of stainless steel: methane on top, oxygen below, one common dome between them, with a raceway down the side and a rack of carbon-wrapped helium bottles.",
+      "pros": [
+        "Cheapest propellant per dollar",
+        "Tough steel: reliability 99.9 %",
+        "Refillable on Mars"
+      ],
+      "cons": [
+        "Heavier than aluminium"
+      ],
+      "diameter": "l",
+      "icon": "tank_l_methalox_steel",
+      "stack": [
+        "tank_l_methalox_steel"
+      ],
+      "radial": [
+        {
+          "type": "cable_raceway",
+          "on": 0,
+          "angle": 315,
+          "yFrac": 0.5
+        },
+        {
+          "type": "copv_rack",
+          "on": 0,
+          "angle": 230,
+          "yFrac": 0.12
+        }
+      ]
+    },
+    {
+      "id": "electron_carbon",
+      "name": "Electron carbon composite",
+      "real": "Rocket Lab Electron",
+      "desc": "A small, black, all-carbon-fibre stage: one composite tank pair with a common bulkhead. On Electron, battery packs drive the engine pumps; here the two packs store the ship's power.",
+      "pros": [
+        "Lightest small stage",
+        "Fits small noses and tails"
+      ],
+      "cons": [
+        "A small rocket: 20 t will not carry a crew to Mars, add tanks",
+        "Expensive",
+        "Composite can hide cracks: reliability 99.4 %"
+      ],
+      "diameter": "s",
+      "icon": "tank_s_kerolox_carbon",
+      "stack": [
+        "tank_s_kerolox_carbon"
+      ],
+      "radial": [
+        {
+          "type": "battery",
+          "on": 0,
+          "angle": 90,
+          "yFrac": 0.08,
+          "symmetry": 2
+        }
+      ]
+    },
+    {
+      "id": "centaur_balloon",
+      "name": "Centaur upper stage",
+      "real": "Centaur (Atlas V and Vulcan upper stage; launched Voyager, Cassini, New Horizons)",
+      "desc": "The guidance electronics on top of a stainless steel balloon: hydrogen over oxygen with an insulated honeycomb bulkhead between them, and helium bottles at the base.",
+      "pros": [
+        "Best Isp with a hydrolox engine",
+        "Lightest hydrogen structure"
+      ],
+      "cons": [
+        "An upper stage: 20 t will not reach Mars on its own, add a second tank",
+        "Balloon tank must stay pressurised: reliability 99 %"
+      ],
+      "diameter": "m",
+      "icon": "tank_m_hydrolox_balloon",
+      "stack": [
+        "avionics_ring_m",
+        "tank_m_hydrolox_balloon"
+      ],
+      "radial": [
+        {
+          "type": "helium_copv",
+          "on": 1,
+          "angle": 60,
+          "yFrac": 0.06,
+          "symmetry": 2
+        },
+        {
+          "type": "wiring_tunnel",
+          "on": 1,
+          "angle": 300,
           "yFrac": 0.5
         }
       ]
