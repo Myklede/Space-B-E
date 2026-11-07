@@ -52,7 +52,8 @@ async function main() {
   try {
     browser = await chromium.launch({ channel: 'chrome', headless: true, args });
   } catch (error) {
-    return finish(0, `SKIPPED  check:boot: Chrome could not start (${String(error.message).split('\n')[0]}).`);
+    // Passing without walking the loop would prove nothing, so a missing browser is a failure.
+    return finish(1, `FAILED  check:boot: Chrome could not start (${String(error.message).split('\n')[0]}). Install Google Chrome and run this again.`);
   }
 
   const page = await (await browser.newContext({ viewport: { width: 1280, height: 720 } })).newPage();
