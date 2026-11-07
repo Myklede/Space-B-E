@@ -20,6 +20,7 @@ import { pressureRatio } from './atmosphere.js';
 import { STARTS } from './presets.js';
 import { createFlightHUD } from './hud/createFlightHUD.js';
 import { stackParts } from './rocketStack.js';
+import { ZOOM_DEFAULT, ZOOM_PAD, applyMouse, createChaseState, createOrbit, horizonFrame, liftAboveGround, resetOrbit, stepZoom, updateChase } from './chaseCam.js';
 
 const fmt = (n, d = 0) => (Number.isFinite(n) ? n.toFixed(d) : '∞');
 
@@ -158,7 +159,7 @@ function buildSpaceView(planetId) {
   scene.add(rig);
 
   // the player's own rocket for the chase camera (local +Y = nose, same as the physics)
-  const { rocket, eyeY } = buildRocket(getShip());
+  const { rocket, eyeY, mid } = buildRocket(getShip());
   const flame = assets.get('vfx:engineFlame');
   const exhaust = assets.get('vfx:exhaust');
   rocket.add(flame, exhaust);
@@ -173,7 +174,7 @@ function buildSpaceView(planetId) {
   path.frustumCulled = false;
   frame.add(path);
   scene.add(frame);
-  return { scene, camera, planet, rig, cockpit, plasma, flame, exhaust, rocketRoot, frame, path, debris: new Map() };
+  return { scene, camera, planet, rig, cockpit, plasma, flame, exhaust, rocketRoot, frame, path, debris: new Map(), centreY: mid - eyeY };
 }
 
 // Builds the rocket from ShipSpec.parts (Role 1's builder; metres, y along the axis, rotation in degrees about the
@@ -193,7 +194,7 @@ function buildRocket(spec) {
     rocket.add(part);
     if (/capsule/.test(p.type)) eyeY = placed.get(p) + (part.userData.height ?? 2) * 0.55;
   }
-  return { rocket, eyeY };
+  return { rocket, eyeY, mid: top / 2 };
 }
 
 const debrisGeometry = new THREE.DodecahedronGeometry(1, 0);
@@ -242,7 +243,7 @@ function buildSiteView() {
   const rig = new THREE.Group();
   const cockpit = assets.get('cockpit');
   rig.add(cockpit, camera);
-  const { rocket, eyeY } = buildRocket(getShip());
+  const { rocket, eyeY, mid } = buildRocket(getShip());
   const flame = assets.get('vfx:engineFlame');
   const exhaust = assets.get('vfx:exhaust');
   rocket.add(flame, exhaust);
@@ -252,7 +253,7 @@ function buildSiteView() {
   rocketRoot.userData.role2 = rig.userData.role2 = true;
   site.scene.add(rocketRoot, rig);
   site.setAltitude(0);
-  return { ...site, camera, rig, cockpit, rocketRoot, flame, exhaust, eyeY };
+  return { ...site, camera, rig, cockpit, rocketRoot, flame, exhaust, eyeY, centreY: mid };
 }
 
 // Low over Mars: Role 2's shared Mars scene (pre-built at boot by src/surface/scenes.js). Our ship IS the lander,
@@ -263,17 +264,44 @@ function buildSurfaceView(fc) {
   lander.visible = false;
   const camera = new THREE.PerspectiveCamera(65, 1, 0.05, 2e5);
   const rig = new THREE.Group();
-  rig.add(assets.get('cockpit'), camera);
+  const cockpit = assets.get('cockpit');
+  rig.add(cockpit, camera);
   const dust = assets.get('vfx:landingDust');
-  rig.userData.role2Flight = dust.userData.role2Flight = true;
-  scene.add(rig, dust);
+  // the outside view: our own rocket, pivoting about its base like on the launch pad
+  const { rocket, mid } = buildRocket(getShip());
+  const flame = assets.get('vfx:engineFlame');
+  const exhaust = assets.get('vfx:exhaust');
+  rocket.add(flame, exhaust);
+  const rocketRoot = new THREE.Group();
+  rocketRoot.add(rocket);
+  showModel(rocketRoot, false);
+  rig.userData.role2Flight = dust.userData.role2Flight = rocketRoot.userData.role2Flight = true;
+  scene.add(rig, dust, rocketRoot);
   // tangent frame at the point under the ship when this view starts: east = +X, north = −Z, up = +Y
   const up = v3(fc.up);
   const east = v3(fc.vel).projectOnPlane(up).normalize();
   if (east.lengthSq() < 0.5) east.set(1, 0, 0).projectOnPlane(up).normalize();
   const north = new THREE.Vector3().crossVectors(east, up);
   const toLocal = new THREE.Quaternion().setFromRotationMatrix(new THREE.Matrix4().makeBasis(east, up, north.clone().negate()).invert());
-  return { scene, camera, rig, dust, origin: up.clone().multiplyScalar(fc.planet.radius), east, north, toLocal };
+  return { scene, camera, rig, dust, cockpit, rocketRoot, flame, exhaust, centreY: mid, origin: up.clone().multiplyScalar(fc.planet.radius), east, north, toLocal };
+}
+
+// ---------- outside camera ----------
+const UP = new THREE.Vector3(0, 1, 0);
+const camOffset = new THREE.Vector3();
+const shipForward = (q) => new THREE.Vector3(0, 1, 0).applyQuaternion(q);
+
+// Orbit the camera around `centre` in the local-horizon frame (up = away from the planet, yaw 0 = behind the ship's
+// motion). The offset is eased relative to the rocket, so the rocket stays centred at any speed. `heightOverGround`
+// (or null) keeps the camera from sinking into the ground near the pad.
+function placeChaseCamera(camera, centre, branch, vel, forward, dt, heightOverGround, up) {
+  if (s.cam.branch !== branch) { s.cam.branch = branch; s.cam.ready = false; } // new frame: snap, don't ease across scenes
+  const frame = horizonFrame(up, vel, forward, s.cam.heading);
+  updateChase(s.cam, s.orbit, frame, dt, false, camOffset);
+  if (heightOverGround !== null) liftAboveGround(camOffset, frame.up, heightOverGround, 2);
+  camera.position.copy(centre).add(camOffset);
+  camera.up.copy(frame.up);
+  camera.lookAt(centre);
 }
 
 // ---------- transfer burn (ORBIT → CRUISE) ----------
@@ -299,7 +327,13 @@ function transferBurn() {
 // ---------- module ----------
 export default {
   init() {
-    if (new URLSearchParams(location.search).get('debug') === '1') window.__role2flight = { get look() { return s?.look; }, get fc() { return s?.fc; } }; // debug only
+    if (new URLSearchParams(location.search).get('debug') === '1') window.__role2flight = {
+      get look() { return s?.look; }, get fc() { return s?.fc; }, get orbit() { return s?.orbit; },
+      // set the outside camera for screenshots: orbit(yawDeg, pitchDeg, dist); `wheel` fakes a wheel step; chase(on) toggles the view
+      orbit(yawDeg, pitchDeg, dist) { if (s) { s.orbit.yaw = THREE.MathUtils.degToRad(yawDeg); s.orbit.pitch = THREE.MathUtils.degToRad(pitchDeg); if (dist) s.orbit.dist = dist; s.cam.ready = false; } return s?.orbit; },
+      wheel(delta) { if (s) s.orbit.dist = stepZoom(s.orbit.dist, delta); return s?.orbit.dist; },
+      chase(on) { if (s && s.chase !== on) { s.chase = on; if (on) { resetOrbit(s.orbit); s.cam.ready = false; } } return s?.chase; },
+    }; // debug only
     setTimeout(prepareLaunchSite, 0); // after boot finished its own work
   },
 
@@ -310,7 +344,7 @@ export default {
     const view = buildSpaceView(fc.planetId);
     s = {
       state, fc, view, surface: null, mode: null,
-      look: { yaw: 0, pitch: 0 }, chase: false, warp: 1, assist: true,
+      look: { yaw: 0, pitch: 0 }, orbit: createOrbit(state === 'LAUNCH' ? ZOOM_PAD : ZOOM_DEFAULT), cam: createChaseState(), chase: false, warp: 1, assist: true,
       sinceTelemetry: 0, engineSound: false, done: false,
     };
     const hudLayer = document.createElement('div');
@@ -330,7 +364,11 @@ export default {
       isLanded: () => fc.landed,
       onStandUp: () => requestState('INTERIOR'),
     });
-    input.onPress('KeyC', () => { s.chase = !s.chase; });
+    if (state === 'LAUNCH') s.cam.heading.set(0, 0, 1); // on the pad "behind" is the clear side, away from the tower and tanks
+    input.onPress('KeyC', () => {
+      s.chase = !s.chase;
+      if (s.chase) { resetOrbit(s.orbit); s.cam.ready = false; } // behind and above, zoom kept
+    });
     input.onPress('Period', () => { s.warp = Math.min(100, s.warp * 10); });
     input.onPress('Comma', () => { s.warp = Math.max(1, s.warp / 10); });
     input.onPress('KeyB', () => fc.setObstacles(createDebrisField({ fc, seed: Math.floor(Math.random() * 1e6) })));
@@ -362,9 +400,13 @@ export default {
     const { fc, view } = s;
     const mouse = input.mouseDelta();
     if (Math.abs(mouse.x) < MAX_MOUSE_STEP && Math.abs(mouse.y) < MAX_MOUSE_STEP) {
-      s.look.yaw = s.look.yaw - mouse.x * 0.002;
-      s.look.pitch = Math.max(-1.2, Math.min(1.2, s.look.pitch - mouse.y * 0.002));
+      if (s.chase) applyMouse(s.orbit, mouse.x, mouse.y); // outside: the mouse orbits the rocket, cockpit look untouched
+      else {
+        s.look.yaw = s.look.yaw - mouse.x * 0.002;
+        s.look.pitch = Math.max(-1.2, Math.min(1.2, s.look.pitch - mouse.y * 0.002));
+      }
     }
+    if (s.chase) s.orbit.dist = stepZoom(s.orbit.dist, input.wheelDelta?.()); // core input adds wheelDelta; none yet = no zoom
 
     s.controls.poll();
     if (s.countdown > 0) {
@@ -419,9 +461,8 @@ export default {
       if (s.chase) {
         sv.rig.quaternion.identity();
         sv.rig.position.set(0, 0, 0);
-        sv.camera.position.copy(eye).add(new THREE.Vector3(0, 0, 1).applyQuaternion(shipQ).multiplyScalar(-40)).add(new THREE.Vector3(18, 6, 0));
-        sv.camera.up.set(0, 1, 0);
-        sv.camera.lookAt(eye);
+        const centre = new THREE.Vector3(0, sv.centreY, 0).applyQuaternion(shipQ).add(sv.rocketBase);
+        placeChaseCamera(sv.camera, centre, 'site', v3(fc.vel), shipForward(shipQ), dt, centre.y + Math.max(0, t.altitude), UP);
       } else {
         sv.rig.position.copy(eye);
         sv.rig.quaternion.copy(shipQ).multiply(toCockpit);
@@ -439,9 +480,27 @@ export default {
       const d = v3(fc.pos).sub(sv.origin);
       const x = d.dot(sv.east), z = -d.dot(sv.north);
       const ground = getTerrainHeight(x, z);
-      sv.rig.position.set(x, t.altitude + ground + 1.6, z);
-      sv.rig.quaternion.copy(sv.toLocal).multiply(shipQ).multiply(toCockpit);
-      sv.camera.quaternion.copy(lookQ);
+      const localQ = sv.toLocal.clone().multiply(shipQ);
+      if (s.surfaceChase !== s.chase) { s.surfaceChase = s.chase; showModel(sv.rocketRoot, s.chase); showModel(sv.cockpit, !s.chase); }
+      sv.rocketRoot.position.set(x, t.altitude + ground, z);
+      sv.rocketRoot.quaternion.copy(localQ);
+      if (s.chase) {
+        sv.rig.position.set(0, 0, 0);
+        sv.rig.quaternion.identity();
+        const centre = new THREE.Vector3(0, sv.centreY, 0).applyQuaternion(localQ).add(sv.rocketRoot.position);
+        placeChaseCamera(sv.camera, centre, 'mars', v3(fc.vel).applyQuaternion(sv.toLocal), shipForward(shipQ).applyQuaternion(sv.toLocal), dt, null, UP);
+        const camGround = getTerrainHeight(sv.camera.position.x, sv.camera.position.z);
+        if (sv.camera.position.y < camGround + 2) { sv.camera.position.y = camGround + 2; sv.camera.lookAt(centre); }
+      } else {
+        sv.rig.position.set(x, t.altitude + ground + 1.6, z);
+        sv.rig.quaternion.copy(localQ).multiply(toCockpit);
+        sv.camera.position.set(0, 0, 0);
+        sv.camera.up.set(0, 1, 0);
+        sv.camera.quaternion.copy(lookQ);
+      }
+      const thr = t.thrust > 0 ? fc.throttle : 0;
+      sv.flame.userData.set({ throttle: thr, airDensity: air });
+      sv.exhaust.userData.set({ throttle: thr, airDensity: air });
       sv.dust.position.set(x, ground, z);
       sv.dust.userData.set({ intensity: t.thrust > 0 ? Math.max(0, 1 - t.altitude / 40) : 0 });
       if (s.mode !== 'surface') { s.mode = 'surface'; graphics.setView(sv.scene, sv.camera); }
@@ -461,10 +520,8 @@ export default {
       if (s.spaceChase !== s.chase) { s.spaceChase = s.chase; showModel(view.rocketRoot, s.chase); showModel(view.cockpit, !s.chase); }
       if (s.chase) {
         view.rig.quaternion.identity();
-        const up = v3(fc.up);
-        view.camera.position.copy(v3(fc.forward).multiplyScalar(-45)).addScaledVector(up, 12);
-        view.camera.up.copy(up);
-        view.camera.lookAt(0, 0, 0);
+        const centre = new THREE.Vector3(0, view.centreY, 0).applyQuaternion(shipQ);
+        placeChaseCamera(view.camera, centre, 'space', v3(fc.vel), v3(fc.forward), dt, null, v3(fc.up));
       } else {
         view.rig.quaternion.copy(shipQ).multiply(toCockpit);
         view.camera.position.set(0, 0, 0);
