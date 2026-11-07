@@ -14,7 +14,7 @@ import { stubScreen } from '/src/core/stubScreen.js';
 import { astronaut } from '/src/surface/astronaut.js';
 import { FlightController } from './FlightController.js';
 import { createCockpitControls } from './cockpitControls.js';
-import { assistReadout, predictPath } from './flightAssist.js';
+import { ascentGuide, assistReadout, predictPath } from './flightAssist.js';
 import { createDebrisField } from './debris.js';
 import { pressureRatio } from './atmosphere.js';
 import { STARTS } from './presets.js';
@@ -220,6 +220,11 @@ export default {
     hudLayer.style.cssText = 'position:absolute;inset:0;pointer-events:none';
     ui.mount(hudLayer, { layer: 'hud' });
     s.hud = createFlightHUD({ parent: hudLayer });
+    const guideMark = document.createElement('span');
+    guideMark.className = 'marker guide';
+    guideMark.textContent = '◎';
+    guideMark.style.color = '#7dffa8';
+    s.hud.root.append(guideMark);
     s.controls = createCockpitControls({
       input,
       onToggleAssist: () => { s.assist = !s.assist; },
@@ -389,6 +394,8 @@ export default {
     if (fc.landed) a.warnings.push({ level: 'amber', text: 'LANDED: press E to stand up' });
     if (s.debrisWarning > 0) a.warnings.unshift({ level: 'red', text: 'ORBITAL DEBRIS AHEAD: steer and burn sideways to dodge' });
     if (state === 'ORBIT' && t.phase === 'orbit') a.warnings.push({ level: 'amber', text: `IN ORBIT: press T for the transfer burn (${fmt((economy.balance.deltaVKmS?.transfer ?? 2.1) * 1000)} m/s)` });
+    const guide = s.assist ? ascentGuide(fc) : null;
+    if (guide) a.warnings.unshift({ level: 'amber', text: guide.text });
     s.hud.update(t, a, s.assist);
     const cam = s.mode === 'surface' ? s.surface.camera : s.mode === 'site' ? s.site.camera : view.camera;
     const project = (dir) => {
@@ -401,6 +408,7 @@ export default {
     const toLocal = (d) => (d && s.mode === 'surface' ? v3(d).applyQuaternion(s.surface.toLocal) : d);
     s.hud.marker('pro', project(toLocal(a.prograde)));
     s.hud.marker('retro', project(toLocal(a.retrograde)));
+    s.hud.marker('guide', project(toLocal(guide?.direction)));
     const danger = t.collisionWarning && fc.obstacles.find((o) => o.id === t.collisionWarning.id);
     s.hud.marker('collision', danger ? project(v3(danger.pos).sub(v3(fc.pos)).normalize()) : null);
   },

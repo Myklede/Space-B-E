@@ -8,7 +8,7 @@ const coreJson = (rel) => JSON.parse(readFileSync(new URL(`../../core/${rel}`, i
 import { MOCK_SHIPS, STARTS } from '../presets.js';
 const MOCK_PLANETS = PLANETS;
 class FlightController extends RawFC { constructor(o) { super({ g0: G0, ...o }); } }
-import { predictPath, stoppingDistance, assistReadout } from '../flightAssist.js';
+import { predictPath, stoppingDistance, assistReadout, ascentGuide } from '../flightAssist.js';
 import { len, dot, v3, scale, qFromTo, LOCAL_FORWARD, norm, add } from '../vec.js';
 import { createDebrisField, closestApproach } from '../debris.js';
 import { stackParts } from '../rocketStack.js';
@@ -379,6 +379,23 @@ test('stackParts re-stacks axial parts by real height in spec order; side parts 
   assert.equal(placed.get(parts[0]), 8.3);
   assert.equal(top, 10.3);
   assert.ok(Math.abs(placed.get(parts[3]) - 0.4) < 1e-9, 'leg stays 0.4 m above the engine base');
+});
+
+test('ascent guide: straight up on the pad, ~45° at 20 km, coast once the apoapsis is high, nothing in orbit', () => {
+  const pad = new FlightController({ planets: PLANETS, shipSpec: MOCK_SHIPS.reliable });
+  assert.equal(ascentGuide(pad).step, 'climb');
+  const mid = new FlightController({ planets: PLANETS, shipSpec: MOCK_SHIPS.reliable, start: { altitude: 20000, speed: 400, flightPathDeg: 60 } });
+  mid.liftoffT = 0;
+  const g = ascentGuide(mid);
+  assert.equal(g.step, 'turn');
+  assert.ok(Math.abs(g.pitchDeg - 45) < 0.01, `${g.pitchDeg}`);
+  const high = new FlightController({ planets: PLANETS, shipSpec: MOCK_SHIPS.reliable, start: { altitude: 60000, speed: 1900, flightPathDeg: 20 } });
+  high.liftoffT = 0;
+  assert.ok(high.telemetry.apoapsis > 95000);
+  assert.equal(ascentGuide(high).step, 'coast');
+  const R = PLANETS.earth.radius;
+  const orbit = new FlightController({ planets: PLANETS, shipSpec: MOCK_SHIPS.reliable, start: { altitude: 200000, speed: Math.sqrt((PLANETS.earth.g * R * R) / (R + 200000)) } });
+  assert.equal(ascentGuide(orbit), null);
 });
 
 let fails = 0;
