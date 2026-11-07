@@ -1,80 +1,110 @@
-// SEED: Sub-AI 2 replaces this file (keep the exports; see README-ARCH.md and the Sub-AI 2 prompt).
-// Settings and the Esc pause menu. Persistent overlays through ui.mountPersistent; saved through save.
+// Settings and the Esc pause menu, usable from any state (other roles import them from /src/builder/index.js).
+// Persistent overlays through ui.mountPersistent; everything is saved through core's save.
 import { graphics } from '/src/graphics/index.js';
 import { audio } from '/src/audio/index.js';
-import { events, input, save, ui } from '/src/core/index.js';
+import { economy, events, input, save, ui } from '/src/core/index.js';
 
 let settingsEl = null;
 let pauseEl = null;
 
-function panel(className, title) {
-  const root = document.createElement('div');
-  root.className = `${className}-root hud`;
-  const box = document.createElement('div');
-  box.className = `${className}-panel hud-panel`;
-  const h = document.createElement('div');
-  h.className = 'hud-label';
-  h.textContent = title;
-  box.append(h);
-  root.append(box);
-  return { root, box };
-}
-
-function button(label, onClick) {
-  const b = document.createElement('button');
+const h = (tag, className, textContent) => Object.assign(document.createElement(tag), { className: className ?? '', textContent: textContent ?? '' });
+const button = (label, onClick, extra = '') => {
+  const b = h('button', `hud-button ${extra}`, label);
   b.type = 'button';
-  b.className = 'hud-button';
-  b.textContent = label;
-  b.addEventListener('click', onClick);
+  b.addEventListener('click', () => { audio.play('ui.click'); onClick(); });
   return b;
+};
+
+function overlay(className, title) {
+  const root = h('div', `${className}-root hud`);
+  const panel = h('div', `${className}-panel hud-panel`);
+  panel.append(h('div', `${className}-title hud-label`, title));
+  root.append(panel);
+  return { root, panel };
 }
 
 /** Opens the settings overlay. Returns a close() function. */
 export function openSettings({ onClose } = {}) {
-  if (settingsEl) return () => close();
+  if (settingsEl) return close;
   const s = save.load();
-  const { root, box } = panel('settings', 'Settings');
-  const row = (label, control) => {
-    const r = document.createElement('label');
-    r.className = 'settings-row';
-    const l = document.createElement('span');
-    l.textContent = label;
+  const { root, panel } = overlay('settings', 'Settings');
+
+  const row = (label, control, hint) => {
+    const r = h('label', 'settings-row');
+    const l = h('span', 'settings-label', label);
+    if (hint) l.append(h('small', 'settings-hint', hint));
     r.append(l, control);
-    box.append(r);
+    panel.append(r);
+    return r;
   };
-  const range = (key, min, max, step, fallback, apply) => {
-    const i = document.createElement('input');
+  const range = (key, min, max, step, fallback, format, apply) => {
+    const wrap = h('span', 'settings-range');
+    const i = h('input');
     i.type = 'range';
-    i.min = min; i.max = max; i.step = step;
-    i.value = s[key] ?? fallback;
-    i.addEventListener('input', () => { save.update({ [key]: Number(i.value) }); apply?.(Number(i.value)); });
-    return i;
+    i.min = String(min); i.max = String(max); i.step = String(step);
+    i.value = String(s[key] ?? fallback);
+    const out = h('span', 'settings-out', format(Number(i.value)));
+    i.addEventListener('input', () => {
+      const v = Number(i.value);
+      out.textContent = format(v);
+      save.update({ [key]: v });
+      apply?.(v);
+    });
+    wrap.append(i, out);
+    return wrap;
   };
   const check = (key, apply) => {
-    const i = document.createElement('input');
+    const i = h('input', 'settings-check');
     i.type = 'checkbox';
     i.checked = !!s[key];
     i.addEventListener('change', () => { save.update({ [key]: i.checked }); apply?.(i.checked); });
     return i;
   };
-  row('Mouse sensitivity', range('sensitivity', 0.2, 3, 0.1, 1));
+  const choice = (key, options, fallback, apply) => {
+    const wrap = h('span', 'settings-choice');
+    const buttons = options.map((o) => {
+      const b = h('button', 'settings-option', o.toUpperCase());
+      b.type = 'button';
+      b.setAttribute('aria-pressed', String((s[key] ?? fallback) === o));
+      b.addEventListener('click', () => {
+        buttons.forEach((x) => x.setAttribute('aria-pressed', String(x === b)));
+        save.update({ [key]: o });
+        apply?.(o);
+      });
+      return b;
+    });
+    wrap.append(...buttons);
+    return wrap;
+  };
+
+  row('Mouse sensitivity', range('sensitivity', 0.2, 3, 0.1, 1, (v) => `${v.toFixed(1)}×`), 'cockpit and EVA look');
   row('Invert Y', check('invertY'));
-  const quality = document.createElement('select');
-  for (const q of ['high', 'low']) {
-    const o = document.createElement('option');
-    o.value = q; o.textContent = q;
-    o.selected = (s.quality ?? 'high') === q;
-    quality.append(o);
-  }
-  quality.addEventListener('change', () => { save.update({ quality: quality.value }); graphics.setQuality(quality.value); });
-  row('Graphics quality', quality);
-  row('Volume', range('volume', 0, 1, 0.05, 1, (v) => audio.setVolume(v)));
-  row('Skip sensitive scenes', check('skipSensitive'));
-  const actions = document.createElement('div');
-  actions.className = 'bld-dialog-actions';
-  actions.append(button('CLOSE', () => close()));
-  box.append(actions);
+  row('Graphics quality', choice('quality', ['high', 'low'], 'high', (q) => graphics.setQuality(q)), 'low: no lens effects, fewer pixels');
+  row('Volume', range('volume', 0, 1, 0.05, 1, (v) => `${Math.round(v * 100)} %`, (v) => audio.setVolume(v)));
+  row('Skip sensitive scenes', check('skipSensitive'), 'the Adrift ending simply runs out of air');
+
+  const danger = h('div', 'settings-danger');
+  const reset = button('RESET SAVE', () => {
+    if (reset.dataset.armed !== '1') {
+      reset.dataset.armed = '1';
+      reset.textContent = 'CLICK AGAIN TO ERASE EVERYTHING';
+      reset.classList.add('hud-alert');
+      return;
+    }
+    save.reset();
+    economy.reset();
+    audio.play('ui.error');
+    close();
+  });
+  danger.append(reset, h('span', 'settings-hint', 'Money, blueprints and progress go back to the start.'));
+  const actions = h('div', 'settings-actions');
+  actions.append(button('CLOSE  [Esc]', () => close(), 'settings-close'));
+  panel.append(danger, actions);
+
   settingsEl = ui.mountPersistent(root);
+  root.addEventListener('click', (e) => { if (e.target === root) close(); });
+  input.onEscape(() => close()); // the caller restores its own Esc handler in onClose
+
   function close() {
     if (!settingsEl) return;
     ui.unmount(settingsEl);
@@ -86,19 +116,20 @@ export function openSettings({ onClose } = {}) {
 
 /** Opens the Esc pause menu. Returns a close() function. */
 export function openPauseMenu({ onResume } = {}) {
-  if (pauseEl) return () => close();
-  const { root, box } = panel('pause', 'Paused');
-  const buttons = document.createElement('div');
-  buttons.className = 'pause-buttons';
+  if (pauseEl) return close;
+  const { root, panel } = overlay('pause', 'Paused');
+  const buttons = h('div', 'pause-buttons');
   buttons.append(
-    button('RESUME', () => close()),
+    button('RESUME  [Esc]', () => close(), 'pause-primary'),
     button('GUIDEBOOK', () => events.emit('guidebook:open', { entryId: 'newtons-laws' })),
-    button('SETTINGS', () => openSettings()),
-    button('QUIT TO MENU', () => location.reload()),
+    button('SETTINGS', () => openSettings({ onClose: () => input.onEscape(() => close()) })),
+    button('QUIT TO MENU', () => location.reload(), 'pause-quit'),
   );
-  box.append(buttons);
+  panel.append(buttons, h('div', 'pause-hint', 'Quitting keeps your money, blueprints and progress.'));
   pauseEl = ui.mountPersistent(root);
+  root.addEventListener('click', (e) => { if (e.target === root) close(); });
   input.onEscape(() => close());
+
   function close() {
     if (!pauseEl) return;
     ui.unmount(pauseEl);

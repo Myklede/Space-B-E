@@ -202,13 +202,43 @@ export function createHangarScreen({ assembly, catalog, launch, text, scene, get
       b.append(h('span', 'bld-part-name', p.name), h('span', 'bld-part-meta', `${fmtMass(p.mass + (p.fuel?.mass ?? 0))} · ${cost}${p.fuel ? ` · ${p.fuel.type}` : ''}`));
       let reason = '';
       if (empty) reason = p.attach === 'axial' ? '' : 'Start with a capsule';
-      else if (!state.node) reason = 'Select a node first';
+      else if (!state.node) reason = 'Select a node first, or drag me onto one';
       else reason = assembly.canAttach(p.id, state.node.partId, state.node.node).reason;
-      b.disabled = !!reason;
+      b.disabled = !!reason && !(reason.startsWith('Select a node'));
       b.title = reason ? `${p.desc} (${reason})` : p.desc;
+      // Drag a part onto a glowing node (HTML drag and drop; mouse listeners stay in core/input.js).
+      b.draggable = !empty;
+      b.addEventListener('dragstart', (e) => {
+        e.dataTransfer.setData('text/plain', p.id);
+        e.dataTransfer.effectAllowed = 'copy';
+        b.classList.add('bld-part--dragging');
+        dragging = p.id;
+      });
+      b.addEventListener('dragend', () => { b.classList.remove('bld-part--dragging'); dragging = null; });
       return b;
     }));
     hint.textContent = empty ? 'Start with a capsule from COMMAND.' : state.node ? `Node selected: ${state.node.node} of ${assembly.def(state.node.partId)?.name ?? state.node.partId}. Pick a part.` : (text.hangar?.hint ?? '');
+  }
+
+  let dragging = null;
+  function dropTarget(m, partId, node) {
+    m.addEventListener('dragover', (e) => {
+      if (!dragging || !assembly.canAttach(dragging, partId, node).ok) return;
+      e.preventDefault();
+      e.dataTransfer.dropEffect = 'copy';
+      m.classList.add('bld-node--target');
+    });
+    m.addEventListener('dragleave', () => m.classList.remove('bld-node--target'));
+    m.addEventListener('drop', (e) => {
+      e.preventDefault();
+      m.classList.remove('bld-node--target');
+      const type = e.dataTransfer.getData('text/plain') || dragging;
+      dragging = null;
+      if (!type) return;
+      state.node = { partId, node };
+      state.part = null;
+      addPart(type);
+    });
   }
 
   function renderSymmetry() {
@@ -239,9 +269,13 @@ export function createHangarScreen({ assembly, catalog, launch, text, scene, get
       if (!m) {
         if (a.kind === 'node') {
           m = btn('bld-node', '', () => { sound('ui.click'); selectNode(a.partId, a.node); }, { node: a.node, part: a.partId });
-          m.title = `${a.node} node of ${assembly.def(a.partId)?.name ?? a.partId}`;
+          m.title = `${a.node} node of ${assembly.def(a.partId)?.name ?? a.partId}: click, or drop a part here`;
+          dropTarget(m, a.partId, a.node);
         } else {
-          m = btn('bld-handle', assembly.def(a.partId)?.name ?? a.partId, () => { sound('ui.click'); selectPart(a.partId); }, { part: a.partId });
+          const name = assembly.def(a.partId)?.name ?? a.partId;
+          const radial = assembly.part(a.partId)?.node === 'radial';
+          m = btn(`bld-handle${radial ? ' bld-handle--radial' : ''}`, name, () => { sound('ui.click'); selectPart(a.partId); }, { part: a.partId });
+          m.title = `${name}: click to select`;
         }
         markers.append(m);
         markerEls.set(key, m);

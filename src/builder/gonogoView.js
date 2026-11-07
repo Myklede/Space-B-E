@@ -1,55 +1,62 @@
-// SEED: Sub-AI 2 replaces this file (keep the export and its arguments; see README-ARCH.md and the Sub-AI 2 prompt).
-// Reveals the Go/No-Go console lines one by one, driven by update(dt) from the module loop (no timers, no rAF).
+// The Go/No-Go poll (spec §5.5): consoles report in turn, "PROPULSION… GO". Driven only by update(dt).
 import { events } from '/src/core/index.js';
 
 const STATUS_CLASS = { GO: 'hud-good', 'NO-GO': 'hud-caution', BLOCK: 'hud-alert' };
-const INTERVAL = 0.7; // seconds between consoles
+const CALL = 0.32; // s between the console calling and its answer
+const GAP = 0.75; // s between consoles
 
 export function createGonogoView({ parent, lines, onReveal, onDone }) {
   const root = document.createElement('div');
   root.className = 'gng-lines';
   parent.append(root);
-  const cursor = document.createElement('span');
-  cursor.className = 'gng-cursor';
-  root.append(cursor);
-  let shown = 0;
+  let index = 0; // next line to call
+  let pending = null; // { el, status, text, line } waiting for its answer
   let clock = 0;
   let done = false;
 
-  function reveal() {
-    const line = lines[shown];
-    const el = document.createElement('div');
-    el.className = `gng-line ${STATUS_CLASS[line.status] ?? 'hud-ok'}`;
+  function make(tag, className, text) {
+    const el = document.createElement(tag);
+    el.className = className;
+    if (text != null) el.textContent = text;
+    return el;
+  }
+
+  function call() {
+    const line = lines[index];
+    const el = make('div', 'gng-line gng-line--calling');
     el.dataset.status = line.status;
-    const console_ = document.createElement('span');
-    console_.className = 'gng-line-console';
-    console_.textContent = `${line.console}…`;
-    const status = document.createElement('span');
-    status.className = 'gng-status';
+    const consoleEl = make('span', 'gng-line-console', `${line.console}…`);
+    const status = make('span', 'gng-status', '');
+    status.append(make('span', 'gng-cursor'));
+    const text = make('span', 'gng-line-text', '');
+    el.append(consoleEl, status, text);
+    root.append(el);
+    pending = { el, status, text, line };
+    index += 1;
+  }
+
+  function answer() {
+    const { el, status, text, line } = pending;
+    el.classList.remove('gng-line--calling');
+    el.classList.add(STATUS_CLASS[line.status] ?? 'hud-ok');
+    if (line.status === 'BLOCK') el.classList.add('gng-line--flash');
     status.textContent = line.status;
-    const text = document.createElement('span');
-    text.className = 'gng-line-text';
     text.textContent = line.text;
     if (line.guidebook) {
-      const link = document.createElement('button');
+      const link = make('button', 'gng-link', '?');
       link.type = 'button';
-      link.className = 'gng-link';
-      link.textContent = '?';
       link.title = 'Open the Guidebook';
       link.addEventListener('click', () => events.emit('guidebook:open', { entryId: line.guidebook }));
       text.append(link);
     }
-    el.append(console_, status, text);
-    root.insertBefore(el, cursor);
-    onReveal?.(line, shown);
-    shown += 1;
-    if (shown >= lines.length) finish();
+    onReveal?.(line, index - 1);
+    pending = null;
+    if (index >= lines.length) finish();
   }
 
   function finish() {
     if (done) return;
     done = true;
-    cursor.remove();
     onDone?.();
   }
 
@@ -57,13 +64,16 @@ export function createGonogoView({ parent, lines, onReveal, onDone }) {
     update(dt) {
       if (done) return;
       clock += dt;
-      if (clock >= INTERVAL || shown === 0) {
+      if (pending) {
+        if (clock >= CALL) { clock = 0; answer(); }
+      } else if (index === 0 || clock >= GAP) {
         clock = 0;
-        reveal();
+        if (index < lines.length) call(); else finish();
       }
     },
     skip() {
-      while (!done && shown < lines.length) reveal();
+      if (pending) answer();
+      while (!done && index < lines.length) { call(); answer(); }
       finish();
     },
     dispose() {

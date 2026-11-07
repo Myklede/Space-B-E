@@ -246,11 +246,16 @@ function enterHangar() {
     input.onPress('Enter', () => { if (a.parts.length) requestState('GONOGO'); }),
     events.on('economy:changed', () => hangar.renderMoney()),
   ];
-  input.onEscape(() => { if (!hangar.el.querySelector('.bld-dialog-backdrop:not([hidden])')) closePause = openPauseMenu({ onResume: () => { closePause = null; } }); else hangar.closeDialog(); });
+  const esc = () => {
+    if (hangar.el.querySelector('.bld-dialog-backdrop:not([hidden])')) { hangar.closeDialog(); return; }
+    closePause = openPauseMenu({ onResume: () => { closePause = null; input.onEscape(esc); } });
+  };
+  input.onEscape(esc);
+  audio.play('ambience.ship', { loop: true, volume: 0.35 });
 
   screen = {
     update: (dt) => hangar.update(dt),
-    dispose: () => { offs.forEach((off) => off()); lens.dispose(); hangar.dispose(); },
+    dispose: () => { offs.forEach((off) => off()); lens.dispose(); hangar.dispose(); audio.stop('ambience.ship'); },
   };
   refresh();
 }
@@ -325,11 +330,13 @@ function enterGonogo() {
   input.onPress('Space', () => view.skip());
   input.onPress('Enter', () => (done ? confirmLaunch() : view.skip()));
   input.onPress('KeyB', () => requestState('HANGAR'));
-  input.onEscape(() => { closePause = openPauseMenu({ onResume: () => { closePause = null; } }); });
+  const esc = () => { closePause = openPauseMenu({ onResume: () => { closePause = null; input.onEscape(esc); } }); };
+  input.onEscape(esc);
+  audio.play('ambience.ship', { loop: true, volume: 0.35 });
 
   screen = {
     update: (dt) => view.update(dt),
-    dispose: () => { view.dispose(); root.remove(); },
+    dispose: () => { view.dispose(); root.remove(); audio.stop('ambience.ship'); },
   };
 }
 
@@ -337,6 +344,9 @@ function enterGonogo() {
 export default {
   init() {
     events.on('builder:highlightPart', ({ partId }) => scene?.highlight([partId]));
+    events.on('ending:show', ({ endingId }) => save.update({ lastEnding: endingId })); // the menu shows the last outcome
+    const volume = save.load().volume;
+    if (typeof volume === 'number') audio.setVolume(volume);
   },
 
   enter(state) {
