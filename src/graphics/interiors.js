@@ -183,12 +183,15 @@ export function createCockpit() {
   const shell = pbr(0x20252b, 0.62, 0.35);
   const panel = pbr(0x14181d, 0.48, 0.5);
   const trim = pbr(0x5b636d, 0.38, 0.85);
+  const matte = pbr(0x0f1317, 0.95, 0.05, { envMapIntensity: 0.1 }); // under the HUD text: sun must not wash it out
 
-  group.add(box(2.1, 0.5, 0.75, panel, 0, -0.72, -1.05, 0.05)); // lower dash
-  const console_ = box(2.1, 0.58, 0.06, panel, 0, -0.44, -0.76, 0.02); // tilted instrument face
-  console_.rotation.x = -0.36;
+  // Everything below the window sits under the default view (about -38 degrees and lower): look down to read it.
+  group.add(box(2.1, 0.6, 0.48, matte, 0, -0.77, -1.19, 0.05)); // dash hood under the glare shield
+  group.add(box(2.1, 0.3, 0.9, panel, 0, -1.3, -0.85, 0.05)); // footwell, so looking down never shows a void
+  const console_ = box(2.1, 0.7, 0.06, panel, 0, -0.88, -0.78, 0.02); // tilted instrument face
+  console_.rotation.x = -0.75;
   group.add(console_);
-  group.add(box(2.1, 0.07, 0.56, shell, 0, -0.17, -1.07, 0.03)); // glare shield
+  group.add(box(2.1, 0.07, 0.56, matte, 0, -0.44, -1.07, 0.03)); // glare shield, its top is the window sill
   [-1.08, 1.08].forEach((x) => group.add(box(0.22, 1.9, 2.4, shell, x, -0.05, -0.55, 0.06)));
   group.add(box(2.4, 0.2, 2.2, shell, 0, 0.94, -0.65, 0.06)); // overhead
   group.add(box(2.4, 2.2, 0.15, shell, 0, -0.05, 0.75, 0.05)); // rear bulkhead
@@ -196,13 +199,13 @@ export function createCockpit() {
   // Window frame around a wide view.
   const frameZ = -1.34;
   group.add(box(2.1, 0.09, 0.09, trim, 0, 0.8, frameZ));
-  group.add(box(2.1, 0.06, 0.07, trim, 0, -0.17, frameZ));
-  [-1.0, -0.42, 0.42, 1.0].forEach((x) => group.add(box(0.05, 1.02, 0.07, trim, x, 0.31, frameZ)));
+  group.add(box(2.1, 0.06, 0.07, trim, 0, -0.42, frameZ));
+  [-1.0, -0.42, 0.42, 1.0].forEach((x) => group.add(box(0.05, 1.22, 0.07, trim, x, 0.19, frameZ)));
   const glass = new THREE.Mesh(
-    new THREE.PlaneGeometry(2.1, 1.02),
+    new THREE.PlaneGeometry(2.1, 1.22),
     new THREE.MeshPhysicalMaterial({ color: 0xbfd9ff, transparent: true, opacity: 0.05, roughness: 0.06, metalness: 0, envMap: interiorEnvironment(), envMapIntensity: 0.4, depthWrite: false }),
   );
-  glass.position.set(0, 0.31, frameZ - 0.02);
+  glass.position.set(0, 0.19, frameZ - 0.02);
   group.add(glass);
 
   // Instruments, tilted back towards the pilot.
@@ -214,8 +217,8 @@ export function createCockpit() {
   const liveScreens = screens.map(([mesh]) => mesh);
   if (typeof window !== 'undefined' && new URLSearchParams(location.search).get('debug') === '1') window.__cockpitCanvases = liveScreens.map((m) => m.userData.canvas); // for tests
   for (const [mesh, x] of screens) {
-    mesh.position.set(x, -0.43, -0.725);
-    mesh.rotation.x = -0.36;
+    mesh.position.set(x, -0.855, -0.752);
+    mesh.rotation.x = -0.75;
     group.add(mesh);
     const bezel = box(mesh.geometry.parameters.width + 0.04, mesh.geometry.parameters.height + 0.04, 0.02, trim, 0, 0, -0.016, 0.008);
     mesh.add(bezel);
@@ -232,7 +235,7 @@ export function createCockpit() {
         if (seed === 2) continue;
         const material = seed < 7 ? lamps[0] : lamps[1 + (seed % 3)];
         const lamp = new THREE.Mesh(button, material.clone());
-        lamp.position.set(side * 0.965, -0.2 - row * 0.09, -1.15 + col * 0.09);
+        lamp.position.set(side * 0.965, -0.62 - row * 0.09, -1.15 + col * 0.09);
         group.add(lamp);
         if (seed === 5 || seed === 9) blinkers.push(lamp);
       }
@@ -247,7 +250,7 @@ export function createCockpit() {
   const cabinLight = new THREE.PointLight(0xffdcb8, 1.5, 4, 2);
   cabinLight.position.set(0, 0.7, -0.2);
   const screenLight = new THREE.PointLight(0x67e8f9, 0.32, 2.2, 2);
-  screenLight.position.set(0, -0.3, -0.45);
+  screenLight.position.set(0, -0.62, -0.45);
   const alarmLight = new THREE.PointLight(0xff2a1f, 0, 5, 2);
   alarmLight.position.set(0, 0.75, -0.4);
   group.add(cabinLight, screenLight, alarmLight);

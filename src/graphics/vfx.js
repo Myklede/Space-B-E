@@ -322,7 +322,7 @@ export function createEntryPlasma() {
   const group = new THREE.Group();
   group.name = 'vfx:entryPlasma';
   const uniforms = { uTime: sharedUniforms.uTime, uIntensity: { value: 0.9 } };
-  const plane = new THREE.Mesh(new THREE.PlaneGeometry(2.5, 1.3), new THREE.ShaderMaterial({
+  const plane = new THREE.Mesh(new THREE.PlaneGeometry(2.5, 1.5), new THREE.ShaderMaterial({
     vertexShader: /* glsl */ `
 #include <common>
 #include <logdepthbuf_pars_vertex>
@@ -341,7 +341,7 @@ void main() {
     blendDst: THREE.OneMinusSrcAlphaFactor,
     depthWrite: false,
   }));
-  plane.position.set(0, 0.31, -1.42);
+  plane.position.set(0, 0.3, -1.42);
   plane.renderOrder = 3;
   // The glow reaches the dash and the pilot's face, but instruments are unlit screens and stay readable.
   const light = new THREE.PointLight(0xff6a1f, 0, 4.5, 2);

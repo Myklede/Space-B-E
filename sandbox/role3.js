@@ -206,7 +206,7 @@ const VIEWS = {
       faceLon(planet, -95); // the US east coast sits right of centre, in daylight
       scene.add(assets.get('cockpit'));
       pivot();
-      look([0, 0, 0], [0, -0.2, -1]);
+      look([0, 0, 0], [0, -0.3, -1]);
       return scene;
     },
   },
@@ -254,7 +254,7 @@ const VIEWS = {
       vfx.push(plasma);
       scene.add(cockpit);
       pivot();
-      look([0, 0, 0], [0, -0.2, -1]);
+      look([0, 0, 0], [0, -0.3, -1]);
       return scene;
     },
   },
