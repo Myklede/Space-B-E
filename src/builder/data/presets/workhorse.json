@@ -1,14 +1,12 @@
 {
   "name": "Workhorse",
   "symmetry": 2,
-  "launch": {
-    "slot": "mild"
-  },
+  "launch": { "site": "slc40", "day": 0 },
   "parts": [
     { "id": "p2", "type": "capsule_m", "parent": null, "node": null, "angle": 0, "yFrac": 0.5, "variant": null, "group": null },
     { "id": "p3", "type": "heat_shield_m", "parent": "p2", "node": "bottom", "angle": 0, "yFrac": 0.5, "variant": null, "group": null },
     { "id": "p4", "type": "avionics_ring_m", "parent": "p3", "node": "bottom", "angle": 0, "yFrac": 0.5, "variant": null, "group": null },
-    { "id": "p5", "type": "tank_l_kerolox", "parent": "p4", "node": "bottom", "angle": 0, "yFrac": 0.5, "variant": null, "group": null },
+    { "id": "p5", "type": "tank_l_kerolox_stretch", "parent": "p4", "node": "bottom", "angle": 0, "yFrac": 0.5, "variant": null, "group": null },
     { "id": "p6", "type": "centerbody_m", "parent": "p5", "node": "bottom", "angle": 0, "yFrac": 0.5, "variant": null, "group": null },
     { "id": "p7", "type": "tank_l_kerolox", "parent": "p6", "node": "bottom", "angle": 0, "yFrac": 0.5, "variant": null, "group": null },
     { "id": "p8", "type": "engine_l", "parent": "p7", "node": "bottom", "angle": 0, "yFrac": 0.5, "variant": null, "group": null, "engine": {
