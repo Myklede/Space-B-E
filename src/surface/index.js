@@ -40,7 +40,7 @@ export const PROP_ENTRIES = { exerciseBike: 'crew-exercise', waterRecycler: 'cre
 
 // Mars dusk / "Pale Blue Dot" texts (Role 4 may edit them here).
 export const EARTH_HINT = 'Look for Earth: low in the sky, hold Z to zoom';
-export const EARTH_CAPTION = ['EARTH · about 225 million km away']; // the "everyone you have ever loved" line is Role 4's radio
+export const EARTH_CAPTION = ['EARTH · about 225 million km away', 'Everyone you have ever loved is on that dot.']; // wording approved by Role 4 (spec §11)
 
 const registry = createInteractables();
 
@@ -175,7 +175,7 @@ function updateDusk(dt, zoomHeld) {
   const fov = easeFov(camera.fov, zoomHeld, dt);
   if (fov !== camera.fov) { camera.fov = fov; camera.updateProjectionMatrix(); }
   if (shouldStartFastDusk({ percent: cachedPercent, secondsOutside: (performance.now() - surfaceSince) / 1000, started: fastDuskMission.started, isDusk: clock.isDusk })) {
-    fastDuskMission.started = true; // Role 4's radio says "look up" a few seconds from now: bring the dusk with it
+    fastDuskMission.started = true; // mid-mission (>= 30 %): bring the dusk so every player gets the Pale Blue Dot moment
     clock.startFastDusk();
     if (!earthHintShown) { earthHintShown = true; s.notice = { text: EARTH_HINT, t: 8, calm: true }; }
   }

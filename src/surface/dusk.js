@@ -23,8 +23,8 @@ export function sunAt(progress) {
   return { elevation: DAY_ELEVATION + (DUSK_ELEVATION - DAY_ELEVATION) * t, azimuth: DAY_AZIMUTH + (DUSK_AZIMUTH - DAY_AZIMUTH) * t };
 }
 
-export const FAST_DUSK_PERCENT = 30; // Role 4's Pale Blue Dot radio line fires at this Mars Exploration percent...
-export const FAST_DUSK_AFTER_S = 25; // ...after 30 s outside; the sky starts changing a few seconds earlier
+export const FAST_DUSK_PERCENT = 30; // mid-mission Mars Exploration percent at which dusk arrives quickly (Pale Blue Dot moment)...
+export const FAST_DUSK_AFTER_S = 25; // ...once the player has been outside this many seconds
 export const FAST_DUSK_S = 20; // real seconds of the fast dusk (ease from the current Sun to twilight)
 
 // Once per mission: set when the fast dusk starts, cleared by astronaut.reset() with the other per-mission state.
