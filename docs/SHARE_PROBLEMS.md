@@ -140,16 +140,6 @@ Copy this block. Keep each line short and factual. Don't commit screenshots.
 
 ## Needs the whole team
 
-### How the game should use the two rovers
-- **For:** all four roles · **From:** Role 3 (dtri) · **Found:** 2026-11-07 on dev 8e9af5c · **Severity:** decision
-- **Where:** `assets.get('rover')` is the futuristic space-SUV rover (Blender model, the default Role 2 drives today); `assets.get('rover:lrv')` is a realistic Apollo LRV with the same interface (same size, wheel pivots, `setDust`; its seat is the default eye). Both drive with Role 2's `RoverController` unchanged.
-- **Steps:** see both in `/sandbox/role3.html?view=rover` and `?view=roverLrv`
-- **Expected:** a team decision on how the LRV appears in the game
-- **Actual:** only `rover` is used. Options: (1) the player chooses a rover before the EVA (Role 1 or Role 2 UI); (2) both are parked by the lander and the player drives whichever they walk to (Role 2); (3) the LRV is a relic of an earlier mission parked near the Halcyon-1 wreck, still drivable, with a story log (Role 2 places it, Role 4 writes the log).
-- **Suggested fix:** pick one; no contract change is needed for any of them
-- **Decision (Role 2's human, Minh Vuong, 2026-11-07):** both rovers are parked by the lander. The **Apollo LRV** (`rover:lrv`) is drivable from the start; the **MR-01** (`rover`) is locked until Mars Exploration reaches 50 % (then a calm unlock notice), with concept specs (about 20 km/h, 30 kWh) so unlocking it matters. Implemented by Role 2 in f2ca02c; `?debug=1` + U unlocks it.
-- **Status:** decided, built in f2ca02c; the team please confirm or object
-
 ### Allow PRELAUNCH → HANGAR (and LAUNCH → HANGAR before liftoff) so the player can SCRUB a launch
 - **For:** all four roles · **From:** Role 2 + Role 4 (Minh Vuong) · **Found:** 2026-11-07 on dev 3d4fa59 · **Severity:** decision
 - **Where:** `src/core/contract.js` `TRANSITIONS` (`PRELAUNCH: ['LAUNCH']`, `LAUNCH: ['ORBIT']`)
@@ -157,5 +147,5 @@ Copy this block. Keep each line short and factual. Don't commit screenshots.
 - **Expected:** the player can answer GO or **SCRUB** (postpone). SCRUB costs a scrub fee and returns to the hangar to fix the ship, like a real launch scrub ("NASA has scrubbed hundreds of launches"). Going on despite a NO-GO is how the Challenger lesson happens.
 - **Actual:** the contract has no way back from PRELAUNCH or LAUNCH to HANGAR except through ENDING, and there is no scrub ending
 - **Suggested fix:** add `'HANGAR'` to `PRELAUNCH` and `LAUNCH` in `TRANSITIONS` (Role 2 only requests it before liftoff), and a `scrubFee` (proposed $100,000) in `src/core/balance.json`. Role 2/4 will show the SCRUB choice only when the contract allows it, so nothing breaks before the team agrees.
-- **Status:** open, needs all four people to agree
+- **Status:** on hold (dtri, 2026-11-07): not now; keep the current flow, revisit later
 
