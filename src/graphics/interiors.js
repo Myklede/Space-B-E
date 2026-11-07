@@ -3,6 +3,7 @@ import { RoundedBoxGeometry } from 'three/addons/geometries/RoundedBoxGeometry.j
 import { RoomEnvironment } from 'three/addons/environments/RoomEnvironment.js';
 import { mergeGeometries } from 'three/addons/utils/BufferGeometryUtils.js';
 import { getRenderer, sharedUniforms } from './shared.js';
+import { events } from '/src/core/index.js';
 
 let environment = null;
 
@@ -40,47 +41,139 @@ function screen(width, height, draw, power = 1.5) {
   texture.colorSpace = THREE.SRGBColorSpace;
   texture.anisotropy = 8;
   const material = new THREE.MeshBasicMaterial({ map: texture, color: new THREE.Color(power, power, power) });
-  return new THREE.Mesh(new THREE.PlaneGeometry(width, height), material);
+  const mesh = new THREE.Mesh(new THREE.PlaneGeometry(width, height), material);
+  mesh.userData.redraw = () => { // clear and draw again (cockpit screens with live data)
+    c.fillStyle = '#04100f';
+    c.fillRect(0, 0, canvas.width, canvas.height);
+    draw(c, canvas.width, canvas.height);
+    texture.needsUpdate = true;
+  };
+  mesh.userData.canvas = canvas;
+  return mesh;
 }
 
 const CYAN = '#67e8f9', AMBER = '#fbbf24';
+
+// ---- Live cockpit data ----------------------------------------------------------------------------------------
+// Latest values from flight:telemetry (sent about twice a second). Missing fields stay null and print as "--".
+const MAXQ_PA = 40000; // matches the flight model's structural limit; used when telemetry sends no maxQ
+const HISTORY = 240; // altitude samples kept for the plot (about 2 minutes)
+const live = { version: 0, t: null, altitude: null, speed: null, gForce: null, q: null, maxQ: null, fuelKg: null, fuelMax: 0, engineTemp: null, o2: null, history: [] };
+const num = (v) => (typeof v === 'number' && Number.isFinite(v) ? v : null);
+
+function resetLive() {
+  Object.assign(live, { t: null, altitude: null, speed: null, gForce: null, q: null, maxQ: null, fuelKg: null, fuelMax: 0, engineTemp: null, o2: null, history: [] });
+  live.version++;
+}
+
+events.on('state:changed', ({ to }) => { if (to === 'LAUNCH') resetLive(); });
+events.on('flight:telemetry', (p) => {
+  const t = num(p.t);
+  if (t !== null && live.t !== null && t < live.t - 1) resetLive(); // a new flight started
+  live.t = t;
+  live.altitude = num(p.altitude);
+  live.speed = num(p.speed);
+  live.gForce = num(p.gForce);
+  live.q = num(p.q);
+  live.maxQ = num(p.maxQ);
+  live.fuelKg = num(p.fuelKg);
+  live.engineTemp = num(p.engineTemp);
+  live.o2 = num(p.o2Percent);
+  if (live.fuelKg !== null) live.fuelMax = Math.max(live.fuelMax, live.fuelKg);
+  if (live.altitude !== null) {
+    live.history.push(live.altitude);
+    if (live.history.length > HISTORY) live.history.shift();
+  }
+  live.version++;
+});
+
+const fmt = (v, digits = 0, unit = '') => (v === null ? '--' : v.toFixed(digits) + unit);
+const clamp01 = (v) => (v === null ? null : Math.min(1, Math.max(0, v)));
+const RED = '#f87171';
+
+// One labelled bar. `fraction` is null when there is no data; amber and red zones start at `amberAt` and `redAt`.
+function bar(c, w, y, label, text, fraction, amberAt = 2, redAt = 2, zones = false) {
+  const x0 = 118, bw = w - x0 - 18, bh = 20;
+  c.font = '500 22px "IBM Plex Mono", monospace';
+  c.textBaseline = 'alphabetic';
+  c.fillStyle = CYAN;
+  c.textAlign = 'left';
+  c.fillText(label, 18, y + 16);
+  c.fillStyle = 'rgba(103,232,249,.16)';
+  c.fillRect(x0, y, bw, bh);
+  if (zones) { // faint amber and red zones behind the fill
+    c.fillStyle = 'rgba(251,191,36,.22)';
+    c.fillRect(x0 + bw * amberAt, y, bw * (redAt - amberAt), bh);
+    c.fillStyle = 'rgba(248,113,113,.3)';
+    c.fillRect(x0 + bw * redAt, y, bw * (1 - redAt), bh);
+  }
+  if (fraction !== null) {
+    c.fillStyle = fraction >= redAt ? RED : fraction >= amberAt ? AMBER : CYAN;
+    c.fillRect(x0, y, bw * fraction, bh);
+  }
+  c.font = '500 18px "IBM Plex Mono", monospace';
+  c.fillStyle = fraction !== null && fraction >= redAt ? RED : fraction !== null && fraction >= amberAt ? AMBER : CYAN;
+  c.fillText(text, x0, y + bh + 20);
+}
+
+function drawReadout(c, w, h) {
+  const fuel = live.fuelKg !== null && live.fuelMax > 0 ? clamp01(live.fuelKg / live.fuelMax) : null;
+  const rows = h / 3;
+  bar(c, w, 14, 'FUEL', fuel === null ? '--' : `${(fuel * 100).toFixed(0)}%  ${fmt(live.fuelKg !== null ? live.fuelKg / 1000 : null, 1)} t`, fuel === null ? null : 1 - fuel, 0.6, 0.85);
+  bar(c, w, 14 + rows, 'O2', fmt(live.o2, 0, '%'), live.o2 === null ? null : 1 - clamp01(live.o2 / 100), 0.7, 0.85);
+  bar(c, w, 14 + rows * 2, 'TEMP', live.engineTemp === null ? '--' : `ENG ${(live.engineTemp * 100).toFixed(0)}%`, clamp01(live.engineTemp), 0.7, 0.85);
+}
 
 function drawTrajectory(c, w, h) {
   c.strokeStyle = 'rgba(103,232,249,.22)';
   c.lineWidth = 1;
   for (let x = 0; x < w; x += 32) { c.beginPath(); c.moveTo(x, 0); c.lineTo(x, h); c.stroke(); }
   for (let y = 0; y < h; y += 32) { c.beginPath(); c.moveTo(0, y); c.lineTo(w, y); c.stroke(); }
-  c.strokeStyle = CYAN;
-  c.lineWidth = 3;
-  c.beginPath();
-  c.ellipse(w * 0.5, h * 0.55, w * 0.36, h * 0.3, -0.25, 0, Math.PI * 2);
-  c.stroke();
+  c.textBaseline = 'alphabetic';
+  c.textAlign = 'left';
+  c.font = '500 22px "IBM Plex Mono", monospace';
+  c.fillStyle = CYAN;
+  const alt = live.altitude === null ? '--' : live.altitude >= 10000 ? `${(live.altitude / 1000).toFixed(1)} km` : `${live.altitude.toFixed(0)} m`;
+  c.fillText('ALT', 16, 30);
+  c.fillText('SPD', w / 2 + 6, 30);
+  c.font = '600 28px "IBM Plex Mono", monospace';
   c.fillStyle = AMBER;
-  c.beginPath();
-  c.arc(w * 0.5, h * 0.55, 12, 0, Math.PI * 2);
-  c.fill();
-}
-
-function drawReadout(c, w, h) {
-  c.font = '500 26px "IBM Plex Mono", monospace';
-  const rows = [['FUEL', 0.72, CYAN], ['O2', 0.91, CYAN], ['PWR', 0.58, AMBER], ['TEMP', 0.34, CYAN]];
-  rows.forEach(([label, value, color], i) => {
-    const y = (h / rows.length) * i + 30;
-    c.fillStyle = color;
-    c.fillText(label, 24, y + 20);
-    c.fillStyle = 'rgba(103,232,249,.16)';
-    c.fillRect(130, y, w - 160, 22);
-    c.fillStyle = color;
-    c.fillRect(130, y, (w - 160) * value, 22);
-  });
+  c.fillText(alt, 16, 62);
+  c.fillText(live.speed === null ? '--' : `${live.speed.toFixed(0)} m/s`, w / 2 + 6, 62);
+  // altitude over time, scaled to the highest point so far
+  const top = 76, bottom = h - 16, left = 16, right = w - 16;
+  const data = live.history;
+  c.strokeStyle = 'rgba(103,232,249,.5)';
+  c.strokeRect(left, top, right - left, bottom - top);
+  if (data.length >= 2) {
+    const max = Math.max(...data, 1);
+    c.strokeStyle = CYAN;
+    c.lineWidth = 3;
+    c.beginPath();
+    data.forEach((v, i) => {
+      const x = left + ((right - left) * i) / (HISTORY - 1);
+      const y = bottom - ((bottom - top - 6) * v) / max - 3;
+      if (i) c.lineTo(x, y); else c.moveTo(x, y);
+    });
+    c.stroke();
+    const last = data.length - 1;
+    c.fillStyle = AMBER;
+    c.beginPath();
+    c.arc(left + ((right - left) * last) / (HISTORY - 1), bottom - ((bottom - top - 6) * data[last]) / max - 3, 6, 0, Math.PI * 2);
+    c.fill();
+  } else {
+    c.fillStyle = 'rgba(103,232,249,.5)';
+    c.font = '500 18px "IBM Plex Mono", monospace';
+    c.fillText('WAITING FOR DATA', left + 12, (top + bottom) / 2);
+  }
 }
 
 function drawBars(c, w, h) {
-  c.fillStyle = CYAN;
-  for (let i = 0; i < 24; i++) {
-    const v = 0.25 + 0.65 * Math.abs(Math.sin(i * 1.7) * Math.cos(i * 0.6));
-    c.fillRect(16 + i * ((w - 32) / 24), h - 16 - v * (h - 40), (w - 32) / 24 - 5, v * (h - 40));
-  }
+  const maxQ = live.maxQ ?? MAXQ_PA;
+  const g = live.gForce;
+  const q = live.q;
+  bar(c, w, 18, 'G', g === null ? '--' : `${g.toFixed(1)} g`, g === null ? null : clamp01(g / 9), 4.5 / 9, 7 / 9, true);
+  bar(c, w, 18 + h / 2, 'MAX-Q', q === null ? '--' : `${(q / 1000).toFixed(1)} / ${(maxQ / 1000).toFixed(0)} kPa`, q === null ? null : clamp01(q / maxQ / 1.25), 0.8 / 1.25, 1 / 1.25, true);
 }
 
 /** Seated cockpit. The group's origin is the pilot's eye and forward is -Z. Add it under the camera's parent. */
@@ -118,6 +211,8 @@ export function createCockpit() {
     [screen(0.56, 0.36, drawTrajectory), 0],
     [screen(0.46, 0.32, drawBars), 0.54],
   ];
+  const liveScreens = screens.map(([mesh]) => mesh);
+  if (typeof window !== 'undefined' && new URLSearchParams(location.search).get('debug') === '1') window.__cockpitCanvases = liveScreens.map((m) => m.userData.canvas); // for tests
   for (const [mesh, x] of screens) {
     mesh.position.set(x, -0.43, -0.725);
     mesh.rotation.x = -0.36;
@@ -159,8 +254,15 @@ export function createCockpit() {
 
   let alarm = false;
   group.userData.setAlarm = (on) => { alarm = on; };
+  let drawnVersion = -1, drawnAt = 0;
   group.userData.onFrame = () => {
     const t = sharedUniforms.uTime.value;
+    const now = performance.now();
+    if (live.version !== drawnVersion && now - drawnAt >= 250) { // at most 4 redraws a second, only when the data changed
+      drawnVersion = live.version;
+      drawnAt = now;
+      liveScreens.forEach((m) => m.userData.redraw());
+    }
     blinkers.forEach((lamp, i) => { lamp.visible = Math.sin(t * (1.3 + i * 0.37) + i) > -0.3; });
     alarmLight.intensity = alarm ? 3 * (0.5 + 0.5 * Math.sign(Math.sin(t * 5))) : 0;
     cabinLight.intensity = alarm ? 0.35 : 1.5;

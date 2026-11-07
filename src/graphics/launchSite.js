@@ -16,7 +16,7 @@ const FENCE = 105;
 const TWO_PI = Math.PI * 2;
 
 const drop = (x, z) => Math.sqrt(R * R - x * x - z * z) - R; // Earth curves away: 3 m at 2 km
-const shoreX = (z) => 1650 + 300 * Math.sin(z * 0.0011 + 1.3) + 130 * Math.sin(z * 0.0041 + 0.4) + 45 * Math.sin(z * 0.013);
+const shoreX = (z) => 1250 + 300 * Math.sin(z * 0.0011 + 1.3) + 130 * Math.sin(z * 0.0041 + 0.4) + 45 * Math.sin(z * 0.013);
 const roadX = (z) => 82 + 55 * Math.sin(z / 330) + 40 * Math.sin(z / 910 + 1);
 
 function rng(seed) {
@@ -437,7 +437,7 @@ function groundMaterial() {
         uniform float uTime;
         float ocean_ = 0.;
         ${GLSL_NOISE}
-        float shoreX(float z) { return 1650. + 300. * sin(z * .0011 + 1.3) + 130. * sin(z * .0041 + .4) + 45. * sin(z * .013); }`)
+        float shoreX(float z) { return 1250. + 300. * sin(z * .0011 + 1.3) + 130. * sin(z * .0041 + .4) + 45. * sin(z * .013); }`)
       .replace('#include <color_fragment>', /* glsl */ `#include <color_fragment>
         {
           vec2 p = vWP.xz;
@@ -450,24 +450,28 @@ function groundMaterial() {
           float n5 = vnoise(vec3(p / .55, 5.));
           float shore = shoreX(p.y) + (n1 - .5) * 260. + (n3 - .5) * 36.;
           float dd = p.x - shore;
-          float lush = smoothstep(.36, .52, n1 * .55 + n2 * .45);
-          vec3 tan_ = mix(vec3(.30, .215, .12), vec3(.37, .28, .16), n3);
-          vec3 grn_ = mix(vec3(.05, .09, .03), vec3(.1, .15, .045), n3);
-          vec3 land = mix(tan_, grn_, lush);
-          float spk = smoothstep(.55, .8, n4 * .6 + n5 * .4);
-          land = mix(land, grn_ * .7, spk * .3 * (1. - lush * .3));
-          land *= .9 + .2 * n5;
-          float wash = smoothstep(.6, .75, fbm(vec3(p / 60. + 31., 7.), 3));
-          land = mix(land, vec3(.46, .38, .25), wash * .4);
-          float bare = 1. - smoothstep(35., 125., r0 + (n2 - .5) * 120.);
-          vec3 dirt = mix(vec3(.25, .19, .12), vec3(.33, .26, .165), n3) * (.92 + .16 * n5) * (.92 + .16 * n4);
+          // Coastal scrub plain: green-dominant, with tan dry patches. Several scales, no large pattern.
+          float broad = n1 * .5 + n2 * .5;
+          float dry = smoothstep(.44, .58, n2 * .55 + n3 * .3 + n1 * .15);
+          float wet = smoothstep(.3, .1, broad);
+          vec3 grass = mix(vec3(.095, .15, .045), vec3(.16, .215, .075), n3);
+          grass = mix(grass, vec3(.075, .14, .06), wet * .6);
+          vec3 straw = mix(vec3(.36, .31, .17), vec3(.45, .39, .22), n3);
+          vec3 land = mix(grass, straw * .85, dry * .8);
+          float clump = smoothstep(.5, .78, n4 * .55 + n5 * .45);
+          land = mix(land, grass * vec3(.55, .7, .5), clump * .45);
+          land *= (.84 + .32 * n2) * (.92 + .16 * n4) * (.93 + .14 * n5);
+          float wash = smoothstep(.62, .78, fbm(vec3(p / 60. + 31., 7.), 3));
+          land = mix(land, vec3(.5, .44, .27), wash * .3);
+          float bare = 1. - smoothstep(18., 70., r0 + (n2 - .5) * 70.);
+          vec3 dirt = mix(vec3(.3, .25, .16), vec3(.4, .34, .22), n3) * (.92 + .16 * n5) * (.92 + .16 * n4);
           land = mix(land, dirt, bare);
           float beach = smoothstep(-210., -40., dd);
           vec3 sand = mix(vec3(.56, .47, .32), vec3(.7, .62, .45), n3) * (.88 + .24 * n5);
           sand = mix(sand, vec3(.26, .21, .15), smoothstep(-34., -2., dd) * .8);
           vec3 col = mix(land, sand, beach);
           float w = smoothstep(-2., 2., dd);
-          vec3 water = mix(mix(vec3(.035, .15, .16), vec3(.02, .09, .13), smoothstep(0., 160., dd)), vec3(.004, .02, .11), smoothstep(80., 800., dd));
+          vec3 water = mix(mix(vec3(.06, .27, .25), vec3(.03, .17, .22), smoothstep(0., 160., dd)), vec3(.01, .06, .2), smoothstep(80., 800., dd));
           float foam = (1. - smoothstep(0., 8., abs(dd - 5. - 3. * sin(p.y * .05 + uTime * .5)))) * smoothstep(.3, .65, n3 + n4 * .3);
           water = mix(water, vec3(.8), foam * .65);
           ocean_ = w;
@@ -480,11 +484,11 @@ function groundMaterial() {
         {
           vec2 q = vWP.xz;
           float dist_ = length(vViewPosition);
-          float e = .5;
-          float h0 = vnoise(vec3(q * 1.7, 3.)) * .6 + vnoise(vec3(q * 6., 1.)) * .4;
-          float hx = vnoise(vec3((q + vec2(e, 0.)) * 1.7, 3.)) * .6 + vnoise(vec3((q + vec2(e, 0.)) * 6., 1.)) * .4;
-          float hz = vnoise(vec3((q + vec2(0., e)) * 1.7, 3.)) * .6 + vnoise(vec3((q + vec2(0., e)) * 6., 1.)) * .4;
-          vec2 g = vec2(hx - h0, hz - h0) / e * .2 * (1. - smoothstep(30., 260., dist_));
+          float e = .12;
+          float h0 = vnoise(vec3(q * 7., 3.)) * .5 + vnoise(vec3(q * 19., 1.)) * .5;
+          float hx = vnoise(vec3((q + vec2(e, 0.)) * 7., 3.)) * .5 + vnoise(vec3((q + vec2(e, 0.)) * 19., 1.)) * .5;
+          float hz = vnoise(vec3((q + vec2(0., e)) * 7., 3.)) * .5 + vnoise(vec3((q + vec2(0., e)) * 19., 1.)) * .5;
+          vec2 g = vec2(hx - h0, hz - h0) / e * .05 * (1. - smoothstep(15., 110., dist_));
           vec2 wq = q * .22 + vec2(uTime * .25, uTime * .13);
           float w0 = vnoise(vec3(wq, 2.)), wx = vnoise(vec3(wq + vec2(.05, 0.), 2.)), wz = vnoise(vec3(wq + vec2(0., .05), 2.));
           vec2 wv = vec2(wx - w0, wz - w0) / .05 * .09 * (1. - smoothstep(400., 3500., dist_));
@@ -505,7 +509,7 @@ function groundMaterial() {
         }`)
       .replace('#include <opaque_fragment>', /* glsl */ `
         {
-          float hz_ = 1. - exp(-length(vViewPosition) * .00018 * uAir);
+          float hz_ = 1. - exp(-length(vViewPosition) * .00018 * uAir * (1. - .55 * ocean_));
           outgoingLight = mix(outgoingLight, uHaze, hz_);
         }
         #include <opaque_fragment>`);
@@ -768,19 +772,19 @@ function buildScrub(m, count) {
   const mat = new THREE.Matrix4(), q = new THREE.Quaternion(), e = new THREE.Euler(), colour = new THREE.Color();
   let placed = 0, guard = 0;
   while (placed < count && guard++ < count * 40) {
-    const rad = 60 + 1500 * Math.pow(r(), 1.6), a = r() * TWO_PI;
+    const rad = 45 + 900 * Math.pow(r(), 2.6), a = r() * TWO_PI;
     const cx = Math.cos(a) * rad, cz = Math.sin(a) * rad;
     const members = 3 + Math.floor(r() * 6), spread = 2 + r() * 8;
     for (let i = 0; i < members && placed < count; i++) {
       const x = cx + (r() - 0.5) * spread * 2, z = cz + (r() - 0.5) * spread * 2;
       const inside = Math.abs(x) < FENCE + 12 && Math.abs(z) < FENCE + 12;
       if (inside || x > shoreX(z) - 190 || (z > 0 && Math.abs(x - roadX(z)) < 9)) continue;
-      const s = 0.3 + r() * r() * 1.3;
+      const s = 0.8 + r() * r() * 2.2;
       e.set(0, r() * TWO_PI, 0);
       mat.compose(new THREE.Vector3(x, drop(x, z) + s * 0.05, z), q.setFromEuler(e), new THREE.Vector3(s, s, s));
       mesh.setMatrixAt(placed, mat);
       const k = r();
-      colour.setRGB(0.035 + k * 0.07, 0.065 + k * 0.08, 0.02 + k * 0.02);
+      colour.setRGB(0.05 + k * 0.06, 0.11 + k * 0.08, 0.03 + k * 0.03);
       if (r() < 0.25) colour.setRGB(0.16 + k * 0.06, 0.12 + k * 0.05, 0.05); // dry brown clumps
       mesh.setColorAt(placed, colour);
       placed++;
@@ -845,7 +849,7 @@ export function createLaunchSite() {
   ground.receiveShadow = true;
   ground.frustumCulled = false;
   ground.position.y = 0;
-  detail.add(ground, buildApron(m), buildMount(m), buildTower(m), buildLights(m), buildMasts(m), buildSupport(m, high), buildRoad(m), buildScrub(m, high ? 800 : 280));
+  detail.add(ground, buildApron(m), buildMount(m), buildTower(m), buildLights(m), buildMasts(m), buildSupport(m, high), buildRoad(m), buildScrub(m, high ? 2200 : 700));
   root.add(detail);
 
   // Blinking aviation lights, sun-driven lighting and haze.

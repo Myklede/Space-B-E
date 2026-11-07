@@ -157,7 +157,7 @@ const VIEWS = {
     build() {
       const scene = launchSite(0);
       orbit();
-      look([-150, 10, 35], [0, 15, -6]);
+      look([-150, 24, 35], [0, 16, -6]);
       return scene;
     },
   },
