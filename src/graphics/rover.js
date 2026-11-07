@@ -1,25 +1,34 @@
 import * as THREE from 'three';
 import { mergeGeometries } from 'three/addons/utils/BufferGeometryUtils.js';
-import { pbr } from './interiors.js';
+import { RoundedBoxGeometry } from 'three/addons/geometries/RoundedBoxGeometry.js';
+import { GLTFLoader } from 'three/addons/loaders/GLTFLoader.js';
+import { pbr, interiorEnvironment } from './interiors.js';
 
 /**
- * Crewed Mars rover, modelled on NASA's Apollo Lunar Roving Vehicle (Role 2 drives it, see src/surface/roverModel.js).
- * Metres, +Y up, forward is -Z, +X is the rover's right. The origin is on the ground at the middle of the wheelbase and
- * track, the wheels rest on y = 0 and the root has no transform.
+ * createRover() serves the Blender model public/assets/models/rover.glb (scripts/blender/rover.py) once it has loaded and
+ * falls back to the code-built rover below until then (or if the file is missing).
+ *
+ * Crewed Mars rover in the style of a modern lunar terrain vehicle: a dark carbon-weave exoskeleton (sloped A-pillars, a thick
+ * roof slab, thick rear pillars) around a high-waisted open cabin with no glass, big white faceted side panels with the game
+ * logo, a row of three battery modules under each side, gold suspension brackets, very wide woven airless tyres on deep dark
+ * hubs, and an open rear equipment bay under a solar roof with a folded robotic arm. Role 2 drives it (src/surface/roverModel.js).
+ * Metres, +Y up, forward is -Z, +X is the rover's right. The origin is on the ground at the middle of the wheelbase and track,
+ * the wheels rest on y = 0 and the root has no transform.
  *
  *   root
- *    ├─ body meshes (static, merged per material)
- *    └─ wheelFL / wheelFR / wheelRL / wheelRR  pivots at the wheel centres: Role 2 sets pivot.rotation.y (steering)
- *         ├─ children[0]  the spinning wheel, symmetric around the X axle: Role 2 sets rotation.x
- *         └─ children[1]  hub drive motor housing (steers, does not spin)
+ *    +- body meshes (static, merged per material)
+ *    +- wheelFL / wheelFR / wheelRL / wheelRR  pivots at the wheel centres: Role 2 sets pivot.rotation.y (steering)
+ *         +- children[0]  the spinning wheel, symmetric around the X axle: Role 2 sets rotation.x
  *
- * userData.setDust(0..1) turns the metal and fabric dusty. Every rover has its own materials, geometries are shared.
- * No lights: the console glows through emissive materials only.
+ * userData.setDust(0..1) turns the paint and fabric dusty and dulls the LEDs. Every rover has its own materials, geometries
+ * are shared. No lights: LED strips, markers and screens glow through emissive materials only.
  */
 
-const WHEELBASE = 2.29, TRACK = 1.83, R = 0.41, WIDTH = 0.23;
+const WHEELBASE = 2.29, TRACK = 1.83, R = 0.41;
 const HB = WHEELBASE / 2, HT = TRACK / 2;
-const DECK = R + 0.12; // top of the floor panels
+const HW = 0.8;                  // half width of the cabin body
+const ZF = -1.4, ZR = 1.6;      // nose and tail
+const BT = 0.012;                // bevel on panels: gives the recessed seams
 const DUST = new THREE.Color(0xb27a54);
 const V = (x, y, z) => new THREE.Vector3(x, y, z);
 
@@ -31,7 +40,7 @@ const memo = (key, make) => {
   return cache.get(key);
 };
 
-function canvasTexture(w, h, paint, { colour = true, repeat = true } = {}) {
+function canvasTexture(w, h, paint, { colour = true, repeat = false } = {}) {
   const canvas = document.createElement('canvas');
   canvas.width = w;
   canvas.height = h;
@@ -43,61 +52,7 @@ function canvasTexture(w, h, paint, { colour = true, repeat = true } = {}) {
   return t;
 }
 
-// Woven wire as an alpha-cut diamond grid, used for the wheels (zinc-coated piano wire) and the gold antenna mesh.
-function wireTexture(name, wire, shade, repeatX, repeatY) {
-  return memo(`wire:${name}:${repeatX}:${repeatY}`, () => {
-    const t = canvasTexture(128, 128, (c, w, h) => {
-      c.clearRect(0, 0, w, h);
-      c.lineCap = 'butt';
-      for (const [width, colour] of [[15, shade], [9, wire]]) {
-        c.strokeStyle = colour;
-        c.lineWidth = width;
-        c.beginPath();
-        c.moveTo(-8, -8); c.lineTo(w + 8, h + 8);
-        c.moveTo(-8, h + 8); c.lineTo(w + 8, -8);
-        c.stroke();
-      }
-    });
-    t.repeat.set(repeatX, repeatY);
-    return t;
-  });
-}
-
-// Crinkled gold Mylar foil: random light and dark facets for a bump map.
-const foilBump = () => memo('foil', () => canvasTexture(256, 256, (c, w, h) => {
-  let s = 7;
-  const rnd = () => ((s = (s * 1664525 + 1013904223) >>> 0) / 4294967296);
-  c.fillStyle = '#808080';
-  c.fillRect(0, 0, w, h);
-  for (let i = 0; i < 420; i++) {
-    const g = 60 + rnd() * 140;
-    c.fillStyle = `rgb(${g},${g},${g})`;
-    c.beginPath();
-    const x = rnd() * w, y = rnd() * h;
-    c.moveTo(x, y);
-    c.lineTo(x + (rnd() - 0.5) * 50, y + (rnd() - 0.5) * 50);
-    c.lineTo(x + (rnd() - 0.5) * 50, y + (rnd() - 0.5) * 50);
-    c.fill();
-  }
-}, { colour: false }));
-
-// Perforated aluminium floor panel.
-const perforated = () => memo('perf', () => canvasTexture(128, 128, (c, w, h) => {
-  c.fillStyle = '#c3c8cc';
-  c.fillRect(0, 0, w, h);
-  c.fillStyle = '#34383c';
-  for (let y = 8; y < h; y += 16) for (let x = 8; x < w; x += 16) { c.beginPath(); c.arc(x, y, 4.5, 0, 6.3); c.fill(); }
-}));
-
-// Black nylon webbing for the seats.
-const webbing = () => memo('webbing', () => canvasTexture(64, 64, (c, w, h) => {
-  c.fillStyle = '#1b1d20';
-  c.fillRect(0, 0, w, h);
-  c.fillStyle = '#2c3035';
-  for (let i = 0; i < w; i += 8) { c.fillRect(i, 0, 5, h); c.fillRect(0, i, w, 4); }
-}));
-
-// Display console: attitude ball, heading, speed, range, power and temperature, as an emissive texture.
+// Dash display: attitude ball, heading, speed, range, power and temperature, as an emissive texture.
 const consoleScreen = () => memo('screen', () => canvasTexture(512, 288, (c, w, h) => {
   c.fillStyle = '#031014';
   c.fillRect(0, 0, w, h);
@@ -106,7 +61,6 @@ const consoleScreen = () => memo('screen', () => canvasTexture(512, 288, (c, w, 
   c.fillStyle = cyan;
   c.lineWidth = 3;
   c.font = 'bold 22px monospace';
-  // attitude ball
   c.save();
   c.beginPath(); c.arc(110, 140, 82, 0, 6.3); c.clip();
   c.fillStyle = '#12606f'; c.fillRect(0, 0, 220, 140);
@@ -115,29 +69,203 @@ const consoleScreen = () => memo('screen', () => canvasTexture(512, 288, (c, w, 
   c.beginPath(); c.arc(110, 140, 82, 0, 6.3); c.stroke();
   c.beginPath(); c.moveTo(40, 140); c.lineTo(180, 140); c.moveTo(110, 120); c.lineTo(110, 160); c.stroke();
   c.fillText('ATT', 82, 252);
-  // heading dial
   c.beginPath(); c.arc(300, 98, 50, 0, 6.3); c.stroke();
   for (let a = 0; a < 12; a++) { c.beginPath(); c.moveTo(300 + Math.cos(a * 0.5236) * 42, 98 + Math.sin(a * 0.5236) * 42); c.lineTo(300 + Math.cos(a * 0.5236) * 50, 98 + Math.sin(a * 0.5236) * 50); c.stroke(); }
   c.fillStyle = amber; c.beginPath(); c.moveTo(300, 54); c.lineTo(308, 98); c.lineTo(292, 98); c.fill();
   c.fillStyle = cyan; c.fillText('HDG 247', 244, 186);
-  // speed and range
   c.fillText('SPD  8.2', 224, 224);
   c.fillText('RNG 12.4', 224, 256);
-  // power and temperature bars
-  c.fillStyle = cyan;
   c.fillText('PWR', 410, 60);
   c.fillText('TMP', 410, 170);
   c.strokeRect(412, 72, 70, 20); c.fillStyle = cyan; c.fillRect(416, 76, 52, 12);
   c.strokeRect(412, 182, 70, 20); c.fillStyle = amber; c.fillRect(416, 186, 38, 12);
-}, { repeat: false }));
+}));
+
+// Small status panel.
+const stationScreen = () => memo('station', () => canvasTexture(256, 160, (c, w, h) => {
+  c.fillStyle = '#031014';
+  c.fillRect(0, 0, w, h);
+  c.strokeStyle = '#5ad8ee';
+  c.fillStyle = '#5ad8ee';
+  c.lineWidth = 2;
+  c.font = 'bold 18px monospace';
+  c.fillText('CARGO  OK', 16, 30);
+  c.fillText('LOCK   ON', 16, 56);
+  for (let i = 0; i < 6; i++) c.strokeRect(16 + i * 38, 84, 30, 14);
+  for (let i = 0; i < 4; i++) c.fillRect(18 + i * 38, 86, 26, 10);
+  c.fillStyle = '#f2a53c';
+  c.fillText('SAMPLES 3', 16, 136);
+}));
+
+// Dark blue solar cells with thin silver grid lines.
+const solarTexture = () => memo('solar', () => canvasTexture(512, 256, (c, w, h) => {
+  c.fillStyle = '#0a1738';
+  c.fillRect(0, 0, w, h);
+  c.fillStyle = '#10265a';
+  for (let x = 0; x < w; x += 32) for (let y = 0; y < h; y += 32) c.fillRect(x + 2, y + 2, 28, 28);
+  c.strokeStyle = '#aab8d0';
+  c.lineWidth = 1.5;
+  for (let x = 0; x <= w; x += 32) { c.beginPath(); c.moveTo(x, 0); c.lineTo(x, h); c.stroke(); }
+  for (let y = 0; y <= h; y += 32) { c.beginPath(); c.moveTo(0, y); c.lineTo(w, y); c.stroke(); }
+  c.strokeStyle = '#d4deee';
+  c.lineWidth = 3;
+  for (let x = 0; x <= w; x += 128) { c.beginPath(); c.moveTo(x, 0); c.lineTo(x, h); c.stroke(); }
+  c.fillStyle = 'rgba(140,180,240,0.12)';
+  c.beginPath(); c.moveTo(0, 0); c.lineTo(w * 0.5, 0); c.lineTo(0, h * 0.7); c.fill();
+}));
+
+// Subtle carbon twill for the frame (tiles; the batch maps it in world space).
+const carbonTexture = () => memo('carbon', () => canvasTexture(64, 64, (c, w, h) => {
+  c.fillStyle = '#9aa6b4';
+  c.fillRect(0, 0, w, h);
+  for (let i = 0; i < 8; i++) {
+    for (let j = 0; j < 8; j++) {
+      const on = (i + j) % 2 === 0;
+      c.fillStyle = on ? '#98a5b4' : '#b4bfcb';
+      c.fillRect(i * 8, j * 8, 8, 8);
+      c.strokeStyle = on ? 'rgba(255,255,255,0.14)' : 'rgba(0,0,0,0.12)';
+      c.lineWidth = 1;
+      for (let k = 0; k < 8; k += 2) {
+        c.beginPath();
+        if (on) { c.moveTo(i * 8, j * 8 + k); c.lineTo(i * 8 + 8, j * 8 + k); } else { c.moveTo(i * 8 + k, j * 8); c.lineTo(i * 8 + k, j * 8 + 8); }
+        c.stroke();
+      }
+    }
+  }
+}, { repeat: true }));
+
+// Faint hexagon facets on the white panels: two hexagons across, four rows.
+const hexTexture = () => memo('hex', () => canvasTexture(104, 180, (c, w, h) => {
+  c.fillStyle = '#ffffff';
+  c.fillRect(0, 0, w, h);
+  c.strokeStyle = 'rgba(120,135,150,0.28)';
+  c.lineWidth = 1.5;
+  const s = 30.02;
+  for (let row = -1; row <= 4; row++) {
+    for (let col = -1; col <= 2; col++) {
+      const cx = col * 52 + (row & 1 ? 26 : 0), cy = row * 45;
+      c.beginPath();
+      for (let k = 0; k < 6; k++) {
+        const a = Math.PI / 6 + (k * Math.PI) / 3;
+        c[k ? 'lineTo' : 'moveTo'](cx + Math.cos(a) * s, cy + Math.sin(a) * s);
+      }
+      c.closePath();
+      c.stroke();
+    }
+  }
+}, { repeat: true }));
+
+// Square steel mesh for the grille panels.
+const meshTexture = () => memo('mesh', () => canvasTexture(32, 32, (c, w, h) => {
+  c.fillStyle = '#0c1014';
+  c.fillRect(0, 0, w, h);
+  c.strokeStyle = '#8f9ba8';
+  c.lineWidth = 3;
+  c.strokeRect(0, 0, w, h);
+}, { repeat: true }));
+
+// Fine knit of the airless tyre: light stitches over dark gaps (also used as the bump map).
+const knitTexture = () => memo('knit', () => {
+  const t = canvasTexture(128, 128, (c, w, h) => {
+    c.fillStyle = '#4d535a';
+    c.fillRect(0, 0, w, h);
+    c.strokeStyle = '#e6eaee';
+    c.lineWidth = 2.2;
+    c.lineCap = 'round';
+    for (let y = 0; y < h; y += 8) {
+      for (let x = 0; x < w; x += 16) {
+        c.beginPath(); c.moveTo(x, y + 1); c.lineTo(x + 8, y + 7); c.lineTo(x + 16, y + 1); c.stroke();
+      }
+    }
+  }, { repeat: true });
+  t.repeat.set(16, 5);
+  return t;
+});
+
+// Side decal on the big white panel: emblem (cyan circle with a small rocket), game name and mission code on transparent.
+const decalTexture = () => memo('decal', () => canvasTexture(1024, 512, (c, w, h) => {
+  c.clearRect(0, 0, w, h);
+  // emblem
+  c.fillStyle = '#12b5d0';
+  c.beginPath(); c.arc(140, 150, 110, 0, Math.PI * 2); c.fill();
+  c.strokeStyle = '#0b3d48'; c.lineWidth = 8;
+  c.beginPath(); c.arc(140, 150, 98, 0, Math.PI * 2); c.stroke();
+  c.save();
+  c.translate(140, 150); c.rotate(0.7);
+  c.fillStyle = '#ffffff';
+  c.beginPath(); c.moveTo(0, -78); c.quadraticCurveTo(26, -34, 22, 32); c.lineTo(-22, 32); c.quadraticCurveTo(-26, -34, 0, -78); c.fill();
+  c.fillStyle = '#0b3d48';
+  c.beginPath(); c.arc(0, -16, 11, 0, Math.PI * 2); c.fill();
+  c.fillStyle = '#ffffff';
+  c.beginPath(); c.moveTo(-22, 8); c.lineTo(-44, 46); c.lineTo(-22, 34); c.fill();
+  c.beginPath(); c.moveTo(22, 8); c.lineTo(44, 46); c.lineTo(22, 34); c.fill();
+  c.fillStyle = '#ffb02e';
+  c.beginPath(); c.moveTo(-10, 34); c.lineTo(0, 66); c.lineTo(10, 34); c.fill();
+  c.restore();
+  c.fillStyle = '#20252b';
+  c.font = '900 118px "Arial Black", Arial, Helvetica, sans-serif';
+  c.textBaseline = 'alphabetic';
+  c.fillText('SPACEB&E', 280, 120);
+  c.font = 'bold 82px Arial, Helvetica, sans-serif';
+  c.fillStyle = '#3a4048';
+  c.fillText('MR-01', 282, 232);
+  c.fillStyle = '#12b5d0';
+  c.fillRect(282, 262, 700, 12);
+  c.fillStyle = '#20252b';
+  c.fillRect(282, 292, 150, 7);
+}));
 
 const unitBox = () => memo('box', () => new THREE.BoxGeometry(1, 1, 1));
-const unitTube = () => memo('tube', () => new THREE.CylinderGeometry(1, 1, 1, 8));
+const unitTube = () => memo('tube', () => new THREE.CylinderGeometry(1, 1, 1, 10));
+const rbox = (w, h, d, r) => memo(`rbox${w}_${h}_${d}_${r}`, () => new RoundedBoxGeometry(w, h, d, 3, r));
 
-function uvScaled(geometry, su, sv) {
-  const uv = geometry.attributes.uv;
-  for (let i = 0; i < uv.count; i++) uv.setXY(i, uv.getX(i) * su, uv.getY(i) * sv);
-  return geometry;
+const flat = (g) => (g.index ? g.toNonIndexed() : g);
+const mergeAll = (list) => mergeGeometries(list.map(flat), false);
+
+// UVs from world position, by dominant normal axis: textures keep the same scale on every part. k = tiles per metre.
+function worldUV(g, k) {
+  const p = g.attributes.position, n = g.attributes.normal, uv = g.attributes.uv;
+  for (let i = 0; i < p.count; i++) {
+    const ax = Math.abs(n.getX(i)), ay = Math.abs(n.getY(i)), az = Math.abs(n.getZ(i));
+    if (ax >= ay && ax >= az) uv.setXY(i, p.getZ(i) * k, p.getY(i) * k);
+    else if (ay >= az) uv.setXY(i, p.getX(i) * k, p.getZ(i) * k);
+    else uv.setXY(i, p.getX(i) * k, p.getY(i) * k);
+  }
+}
+
+/* ---------------------------------------------------------------- panel geometry */
+
+// A side profile (z, y points) extruded across x from x0 to x1, with bevelled edges that read as panel seams.
+function sideExtrude(points, x0, x1, bevel = BT) {
+  const shape = new THREE.Shape();
+  points.forEach(([z, y], i) => (i ? shape.lineTo(z, y) : shape.moveTo(z, y)));
+  const g = new THREE.ExtrudeGeometry(shape, { depth: x1 - x0 - 2 * bevel, bevelEnabled: true, bevelThickness: bevel, bevelSize: bevel, bevelOffset: -bevel, bevelSegments: 1, curveSegments: 6 });
+  g.translate(0, 0, bevel);
+  g.rotateY(-Math.PI / 2); // local x -> world z, local z -> world -x
+  g.translate(x1, 0, 0);
+  return g;
+}
+
+// A top-view outline (x, z points) extruded upward from y0 by h.
+function slab(points, y0, h, bevel = BT, segs = 1) {
+  const shape = new THREE.Shape();
+  points.forEach(([x, z], i) => (i ? shape.lineTo(x, -z) : shape.moveTo(x, -z)));
+  const g = new THREE.ExtrudeGeometry(shape, { depth: h - 2 * bevel, bevelEnabled: true, bevelThickness: bevel, bevelSize: bevel, bevelOffset: -bevel, bevelSegments: segs });
+  g.translate(0, 0, bevel);
+  g.rotateX(-Math.PI / 2); // local y -> -z, local z -> up
+  g.translate(0, y0, 0);
+  return g;
+}
+
+// Rounded rectangle outline (x, z), counter-clockwise points.
+function rrect(x0, x1, z0, z1, r, seg = 4) {
+  const pts = [];
+  const corner = (cx, cz, a0) => { for (let i = 0; i <= seg; i++) { const a = a0 + (i / seg) * (Math.PI / 2); pts.push([cx + Math.cos(a) * r, cz + Math.sin(a) * r]); } };
+  corner(x1 - r, z1 - r, 0);
+  corner(x0 + r, z1 - r, Math.PI / 2);
+  corner(x0 + r, z0 + r, Math.PI);
+  corner(x1 - r, z0 + r, Math.PI * 1.5);
+  return pts;
 }
 
 /* ---------------------------------------------------------------- body batching */
@@ -150,22 +278,20 @@ function createBatch() {
   const put = (material, geometry, position, quaternion, scale = one) => {
     m.compose(position, quaternion, scale);
     if (!groups.has(material)) groups.set(material, []);
-    groups.get(material).push(geometry.clone().applyMatrix4(m));
+    groups.get(material).push(flat(geometry).clone().applyMatrix4(m));
   };
   const api = {
-    // any geometry at a position with an XYZ rotation
-    geo(material, geometry, x, y, z, rx = 0, ry = 0, rz = 0, scale) {
+    geo(material, geometry, x = 0, y = 0, z = 0, rx = 0, ry = 0, rz = 0, scale) {
       put(material, geometry, V(x, y, z), q.setFromEuler(e.set(rx, ry, rz)), scale);
     },
     box(material, w, h, d, x, y, z, rx = 0, ry = 0, rz = 0) {
       put(material, unitBox(), V(x, y, z), q.setFromEuler(e.set(rx, ry, rz)), V(w, h, d));
     },
-    // a round tube from a to b
     strut(material, a, b, radius) {
       const dir = b.clone().sub(a);
       put(material, unitTube(), a.clone().add(b).multiplyScalar(0.5), q.setFromUnitVectors(up, dir.clone().normalize()), V(radius, dir.length(), radius));
     },
-    // a flat strap or plate from a to b (width across, thickness t)
+    // a flat bar from a to b: `width` across x, `t` thick; never exactly vertical
     bar(material, a, b, width, t) {
       const mid = a.clone().add(b).multiplyScalar(0.5);
       const o = new THREE.Object3D();
@@ -175,7 +301,9 @@ function createBatch() {
     },
     build(parent) {
       for (const [material, list] of groups) {
-        const mesh = new THREE.Mesh(mergeGeometries(list, false), material);
+        const geometry = mergeGeometries(list, false);
+        if (material.userData.worldUV) worldUV(geometry, material.userData.worldUV);
+        const mesh = new THREE.Mesh(geometry, material);
         mesh.castShadow = true;
         mesh.receiveShadow = true;
         parent.add(mesh);
@@ -190,29 +318,40 @@ function createBatch() {
 
 function createMaterials() {
   const dusty = [];
-  const make = (color, roughness, metalness, extra = {}, dust = 0.8) => {
-    const material = pbr(color, roughness, metalness, { envMapIntensity: metalness > 0.5 ? 0.9 : 0.4, ...extra });
+  const glowing = [];
+  const make = (color, roughness, metalness, extra = {}, dust = 0.8, uvScale = 0) => {
+    const material = pbr(color, roughness, metalness, { envMapIntensity: metalness > 0.5 ? 0.9 : 0.55, ...extra });
+    if (uvScale) material.userData.worldUV = uvScale;
     dusty.push({ material, base: new THREE.Color(color), roughness, metalness, dust });
     return material;
   };
-  const materials = {
-    aluminium: make(0xc9ced2, 0.32, 0.92),
-    anodised: make(0x9aa3ab, 0.4, 0.85),
-    titanium: make(0x7b8085, 0.45, 0.8),
-    floor: make(0xffffff, 0.45, 0.8, { map: perforated() }),
-    fender: make(0x6f757b, 0.6, 0.05, { side: THREE.DoubleSide }, 0.9),
-    seat: make(0xffffff, 0.85, 0, { map: webbing() }, 0.7),
-    belt: make(0x3d4048, 0.8, 0, {}, 0.7),
-    dark: make(0x24272b, 0.6, 0.35),
-    thermal: make(0xe4dfd2, 0.7, 0.1, {}, 0.9),
-    sack: make(0xd8d3c4, 0.9, 0, {}, 1),
-    mirror: make(0xc9cdd1, 0.3, 0.7, { envMapIntensity: 0.5 }, 0.6),
-    gold: make(0xdcab3c, 0.3, 1, { bumpMap: foilBump(), bumpScale: 1.2 }),
-    goldMesh: make(0xffffff, 0.35, 0.95, { map: wireTexture('gold', '#e6b84a', '#a07a20', 18, 5), alphaTest: 0.5, side: THREE.DoubleSide }),
-    wire: make(0xffffff, 0.45, 0.85, { map: wireTexture('zinc', '#c4cacf', '#7c8388', 56, 5), alphaTest: 0.5, side: THREE.DoubleSide }),
-    wireDisc: make(0xffffff, 0.45, 0.85, { map: wireTexture('zinc', '#c4cacf', '#7c8388', 9, 9), alphaTest: 0.5, side: THREE.DoubleSide }),
-    screen: pbr(0x05080a, 0.35, 0, { emissive: 0xffffff, emissiveMap: consoleScreen(), emissiveIntensity: 0.85 }),
+  const led = (color, emissive, intensity) => {
+    const material = pbr(color, 0.4, 0, { emissive, emissiveIntensity: intensity });
+    glowing.push({ material, intensity });
+    return material;
   };
+  const materials = {
+    white: make(0xeceff2, 0.24, 0.12, { map: hexTexture(), envMapIntensity: 0.75 }, 0.9, 3),
+    silver: make(0xc3c9cf, 0.3, 0.45, { envMapIntensity: 0.8 }, 0.9),
+    frame: make(0x4f6074, 0.4, 0.4, { map: carbonTexture() }, 0.85, 9),
+    graphite: make(0x24282d, 0.5, 0.35),
+    inset: make(0x3b4048, 0.5, 0.4),
+    liner: make(0x15181c, 0.8, 0.1, { side: THREE.DoubleSide }, 0.8),
+    seat: make(0x2c3036, 0.85, 0.02, {}, 0.7),
+    strap: make(0x4b5159, 0.8, 0, {}, 0.6),
+    tyre: make(0xc9ced3, 0.9, 0, { side: THREE.DoubleSide, map: knitTexture(), bumpMap: knitTexture(), bumpScale: 1.6, envMapIntensity: 0.45 }, 0.95),
+    dish: make(0x0a0e15, 0.5, 0.55, { side: THREE.DoubleSide }, 0.7),
+    spoke: make(0x55606b, 0.4, 0.7, {}, 0.8),
+    ring: make(0xe3e8ec, 0.22, 0.9),
+    gold: make(0xb48c3c, 0.38, 0.8, {}, 0.7),
+    grille: make(0x7b8794, 0.5, 0.5, { map: meshTexture(), side: THREE.DoubleSide }, 0.7, 22),
+    solar: make(0xffffff, 0.3, 0.45, { map: solarTexture(), envMapIntensity: 1 }, 0.6),
+    decal: make(0xffffff, 0.45, 0, { map: decalTexture(), transparent: true, depthWrite: false, polygonOffset: true, polygonOffsetFactor: -4, polygonOffsetUnits: -4 }, 0.6),
+    ledCyan: led(0x0a2c33, 0x67e8f9, 1.0),
+    screen: pbr(0x05080a, 0.35, 0, { emissive: 0xffffff, emissiveMap: consoleScreen(), emissiveIntensity: 0.85 }),
+    station: pbr(0x05080a, 0.35, 0, { emissive: 0xffffff, emissiveMap: stationScreen(), emissiveIntensity: 0.8 }),
+  };
+  glowing.push({ material: materials.screen, intensity: 0.85 }, { material: materials.station, intensity: 0.8 });
   const tmp = new THREE.Color();
   const setDust = (amount) => {
     const t = THREE.MathUtils.clamp(amount, 0, 1);
@@ -221,219 +360,248 @@ function createMaterials() {
       d.material.roughness = THREE.MathUtils.lerp(d.roughness, 0.95, t * d.dust);
       d.material.metalness = THREE.MathUtils.lerp(d.metalness, d.metalness * 0.3, t * d.dust);
     }
+    for (const g of glowing) g.material.emissiveIntensity = g.intensity * (1 - 0.35 * t);
   };
   return { materials, setDust };
 }
 
 /* ---------------------------------------------------------------- wheels */
 
-// 24 titanium chevrons around the tread: two angled bars forming a V, so about half of the tread is covered.
-const chevronGeometry = () => memo('chevrons', () => {
-  const arm = new THREE.BoxGeometry(0.1, 0.016, 0.022);
-  const list = [];
-  const n = 24;
-  for (let i = 0; i < n; i++) {
-    const a = (i / n) * Math.PI * 2;
-    for (const side of [-1, 1]) {
-      const g = arm.clone();
-      g.applyMatrix4(new THREE.Matrix4().makeRotationY(-side * 0.7).setPosition(side * 0.045, 0, 0.03));
-      g.applyMatrix4(new THREE.Matrix4().makeRotationX(a).setPosition(0, Math.cos(a) * (R - 0.008), Math.sin(a) * (R - 0.008)));
-      list.push(g);
+// Wide airless tyre with bulging balloon sidewalls, and a deep dark dish hub with six thick spokes and a ring.
+const wheelParts = () => memo('wheelParts', () => {
+  const half = [[0.24, 0.165], [0.265, 0.184], [0.31, 0.196], [0.355, 0.192], [0.385, 0.17], [0.402, 0.13], [0.409, 0.07], [0.41, 0]];
+  const profile = [...half.map(([r, a]) => [r, -a]), ...half.slice(0, -1).reverse().map(([r, a]) => [r, a])].map(([r, a]) => new THREE.Vector2(r, a));
+  const tyre = new THREE.LatheGeometry(profile, 56).rotateZ(Math.PI / 2);
+
+  const dishList = [], spokes = [], rings = [], caps = [];
+  for (const sx of [-1, 1]) {
+    // dish: the rim lip is at the tyre opening, the floor sits 10 cm deeper
+    const d = [[0.256, 0.18], [0.248, 0.13], [0.22, 0.095], [0.15, 0.07], [0.07, 0.058], [0.0, 0.058]].map(([r, a]) => new THREE.Vector2(r, -sx * a));
+    dishList.push(new THREE.LatheGeometry(d, 28).rotateZ(Math.PI / 2));
+    for (let i = 0; i < 6; i++) {
+      const g = new THREE.BoxGeometry(0.07, 0.13, 0.1);
+      g.translate(sx * 0.1, 0.165, 0);
+      g.rotateX((i / 6) * Math.PI * 2);
+      spokes.push(g);
     }
+    caps.push(new THREE.CylinderGeometry(0.075, 0.075, 0.07, 18).rotateZ(Math.PI / 2).translate(sx * 0.095, 0, 0));
+    rings.push(new THREE.TorusGeometry(0.256, 0.017, 6, 40).rotateY(Math.PI / 2).translate(sx * 0.178, 0, 0));
   }
-  return mergeGeometries(list, false);
+  caps.push(new THREE.CylinderGeometry(0.05, 0.05, 0.3, 12).rotateZ(Math.PI / 2));
+  return { tyre, dish: mergeAll(dishList), spokes: mergeAll([...spokes, ...caps]), ring: mergeAll(rings) };
 });
 
-const wheelParts = () => memo('wheelParts', () => ({
-  mesh: new THREE.CylinderGeometry(R - 0.012, R - 0.012, WIDTH, 64, 1, true).rotateZ(Math.PI / 2),
-  disc: new THREE.RingGeometry(0.1, R - 0.014, 48).rotateY(Math.PI / 2),
-  bead: new THREE.TorusGeometry(R - 0.014, 0.007, 5, 56).rotateY(Math.PI / 2),
-  hub: new THREE.CylinderGeometry(0.1, 0.1, 0.14, 24).rotateZ(Math.PI / 2),
-  cap: new THREE.CylinderGeometry(0.045, 0.06, 0.2, 16).rotateZ(Math.PI / 2),
-  motor: new THREE.CylinderGeometry(0.095, 0.095, 0.13, 24).rotateZ(Math.PI / 2),
-  fin: new THREE.CylinderGeometry(0.105, 0.105, 0.012, 24).rotateZ(Math.PI / 2),
-}));
-
-// A wire-mesh wheel: woven piano wire, titanium chevron treads, aluminium hub. Symmetric around the X axle.
+// Symmetric around the X axle: tyre, dark dishes, spokes and rings. Role 2 spins this group around x.
 function createWheel(materials) {
   const g = wheelParts();
   const spin = new THREE.Group();
   spin.name = 'wheelSpin';
-  const add = (geometry, material, x = 0) => {
+  for (const [geometry, material] of [[g.tyre, materials.tyre], [g.dish, materials.dish], [g.spokes, materials.spoke], [g.ring, materials.ring]]) {
     const mesh = new THREE.Mesh(geometry, material);
-    mesh.position.x = x;
     mesh.castShadow = true;
     spin.add(mesh);
-    return mesh;
-  };
-  add(g.mesh, materials.wire);
-  add(g.disc, materials.wireDisc);
-  add(g.bead, materials.anodised, WIDTH / 2 - 0.005);
-  add(g.bead, materials.anodised, -WIDTH / 2 + 0.005);
-  add(chevronGeometry(), materials.titanium);
-  add(g.hub, materials.aluminium);
-  add(g.cap, materials.anodised);
+  }
   return spin;
 }
 
 /* ---------------------------------------------------------------- parts of the body */
 
+// Underbody, floor, and the three battery modules under each side.
 function chassis(b, mat) {
-  // three-part chassis (front, centre, rear), each a frame of aluminium tube with a perforated floor panel
-  for (const [z0, z1] of [[-1.5, -0.67], [-0.63, 0.63], [0.67, 1.5]]) {
-    const len = z1 - z0, zc = (z0 + z1) / 2;
-    b.geo(mat.floor, uvScaled(new THREE.BoxGeometry(0.96, 0.03, len - 0.04), 0.96 / 0.16, len / 0.16), 0, DECK - 0.015, zc);
-    for (const x of [-0.5, 0.5]) b.strut(mat.aluminium, V(x, DECK - 0.01, z0), V(x, DECK - 0.01, z1), 0.026);
-    for (const z of [z0 + 0.02, z1 - 0.02]) b.strut(mat.aluminium, V(-0.5, DECK - 0.01, z), V(0.5, DECK - 0.01, z), 0.022);
-    for (const x of [-0.4, 0.4]) b.strut(mat.anodised, V(x, DECK - 0.1, z0 + 0.04), V(x, DECK - 0.1, z1 - 0.04), 0.018); // belly rails
-    for (const x of [-0.4, 0.4]) for (const z of [z0 + 0.04, z1 - 0.04]) b.strut(mat.anodised, V(x, DECK - 0.1, z), V(x * 1.25, DECK - 0.01, z), 0.014);
-  }
-  // hinges between the sections
-  for (const z of [-0.65, 0.65]) {
-    b.strut(mat.anodised, V(-0.52, DECK + 0.005, z), V(0.52, DECK + 0.005, z), 0.03);
-    for (const x of [-0.5, 0.5]) b.box(mat.dark, 0.06, 0.05, 0.1, x, DECK + 0.005, z);
+  b.box(mat.graphite, 1.16, 0.14, 2.5, 0, 0.32, 0.0); // skid tub, narrow enough for the steered tyres
+  b.box(mat.liner, 1.4, 0.03, 0.95, 0, 0.405, -0.44); // cabin floor
+  b.box(mat.inset, 0.9, 0.03, 0.5, 0, 0.245, 0.2); // skid plate
+  b.box(mat.inset, 0.7, 0.03, 0.5, 0, 0.245, -1.1);
+  for (const sx of [-1, 1]) {
+    b.box(mat.frame, 0.22, 0.04, 1.5, sx * 0.69, 0.24, 0); // rail under the modules
+    b.box(mat.graphite, 0.18, 0.3, 1.36, sx * 0.69, 0.43, 0); // dark back plate, shows as gaps
+    for (let i = -1; i <= 1; i++) {
+      const z = i * 0.44;
+      b.geo(mat.graphite, rbox(0.2, 0.34, 0.4, 0.05), sx * 0.69, 0.43, z);
+      b.box(mat.inset, 0.012, 0.04, 0.3, sx * 0.795, 0.565, z); // lighter bevel strip along the top
+      b.box(mat.ledCyan, 0.014, 0.026, 0.026, sx * 0.797, 0.46, z); // status LED
+      b.box(mat.inset, 0.012, 0.18, 0.3, sx * 0.794, 0.42, z); // recessed face
+    }
   }
 }
 
-// Wheel suspension (upper and lower arms), hub motors' mounts and the fender with its extension.
-function wheelStations(b, mat) {
-  const fender = memo('fender', () => new THREE.CylinderGeometry(R + 0.06, R + 0.06, 0.3, 28, 1, true, Math.PI / 2 - 1.35, 2.7).rotateZ(Math.PI / 2));
-  const lip = memo('lip', () => new THREE.BoxGeometry(0.3, 0.012, 0.2));
+// White nose with angled facets, hood ledge, the low walls under the window and the dash.
+function nose(b, mat) {
+  // lower nose: narrow so the steered tyres clear it
+  b.geo(mat.white, sideExtrude([[-1.26, 0.5], [ZF, 0.64], [ZF, 0.8], [-1.3, 0.88], [-0.62, 0.88], [-0.62, 0.5]], -0.6, 0.6, 0.02));
+  b.geo(mat.white, sideExtrude([[-1.3, 0.82], [ZF, 0.89], [ZF, 0.95], [-0.7, 0.95], [-0.7, 0.82]], -HW, HW, 0.02)); // upper tier above the tyres
+  b.geo(mat.frame, slab(rrect(-0.84, 0.84, ZF - 0.04, -0.7, 0.07, 3), 0.95, 0.055, 0.016)); // hood ledge
+  b.box(mat.graphite, 1.4, 0.62, 0.03, 0, 0.7, -0.715); // dash face under the ledge
+  b.box(mat.frame, 1.0, 0.09, 0.07, 0, 0.55, ZF - 0.03); // bumper
+  b.box(mat.inset, 0.9, 0.1, 0.02, 0, 0.74, ZF - 0.012); // grille
+  for (let i = 0; i < 4; i++) b.box(mat.graphite, 0.82, 0.008, 0.01, 0, 0.7 + i * 0.026, ZF - 0.026);
+  b.box(mat.ledCyan, 0.62, 0.022, 0.012, 0, 0.84, ZF - 0.012); // light strip across the nose
+  for (let i = 0; i < 4; i++) for (const sx of [-1, 1]) b.box(mat.graphite, 0.34, 0.006, 0.026, sx * 0.4, 1.011, -1.2 + i * 0.1); // vents on the ledge
   for (const sx of [-1, 1]) {
-    for (const sz of [-1, 1]) {
-      const x = sx * HT, z = sz * HB;
-      b.strut(mat.anodised, V(sx * 0.5, DECK + 0.03, z - 0.15), V(sx * 0.72, R + 0.08, z), 0.016); // upper arms
-      b.strut(mat.anodised, V(sx * 0.5, DECK + 0.03, z + 0.15), V(sx * 0.72, R + 0.08, z), 0.016);
-      b.strut(mat.anodised, V(sx * 0.5, DECK - 0.02, z - 0.15), V(sx * 0.72, R - 0.08, z), 0.016); // lower arms
-      b.strut(mat.anodised, V(sx * 0.5, DECK - 0.02, z + 0.15), V(sx * 0.72, R - 0.08, z), 0.016);
-      b.strut(mat.dark, V(sx * 0.62, DECK + 0.1, z), V(sx * 0.62, R - 0.02, z), 0.012); // torsion damper
-      // fender over the wheel, with a tilted extension on the outer end
-      b.geo(mat.fender, fender, x, R, z);
-      const out = sz; // front fenders extend forward (-Z), rear fenders rearward (+Z)
-      b.geo(mat.fender, lip, x, R + 0.075, z + out * 0.52, out * 0.45);
-      b.strut(mat.aluminium, V(sx * 0.78, R + R * 0.95, z - 0.1), V(sx * 0.5, DECK + 0.04, z - 0.1), 0.009); // fender stays
-      b.strut(mat.aluminium, V(sx * 0.78, R + R * 0.95, z + 0.1), V(sx * 0.5, DECK + 0.04, z + 0.1), 0.009);
-    }
+    b.geo(mat.white, sideExtrude([[-0.66, 0.6], [-0.66, 0.95], [-0.38, 0.95], [-0.38, 0.6]], sx > 0 ? 0.7 : -HW, sx > 0 ? HW : -0.7, 0.014));
+    b.geo(mat.frame, slab(rrect(sx * 0.76 - 0.1, sx * 0.76 + 0.1, -0.72, -0.36, 0.03, 2), 0.95, 0.055, 0.014)); // sill rails
+    b.box(mat.liner, 0.012, 0.36, 0.5, sx * 0.694, 0.78, -0.5); // inner wall liner
+    // C-shaped LED bracket at each lower front corner
+    const x = sx * 0.63, z = ZF - 0.03;
+    b.box(mat.graphite, 0.1, 0.2, 0.03, x, 0.7, z + 0.008);
+    b.box(mat.ledCyan, 0.016, 0.16, 0.014, x + sx * 0.04, 0.7, z - 0.006);
+    for (const dy of [-0.08, 0.08]) b.box(mat.ledCyan, 0.08, 0.016, 0.014, x, 0.7 + dy, z - 0.006);
+    b.box(mat.ledCyan, 0.03, 0.03, 0.03, sx * 0.797, 0.66, ZF + 0.3); // marker on the side
+  }
+}
+
+// The hero: tall white faceted panels with the logo, carbon edges, and the exoskeleton pillars.
+function sidesAndFrame(b, mat) {
+  const hex = [[-0.4, 1.0], [-0.15, 1.72], [0.4, 1.72], [0.45, 1.0], [0.4, 0.6], [-0.3, 0.6]];
+  const decalPlane = memo('decalPlane', () => new THREE.PlaneGeometry(0.66, 0.33));
+  for (const sx of [-1, 1]) {
+    const [x0, x1] = sx > 0 ? [0.72, 0.845] : [-0.845, -0.72];
+    b.geo(mat.white, sideExtrude(hex, x0, x1, 0.018));
+    b.bar(mat.frame, V(sx * 0.842, 0.99, -0.4), V(sx * 0.842, 1.71, -0.15), 0.05, 0.07); // diagonal front edge
+    b.box(mat.frame, 0.05, 0.1, 0.6, sx * 0.842, 0.62, 0.05);
+    b.geo(mat.decal, decalPlane, sx * 0.849, 1.08, 0.1, 0, sx * Math.PI / 2, 0);
+    b.box(mat.graphite, 0.006, 0.012, 0.4, sx * 0.848, 1.5, 0.2); // seam lines
+    b.bar(mat.graphite, V(sx * 0.848, 0.72, -0.2), V(sx * 0.848, 0.9, 0.35), 0.006, 0.012);
+    b.box(mat.graphite, 0.006, 0.012, 0.55, sx * 0.848, 0.86, 0.1);
+
+    // A-pillar: steep and thick from the nose up to the roof front
+    b.bar(mat.frame, V(sx * HW, 0.98, -1.38), V(sx * HW, 1.76, -0.95), 0.16, 0.14);
+    b.bar(mat.frame, V(sx * 0.72, 1.0, -1.24), V(sx * 0.72, 1.72, -0.9), 0.05, 0.05); // inner slim member
+    b.box(mat.frame, 0.16, 0.1, 0.15, sx * HW, 0.99, -1.4); // foot
+    // rear pillar of the white block and the thick C-pillar
+    b.box(mat.frame, 0.14, 0.74, 0.12, sx * HW, 1.36, 0.51);
+    b.bar(mat.frame, V(sx * HW, 0.97, ZR + 0.05), V(sx * HW, 1.7, ZR - 0.05), 0.14, 0.14);
+    // LED marker dots
+    for (const [y, z] of [[1.22, -1.27], [1.5, -1.1]]) b.box(mat.ledCyan, 0.012, 0.03, 0.03, sx * (HW + 0.088), y, z);
+    b.box(mat.ledCyan, 0.012, 0.03, 0.03, sx * (HW + 0.078), 1.7, 0.51);
+    b.box(mat.ledCyan, 0.03, 0.03, 0.012, sx * (HW - 0.01), 1.0, ZR + 0.052);
+    b.box(mat.ledCyan, 0.012, 0.03, 0.03, sx * (HW + 0.078), 1.2, ZR - 0.05);
   }
 }
 
 function seats(b, mat) {
-  const panY = DECK + 0.28;
+  const dz = -0.67; // seats sit forward, under the cabin opening
+  const shell = memo('seatShell', () => sideExtrude([[0.05, 0.42], [0.05, 0.58], [0.34, 0.55], [0.5, 1.06], [0.6, 1.04], [0.62, 0.42]], -0.23, 0.23));
   for (const x of [-0.32, 0.32]) {
-    // seat pan: tube frame with webbing
-    for (const dx of [-0.2, 0.2]) {
-      b.strut(mat.aluminium, V(x + dx, panY, 0.06), V(x + dx, panY, 0.54), 0.014);
-      b.strut(mat.aluminium, V(x + dx, DECK, 0.1), V(x + dx, panY, 0.1), 0.013); // front legs
-      b.strut(mat.aluminium, V(x + dx, DECK, 0.5), V(x + dx, panY, 0.5), 0.013);
-      b.strut(mat.aluminium, V(x + dx, panY, 0.54), V(x + dx * 0.95, panY + 0.5, 0.7), 0.014); // back uprights
-    }
-    b.strut(mat.aluminium, V(x - 0.2, panY, 0.06), V(x + 0.2, panY, 0.06), 0.014);
-    b.strut(mat.aluminium, V(x - 0.19, panY + 0.5, 0.7), V(x + 0.19, panY + 0.5, 0.7), 0.013);
-    b.strut(mat.aluminium, V(x - 0.2, DECK + 0.1, 0.1), V(x + 0.2, DECK + 0.1, 0.5), 0.009); // leg cross braces
-    b.strut(mat.aluminium, V(x + 0.2, DECK + 0.1, 0.1), V(x - 0.2, DECK + 0.1, 0.5), 0.009);
-    b.box(mat.seat, 0.4, 0.014, 0.48, x, panY + 0.01, 0.3);
-    b.bar(mat.seat, V(x, panY + 0.05, 0.56), V(x, panY + 0.46, 0.69), 0.38, 0.012);
-    // lap belt and shoulder straps with a buckle
-    b.bar(mat.belt, V(x - 0.2, panY + 0.03, 0.4), V(x, panY + 0.06, 0.1), 0.045, 0.008);
-    b.bar(mat.belt, V(x + 0.2, panY + 0.03, 0.4), V(x, panY + 0.06, 0.1), 0.045, 0.008);
-    b.box(mat.aluminium, 0.06, 0.02, 0.05, x, panY + 0.065, 0.1);
-    for (const dx of [-0.12, 0.12]) b.bar(mat.belt, V(x + dx, panY + 0.44, 0.69), V(x * 0.9 + dx * 0.3, panY + 0.06, 0.12), 0.04, 0.007);
-    // footrest plate on two tubes, folded flat to the floor
-    b.bar(mat.anodised, V(x, DECK + 0.1, -0.2), V(x, DECK + 0.03, -0.46), 0.3, 0.015);
-    for (const dx of [-0.13, 0.13]) b.strut(mat.aluminium, V(x + dx, DECK, -0.1), V(x + dx, DECK + 0.1, -0.2), 0.011);
+    b.geo(mat.seat, shell, x, 0, dz);
+    for (const sx of [-1, 1]) b.box(mat.seat, 0.06, 0.2, 0.36, x + sx * 0.215, 0.66, 0.24 + dz, 0.3);
+    b.box(mat.seat, 0.07, 0.38, 0.1, x - 0.2, 0.86, 0.52 + dz, 0.3);
+    b.box(mat.seat, 0.07, 0.38, 0.1, x + 0.2, 0.86, 0.52 + dz, 0.3);
+    b.geo(mat.seat, rbox(0.3, 0.2, 0.09, 0.03), x, 1.2, 0.56 + dz, 0.25); // headrest
+    b.box(mat.silver, 0.1, 0.06, 0.1, x, 1.0, 0.5 + dz, 0.25);
+    for (const ddx of [-0.1, 0.1]) b.bar(mat.strap, V(x + ddx, 1.12, 0.5 + dz), V(x + ddx * 1.6, 0.6, 0.2 + dz), 0.045, 0.01);
+    b.bar(mat.strap, V(x - 0.22, 0.52, 0.45 + dz), V(x - 0.04, 0.6, 0.18 + dz), 0.045, 0.01);
+    b.bar(mat.strap, V(x + 0.22, 0.52, 0.45 + dz), V(x + 0.04, 0.6, 0.18 + dz), 0.045, 0.01);
+    b.box(mat.silver, 0.07, 0.025, 0.05, x, 0.6, 0.17 + dz);
+    b.box(mat.inset, 0.5, 0.04, 0.4, x, 0.42, 0.3 + dz);
+  }
+  b.box(mat.graphite, 1.44, 0.9, 0.04, 0, 0.9, 0.02); // rear wall behind the seats
+  b.box(mat.inset, 0.2, 0.3, 0.5, 0, 0.55, -0.37); // centre console
+  b.box(mat.inset, 0.13, 0.04, 0.1, 0, 0.72, -0.57);
+  b.strut(mat.silver, V(0, 0.72, -0.57), V(0, 0.92, -0.57), 0.014);
+  b.box(mat.graphite, 0.05, 0.06, 0.07, 0, 0.94, -0.57);
+}
+
+// Low dash pod on the hood ledge with two emissive displays (everything stays under y 1.05).
+function dash(b, mat) {
+  const z0 = -0.86;
+  b.box(mat.graphite, 1.3, 0.05, 0.28, 0, 1.03, z0);
+  const tilt = -0.65;
+  for (const [x, w, h, m] of [[-0.32, 0.46, 0.1, mat.screen], [0.32, 0.4, 0.1, mat.station]]) {
+    b.box(mat.graphite, w + 0.03, h + 0.025, 0.03, x, 1.045, z0 - 0.01, tilt);
+    b.geo(m, memo(`face${w}`, () => new THREE.PlaneGeometry(w, h)), x, 1.045 + 0.0165 * Math.sin(-tilt), z0 - 0.01 + 0.0165 * Math.cos(tilt), tilt);
   }
 }
 
-// Console on a short pedestal in front of the seats, and the T-shaped hand controller between them. Both stay below y 1.1.
-function controls(b, mat) {
-  b.strut(mat.anodised, V(0, DECK, -0.36), V(0, DECK + 0.36, -0.36), 0.025);
-  b.box(mat.dark, 0.4, 0.24, 0.07, 0, DECK + 0.4, -0.38, -0.5);
-  const face = new THREE.PlaneGeometry(0.35, 0.197);
-  b.geo(mat.screen, face, 0, DECK + 0.4 + 0.037 * Math.sin(0.5), -0.38 + 0.037 * Math.cos(0.5), -0.5);
-  // switch row under the display
-  for (let i = -3; i <= 3; i++) b.box(mat.aluminium, 0.02, 0.025, 0.02, i * 0.05, DECK + 0.275, -0.31, -0.5);
-  // hand controller: stalk on a base plate, with the T grip on top
-  b.box(mat.dark, 0.1, 0.03, 0.1, 0, DECK + 0.015, -0.1);
-  b.strut(mat.aluminium, V(0, DECK + 0.03, -0.1), V(0, DECK + 0.33, -0.1), 0.014);
-  b.box(mat.dark, 0.17, 0.034, 0.04, 0, DECK + 0.35, -0.1);
-  b.box(mat.dark, 0.03, 0.05, 0.06, 0.09, DECK + 0.35, -0.1);
-  b.box(mat.dark, 0.03, 0.05, 0.06, -0.09, DECK + 0.35, -0.1);
-}
-
-function frontEquipment(b, mat) {
-  const relay = new THREE.BoxGeometry(0.5, 0.22, 0.38);
-  // Lunar Communications Relay Unit: gold foil box with a radiator louvre and a small stub antenna
-  b.geo(mat.gold, relay, 0, DECK + 0.11, -1.2);
-  b.box(mat.mirror, 0.4, 0.008, 0.28, 0, DECK + 0.224, -1.2);
-  b.strut(mat.aluminium, V(0.17, DECK + 0.22, -1.3), V(0.17, DECK + 0.42, -1.3), 0.008);
-  // TV camera on its mast, low at the front
-  b.strut(mat.aluminium, V(0.14, DECK, -1.43), V(0.14, DECK + 0.3, -1.43), 0.02);
-  b.box(mat.dark, 0.14, 0.1, 0.2, 0.14, DECK + 0.36, -1.43);
-  b.strut(mat.titanium, V(0.14, DECK + 0.36, -1.52), V(0.14, DECK + 0.36, -1.52 + 0.1), 0.035);
-  b.box(mat.gold, 0.15, 0.015, 0.22, 0.14, DECK + 0.42, -1.43);
-  // two batteries under thermal covers, each with a hinged dust mirror
-  for (const x of [-0.28, 0.28]) {
-    b.geo(mat.thermal, new THREE.BoxGeometry(0.46, 0.2, 0.26), x, DECK + 0.1, -0.82);
-    b.box(mat.dark, 0.48, 0.02, 0.28, x, DECK + 0.01, -0.82);
-    b.box(mat.mirror, 0.38, 0.01, 0.18, x, DECK + 0.225, -0.84, 0.25); // dust mirror, tilted a little toward the front
-    b.strut(mat.aluminium, V(x - 0.2, DECK + 0.21, -0.93), V(x + 0.2, DECK + 0.21, -0.93), 0.008);
+// One thick cabin roof slab with a raised centre over the cabin and white block, a lower flat solar roof over the bay.
+function roof(b, mat) {
+  const y0 = 1.72;
+  b.geo(mat.frame, slab(rrect(-0.88, 0.88, -1.0, 0.5, 0.2, 5), y0, 0.12, 0.036, 2));
+  b.geo(mat.frame, slab(rrect(-0.6, 0.6, -0.8, 0.3, 0.15, 4), y0 + 0.12, 0.02, 0.008));
+  b.box(mat.inset, 1.7, 0.012, 1.4, 0, y0 - 0.004, -0.25);
+  // bay roof with the solar panel, continuing to the back
+  b.geo(mat.frame, slab(rrect(-0.84, 0.84, 0.44, ZR + 0.02, 0.06, 3), 1.64, 0.07, 0.014));
+  b.geo(mat.solar, memo('solarPlane', () => new THREE.PlaneGeometry(1.5, 1.04).rotateX(-Math.PI / 2)), 0, 1.7145, 1.06);
+  for (const sx of [-1, 1]) {
+    b.box(mat.graphite, 0.08, 0.045, 0.52, sx * 0.78, 1.86, -0.7);
+    b.box(mat.ledCyan, 0.05, 0.03, 0.5, sx * 0.78, 1.882, -0.7);
+    b.box(mat.ledCyan, 0.03, 0.03, 0.03, sx * 0.9, 1.78, -0.8);
   }
+  // dish and camera mast above the white block, whip antenna at the back
+  b.strut(mat.silver, V(-0.2, 1.86, 0.02), V(-0.2, 1.97, 0.02), 0.022);
+  b.geo(mat.silver, memo('dish', () => {
+    const p = [];
+    for (let i = 0; i <= 8; i++) { const r = (i / 8) * 0.17; p.push(new THREE.Vector2(r, 1.4 * r * r)); }
+    return new THREE.LatheGeometry(p, 20);
+  }), -0.2, 1.995, 0.0, -0.55);
+  b.geo(mat.graphite, memo('dishDisc', () => new THREE.CylinderGeometry(0.03, 0.03, 0.04, 8)), -0.2, 1.995, 0.02);
+  b.strut(mat.silver, V(-0.2, 2.0, 0.02), V(-0.2, 2.0 + Math.cos(0.55) * 0.17, 0.02 - Math.sin(0.55) * 0.17 - 0.02), 0.005);
+  b.strut(mat.silver, V(0.4, 1.86, 0.25), V(0.4, 2.0, 0.25), 0.02);
+  b.geo(mat.graphite, rbox(0.12, 0.09, 0.12, 0.025), 0.4, 2.05, 0.25);
+  b.box(mat.ledCyan, 0.035, 0.035, 0.012, 0.4, 2.05, 0.19);
+  b.strut(mat.graphite, V(0.74, 1.71, 1.5), V(0.74, 2.3, 1.5), 0.007);
 }
 
-function antennas(b, mat) {
-  // umbrella high-gain antenna: gold mesh dish on a mast at the front right, opening up and back
-  const x = 0.66, z = -0.78;
-  b.strut(mat.aluminium, V(0.5, DECK + 0.02, z), V(x, DECK + 0.04, z), 0.016); // outrigger bracket
-  b.strut(mat.aluminium, V(x, DECK, z), V(x, DECK + 0.68, z), 0.017);
-  const profile = [];
-  for (let i = 0; i <= 8; i++) { const r = (i / 8) * 0.34; profile.push(new THREE.Vector2(r, 0.9 * r * r)); }
-  const tilt = 0.6, cy = DECK + 0.7;
-  b.geo(mat.goldMesh, memo('dish', () => new THREE.LatheGeometry(profile, 28)), x, cy, z, tilt);
-  b.geo(mat.gold, memo('dishRim', () => new THREE.TorusGeometry(0.34, 0.006, 5, 36).rotateX(Math.PI / 2).translate(0, 0.9 * 0.34 * 0.34, 0)), x, cy, z, tilt);
-  const normal = V(0, Math.cos(tilt), Math.sin(tilt));
-  b.strut(mat.aluminium, V(x, cy, z), V(x, cy, z).add(normal.clone().multiplyScalar(0.3)), 0.006); // feed boom
-  b.geo(mat.gold, memo('horn', () => new THREE.ConeGeometry(0.03, 0.06, 10)), x + 0, cy + normal.y * 0.32, z + normal.z * 0.32, tilt);
+// Open rear bay: frame box, shelf with equipment, grille panels, light strips, and a folded robotic arm.
+function bay(b, mat) {
+  b.geo(mat.graphite, sideExtrude([[0.45, 0.5], [0.45, 0.9], [ZR, 0.9], [ZR, 0.5]], -0.6, 0.6, 0.02));
+  b.geo(mat.silver, slab(rrect(-0.82, 0.82, 0.45, ZR + 0.02, 0.05, 3), 0.9, 0.09, 0.014)); // shelf deck
+  b.box(mat.ledCyan, 0.5, 0.02, 0.012, 0, 0.7, ZR + 0.012);
+  b.box(mat.frame, 1.6, 0.1, 0.1, 0, 1.02, ZR - 0.05); // rear sill beam
+  b.box(mat.frame, 1.6, 0.12, 0.12, 0, 1.6, ZR - 0.06); // rear header
+  b.box(mat.frame, 1.6, 0.1, 0.1, 0, 1.6, 0.52); // front beam under the bay roof
+  const pts = [[0.9, 1.1], [1.52, 1.1], [1.52, 1.56], [1.15, 1.56]];
+  for (const sx of [-1, 1]) {
+    // diagonal mesh grille panel on the side (front edge slanted)
+    b.geo(mat.grille, memo(`grille${sx}`, () => {
+      const shape = new THREE.Shape();
+      pts.forEach(([z, y], i) => (i ? shape.lineTo(sx > 0 ? -z : z, y) : shape.moveTo(sx > 0 ? -z : z, y)));
+      return new THREE.ShapeGeometry(shape).rotateY(sx * Math.PI / 2);
+    }), sx * (HW - 0.02), 0, 0);
+    b.bar(mat.frame, V(sx * (HW - 0.02), 1.1, 0.9), V(sx * (HW - 0.02), 1.56, 1.15), 0.04, 0.04);
+    b.box(mat.frame, 0.04, 0.04, 0.64, sx * (HW - 0.02), 1.1, 1.21);
+    b.box(mat.frame, 0.04, 0.04, 0.4, sx * (HW - 0.02), 1.56, 1.35);
+    b.box(mat.frame, 0.04, 0.5, 0.04, sx * (HW - 0.02), 1.33, 1.52);
+    b.box(mat.ledCyan, 0.05, 0.018, 0.5, sx * 0.45, 1.622, 1.05); // light strips under the bay roof
+    b.box(mat.graphite, 0.08, 0.014, 0.54, sx * 0.45, 1.63, 1.05);
+  }
+  // equipment on the shelf: graphite boxes with cyan labels, a silver tank
+  b.geo(mat.graphite, rbox(0.46, 0.34, 0.4, 0.03), -0.42, 1.14, 0.98);
+  b.box(mat.ledCyan, 0.3, 0.02, 0.01, -0.42, 1.18, 1.18);
+  b.box(mat.silver, 0.44, 0.02, 0.38, -0.42, 1.315, 0.98);
+  b.geo(mat.graphite, rbox(0.4, 0.22, 0.36, 0.03), 0.06, 1.06, 0.96);
+  b.box(mat.ledCyan, 0.2, 0.02, 0.01, 0.06, 1.08, 1.15);
+  b.geo(mat.inset, rbox(0.34, 0.14, 0.3, 0.025), 0.06, 1.24, 0.96);
+  b.strut(mat.silver, V(0.52, 0.99, 0.8), V(0.52, 1.45, 0.8), 0.08);
+  b.box(mat.ledCyan, 0.1, 0.015, 0.012, 0.52, 1.2, 0.88);
+  b.geo(mat.graphite, rbox(0.5, 0.2, 0.28, 0.025), -0.2, 1.08, 1.4);
+  b.box(mat.ledCyan, 0.2, 0.02, 0.01, -0.2, 1.1, 1.55);
+  b.geo(mat.graphite, rbox(0.3, 0.26, 0.28, 0.025), 0.4, 1.12, 1.35);
+  // folded robotic arm at the rear right corner: base, two links, elbow, gripper
+  const ax = 0.66;
+  b.geo(mat.graphite, rbox(0.17, 0.24, 0.17, 0.03), ax, 1.14, ZR + 0.1);
+  b.box(mat.ledCyan, 0.03, 0.03, 0.012, ax, 1.2, ZR + 0.19);
+  b.strut(mat.silver, V(ax, 1.22, ZR + 0.1), V(ax, 1.74, ZR + 0.12), 0.032);
+  b.geo(mat.graphite, new THREE.SphereGeometry(0.05, 12, 8), ax, 1.74, ZR + 0.12);
+  b.strut(mat.silver, V(ax, 1.74, ZR + 0.12), V(ax, 1.42, ZR + 0.15), 0.026);
+  b.box(mat.graphite, 0.07, 0.1, 0.07, ax, 1.34, ZR + 0.15);
+  for (const dx of [-0.026, 0.026]) b.box(mat.silver, 0.014, 0.1, 0.04, ax + dx, 1.26, ZR + 0.15);
+}
 
-  // helical low-gain antenna on a short mast at the rear left, behind the driver
-  const hx = -0.55, hz = 0.8;
-  b.strut(mat.aluminium, V(hx, DECK, hz), V(hx, DECK + 0.32, hz), 0.013);
-  const helix = memo('helix', () => {
-    class Helix extends THREE.Curve {
-      getPoint(t, target = new THREE.Vector3()) {
-        const a = t * Math.PI * 2 * 7;
-        return target.set(Math.cos(a) * 0.05, t * 0.5, Math.sin(a) * 0.05);
+// Gold suspension: a bracket above the inner top of each tyre and two arms into the body (static, does not steer).
+function suspension(b, mat) {
+  for (const sx of [-1, 1]) {
+    for (const sz of [-1, 1]) {
+      const zc = sz * HB;
+      b.geo(mat.gold, rbox(0.08, 0.15, 0.16, 0.03), sx * 0.84, 0.915, zc);
+      b.box(mat.graphite, 0.1, 0.03, 0.14, sx * 0.835, 0.845, zc);
+      b.box(mat.gold, 0.08, 0.2, 0.14, sx * 0.66, 0.7, zc);
+      for (const dz of [-0.08, 0.08]) {
+        b.strut(mat.gold, V(sx * 0.68, 0.68, zc + dz), V(sx * 0.5, 0.4, zc + dz * 1.5), 0.022);
+        b.strut(mat.gold, V(sx * 0.7, 0.58, zc + dz), V(sx * 0.46, 0.34, zc + dz * 1.2), 0.016);
       }
     }
-    return new THREE.TubeGeometry(new Helix(), 112, 0.007, 5);
-  });
-  b.geo(mat.gold, helix, hx, DECK + 0.32, hz);
-  b.strut(mat.aluminium, V(hx, DECK + 0.32, hz), V(hx, DECK + 0.84, hz), 0.007);
-}
-
-// Rear payload pallet: tool carrier rack, sample bags and a sample container.
-function pallet(b, mat) {
-  b.box(mat.anodised, 0.96, 0.03, 0.62, 0, DECK + 0.015, 1.12);
-  for (const x of [-0.45, 0.45]) {
-    b.strut(mat.aluminium, V(x, DECK, 1.38), V(x, DECK + 0.6, 1.38), 0.015); // carrier posts
-    b.strut(mat.aluminium, V(x, DECK + 0.6, 1.38), V(x, DECK + 0.45, 1.0), 0.012);
   }
-  b.strut(mat.aluminium, V(-0.45, DECK + 0.6, 1.38), V(0.45, DECK + 0.6, 1.38), 0.015);
-  b.strut(mat.aluminium, V(-0.45, DECK + 0.45, 1.0), V(0.45, DECK + 0.45, 1.0), 0.012);
-  // tools hanging in the carrier: scoop, rake, tongs and a hammer
-  const tools = [[-0.3, 0.55], [-0.15, 0.5], [0.0, 0.58], [0.15, 0.5]];
-  tools.forEach(([x, len], i) => {
-    b.strut(mat.anodised, V(x, DECK + 0.58, 1.34), V(x + 0.02, DECK + 0.58 - len, 1.3), 0.01);
-    b.box(mat.titanium, 0.07 + (i % 2) * 0.04, 0.012, 0.09, x + 0.02, DECK + 0.58 - len - 0.02, 1.3);
-  });
-  // sample bags, soft white sacks, and a tool case
-  const sack = memo('sack', () => new THREE.SphereGeometry(0.5, 14, 10));
-  [[-0.3, 0.2], [-0.1, 0.17], [0.1, 0.19], [0.3, 0.16]].forEach(([x, h], i) => {
-    b.geo(mat.sack, sack, x, DECK + 0.04 + h / 2, 1.12 + (i % 2) * 0.05, 0, i, 0, V(0.2, h, 0.24));
-    b.box(mat.belt, 0.2, 0.012, 0.02, x, DECK + 0.04 + h * 0.8, 1.12 + (i % 2) * 0.05);
-  });
-  b.box(mat.anodised, 0.36, 0.16, 0.26, 0.28, DECK + 0.11, 0.86);
-  b.box(mat.dark, 0.3, 0.02, 0.01, 0.28, DECK + 0.15, 0.725);
-  b.box(mat.thermal, 0.32, 0.14, 0.24, -0.28, DECK + 0.1, 0.86);
 }
 
 /* ---------------------------------------------------------------- the rover */
@@ -448,7 +616,7 @@ function countTriangles(root) {
   return n;
 }
 
-export function createRover() {
+function createProceduralRover() {
   const root = new THREE.Group();
   root.name = 'rover';
   const { materials: mat, setDust } = createMaterials();
@@ -457,34 +625,26 @@ export function createRover() {
   body.name = 'body';
   const batch = createBatch();
   chassis(batch, mat);
-  wheelStations(batch, mat);
+  nose(batch, mat);
+  sidesAndFrame(batch, mat);
   seats(batch, mat);
-  controls(batch, mat);
-  frontEquipment(batch, mat);
-  antennas(batch, mat);
-  pallet(batch, mat);
+  dash(batch, mat);
+  roof(batch, mat);
+  bay(batch, mat);
+  suspension(batch, mat);
   batch.build(body);
   root.add(body);
 
   // wheel pivots: steering turns the pivot, spin turns children[0]
-  const parts = wheelParts();
   for (const [name, sx, sz] of [['wheelFL', -1, -1], ['wheelFR', 1, -1], ['wheelRL', -1, 1], ['wheelRR', 1, 1]]) {
     const pivot = new THREE.Group();
     pivot.name = name;
     pivot.position.set(sx * HT, R, sz * HB);
     pivot.add(createWheel(mat));
-    const motor = new THREE.Group();
-    motor.name = 'hubMotor';
-    const housing = new THREE.Mesh(parts.motor, mat.dark);
-    housing.position.x = -sx * 0.145;
-    const fins = new THREE.Mesh(parts.fin, mat.anodised);
-    fins.position.x = -sx * 0.1;
-    housing.castShadow = fins.castShadow = true;
-    motor.add(housing, fins);
-    pivot.add(motor);
     root.add(pivot);
   }
 
+  root.userData.eye = new THREE.Vector3(-0.32, 1.45, -0.45);
   root.userData.setDust = setDust;
   root.userData.triangles = countTriangles(root);
   if (!logged) {
@@ -492,4 +652,74 @@ export function createRover() {
     console.info(`[rover] ${Math.round(root.userData.triangles)} triangles`);
   }
   return root;
+}
+
+/* ---------------------------------------------------------------- the Blender model (GLB) */
+
+const GLB_URL = '/assets/models/rover.glb';
+const EYE = new THREE.Vector3(-0.32, 1.45, -0.45);
+let template = null;
+let loading = null;
+
+/** Starts loading the GLB (once). Resolves with the template or null if it could not be loaded. */
+export function loadRoverModel() {
+  if (!loading) {
+    loading = new GLTFLoader().loadAsync(GLB_URL).then((gltf) => {
+      template = gltf.scene;
+      template.name = 'rover';
+      template.userData.triangles = countTriangles(template);
+      console.info(`[rover] Blender model loaded, ${Math.round(template.userData.triangles)} triangles`);
+      return template;
+    }).catch((error) => {
+      console.warn('[rover] rover.glb not loaded, using the code-built rover:', error?.message ?? error);
+      return null;
+    });
+  }
+  return loading;
+}
+if (typeof window !== 'undefined') loadRoverModel();
+
+// A clone of the template with its own materials (dust is per rover), env reflections and shadows.
+function cloneRoverModel() {
+  const root = template.clone(true);
+  const dusty = [], glowing = [];
+  const env = interiorEnvironment();
+  const owned = new Map();
+  const own = (m) => {
+    if (!owned.has(m)) {
+      const c = m.clone();
+      c.envMap = env;
+      const emissive = c.emissive && c.emissive.getHex() !== 0;
+      c.envMapIntensity = emissive ? 0.3 : c.metalness > 0.5 || c.clearcoat > 0 ? 0.9 : 0.6;
+      if (emissive) glowing.push({ material: c, intensity: c.emissiveIntensity });
+      else dusty.push({ material: c, base: c.color.clone(), roughness: c.roughness, metalness: c.metalness, dust: c.map && !c.normalMap ? 0.6 : 0.85 });
+      owned.set(m, c);
+    }
+    return owned.get(m);
+  };
+  root.traverse((o) => {
+    if (!o.isMesh) return;
+    o.material = Array.isArray(o.material) ? o.material.map(own) : own(o.material);
+    o.castShadow = true;
+    o.receiveShadow = true;
+  });
+  const tmp = new THREE.Color();
+  root.userData.setDust = (amount) => {
+    const t = THREE.MathUtils.clamp(amount, 0, 1);
+    for (const d of dusty) {
+      d.material.color.copy(tmp.copy(d.base).lerp(DUST, 0.8 * t * d.dust));
+      d.material.roughness = THREE.MathUtils.lerp(d.roughness, 0.95, t * d.dust);
+      d.material.metalness = THREE.MathUtils.lerp(d.metalness, d.metalness * 0.3, t * d.dust);
+      if (d.material.clearcoat) d.material.clearcoat = (1 - t) * 0.7;
+    }
+    for (const g of glowing) g.material.emissiveIntensity = g.intensity * (1 - 0.35 * t);
+  };
+  root.userData.eye = EYE.clone();
+  root.userData.triangles = template.userData.triangles;
+  return root;
+}
+
+/** The rover for Role 2: the Blender model when loaded, else the procedural one. */
+export function createRover() {
+  return template ? cloneRoverModel() : createProceduralRover();
 }

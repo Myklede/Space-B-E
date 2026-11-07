@@ -3,6 +3,7 @@ import { RoundedBoxGeometry } from 'three/addons/geometries/RoundedBoxGeometry.j
 import { RoomEnvironment } from 'three/addons/environments/RoomEnvironment.js';
 import { mergeGeometries } from 'three/addons/utils/BufferGeometryUtils.js';
 import { getRenderer, sharedUniforms } from './shared.js';
+import { buildCockpitInterior } from './cockpitParts.js';
 import { events, getShip } from '/src/core/index.js';
 
 let environment = null;
@@ -178,8 +179,80 @@ function drawBars(c, w, h) {
   bar(c, w, 18 + h / 2, 'MAX-Q', q === null ? '--' : `${(q / 1000).toFixed(1)} / ${(maxQ / 1000).toFixed(0)} kPa`, q === null ? null : clamp01(q / maxQ / 1.25), 0.8 / 1.25, 1 / 1.25, true);
 }
 
+// Everything heavy (canvas textures, merged geometry, materials) is built once; each createCockpit() clones the group, which
+// shares them. Flight makes a new cockpit on every LAUNCH, ORBIT and ENTRY, so this keeps those frames short.
+let cockpitTemplate = null;
+export function warmCockpit() {
+  cockpitTemplate ??= buildCockpitTemplate();
+  return cockpitTemplate;
+}
+
+// Uploads the shared textures and geometry and compiles the shaders by drawing the cockpit once into a tiny target, so
+// the first real frame after LAUNCH or ORBIT has nothing left to upload. Runs in idle time after boot.
+let cockpitUploaded = false;
+export function uploadCockpit() {
+  if (cockpitUploaded) return;
+  const renderer = getRenderer();
+  if (!renderer) return;
+  cockpitUploaded = true;
+  const probe = createCockpit();
+  const scene = new THREE.Scene();
+  scene.add(probe);
+  const camera = new THREE.PerspectiveCamera(70, 1, 0.05, 20);
+  const target = new THREE.WebGLRenderTarget(32, 32);
+  const lookDirs = [[0, 0, -1], [0, -1, -0.2], [0, 0, 1], [-1, 0, 0], [1, 0, 0], [0, 1, 0]]; // every part gets drawn once
+  const previous = renderer.getRenderTarget();
+  try {
+    for (const d of lookDirs) {
+      camera.lookAt(d[0], d[1], d[2]);
+      camera.updateMatrixWorld();
+      renderer.setRenderTarget(target);
+      renderer.render(scene, camera);
+    }
+  } finally {
+    renderer.setRenderTarget(previous);
+    target.dispose();
+  }
+}
+if (typeof window !== 'undefined') { // build, then upload, in idle time soon after boot, long before the first LAUNCH
+  const idle = (fn) => (window.requestIdleCallback ?? setTimeout)(fn);
+  setTimeout(() => idle(() => {
+    try { warmCockpit(); } catch (err) { console.error('[cockpit] warm failed', err); return; }
+    setTimeout(() => idle(() => { try { uploadCockpit(); } catch (err) { console.error('[cockpit] upload failed', err); } }), 300);
+  }), 1500);
+}
+
 /** Seated cockpit. The group's origin is the pilot's eye and forward is -Z. Add it under the camera's parent. */
 export function createCockpit() {
+  const t = warmCockpit();
+  const group = t.group.clone(true); // shares geometry, materials and textures with the template
+  const ctl = t.bind(group);
+  group.userData.setControls = ctl.setControls; // ({ pitch -1..1, yaw -1..1, throttle 0..1 }), smoothed
+  const blinkers = [];
+  group.traverse((o) => { if (o.name === 'blinker') blinkers.push(o); });
+  const cabinLight = group.getObjectByName('cabinLight'), alarmLight = group.getObjectByName('alarmLight');
+  const { liveScreens } = t;
+  let alarm = false;
+  group.userData.setAlarm = (on) => { alarm = on; };
+  let drawnVersion = -1, drawnAt = 0, lastFrame = performance.now();
+  group.userData.onFrame = () => {
+    const tm = sharedUniforms.uTime.value;
+    const now = performance.now();
+    ctl.update((now - lastFrame) / 1000);
+    lastFrame = now;
+    if (live.version !== drawnVersion && now - drawnAt >= 250) { // at most 4 redraws a second, only when the data changed
+      drawnVersion = live.version;
+      drawnAt = now;
+      liveScreens.forEach((m) => m.userData.redraw());
+    }
+    blinkers.forEach((lamp, i) => { lamp.visible = Math.sin(tm * (1.3 + i * 0.37) + i) > -0.3; });
+    alarmLight.intensity = alarm ? 3 * (0.5 + 0.5 * Math.sign(Math.sin(tm * 5))) : 0;
+    cabinLight.intensity = alarm ? 0.35 : 2.6;
+  };
+  return group;
+}
+
+function buildCockpitTemplate() {
   const group = new THREE.Group();
   group.name = 'cockpit';
   const shell = pbr(0x20252b, 0.62, 0.35);
@@ -190,7 +263,7 @@ export function createCockpit() {
   // Everything below the window sits under the default view (about -38 degrees and lower): look down to read it.
   group.add(box(2.1, 0.6, 0.48, matte, 0, -0.77, -1.19, 0.05)); // dash hood under the glare shield
   group.add(box(2.1, 0.3, 0.9, panel, 0, -1.3, -0.85, 0.05)); // footwell, so looking down never shows a void
-  const console_ = box(2.1, 0.7, 0.06, panel, 0, -0.88, -0.78, 0.02); // tilted instrument face
+  const console_ = box(2.1, 0.5, 0.06, panel, 0, -0.88, -0.78, 0.02); // tilted instrument face
   console_.rotation.x = -0.75;
   group.add(console_);
   group.add(box(2.1, 0.07, 0.56, matte, 0, -0.44, -1.07, 0.03)); // glare shield, its top is the window sill
@@ -230,6 +303,18 @@ export function createCockpit() {
   const lamps = [glow('#22d3ee', 2.4), glow('#fbbf24', 2.4), glow('#34d399', 2.2), glow('#f87171', 2.6)];
   const blinkers = [];
   const button = new THREE.BoxGeometry(0.01, 0.01, 0.01);
+  // Seat, suited body, controllers, pedestal, consoles, floor and lower walls (cockpitParts.js).
+  const low = typeof location !== 'undefined' && new URLSearchParams(location.search).get('q') === 'low';
+  let interior;
+  try {
+    interior = buildCockpitInterior({ pbr, glow, matte, trim, panel, shell, low });
+  } catch (err) { // the seat and controls are decoration: never let them stop a state from starting
+    console.error('[cockpit] interior failed', err);
+    interior = { group: new THREE.Group(), blinkers: [], bind: () => ({ setControls() {}, update() {} }) };
+  }
+  group.add(interior.group);
+  group.userData.triangles = interior.group.userData.triangles;
+  blinkers.push(...interior.blinkers);
   const darkPanel = pbr(0x090c0f, 0.9, 0.1, { envMapIntensity: 0.05 });
   [-1, 1].forEach((side) => {
     group.add(box(0.012, 0.3, 0.9, pbr(0x1b2026, 0.9, 0.1, { envMapIntensity: 0.1 }), side * 0.964, -0.71, -0.79, 0.004)); // bezel
@@ -269,30 +354,18 @@ export function createCockpit() {
     group.add(lamp);
   }
 
-  const cabinLight = new THREE.PointLight(0xffdcb8, 1.5, 4, 2);
-  cabinLight.position.set(0, 0.7, -0.2);
-  const screenLight = new THREE.PointLight(0x67e8f9, 0.32, 2.2, 2);
-  screenLight.position.set(0, -0.62, -0.45);
+  const cabinLight = new THREE.PointLight(0xfff0e2, 2.6, 5, 1.6);
+  cabinLight.position.set(0, 0.45, 0.05);
+  const screenLight = new THREE.PointLight(0x67e8f9, 0.22, 2.0, 2);
+  screenLight.position.set(0, -0.6, -0.6);
   const alarmLight = new THREE.PointLight(0xff2a1f, 0, 5, 2);
   alarmLight.position.set(0, 0.75, -0.4);
+  cabinLight.name = 'cabinLight';
+  alarmLight.name = 'alarmLight';
   group.add(cabinLight, screenLight, alarmLight);
 
-  let alarm = false;
-  group.userData.setAlarm = (on) => { alarm = on; };
-  let drawnVersion = -1, drawnAt = 0;
-  group.userData.onFrame = () => {
-    const t = sharedUniforms.uTime.value;
-    const now = performance.now();
-    if (live.version !== drawnVersion && now - drawnAt >= 250) { // at most 4 redraws a second, only when the data changed
-      drawnVersion = live.version;
-      drawnAt = now;
-      liveScreens.forEach((m) => m.userData.redraw());
-    }
-    blinkers.forEach((lamp, i) => { lamp.visible = Math.sin(t * (1.3 + i * 0.37) + i) > -0.3; });
-    alarmLight.intensity = alarm ? 3 * (0.5 + 0.5 * Math.sign(Math.sin(t * 5))) : 0;
-    cabinLight.intensity = alarm ? 0.35 : 1.5;
-  };
-  return group;
+  blinkers.forEach((m) => { m.name = 'blinker'; });
+  return { group, liveScreens, bind: interior.bind };
 }
 
 

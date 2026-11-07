@@ -1,9 +1,11 @@
 import * as THREE from 'three';
 import { createPlanet, loadPlanetMaps } from './planets.js';
 import { createSpaceSky } from './sky.js';
-import { createCabin, createCockpit, interiorEnvironment, pbr } from './interiors.js';
+import { createCockpit, interiorEnvironment, pbr } from './interiors.js';
+import { createCabin } from './cabin.js';
 import { PROPS } from './props.js';
-import { createRover } from './rover.js';
+import { createRover, loadRoverModel } from './rover.js';
+import { createLunarRover, loadLunarRoverModel } from './roverLrv.js';
 import { createEngineFlame, createEntryPlasma, createExhaust, createLandingDust } from './vfx.js';
 
 const factories = new Map();
@@ -443,7 +445,8 @@ register('planet:earth', () => createPlanet('earth'));
 register('planet:mars', () => createPlanet('mars'));
 register('sky:space', createSpaceSky);
 register('lander', () => createLander());
-register('rover', createRover); // crewed LRV-style rover for Role 2: src/graphics/rover.js
+register('rover', createRover); // the futuristic crewed rover (Blender model, rover.glb): src/graphics/rover.js
+register('rover:lrv', createLunarRover); // the traditional Apollo-style rover, same interface: src/graphics/roverLrv.js
 for (const [name, factory] of Object.entries(PROPS)) register(name, factory); // mission props: src/graphics/props.js
 
 /**
@@ -499,8 +502,8 @@ export const assets = {
     }
     return hologram(name);
   },
-  /** Resolves when the real maps of the given `planet:*` names are ready, so get() never shows a placeholder. Other names are ignored. */
-  preload: (names) => Promise.all(names.filter((n) => n.startsWith('planet:')).map((n) => loadPlanetMaps(n.slice(7)))).then(() => {}),
+  /** Resolves when the real maps of the given `planet:*` names are ready, so get() never shows a placeholder. Other names are ignored. Also waits for the Blender rover model (rover.glb, falls back to the code-built rover if it is missing). */
+  preload: (names) => Promise.all([...names.filter((n) => n.startsWith('planet:')).map((n) => loadPlanetMaps(n.slice(7))), loadRoverModel(), loadLunarRoverModel()]).then(() => {}),
   has: (name) => factories.has(name) || name.startsWith('rocketPart:'),
   names: () => [...factories.keys(), 'rocketPart:<id>'],
   register,
