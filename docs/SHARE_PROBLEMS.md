@@ -127,6 +127,24 @@ Copy this block. Keep each line short and factual. Don't commit screenshots.
   - Role 2 will keep a fallback: if `setTrajectory` is missing, the old HUD markers come back, so a cockpit without it never leaves the player unable to fly.
 - **Status:** open
 
+### Phase 0 (strap-in): pressable cockpit buttons HATCH, CABIN, O2 and a new ARM ENGINE
+- **For:** Role 3 · **From:** Role 2 + Role 4 (Minh Vuong; our team now also keeps Role 4) · **Found:** 2026-11-07 on dev 3d4fa59 · **Severity:** polish
+- **Where:** the button row under the cockpit displays (`src/graphics/cockpitParts.js` / `interiors.js`): it already has O2, CABIN, HATCH (and FIRE, DUMP, DOCK, PARA, ENTRY); there is no ARM ENGINE button
+- **Steps:** `/?debug=1&state=LAUNCH`, look down at the button row
+- **Expected:** the agreed Phase 0 pre-launch checklist: before the countdown the player closes the HATCH, pressurises the CABIN, opens O2 and presses ARM ENGINE, each light turning from amber to green (red for ARMED), with a short press animation
+- **Actual:** the buttons are static models without names or an API, and ARM ENGINE doesn't exist
+- **Suggested fix:** name the buttons (`btn:hatch`, `btn:cabin`, `btn:o2`, `btn:arm`, …), add an ARM ENGINE button, and expose `cockpit.userData.setButton(id, state)` with `state` `'off' | 'amber' | 'green' | 'red'` plus a `press(id)` animation. Until then Role 2 shows the checklist on the HUD (keys 1–4) and calls `setButton?.()` so it lights up as soon as it exists.
+- **Status:** open
+
+### Phase 0 sounds: harness click, hatch lock, cabin pressurise hiss, O2 flow, switch toggle
+- **For:** Role 3 · **From:** Role 2 + Role 4 (Minh Vuong) · **Found:** 2026-11-07 on dev 3d4fa59 · **Severity:** polish
+- **Where:** `src/audio/index.js` (today: alarm.master, ambience.mars, ambience.ship, engine.rumble, gonogo.tick, impact.small, radio.blip, radio.static, suit.breath, ui.click, ui.error, ui.hover, ui.snap)
+- **Steps:** the Phase 0 strap-in and checklist
+- **Expected:** `crew.harness` (buckle click), `cockpit.hatch` (heavy latch), `cockpit.pressurise` (2–3 s hiss), `suit.o2flow` (soft flow, loopable), `cockpit.switch` (toggle click)
+- **Actual:** none of these exist; Role 2 falls back to `ui.click`
+- **Suggested fix:** add the five ids (CC0 sounds, credit in CREDITS.md). Role 2 plays them by these names and falls back to `ui.click` while they are missing.
+- **Status:** open
+
 ## Role 4: Story, Cruise & Knowledge
 
 ### ENDING reuses whatever camera the last state left
@@ -158,3 +176,13 @@ Copy this block. Keep each line short and factual. Don't commit screenshots.
 - **Suggested fix:** pick one; no contract change is needed for any of them
 - **Decision (Role 2's human, Minh Vuong, 2026-11-07):** both rovers are parked by the lander. The **Apollo LRV** (`rover:lrv`) is drivable from the start; the **MR-01** (`rover`) is locked until Mars Exploration reaches 50 % (then a calm unlock notice), with concept specs (about 20 km/h, 30 kWh) so unlocking it matters. Implemented by Role 2 in f2ca02c; `?debug=1` + U unlocks it.
 - **Status:** decided, built in f2ca02c; the team please confirm or object
+
+### Allow PRELAUNCH → HANGAR (and LAUNCH → HANGAR before liftoff) so the player can SCRUB a launch
+- **For:** all four roles · **From:** Role 2 + Role 4 (Minh Vuong) · **Found:** 2026-11-07 on dev 3d4fa59 · **Severity:** decision
+- **Where:** `src/core/contract.js` `TRANSITIONS` (`PRELAUNCH: ['LAUNCH']`, `LAUNCH: ['ORBIT']`)
+- **Steps:** the agreed Phase 0: the launch director polls the stations ("Booster? GO. Guidance? GO. Weather? NO-GO: 2 °C, seals not rated"), then asks "Flight crew, are you GO?"
+- **Expected:** the player can answer GO or **SCRUB** (postpone). SCRUB costs a scrub fee and returns to the hangar to fix the ship, like a real launch scrub ("NASA has scrubbed hundreds of launches"). Going on despite a NO-GO is how the Challenger lesson happens.
+- **Actual:** the contract has no way back from PRELAUNCH or LAUNCH to HANGAR except through ENDING, and there is no scrub ending
+- **Suggested fix:** add `'HANGAR'` to `PRELAUNCH` and `LAUNCH` in `TRANSITIONS` (Role 2 only requests it before liftoff), and a `scrubFee` (proposed $100,000) in `src/core/balance.json`. Role 2/4 will show the SCRUB choice only when the contract allows it, so nothing breaks before the team agrees.
+- **Status:** open, needs all four people to agree
+
