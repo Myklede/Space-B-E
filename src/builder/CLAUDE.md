@@ -104,7 +104,8 @@ Người dùng muốn làm lại giao diện trang thiết kế:
 
 - Người dùng hỏi: nên báo "No spare oxygen", "Not enough Δv…" hay giấu đi để người chơi tự trải nghiệm tai nạn.
 - AI đề xuất hướng giữa: (1) trong trang thiết kế chỉ hiện con số (Δv / cần), bỏ câu chỉ cách sửa, thêm "Why?" mở Formula Lens; (2) Go/No-Go vẫn đọc NO-GO kèm lý do, người chơi được OVERRIDE (spec §5.5 và contract đã chốt, các ending dựa vào đây; bài học Challenger/Columbia là cảnh báo có nhưng bị bỏ qua); (3) không cảnh báo những gì phụ thuộc cách lái và độ tin cậy ẩn; (4) màn kết thúc nối lại nguyên nhân (Role 4); (5) tuỳ chọn chế độ "Veteran" trong Settings.
-- **Chờ người dùng chốt.**
+- **Người dùng trả lời (2026-11-07):** đồng ý hướng xác suất "kiểu cầu thủ FIFA": bộ phận càng đắt càng chắc chắn nhưng vẫn có thể hỏng; đồ rẻ đôi khi vẫn thành công; liều khi Δv thiếu một chút đôi khi vẫn tới nơi (kịch tính khi sắp hết tiền). **Không nhắc lộ liễu** trong lúc lắp (chán nếu "cần 5000, lắp đúng 5000, bay thành công"). Khi thất bại thì **hiện phân tích nguyên nhân** để lần sau người chơi tự tính kỹ hơn.
+- AI đề xuất cách làm (chờ người dùng chốt chi tiết): tàu thực tế lệch quanh thông số thiết kế lúc xác nhận (đồ đắt lệch ít, đồ rẻ lệch nhiều, hiếm khi có lỗi chế tạo); bỏ con số "cần X m/s" và câu chỉ cách sửa trong trang thiết kế; Go/No-Go nói kiểu điều khiển viên, không số, không cách sửa; TEST FIRE tốn tiền có thể phát hiện lỗi động cơ (spec §5.3); "Hội đồng điều tra tai nạn" trong hangar sau chuyến bay hỏng. Nổ/hỏng giữa chuyến cần Role 2.
 
 ## 5. Việc tồn đọng
 

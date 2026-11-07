@@ -1,4 +1,7 @@
 // ShipSpec from an Assembly (contract.js SHIP_SPEC_SHAPE). Pure JS: planets and g0 are passed in, never written here.
+import { computeHull } from './hull.js';
+import { weatherFor } from './weather.js';
+import { padEffects } from './sections/pad/effects.js';
 import { partRadius } from './assembly.js';
 
 export const TWR_MIN = 1.2;
@@ -65,13 +68,11 @@ const sum = (xs, f) => xs.reduce((acc, x, i) => acc + f(x, i), 0);
  */
 export function computeShipSpec(assembly, { catalog, engines, launch, balance, planets, g0, materials = null, pad = null }) {
   const layout = assembly.layout();
-  // launch site, window and pad equipment (sections/pad/section.json); without pad data, the old launch.json slots
-  const site = pad?.sites?.find((x) => x.id === assembly.launch.site) ?? pad?.sites?.[0] ?? null;
-  const slots = site?.slots ?? launch.slots ?? [];
-  const slot = slots.find((x) => x.id === assembly.launch.slot) ?? slots[0] ?? { id: 'mild', tempC: 15, fee: 0 };
-  const padChoices = (pad?.equipment ?? []).map((eq) => ({ eq, option: eq.options.find((o) => o.id === assembly.launch.pad?.[eq.key]) ?? eq.options[0] })).filter((c) => c.option);
-  const launchFee = (slot.fee ?? 0) + (site?.fee ?? 0) + sum(padChoices, (c) => c.option.fee ?? 0);
-  const padReliability = sum(padChoices, (c) => c.option.reliability ?? 0);
+  // launch-day weather (weather.js) and the outer skin (hull.js); the pad's effects follow once the thrust is known
+  const weather = weatherFor(assembly.launch, { pad, launchData: launch });
+  const slot = weather.slot ?? { id: 'mild', tempC: weather.tempC, fee: 0 };
+  const site = weather.site ?? null;
+  const hull = computeHull(layout, { catalog, hull: assembly.hull });
   const flags = (e) => e.def.flags ?? {};
   // material of a part: factors on dry mass, cost and reliability (data/materials.json); the first option is the default
   const materialOf = (e) => {
@@ -106,17 +107,25 @@ export function computeShipSpec(assembly, { catalog, engines, launch, balance, p
   const ispVac = thrust > 0 ? (sum(engineSpecs, (s, i) => s.ispVac * s.thrust * n(i)) + sum(boosterSpecs, (s) => s.ispVac * s.thrust)) / thrust : 0;
   const ispSL = thrust > 0 ? (sum(engineSpecs, (s, i) => s.ispSL * s.thrust * n(i)) + sum(boosterSpecs, (s) => s.ispSL * s.thrust)) / thrust : 0;
   const mainFuel = engineSpecs[0]?.fuel ?? null;
+  const engineCount0 = engineCount;
+  const padFx = padEffects(assembly.launch, { pad, weather, thrustSL, engineCount: engineCount0 });
+  const padChoices = padFx.choices ?? [];
+  const launchFee = padFx.fee ?? 0;
+  const padReliability = padFx.reliability ?? 0;
 
   // Masses (engine hardware mass and cost scale with the chamber material; options add on top)
   const dryOf = (e) => (e.def.mass * massFactor(e) + mod(e).massD) * mod(e).massF;
   const engineHardwareMass = (e, i) => engineSpecs[i].mass * massFactor(e) * countOf(e);
-  const partMass = sum(layout, dryOf) + sum(engineEntries, engineHardwareMass);
+  const partMass = sum(layout, dryOf) + sum(engineEntries, engineHardwareMass) + (hull.mass ?? 0);
   const usableFuel = sum(layout, (e) => (e.def.fuel && e.def.fuel.type === mainFuel ? e.def.fuel.mass : 0)) + sum(boosterSpecs, (s) => s.propellant);
   const deadFuel = sum(layout, (e) => (e.def.fuel && e.def.fuel.type !== mainFuel ? e.def.fuel.mass : 0));
   const dryMass = partMass + deadFuel; // fuel the engine can't burn is just weight
-  const fuelMass = usableFuel;
+  // an over-strong ship on a weak pad throttles back for the first seconds: that propellant is spent on the pad
+  const fullWet = dryMass + usableFuel;
+  const liftoffBurn = padFx.liftoffLossMps > 0 && ispSL > 0 ? Math.min(usableFuel, fullWet * (1 - Math.exp(-padFx.liftoffLossMps / (ispSL * g0)))) : 0;
+  const fuelMass = usableFuel - liftoffBurn;
   const wetMass = dryMass + fuelMass;
-  const cost = sum(layout, (e) => (e.def.cost * costFactor(e) + mod(e).costD) * mod(e).costF) + sum(engineEntries, (e, i) => engineSpecs[i].cost * costFactor(e) * countOf(e));
+  const cost = sum(layout, (e) => (e.def.cost * costFactor(e) + mod(e).costD) * mod(e).costF) + sum(engineEntries, (e, i) => engineSpecs[i].cost * costFactor(e) * countOf(e)) + (hull.cost ?? 0);
 
   // Performance (one stage: the flight model burns everything with the thrust-weighted Isp)
   const deltaV = fuelMass > 0 && dryMass > 0 ? ispVac * g0 * Math.log(wetMass / dryMass) : 0;
@@ -126,10 +135,11 @@ export function computeShipSpec(assembly, { catalog, engines, launch, balance, p
   // Centre of mass and pressure (metres from the stack base)
   // Full mass of one part: structure + any propellant inside (usable or not) + the engine hardware.
   const massOf = (e) => dryOf(e) + (e.def.fuel?.mass ?? 0) + (e.def.booster?.propellant ?? 0) + (e.def.engine ? engineStats(engineDefOf(e), engines, g0, mod(e)).mass * massFactor(e) * countOf(e) : 0);
-  const totalMass = sum(layout, massOf);
-  const comY = totalMass > 0 ? sum(layout, (e) => massOf(e) * e.centerY) / totalMass : 0;
-  const totalArea = sum(layout, (e) => e.def.aero.sideArea);
-  const copY = totalArea > 0 ? sum(layout, (e) => e.def.aero.sideArea * e.centerY) / totalArea : comY;
+  const skin = hull.segments ?? [];
+  const totalMass = sum(layout, massOf) + sum(skin, (g) => g.mass ?? 0);
+  const comY = totalMass > 0 ? (sum(layout, (e) => massOf(e) * e.centerY) + sum(skin, (g) => (g.mass ?? 0) * (g.centerY ?? 0))) / totalMass : 0;
+  const totalArea = sum(layout, (e) => e.def.aero.sideArea) + sum(skin, (g) => g.sideArea ?? 0);
+  const copY = totalArea > 0 ? (sum(layout, (e) => e.def.aero.sideArea * e.centerY) + sum(skin, (g) => (g.sideArea ?? 0) * (g.centerY ?? 0))) / totalArea : comY;
   const stackHeight = layout.reduce((top, e) => (e.attach === 'axial' ? Math.max(top, e.y + e.height) : top), 0);
   const comOffset = comY - stackHeight / 2;
   const copOffset = copY - stackHeight / 2;
@@ -172,7 +182,7 @@ export function computeShipSpec(assembly, { catalog, engines, launch, balance, p
     hasParachute: has('parachute'), hasAntenna: has('antenna'), hasShelter: has('shelter'), coldRatedSeals: !has('cheapSeals'),
     armorHits: count('armorHits'), spareO2Tanks: count('spareO2Tanks'), power: Math.round(power),
     // Extras Role 2's FlightController reads when present (not in the contract shape, harmless when ignored).
-    ascentCdA: noseCdA ?? 6, cdA: hasHeatShield ? (shieldCdA ?? 80) : 3,
+    ascentCdA: (noseCdA ?? 6) * (hull.cdAFactor ?? 1), cdA: hasHeatShield ? (shieldCdA ?? 80) : 3,
     ...(chuteCdA > 0 ? { chuteCdA } : {}),
   };
 
@@ -191,7 +201,7 @@ export function computeShipSpec(assembly, { catalog, engines, launch, balance, p
   if (stats.spareO2Tanks < 1) warnings.push('LOW_O2');
   if (!stats.hasAntenna) warnings.push('NO_ANTENNA');
   if (!stats.hasShelter) warnings.push('NO_SHELTER');
-  if (!stats.coldRatedSeals && slot.tempC < COLD_TEMP_C) warnings.push('COLD_SEALS');
+  if (!stats.coldRatedSeals && weather.tempC < COLD_TEMP_C) warnings.push('COLD_SEALS');
   if (reliability < RELIABILITY_MIN) warnings.push('LOW_RELIABILITY');
 
   const blocks = [];
@@ -209,7 +219,7 @@ export function computeShipSpec(assembly, { catalog, engines, launch, balance, p
     engines: engineSpecs.flatMap((s, i) => Array.from({ length: n(i) }, () => ({ fuel: s.fuel, nozzle: s.nozzle, pump: s.pump }))),
     stats,
     warnings,
-    launch: { tempC: slot.tempC, slot: slot.id, ...(site ? { site: site.id } : {}), ...(padChoices.length ? { pad: Object.fromEntries(padChoices.map((c) => [c.eq.key, c.option.id])) } : {}) },
+    launch: { ...(padFx.launch ?? {}), tempC: weather.tempC },
   };
 
   const breakdown = {
@@ -219,7 +229,7 @@ export function computeShipSpec(assembly, { catalog, engines, launch, balance, p
     finPartIds: layout.filter((e) => /fin/.test(e.type)).map((e) => e.id),
     capsulePartIds: layout.filter((e) => flags(e).capsule).map((e) => e.id),
     comY, copY, stackHeight, steering, stabilityMargin: margin, dvNeeded, oneWay, roundTrip: oneWay + dvNeeded.return,
-    usableFuel, deadFuel, slot, site, padChoices, launchFee, padReliability, engineSpecs, engineCount, boosterSpecs, mainFuel, thrustSL, baseReliability, reliabilityBonus: bonus,
+    usableFuel, deadFuel, liftoffBurn, slot, site, padChoices, launchFee, padReliability, weather, padFx, hull, engineSpecs, engineCount, boosterSpecs, mainFuel, thrustSL, baseReliability, reliabilityBonus: bonus,
     radius: layout.length ? Math.max(...layout.filter((e) => e.attach === 'axial').map((e) => partRadius(e.def))) : 1,
   };
 

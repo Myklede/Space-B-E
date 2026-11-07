@@ -55,7 +55,9 @@ export function createCatalog(json, internals = null) {
 
 export const partRadius = (def) => BASE_RADIUS * (SIZE_SCALE[def.size] ?? 1);
 
-const cloneLaunch = (l) => ({ slot: l?.slot ?? 'mild', site: l?.site ?? null, pad: { ...(l?.pad ?? {}) } });
+const cloneLaunch = (l) => ({ slot: 'mild', site: null, ...JSON.parse(JSON.stringify(l ?? {})), pad: JSON.parse(JSON.stringify(l?.pad ?? {})) });
+// outer skin: section id → material id of hull.js (missing = that section's default)
+const cloneHull = (h) => ({ ...(h && typeof h === 'object' ? h : {}) });
 
 function clonePart(p) {
   return { ...p, engine: p.engine ? { ...p.engine } : undefined, options: p.options ? { ...p.options } : undefined };
@@ -83,6 +85,7 @@ export class Assembly {
     this.name = json?.name ?? 'Untitled';
     this.symmetry = SYMMETRIES.includes(json?.symmetry) ? json.symmetry : 1;
     this.launch = cloneLaunch(json?.launch);
+    this.hull = cloneHull(json?.hull);
     this.parts = (json?.parts ?? []).map((p) => ({
       id: p.id, type: p.type, parent: p.parent ?? null, node: p.node ?? null,
       angle: Number(p.angle) || 0, yFrac: p.yFrac == null ? 0.5 : Number(p.yFrac), variant: p.variant ?? null, group: p.group ?? null,
@@ -153,13 +156,14 @@ export class Assembly {
 
   // ---------- history ----------
   #snapshot() {
-    return { name: this.name, symmetry: this.symmetry, launch: cloneLaunch(this.launch), parts: this.parts.map(clonePart) };
+    return { name: this.name, symmetry: this.symmetry, launch: cloneLaunch(this.launch), hull: cloneHull(this.hull), parts: this.parts.map(clonePart) };
   }
 
   #restore(s) {
     this.name = s.name;
     this.symmetry = s.symmetry;
     this.launch = cloneLaunch(s.launch);
+    this.hull = cloneHull(s.hull);
     this.parts = s.parts.map(clonePart);
     this.version += 1;
   }
@@ -391,6 +395,20 @@ export class Assembly {
     this.#commit();
   }
 
+  /** Merge fields into the launch settings (pad, equipment, launch day…), with undo. */
+  setLaunch(patch) {
+    this.#begin();
+    this.launch = cloneLaunch({ ...this.launch, ...patch });
+    this.#commit();
+  }
+
+  /** Outer skin material of one section (nose, body, tail): an id from hull.js. */
+  setHull(sectionId, materialId) {
+    this.#begin();
+    this.hull = { ...this.hull, [sectionId]: materialId };
+    this.#commit();
+  }
+
   /** One piece of pad equipment: key (equipment id) → option id. */
   setPadOption(key, optionId) {
     this.#begin();
@@ -572,7 +590,7 @@ export class Assembly {
   }
 
   toJSON() {
-    return { name: this.name, symmetry: this.symmetry, launch: cloneLaunch(this.launch), parts: this.parts.map(clonePart) };
+    return { name: this.name, symmetry: this.symmetry, launch: cloneLaunch(this.launch), hull: cloneHull(this.hull), parts: this.parts.map(clonePart) };
   }
 
   clone() {

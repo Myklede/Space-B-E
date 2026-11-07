@@ -28,6 +28,7 @@ import { createIconRenderer } from './partIcons.js';
 import { NASA_PARTS, hasNasaArt, nasaFailures, preloadNasaParts, registerNasaModels } from './bay/nasa.js';
 import { menu } from './menu.js';
 import { openPauseMenu, openSettings } from './settings.js';
+import { initLang } from './i18n.js';
 
 export { openPauseMenu, openSettings }; // other roles may open the Esc menu and settings from their states
 
@@ -447,6 +448,7 @@ function enterGonogo() {
 // ---------- module ----------
 export default {
   init() {
+    initLang(save);
     events.on('builder:highlightPart', ({ partId }) => bay?.highlight([partId]));
     events.on('ending:show', ({ endingId }) => save.update({ lastEnding: endingId }));
     const volume = save.load().volume;

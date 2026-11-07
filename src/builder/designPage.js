@@ -3,11 +3,12 @@
 // then every component of that section, then each component's choices, and inside the part, its own internals.
 // Nothing floats over the ship: every word is in the card column. One card open at a time.
 import { partFigures } from './stats.js';
-import { padArt } from './sections/pad/art.js';
+import { createPadViews } from './designPad.js';
+import { hullChoices, hullMaterial } from './hull.js';
 import { internalsArt } from './bay/internalsArt.js';
 import { BASE_RADIUS, SIZE_SCALE } from './assembly.js';
 import {
-  VEHICLE_SECTIONS, WARNING_SECTION, addThroughRow, applyShape, clearSection, currentShape, padState, rowCandidates, rowItems, rowOf, sectionParts,
+  VEHICLE_SECTIONS, WARNING_SECTION, addThroughRow, applyShape, clearSection, currentShape, rowCandidates, rowItems, rowOf, sectionParts,
 } from './sections.js';
 import { fmtInt, fmtKN, fmtMass, fmtMoney, fmtMoneyShort, fmtPct } from './format.js';
 
@@ -252,10 +253,9 @@ export function createDesignPage({ assembly, catalog, sections, materials, engin
   function viewHome(sec) {
     const out = [];
     const w = sectionWarnings(sec.id);
-    if (w.blocks.length || w.warnings.length) {
+    if (w.blocks.length) {
       const box = h('div', 'vd-issues');
       for (const id of w.blocks) box.append(h('div', 'vd-issue vd-issue--block', WARN[id] ?? id));
-      for (const id of w.warnings) box.append(h('div', 'vd-issue', WARN[id] ?? id));
       out.push(box);
     }
     const parts = sectionParts(assembly, sec.id);
@@ -299,6 +299,14 @@ export function createDesignPage({ assembly, catalog, sections, materials, engin
         comp.append(group);
       }
       out.push(comp);
+    }
+    if (!empty) {
+      const skin = h('div', 'vd-block');
+      skin.append(h('div', 'vd-label', '3 · Outer skin'));
+      const mat = hullMaterial(assembly.hull, sec.id);
+      const fig = last?.breakdown.hull?.bySection?.[sec.id];
+      skin.append(item({ id: 'hull', img: null, name: mat?.name ?? 'Skin', sub: fig?.mass ? `${fmtMass(fig.mass)} · covers the gaps between parts` : (mat?.note ?? ''), price: fig?.cost ? fmtMoneyShort(fig.cost) : '', onToggle: () => { sound('ui.click'); go({ view: 'hull' }); } }));
+      out.push(skin);
     }
     if (!empty) out.push(btn('vd-btn vd-btn--danger vd-btn--wide', `REMOVE THE WHOLE ${sec.short.toUpperCase()}`, () => hooks.onConfirm?.(`Take the ${sec.short.toLowerCase()} off the vehicle?`, () => { clearSection(assembly, sec); sound('ui.click'); changed(); }), { tool: 'clearsection' }));
     return out;
@@ -480,62 +488,33 @@ export function createDesignPage({ assembly, catalog, sections, materials, engin
     return out;
   }
 
-  // ---------- views of the pad ----------
-  function viewPadHome(pad) {
-    const st = padState(assembly, pad);
-    const out = [];
-    const w = sectionWarnings('pad');
-    if (w.warnings.length) { const box = h('div', 'vd-issues'); for (const id of w.warnings) box.append(h('div', 'vd-issue', WARN[id] ?? id)); out.push(box); }
-    const where = h('div', 'vd-block');
-    where.append(h('div', 'vd-label', '1 · Where and when'));
-    where.append(item({ id: 'site', img: null, name: st.site?.name ?? 'Launch site', sub: st.site?.real ?? '', price: st.site?.fee ? fmtMoneyShort(st.site.fee) : '', onToggle: () => go({ view: 'sites' }) }));
-    where.append(item({ id: 'slot', img: null, name: st.slot ? `${st.slot.name} · ${fmtInt(st.slot.tempC)} °C` : 'Launch window', sub: st.slot?.note ?? '', price: st.slot?.fee ? fmtMoneyShort(st.slot.fee) : 'free', onToggle: () => go({ view: 'slots' }) }));
-    out.push(where);
-    const eqBox = h('div', 'vd-block');
-    eqBox.append(h('div', 'vd-label', '2 · Pad equipment'));
-    for (const { eq, option } of st.equipment) eqBox.append(item({ id: `eq:${eq.key}`, img: null, name: eq.name, sub: option?.name ?? '', price: option?.fee ? fmtMoneyShort(option.fee) : 'free', onToggle: () => go({ view: 'equipment', key: eq.key }) }));
-    out.push(eqBox);
-    const fees = last?.breakdown.launchFee ?? 0;
-    out.push(facts(fact('Launch fees, paid at confirm', fmtMoney(fees)), fact('Pad reliability', `+${((last?.breakdown.padReliability ?? 0) * 100).toFixed(1)} %`)));
+  // ---------- outer skin of a section (hull.js) ----------
+  function viewHull(sec) {
+    const cur = hullMaterial(assembly.hull, sec.id);
+    const out = [para('Real rockets are one smooth body: skirts, interstages and fairings cover every narrower part. Pick what this section\'s skin is made of.', 'vd-muted')];
+    for (const m of hullChoices(sec.id)) {
+      const open = state.focus === m.id, isOn = m.id === cur?.id;
+      const rows = [];
+      if (m.maxTempC != null) rows.push(fact('Takes heat up to', `${fmtInt(m.maxTempC)} °C`));
+      if (m.massPerM2) rows.push(fact('Mass per square metre', `${m.massPerM2} kg`));
+      if (m.costPerM2) rows.push(fact('Price per square metre', fmtMoneyShort(m.costPerM2)));
+      if (m.real) rows.push(fact('Real-world reference', m.real));
+      out.push(item({
+        id: m.id, img: null, name: m.name, sub: m.short ?? '', price: '', on: isOn, tag: isOn ? { text: 'CHOSEN', kind: 'on' } : null,
+        expanded: open, onToggle: () => toggleFocus(m.id),
+        detail: open ? [para(m.note ?? ''), prosCons(m.pros, m.cons), facts(...rows)] : null,
+        action: open && !isOn ? primary('USE THIS SKIN', () => { assembly.setHull(sec.id, m.id); sound('ui.click'); state.focus = null; changed(); }, 'choose') : null,
+      }));
+    }
     return out;
   }
-  function choiceItems(options, currentId, onChoose, { subOf = (o) => o.note ?? '', priceOf = (o) => (o.fee ? fmtMoneyShort(o.fee) : 'free') } = {}) {
-    return options.map((o) => {
-      const open = state.focus === o.id;
-      const extra = [];
-      if (o.tempC != null) extra.push(fact('Temperature at the pad', `${fmtInt(o.tempC)} °C`));
-      if (o.reliability) extra.push(fact('Reliability', signed(o.reliability * 100, (n) => `${n.toFixed(1)} %`), o.reliability > 0 ? 'vd-good' : 'vd-warn'));
-      if (o.fee != null) extra.push(fact('Fee', o.fee ? fmtMoney(o.fee) : 'free'));
-      if (o.real) extra.push(fact('Real-world reference', o.real));
-      return item({
-        id: o.id, img: null, name: o.name, sub: subOf(o), price: priceOf(o), on: o.id === currentId, tag: o.id === currentId ? { text: 'CHOSEN', kind: 'on' } : null,
-        expanded: open, onToggle: () => toggleFocus(o.id),
-        detail: open ? [para(o.note ?? ''), prosCons(o.pros, o.cons), facts(...extra)] : null,
-        action: open && o.id !== currentId ? primary('CHOOSE', () => { onChoose(o); sound('ui.click'); state.focus = null; changed(); }, 'choose') : null,
-      });
-    });
-  }
-  function viewSites(pad) {
-    const st = padState(assembly, pad);
-    return [para('Where the ship leaves from. The site sets the weather of each launch window.', 'vd-muted'), ...choiceItems(pad.sites, st.site?.id, (o) => assembly.setLaunchSite(o.id, o.slots?.[0]?.id ?? null), { subOf: (o) => o.real ?? o.note ?? '' })];
-  }
-  function viewSlots(pad) {
-    const st = padState(assembly, pad);
-    return [para('The soonest window is free but may be cold. Seals that are not rated for cold lose their flexibility below 5 °C: the whole story of Challenger.', 'vd-muted'), ...choiceItems(st.site?.slots ?? [], st.slot?.id, (o) => assembly.setLaunchSlot(o.id), { subOf: (o) => `${fmtInt(o.tempC)} °C · ${o.note ?? ''}` })];
-  }
-  function viewEquipment(pad, key) {
-    const st = padState(assembly, pad);
-    const c = st.equipment.find((x) => x.eq.key === key);
-    if (!c) { back(); return []; }
-    return [para(c.eq.role ?? '', 'vd-muted'), ...choiceItems(c.eq.options, c.option?.id, (o) => assembly.setPadOption(key, o.id))];
-  }
+
+  // ---------- the launch pad card (designPad.js) ----------
+  const padViews = createPadViews({ assembly, sections, h, item, fact, facts, para, prosCons, primary, signed, go, back, state, sound, changed, toggleFocus, getLast: () => last });
 
   // ---------- cards ----------
   function sectionSummary(id) {
-    if (id === 'pad') {
-      const st = padState(assembly, sections.pad);
-      return { line: `${st.site?.name?.split(',')[0] ?? 'No site'} · ${st.slot ? `${st.slot.name} · ${fmtInt(st.slot.tempC)} °C` : ''}`, built: true, img: null };
-    }
+    if (id === 'pad') return padViews.summary();
     const sec = sections[id];
     const { axial, radial } = sectionParts(assembly, id);
     if (!axial.length && !radial.length) return { line: 'Not built yet: click to start', built: false, img: null };
@@ -551,25 +530,20 @@ export function createDesignPage({ assembly, catalog, sections, materials, engin
     const sec = sections[id];
     const names = [sec.short];
     for (const v of state.path.slice(1)) {
-      if (v.view === 'shapes') names.push('Shape');
+      if (id === 'pad') { names.push(padViews.crumb(v)); continue; }
+      if (v.view === 'hull') names.push('Outer skin');
+      else if (v.view === 'shapes') names.push('Shape');
       else if (v.view === 'add') names.push(`Add: ${sec.rows.find((r) => r.id === v.row)?.name ?? ''}`);
       else if (v.view === 'part') names.push(catalog.get(assembly.part(v.id)?.type)?.name ?? 'Part');
       else if (v.view === 'slot') names.push(kitOf(catalog.get(assembly.part(v.id)?.type))?.slots.find((s) => s.key === v.key)?.name ?? 'Inside');
-      else if (v.view === 'sites') names.push('Launch site');
-      else if (v.view === 'slots') names.push('Launch window');
-      else if (v.view === 'equipment') names.push(sec.equipment?.find((e) => e.key === v.key)?.name ?? 'Equipment');
     }
     return names;
   }
   function bodyFor(id) {
     const v = here();
-    if (id === 'pad') {
-      if (v.view === 'sites') return viewSites(sections.pad);
-      if (v.view === 'slots') return viewSlots(sections.pad);
-      if (v.view === 'equipment') return viewEquipment(sections.pad, v.key);
-      return viewPadHome(sections.pad);
-    }
+    if (id === 'pad') return padViews.body(v);
     const sec = sections[id];
+    if (v.view === 'hull') return viewHull(sec);
     if (v.view === 'shapes') return viewShapes(sec);
     if (v.view === 'add') return viewAdd(sec, v.row);
     if (v.view === 'part') return viewPart(sec, v.id);
@@ -587,7 +561,7 @@ export function createDesignPage({ assembly, catalog, sections, materials, engin
       const open = state.open === id;
       const sum = sectionSummary(id);
       const w = sectionWarnings(id);
-      const issues = w.blocks.length + w.warnings.length;
+      const issues = w.blocks.length;
       const card = h('article', `vd-sec${open ? ' vd-sec--open' : ''}${!sum.built ? ' vd-sec--empty' : ''}`);
       card.dataset.section = id;
       const head = btn('vd-sec-head', null, () => { sound('ui.click'); if (open) closeAll(); else openSection(id); }, { section: id });
@@ -625,8 +599,8 @@ export function createDesignPage({ assembly, catalog, sections, materials, engin
     stats.replaceChildren(
       chip('Cost', fmtMoneyShort(s.cost), s.cost + fee > money ? 'bad' : 'ok', fee ? `+${fmtMoneyShort(fee)} launch fees` : 'no launch fees'),
       chip('Funds', fmtMoneyShort(money), money < s.cost + fee ? 'bad' : 'ok'),
-      chip('Δv', fmtInt(s.deltaV), s.deltaV >= b.roundTrip ? 'good' : s.deltaV >= b.oneWay ? 'ok' : 'bad', `need ${fmtInt(b.oneWay)} m/s`),
-      chip('TWR', s.twrEarth.toFixed(2), s.twrEarth >= 1.2 ? 'ok' : s.twrEarth >= 1 ? 'warn' : 'bad', `${fmtKN(b.thrustSL)} on the pad`),
+      chip('Δv', fmtInt(s.deltaV), 'ok', 'm/s'),
+      chip('TWR', s.twrEarth.toFixed(2), s.twrEarth >= 1 ? 'ok' : 'bad', `${fmtKN(b.thrustSL)} on the pad`),
       chip('Reliability', fmtPct(s.reliability), s.reliability >= 0.9 ? 'good' : s.reliability >= 0.8 ? 'ok' : 'bad'),
     );
     shipName.textContent = assembly.name;
@@ -673,15 +647,14 @@ export function createDesignPage({ assembly, catalog, sections, materials, engin
     last = result;
     renderStats(result);
     scene3d.setLayout(assembly.layout());
-    const st = padState(assembly, sections.pad);
-    // the pad is redrawn when the site, the equipment or the ship's size changes (the tower and its arms fit the ship)
+    // the pad is redrawn when its own choices or the ship's size change (the tower and its arms fit the ship)
     const lay = scene3d.layout.filter((e) => e.attach === 'axial');
     const radius = lay.reduce((r, e) => Math.max(r, e.radius), 1.25);
     const height = lay.reduce((t, e) => Math.max(t, e.y + e.height), 0);
-    const key = `${st.site?.id}:${st.slot?.id}:${st.equipment.map((c) => c.option?.id).join(',')}:${radius.toFixed(2)}:${height.toFixed(1)}`;
+    const key = padViews.artKey({ radius, height });
     if (key !== padKey) {
       padKey = key;
-      scene3d.setPad(padArt(st, { radius, height, layout: scene3d.layout }));
+      scene3d.setPad(padViews.art({ radius, height, layout: scene3d.layout }));
     }
     if (scene3d.missingArt.length) hooks.onNeedArt?.(scene3d.missingArt);
     emptyHint.hidden = assembly.parts.length > 0;
