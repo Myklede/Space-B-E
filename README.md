@@ -20,7 +20,7 @@ Models, textures and audio go in `public/assets/`, and everything used is credit
 ### Role 1: Rocket Builder + Core Keeper
 
 - **Builds:** hangar computer UI, LEGO-style builder, engine workbench, Formula Lens, Go/No-Go poll, economy, save, preset ships, debug panel.
-- **Also:** sets up the Vite project, keeps `src/core/`, and merges to `main` at every checkpoint.
+- **Also:** sets up the Vite project, keeps `src/core/`, and checks that `dev` still boots at every checkpoint.
 - **Start with:** basic parts and snapping, text Go/No-Go, economy and failure penalty, the "Reliable" preset, debug mode.
 - **Delivers by hour 3:** `ShipSpec` and 3 preset JSONs in `src/core/mocks/`, economy API, debug panel, `builder:highlightPart`.
 - **Needs:** theme CSS (Role 3), guidebook text (Role 4).
@@ -59,11 +59,17 @@ Proposed owners, to confirm at the contract freeze:
 ## Working rules
 
 1. Stay inside your own folders. Talk to other roles only through events and public APIs (spec §14).
-2. Work on your role's branch. Keep `main` running: `npm run dev` starts the game with no console errors.
+2. Work on your role's branch and merge into `dev` when a piece is finished. Keep `dev` running: `npm run dev` starts the game with no console errors.
 3. Make every feature testable alone through `?debug=1`, using mocks until the real data arrives.
 4. Keep text, numbers, parts and task placement in JSON, so balancing doesn't cause merge conflicts.
 5. After the contract freeze, contracts change only if all four people agree.
 6. When the spec is unclear, pick the simplest option and write it in `docs/DECISIONS.md`.
+
+## Getting work to `main`
+
+1. Merge your finished work into `dev` and push it.
+2. Tell the team, and everyone checks `dev`.
+3. When everyone agrees, dtri moves `dev` to `main`. Nobody else pushes to `main`.
 
 ## Timeline
 
@@ -77,13 +83,15 @@ Proposed owners, to confirm at the contract freeze:
 | 42–45 | Feature freeze, bug fixes only, deploy |
 | 45–48 | Record a backup demo video, rehearse the pitch |
 
-Role 1 merges to `main` at hours **12, 18, 24, 30, 36 and 42**. When time runs short, cut from the bottom tier up (spec §16).
+Everyone merges finished work into `dev` at hours **12, 18, 24, 30, 36 and 42**, and Role 1 checks that it still boots. When time runs short, cut from the bottom tier up (spec §16).
 
 ## Getting started
 
 ```bash
 git clone https://github.com/dtri2206/SpaceB-E.git
 cd SpaceB-E
+git switch dev
+npm install
 git switch -c <your-role-branch>
 ```
 
