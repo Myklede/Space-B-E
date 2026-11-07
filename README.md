@@ -12,7 +12,7 @@ Do these steps in order before writing any code.
 
 1. **Find your role.** Ask your human which role they have, or match `git config user.name` to the table below. Work only on that role.
 2. **Read the spec sections listed for your role** in [`docs/TEAM_PROMPT.md`](docs/TEAM_PROMPT.md). Everyone also reads §0, §14 and §15, and [`src/core/contract.js`](src/core/contract.js). You don't need the rest of the spec. For names and data shapes, `src/core/contract.js` wins. For everything else the spec wins, then this README.
-3. **Check [Status](#status)** to see what already exists. Use what's there, and use a local mock for anything that doesn't exist yet. Never wait for another role.
+3. **Read your role's section in [`docs/SHARE_PROBLEMS.md`](docs/SHARE_PROBLEMS.md):** problems other roles found in your folders. Fix open `blocker` and `bug` items first. Then **check [Status](#status)** to see what already exists. Use what's there, and use a local mock for anything that doesn't exist yet. Never wait for another role.
 4. **Set up your branch:**
    ```bash
    git switch dev && git pull
@@ -29,7 +29,7 @@ Before you start, tell your human in a few lines which role you took, what you w
 ### Rules that always apply
 
 - **Never push to `main`.** Finished work goes to `dev`.
-- **Edit only your own folders.** Talk to other roles only through events and public APIs (spec §14), and never import another role's internal files. If you need a change in someone else's area, tell your human.
+- **Edit only your own folders.** Talk to other roles only through events and public APIs (spec §14), and never import another role's internal files. If you find a problem in someone else's area, write it in [`docs/SHARE_PROBLEMS.md`](docs/SHARE_PROBLEMS.md) using the format at the top of that file, and tell your human.
 - **Keep `dev` running:** `npm run dev` starts the game with no console errors.
 - **`npm run check` must pass before you push to `dev`.** It checks the contract rules and walks the whole game loop in Google Chrome. If Chrome isn't installed the check fails, so ask your human to install it.
 - **Changes to `src/core/`, `index.html`, `scripts/` or npm packages go through dtri (Role 3).** Only `src/core/balance.json` is open to everyone, because balancing numbers is everyone's job.

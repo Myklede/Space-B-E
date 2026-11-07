@@ -174,7 +174,7 @@ function gitOk(...args) {
 if (!gitOk('rev-parse', '--is-inside-work-tree')) {
   notes.push('git checks skipped: not inside a git repository.');
 } else if (!gitOk('rev-parse', '--verify', '--quiet', 'origin/dev')) {
-  notes.push('git checks skipped: origin/dev does not exist (run git fetch).');
+  fail('(git)', 0, 'origin/dev is missing. Run: git fetch origin. If GitHub has no dev branch, someone renamed or deleted it: stop and tell dtri. Do not create it yourself.');
 } else {
   if (!gitOk('merge-base', '--is-ancestor', 'origin/dev', 'HEAD')) {
     fail('(git)', 0, 'This branch does not contain origin/dev. Run: git merge origin/dev  (then fix conflicts and run npm run check again).');
@@ -195,7 +195,7 @@ if (!gitOk('rev-parse', '--is-inside-work-tree')) {
     notes.push('role folder check skipped: ALLOW_OWNERSHIP_CHANGE=1.');
   } else if (role && ROLE_FOLDERS[role]) {
     const folders = ROLE_FOLDERS[role];
-    const shared = ['README.md', 'CREDITS.md', 'docs/DECISIONS.md', 'src/core/balance.json']; // balancing numbers are everyone's job
+    const shared = ['README.md', 'CREDITS.md', 'docs/DECISIONS.md', 'docs/SHARE_PROBLEMS.md', 'src/core/balance.json']; // balancing numbers are everyone's job
     const sandbox = new RegExp(`^sandbox/role${role}\\.`);
     // Role 3 keeps src/core, so it also keeps the project files around it.
     const keeper = role === '3' && /^(scripts\/|docs\/|index\.html$|package(-lock)?\.json$|AGENTS\.md$|CLAUDE\.md$|\.gitignore$)/;
