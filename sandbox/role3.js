@@ -58,7 +58,9 @@ const vfx = [];
 // The launch site and mission props of the current view, driven by the altitude slider and the prop state dropdown.
 let site = null;
 const propItems = [];
-const scene3d = { altitude: 0, propState: 'idle' };
+const roverItems = [];
+const ticks = []; // per-frame animators of the current view
+const scene3d = { altitude: 0, propState: 'idle', roverDust: 0 };
 
 const sunFrom = (elevation, azimuth) => {
   const e = THREE.MathUtils.degToRad(elevation), a = THREE.MathUtils.degToRad(azimuth);
@@ -306,6 +308,29 @@ const VIEWS = {
       return scene;
     },
   },
+  rover: {
+    label: 'Rover',
+    build() {
+      const { scene } = createMarsScene({ sunElevation: 30, sunAzimuth: 120 });
+      const rover = spawnRover(scene, 10, 8);
+      const g = rover.position.y;
+      orbit();
+      controls.autoRotate = true;
+      controls.autoRotateSpeed = 1.5;
+      look([15.5, g + 2.2, 13.5], [10, g + 0.6, 8]);
+      return scene;
+    },
+  },
+  roverEye: {
+    label: "Rover: driver's eye",
+    build() {
+      const { scene } = createMarsScene({ sunElevation: 30, sunAzimuth: 120 });
+      const rover = spawnRover(scene, 10, 8);
+      pivot();
+      look([10 - 0.32, rover.position.y + 1.48, 8 + 0.22], [10 - 0.32, rover.position.y + 1.2, 8 - 10]);
+      return scene;
+    },
+  },
   gear: {
     label: 'Rocket parts: side equipment',
     build() {
@@ -326,6 +351,23 @@ const VIEWS = {
     },
   },
 };
+
+// The rover on Mars ground; wheels steer left and right and spin so both pivots can be checked by eye.
+function spawnRover(scene, x, z) {
+  const rover = assets.get('rover');
+  rover.position.set(x, getTerrainHeight(x, z), z);
+  scene.add(rover);
+  roverItems.push(rover);
+  const wheels = ['wheelFL', 'wheelFR', 'wheelRL', 'wheelRR'].map((n) => rover.getObjectByName(n));
+  let t = 0, spin = 0;
+  ticks.push((dt) => {
+    t += dt;
+    spin -= dt * 3;
+    const steer = Math.sin(t * 0.7) * 0.5;
+    wheels.forEach((w, i) => { w.rotation.y = i < 2 ? steer : -steer; w.children[0].rotation.x = spin; });
+  });
+  return rover;
+}
 
 function placeLander(scene) {
   const lander = assets.get('lander');
@@ -374,6 +416,9 @@ function show(name) {
   site = null;
   vfx.length = 0;
   propItems.length = 0;
+  roverItems.length = 0;
+  ticks.length = 0;
+  controls.autoRotate = false;
   const scene = VIEWS[name].build();
   graphics.setView(scene, camera);
   Object.entries(buttons).forEach(([key, b]) => b.setAttribute('aria-pressed', key === name));
@@ -422,6 +467,7 @@ gui.add({
 }, 'run').name('test cinematic');
 const sceneFolder = gui.addFolder('launch site and props');
 sceneFolder.add(scene3d, 'altitude', 0, 45000).name('setAltitude (m)').onChange((v) => site?.setAltitude(v));
+sceneFolder.add(scene3d, 'roverDust', 0, 1).name('rover setDust').onChange((v) => roverItems.forEach((r) => r.userData.setDust(v)));
 sceneFolder.add(scene3d, 'propState', ['idle', 'active', 'done']).name('prop state').onChange((v) => propItems.forEach((p) => p.userData.setState(v)));
 const fx = { throttle: 1, airDensity: 1, intensity: 1, fuel: 'methalox' };
 const vfxFolder = gui.addFolder('vfx');
@@ -435,7 +481,7 @@ gui.close();
 graphics.renderer.info.autoReset = false; // keeps the scene's triangle count, not just the last fullscreen pass
 show(VIEWS[params.get('view')] ? params.get('view') : 'orbit');
 
-window.__role3 = { graphics, assets, cinematic, getTerrainHeight, audio, camera, controls, vfx, get site() { return site; }, propItems, stopWalk: () => { walking = null; } };  // for automated checks
+window.__role3 = { graphics, assets, cinematic, getTerrainHeight, audio, camera, controls, vfx, get site() { return site; }, propItems, roverItems, stopWalk: () => { walking = null; } };  // for automated checks
 
 // Frame stats for the sandbox readout and the automated checks.
 const fpsEl = document.getElementById('fps');
@@ -446,6 +492,7 @@ function frame(now) {
   const dt = Math.min((now - last) / 1000, 0.1);
   last = now;
   walk(dt);
+  ticks.forEach((f) => f(dt));
   graphics.renderer.info.reset();
   if (!cinematic.active) controls.update();
   graphics.render(dt);

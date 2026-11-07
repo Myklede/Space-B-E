@@ -3,6 +3,7 @@ import { createPlanet, loadPlanetMaps } from './planets.js';
 import { createSpaceSky } from './sky.js';
 import { createCabin, createCockpit, interiorEnvironment, pbr } from './interiors.js';
 import { PROPS } from './props.js';
+import { createRover } from './rover.js';
 import { createEngineFlame, createEntryPlasma, createExhaust, createLandingDust } from './vfx.js';
 
 const factories = new Map();
@@ -442,6 +443,7 @@ register('planet:earth', () => createPlanet('earth'));
 register('planet:mars', () => createPlanet('mars'));
 register('sky:space', createSpaceSky);
 register('lander', () => createLander());
+register('rover', createRover); // crewed LRV-style rover for Role 2: src/graphics/rover.js
 for (const [name, factory] of Object.entries(PROPS)) register(name, factory); // mission props: src/graphics/props.js
 
 /**
