@@ -1,13 +1,13 @@
 {
   "name": "Launch pad",
   "short": "Pad",
-  "blurb": "Where and when the ship leaves Earth, and the equipment that holds it until it does.",
+  "blurb": "Where and when the ship leaves Earth, and the ground equipment that feeds it, holds it, cools it and protects it until it does. The pad changes the launch fees, the ship's reliability and the weather at liftoff.",
   "sites": [
     {
       "id": "cape",
       "name": "Cape Canaveral, Florida",
-      "real": "LC-39A / SLC-41",
-      "note": "Warm, humid, thunderstorms in summer.",
+      "real": "Kennedy Space Center LC-39A · 28.6° N",
+      "note": "America's busiest spaceport, on a sandy island on the Atlantic coast. Rockets fly east over the ocean, so spent stages fall into the sea instead of on towns, and the Earth's spin gives them about 408 m/s for free (the game does not count it). Summers bring the most lightning in the USA; in winter a cold front can bring frost. In the game: no site fee; the free window is cold, and a warm one costs pad fees for the wait.",
       "fee": 0,
       "slots": [
         {
@@ -15,91 +15,720 @@
           "name": "Tomorrow 06:10",
           "tempC": 2,
           "fee": 0,
-          "note": "Clear and cold. No waiting, no fees."
+          "note": "A January cold front: clear, still and close to freezing. No waiting, no fees.",
+          "real": "Challenger, 28 January 1986: about 2 °C at launch, some 9 °C colder than any earlier Shuttle launch. A cold, stiff rubber O-ring in a booster joint let hot gas escape."
         },
         {
           "id": "mild",
           "name": "In 3 days 11:40",
           "tempC": 18,
           "fee": 150000,
-          "note": "Pad fees for the wait."
+          "note": "The front has passed: mild, dry and calm. Pad fees for the wait."
         },
         {
           "id": "warm",
           "name": "In 6 days 14:00",
           "tempC": 27,
           "fee": 300000,
-          "note": "Pad fees for the wait."
+          "note": "Warm and humid. Thunderstorms build inland in the afternoon, so the window is short. Pad fees for the wait."
+        }
+      ]
+    },
+    {
+      "id": "vandenberg",
+      "name": "Vandenberg, California",
+      "real": "Vandenberg SFB SLC-3E / SLC-4E · 34.6° N",
+      "note": "On the Pacific coast. Rockets fly south over open ocean into polar orbits, which pass over the whole Earth; flying east from here would cross California's towns. The sea keeps it cool and foggy but rarely freezing. NASA's InSight left from here for Mars, the first planetary mission launched from the US West Coast. In the game: a site fee about the same as waiting at the Cape, and no frost in any window.",
+      "fee": 130000,
+      "slots": [
+        {
+          "id": "vafb_fog",
+          "name": "Tomorrow 04:05",
+          "tempC": 8,
+          "fee": 0,
+          "note": "Winter sea fog: cool and damp, but the fog keeps the frost away. No waiting, no fees.",
+          "real": "InSight to Mars, 5 May 2018: an Atlas V lifted off from SLC-3E at 04:05 local time into fog so thick the rocket vanished in seconds."
+        },
+        {
+          "id": "vafb_noon",
+          "name": "In 2 days 12:30",
+          "tempC": 14,
+          "fee": 30000,
+          "note": "The fog has burned off; light sea breeze. Pad fees for the wait."
+        },
+        {
+          "id": "vafb_wind",
+          "name": "In 5 days 15:20",
+          "tempC": 19,
+          "fee": 60000,
+          "note": "A dry wind from inland pushes the fog out to sea: clear and mild, but gusty. Pad fees for the wait."
+        }
+      ]
+    },
+    {
+      "id": "starbase",
+      "name": "Starbase, Texas",
+      "real": "SpaceX Starbase, Boca Chica · 26.0° N",
+      "note": "A private launch site on a beach at the southern tip of Texas, a few kilometres from Mexico, built for Starship, the largest rocket ever flown. Rockets fly east over the Gulf of Mexico. Salt spray rusts steel, the only road to the beach closes for every launch, and the Gulf brings hurricanes in late summer. In the game: the cheapest frost-free launch, by a little.",
+      "fee": 120000,
+      "slots": [
+        {
+          "id": "sb_norther",
+          "name": "Tomorrow 07:15",
+          "tempC": 11,
+          "fee": 0,
+          "note": "A winter 'norther': cold wind off the land, clear sky, choppy sea. No waiting, no fees."
+        },
+        {
+          "id": "sb_breeze",
+          "name": "In 3 days 13:00",
+          "tempC": 20,
+          "fee": 30000,
+          "note": "Mild and humid with a light sea breeze. Pad fees for the wait."
+        },
+        {
+          "id": "sb_warm",
+          "name": "In 5 days 10:00",
+          "tempC": 24,
+          "fee": 60000,
+          "note": "A warm, sticky winter day: south wind off the Gulf. Pad fees for the wait."
+        }
+      ]
+    },
+    {
+      "id": "kourou",
+      "name": "Kourou, French Guiana",
+      "real": "Guiana Space Centre ELA-3 · 5.2° N",
+      "note": "Europe's spaceport, on the coast of South America only 5° from the equator. The ground here moves east at 463 m/s, almost the full speed of the equator, which is why rockets for high orbits love it (the game does not count it). No hurricanes and no earthquakes, but hot, humid and rainy most of the year. Rockets arrive from Europe by ship. In the game: warm in every window, for the highest site fee.",
+      "fee": 150000,
+      "slots": [
+        {
+          "id": "kr_morning",
+          "name": "Tomorrow 09:20",
+          "tempC": 27,
+          "fee": 0,
+          "note": "A humid morning in the short rainy season; showers come and go. No waiting, no fees.",
+          "real": "James Webb Space Telescope: Ariane 5 from ELA-3, 25 December 2021 at 09:20 local time."
+        },
+        {
+          "id": "kr_squall",
+          "name": "In 2 days 17:30",
+          "tempC": 30,
+          "fee": 30000,
+          "note": "Hot afternoon with a squall line on the radar; the lightning rules may hold the count. Pad fees for the wait."
+        },
+        {
+          "id": "kr_night",
+          "name": "In 4 days 22:45",
+          "tempC": 24,
+          "fee": 60000,
+          "note": "A night launch after the rain: cooler air and calm winds. Pad fees for the wait."
+        }
+      ]
+    },
+    {
+      "id": "baikonur",
+      "name": "Baikonur, Kazakhstan",
+      "real": "Gagarin's Start, Site 1/5 · 45.9° N",
+      "note": "On the flat, empty steppe of Kazakhstan, picked in 1955 so spent stages fall on open land and the radio stations guiding the first rockets could see them climb. Sputnik (1957) and Yuri Gagarin (1961) left from Site 1, which flew 520 times until 2019; the rocket hangs in four steel arms over a deep flame pit. Winters are bitter and summers very hot, but waiting months for spring is no option: Mars lines up with Earth for only a few weeks every 26 months. In the game: no site fee, but every window this week is below freezing, so pick it only with cold-rated seals.",
+      "fee": 0,
+      "slots": [
+        {
+          "id": "bk_winter",
+          "name": "Tomorrow 09:20",
+          "tempC": -18,
+          "fee": 0,
+          "note": "Deep winter on the steppe: dry, still and bitterly cold. Soyuz rockets do fly in this, with seals rated for it. No waiting, no fees."
+        },
+        {
+          "id": "bk_wind",
+          "name": "In 3 days 12:00",
+          "tempC": -9,
+          "fee": 30000,
+          "note": "Grey and windy, with snow blowing across the pad. Pad fees for the wait."
+        },
+        {
+          "id": "bk_thaw",
+          "name": "In 6 days 14:00",
+          "tempC": -2,
+          "fee": 60000,
+          "note": "A short thaw at midday, still just below freezing. Pad fees for the wait."
+        }
+      ]
+    },
+    {
+      "id": "plesetsk",
+      "name": "Plesetsk, Russia",
+      "real": "Plesetsk Cosmodrome · 62.9° N",
+      "note": "A Cold War missile base hidden in the northern forest, about 800 km north of Moscow. Rockets fly north into polar orbits. For decades it launched more rockets than any other site on Earth, well over 1,500 by now. Winters are long and fierce, and spring is months away: far too long, since Mars lines up with Earth for only a few weeks every 26 months. In the game: no site fee, but every window this week is far below freezing, so pick it only with cold-rated seals.",
+      "fee": 0,
+      "slots": [
+        {
+          "id": "pl_winter",
+          "name": "Tomorrow 11:00",
+          "tempC": -27,
+          "fee": 0,
+          "note": "Midwinter: about four hours of pale daylight and deep frost. Everything on the ship must be rated for it. No waiting, no fees."
+        },
+        {
+          "id": "pl_snow",
+          "name": "In 3 days 12:30",
+          "tempC": -15,
+          "fee": 30000,
+          "note": "Low cloud and light snow; a little milder. Pad fees for the wait."
+        },
+        {
+          "id": "pl_mild",
+          "name": "In 5 days 13:00",
+          "tempC": -6,
+          "fee": 60000,
+          "note": "A mild spell from the Atlantic, still well below freezing. Pad fees for the wait."
+        }
+      ]
+    },
+    {
+      "id": "wenchang",
+      "name": "Wenchang, Hainan, China",
+      "real": "Wenchang LC-101 · 19.6° N",
+      "note": "China's southernmost spaceport, on the tropical island of Hainan. It was built by the sea so the 5 m wide Long March 5 can arrive by ship (it is too wide for railway tunnels), and so spent stages fall into the ocean instead of on villages, as they do from China's inland sites. Tianwen-1 left from here for Mars in July 2020. In the game: mild in every window, for a site fee like waiting at the Cape.",
+      "fee": 140000,
+      "slots": [
+        {
+          "id": "wc_noon",
+          "name": "Tomorrow 12:30",
+          "tempC": 22,
+          "fee": 0,
+          "note": "Dry-season noon: sunny, with a steady trade wind. No waiting, no fees."
+        },
+        {
+          "id": "wc_dawn",
+          "name": "In 3 days 06:30",
+          "tempC": 16,
+          "fee": 30000,
+          "note": "A cool, clear dry-season dawn. Pad fees for the wait."
+        },
+        {
+          "id": "wc_evening",
+          "name": "In 5 days 20:30",
+          "tempC": 19,
+          "fee": 60000,
+          "note": "A still evening; crowds watch from the beach. Pad fees for the wait."
+        }
+      ]
+    },
+    {
+      "id": "tanegashima",
+      "name": "Tanegashima, Japan",
+      "real": "Tanegashima Yoshinobu LP-1 · 30.4° N",
+      "note": "Japan's main spaceport, on a green island in the far south, often called the most beautiful launch site in the world. Rockets fly south-east over the Pacific. To protect the local fishermen, launches were allowed on only 190 days a year until 2011; now they may launch all year, up to 17 times. The UAE's Hope left from here for Mars in July 2020. In the game: a cool but frost-free winter, among the cheapest frost-free launches.",
+      "fee": 120000,
+      "slots": [
+        {
+          "id": "tn_morning",
+          "name": "Tomorrow 08:00",
+          "tempC": 8,
+          "fee": 0,
+          "note": "A cool, windy winter morning under broken cloud. No waiting, no fees."
+        },
+        {
+          "id": "tn_noon",
+          "name": "In 3 days 12:00",
+          "tempC": 13,
+          "fee": 30000,
+          "note": "Sunny and calm between two winter fronts. Pad fees for the wait."
+        },
+        {
+          "id": "tn_afternoon",
+          "name": "In 6 days 14:00",
+          "tempC": 15,
+          "fee": 60000,
+          "note": "A mild afternoon as the north wind drops. Pad fees for the wait."
+        }
+      ]
+    },
+    {
+      "id": "mahia",
+      "name": "Mahia Peninsula, New Zealand",
+      "real": "Rocket Lab Launch Complex 1 · 39.3° S",
+      "note": "The world's first private orbital launch site (opened 2016), on a remote sheep-farming peninsula. So few ships and planes pass that it is licensed for a launch every 72 hours for 30 years. It is in the southern hemisphere, so January is summer: mild, breezy and often clear. In the game: summer in every window, for a site fee like waiting at the Cape.",
+      "fee": 130000,
+      "slots": [
+        {
+          "id": "nz_dawn",
+          "name": "Tomorrow 06:30",
+          "tempC": 13,
+          "fee": 0,
+          "note": "A calm, clear summer dawn over the sea. No waiting, no fees."
+        },
+        {
+          "id": "nz_afternoon",
+          "name": "In 2 days 15:00",
+          "tempC": 21,
+          "fee": 30000,
+          "note": "A warm afternoon with a fresh sea breeze. Pad fees for the wait."
+        },
+        {
+          "id": "nz_evening",
+          "name": "In 5 days 20:00",
+          "tempC": 17,
+          "fee": 60000,
+          "note": "A long summer evening after a passing shower. Pad fees for the wait."
         }
       ]
     }
   ],
   "equipment": [
     {
-      "key": "clamps",
-      "name": "Hold-down clamps",
-      "role": "Hold the ship on the pad until every engine is at full thrust.",
+      "key": "mount",
+      "name": "Launch mount and flame trench",
+      "role": "What the ship stands on, and where its fire goes in the first seconds after the engines light.",
+      "options": [
+        {
+          "id": "slab",
+          "name": "Flat concrete pad",
+          "fee": 0,
+          "reliability": 0,
+          "note": "The ship stands on a plain concrete slab. At ignition the exhaust slams into the concrete, splashes back up at the engines and blasts gravel and chunks of concrete around the pad.",
+          "pros": [
+            "Free",
+            "Nothing to build"
+          ],
+          "cons": [
+            "Hot gas and debris bounce back at the engines",
+            "The pad needs repairs after every launch"
+          ],
+          "real": "Starship's first flight (20 April 2023) left a mount with no flame trench and no water under it: the 33 Raptor engines dug a crater and threw concrete chunks across the site."
+        },
+        {
+          "id": "deflector",
+          "name": "Raised mount and deflector",
+          "fee": 50000,
+          "reliability": 0.004,
+          "note": "The ship stands on a steel ring a few metres up. A sloped deflector under it turns the fire sideways into an open channel, away from the ship and the tower.",
+          "pros": [
+            "The exhaust goes one way, away from the ship",
+            "Cheap to build"
+          ],
+          "cons": [
+            "One side of the pad is a fire zone",
+            "The deflector lining wears and needs repairs"
+          ],
+          "real": "Gagarin's Start at Baikonur: the Soyuz hangs over a deep pit, and a sloped deflector at its bottom sends the flame out of one side."
+        },
+        {
+          "id": "trench",
+          "name": "Flame trench and deflector",
+          "fee": 110000,
+          "reliability": 0.007,
+          "note": "A concrete trench runs under the pad. In it, a steel wedge shaped like a roof splits the exhaust and sends it out of both ends, far from the ship. The walls are lined with heat-proof brick.",
+          "pros": [
+            "Fire and debris go far from the ship and the tower",
+            "Handles big rockets"
+          ],
+          "cons": [
+            "A big concrete job",
+            "Bricks and steel plates wear out"
+          ],
+          "real": "LC-39B at Kennedy: the trench is about 137 m long, 18 m wide and 13 m deep; the deflector is about 150 steel plates of up to 1.8 t each, and 96,000 heat-proof bricks line the walls."
+        },
+        {
+          "id": "mlp",
+          "name": "Mobile launcher platform",
+          "fee": 160000,
+          "reliability": 0.008,
+          "note": "The ship is assembled indoors on a two-storey steel platform. A giant crawler then carries platform and ship to the pad and sets them down over the flame trench. The work is done out of the weather, and the pad is busy for days instead of months.",
+          "pros": [
+            "Built and checked under a roof",
+            "The pad stays free for other launches",
+            "Comes with a flame trench under it"
+          ],
+          "cons": [
+            "The most expensive mount",
+            "A slow, careful drive to the pad"
+          ],
+          "real": "Shuttle mobile launcher platform: 49 × 41 m, 7.6 m high, 3,730 t. The 2,700 t crawler-transporter carried it at about 1.6 km/h and up the pad's 5 % ramp."
+        }
+      ]
+    },
+    {
+      "key": "tower",
+      "name": "Service tower",
+      "role": "Gives people, hoses and cables a way up the ship: propellant, power, cooling air and data reach it until the last seconds.",
       "options": [
         {
           "id": "none",
-          "name": "No hold-down (release at ignition)",
+          "name": "No tower",
           "fee": 0,
           "reliability": 0,
-          "note": "The ship lifts as soon as thrust exceeds weight, whatever the engines are doing.",
+          "note": "Only a small plug at the base of the ship carries propellant and power. Nothing reaches the upper ship, so a last-minute problem up there means rolling back to the hangar.",
+          "pros": [
+            "Free",
+            "Nothing for the exhaust to damage"
+          ],
+          "cons": [
+            "No way to reach the upper ship on the pad",
+            "No cooling air for the crew cabin"
+          ],
+          "real": "The German V-2 of 1944 stood alone on a small firing table, fuelled by hoses from road tankers."
+        },
+        {
+          "id": "fixed",
+          "name": "Fixed umbilical tower",
+          "fee": 120000,
+          "reliability": 0.005,
+          "note": "A steel lattice tower beside the ship, with floors every few metres and swing arms that carry hoses and cables to each level. The arms swing clear in the last seconds; the tower stays.",
+          "pros": [
+            "Reach every level of the ship",
+            "Propellant and power topped up until liftoff"
+          ],
+          "cons": [
+            "Must survive the exhaust at every launch",
+            "Its arms must swing clear on time"
+          ],
+          "real": "Saturn V's launch umbilical tower stood 116 m tall with nine swing arms: four swung back before liftoff and five at the moment of launch. Part of it lives on as LC-39A's fixed service structure, which now serves Falcon 9 and Falcon Heavy."
+        },
+        {
+          "id": "rss",
+          "name": "Rotating service structure",
+          "fee": 200000,
+          "reliability": 0.007,
+          "note": "A fixed tower plus a tall enclosed building on a hinge that swings around the ship like a door. Closed, it is a clean room for loading the payload and a shield from rain and wind. It swings back hours before launch.",
+          "pros": [
+            "Clean, sheltered work on the upper ship",
+            "Protects the ship from the weather"
+          ],
+          "cons": [
+            "The most expensive tower",
+            "Hours to swing back"
+          ],
+          "real": "Space Shuttle pads 39A and 39B: the rotating service structure turned 120 degrees on a hinge pin to close around the orbiter's payload bay."
+        },
+        {
+          "id": "strongback",
+          "name": "Strongback (Falcon style)",
+          "fee": 140000,
+          "reliability": 0.006,
+          "note": "The ship is put together lying down in a hangar. A steel frame, the strongback, rolls it to the pad and lifts it upright. It carries the hoses and holds the ship until it tilts back a few degrees minutes before launch.",
+          "pros": [
+            "Quick to set up, few people on the pad",
+            "The ship is built lying down, easy to reach"
+          ],
+          "cons": [
+            "The upper ship is hard to reach once upright",
+            "The crew needs a separate access tower"
+          ],
+          "real": "SpaceX's transporter-erector at SLC-40 and LC-39A pulls back about 4½ minutes before Falcon 9 lifts off. Soyuz and Rocket Lab's Electron also roll out lying down and are raised at the pad."
+        }
+      ]
+    },
+    {
+      "key": "clamps",
+      "name": "Hold-down clamps",
+      "role": "Hold the ship on the pad after the engines light, until every engine is at full thrust.",
+      "options": [
+        {
+          "id": "none",
+          "name": "No hold-down",
+          "fee": 0,
+          "reliability": 0,
+          "note": "The ship lifts as soon as its thrust is greater than its weight, whatever the engines are doing.",
           "pros": [
             "Free"
           ],
           "cons": [
-            "A failing engine is found out in the air"
+            "An engine that starts badly is found out in the air"
           ]
         },
         {
           "id": "hold",
           "name": "Hold-down clamps",
           "fee": 80000,
-          "reliability": 0.01,
-          "note": "Clamps hold the ship for a few seconds while the computer checks every engine; a bad start shuts down on the pad.",
+          "reliability": 0.008,
+          "note": "Clamps grip the base of the ship for a few seconds after ignition while the computer checks every engine. If one is not right, the engines shut down and the ship stays on the pad.",
           "pros": [
-            "Catches bad starts on the ground"
+            "Catches bad engine starts on the ground"
           ],
           "cons": [
-            "Pad fee"
+            "Pad fee",
+            "A shutdown on the pad still means days of checks"
           ],
-          "real": "Saturn V hold-down arms, Falcon 9 clamps"
+          "real": "Falcon 9's hydraulic clamps let go only after the computer has seen all nine engines at full thrust. The Space Shuttle had five pad aborts after its main engines had lit."
+        },
+        {
+          "id": "release",
+          "name": "Hold-down arms, slow release",
+          "fee": 130000,
+          "reliability": 0.009,
+          "note": "Heavy hold-down arms plus a 'controlled release': tapered steel pins are pulled through dies as the ship rises, so it is let go gently over the first few centimetres instead of with a jolt.",
+          "pros": [
+            "Catches bad engine starts",
+            "No jolt on the structure at release"
+          ],
+          "cons": [
+            "The most expensive clamps",
+            "Heavy steel to refurbish after each launch"
+          ],
+          "real": "Saturn V: four hold-down arms of 18 t each held the rocket until all five F-1 engines were at full thrust; the release system then eased it free over its first 15 cm or so."
         }
       ]
     },
     {
       "key": "deluge",
       "name": "Sound suppression water",
-      "role": "A flood of water under the engines that soaks up the roar.",
+      "role": "A flood of water under and around the engines that soaks up the roar, so the sound does not shake the ship apart.",
       "options": [
         {
           "id": "none",
           "name": "No water",
           "fee": 0,
           "reliability": 0,
-          "note": "The sound of the engines reflects off the pad and shakes the ship.",
+          "note": "The roar of the engines bounces off the pad and back up at the ship, loud enough to shake wiring loose and damage the payload.",
           "pros": [
             "Free"
           ],
           "cons": [
-            "Vibration on the payload"
+            "Violent vibration on the ship and payload",
+            "The pad takes the full heat"
           ]
         },
         {
           "id": "water",
           "name": "Water deluge",
-          "fee": 60000,
-          "reliability": 0.006,
-          "note": "Hundreds of tonnes of water in seconds: the white cloud at every Shuttle launch was steam.",
+          "fee": 50000,
+          "reliability": 0.004,
+          "note": "Pipes and nozzles around the mount spray water into the exhaust at ignition. The water turns to steam and soaks up part of the sound and the heat.",
           "pros": [
-            "Less vibration"
+            "Less vibration",
+            "Cools the mount"
           ],
           "cons": [
             "Pad fee"
           ],
-          "real": "LC-39A sound suppression system"
+          "real": "After Starship's first flight, Starbase put a water-cooled steel plate under the mount that sprays water straight up into the exhaust."
+        },
+        {
+          "id": "tower",
+          "name": "Water tower and rainbirds",
+          "fee": 120000,
+          "reliability": 0.007,
+          "note": "A tall water tower empties its tank onto the pad in under half a minute. Big 'rainbird' nozzles flood the deck and the trench. The white cloud at every big launch is mostly this water turning to steam.",
+          "pros": [
+            "The quietest, coolest pad",
+            "Protects both the ship and the pad"
+          ],
+          "cons": [
+            "Expensive",
+            "A huge tank to refill after every launch"
+          ],
+          "real": "LC-39B (Artemis): a tower holding about 1.5 million litres (400,000 US gallons), with a peak flow of 4 million litres a minute; a 2018 test released 1.7 million litres. With the whole Shuttle water system running, the noise inside the payload bay was held to about 142 dB."
+        }
+      ]
+    },
+    {
+      "key": "lightning",
+      "name": "Lightning protection",
+      "role": "Gives lightning something taller than the ship to hit, and a path to the ground that does not run through the ship.",
+      "options": [
+        {
+          "id": "none",
+          "name": "No protection",
+          "fee": 0,
+          "reliability": 0,
+          "note": "The ship is the tallest metal thing for kilometres. A strike on the pad can damage its electronics, and every strike means days of checks.",
+          "pros": [
+            "Free"
+          ],
+          "cons": [
+            "The ship is the lightning rod"
+          ]
+        },
+        {
+          "id": "mast",
+          "name": "Lightning mast",
+          "fee": 30000,
+          "reliability": 0.003,
+          "note": "A tall pointed mast on top of the tower, with a steel cable running down to the ground on each side. Lightning hits the mast instead of the ship.",
+          "pros": [
+            "Cheap",
+            "Stops direct strikes on the ship"
+          ],
+          "cons": [
+            "A strike nearby can still upset cables and electronics"
+          ],
+          "real": "On 25 August 2006 a strike of about 100,000 amps hit the mast on pad 39B with Atlantis waiting below (STS-115). The mast took it, but the checks delayed the launch by days."
+        },
+        {
+          "id": "catenary",
+          "name": "Catenary wire system",
+          "fee": 80000,
+          "reliability": 0.005,
+          "note": "Three towers taller than anything else around the pad, joined by steel wires that hang above the ship like a tent. Lightning hits the wires and runs to the ground far from the ship and the tower.",
+          "pros": [
+            "Covers the whole pad, not just the tower",
+            "Keeps strike currents away from the ship"
+          ],
+          "cons": [
+            "Three extra towers to build"
+          ],
+          "real": "LC-39B (Artemis): three towers about 180 m (600 ft) tall, taller than the 160 m Vehicle Assembly Building, carry the overhead wires."
+        }
+      ]
+    },
+    {
+      "key": "access",
+      "name": "Crew access and escape",
+      "role": "How the crew gets into the capsule on the pad, and how they get away fast if something goes wrong before launch.",
+      "options": [
+        {
+          "id": "none",
+          "name": "Lift only, no escape route",
+          "fee": 0,
+          "reliability": 0,
+          "note": "The crew rides a lift up a service gantry, which is pulled away before launch. If something goes wrong after that, the escape rocket on top of the capsule is the only way out.",
+          "pros": [
+            "Free"
+          ],
+          "cons": [
+            "No way down from a ship in trouble on the pad"
+          ],
+          "real": "Soyuz T-10-1, 26 September 1983: the rocket caught fire on the pad at Baikonur and the escape rocket pulled the capsule away seconds before the explosion. The crew landed 4 km away, bruised but alive."
+        },
+        {
+          "id": "arm",
+          "name": "Crew access arm",
+          "fee": 40000,
+          "reliability": 0.003,
+          "note": "A covered walkway from the tower to the hatch, ending in a small 'white room' where suit technicians help the crew in. It swings back minutes before launch and can swing back to the hatch quickly if needed. Without a tower, a small stair tower is built for it.",
+          "pros": [
+            "The crew boards sheltered, with help",
+            "Can return to the hatch fast"
+          ],
+          "cons": [
+            "Pad fee"
+          ],
+          "real": "Apollo crews boarded through Swing Arm 9 of the Saturn V tower. SpaceX added a crew access arm to LC-39A in 2018 for Crew Dragon."
+        },
+        {
+          "id": "slidewire",
+          "name": "Arm and slidewire baskets",
+          "fee": 90000,
+          "reliability": 0.005,
+          "note": "Adds an escape route: baskets hang on steel wires from the crew level down to a bunker far from the pad. The crew jumps in, pulls a lever and slides away from the ship in about half a minute.",
+          "pros": [
+            "A fast way off a ship in trouble",
+            "Works with no power at all"
+          ],
+          "cons": [
+            "Pad fee",
+            "One more system to test and maintain"
+          ],
+          "real": "Shuttle pads: seven baskets for three people each slid about 370 m (1,200 ft) at up to 90 km/h to a landing zone with a bunker. LC-39A still has a slidewire escape for Crew Dragon."
+        }
+      ]
+    },
+    {
+      "key": "propellant",
+      "name": "Propellant loading",
+      "role": "How propellant gets from storage into the ship, and how it stays topped up while the super-cold liquid boils away.",
+      "options": [
+        {
+          "id": "manual",
+          "name": "Tanker trucks, hand valves",
+          "fee": 0,
+          "reliability": 0,
+          "note": "Tanker trucks pump propellant in while technicians open and close valves by hand from a checklist. It is slow, and liquid oxygen boils off while you wait.",
+          "pros": [
+            "Free",
+            "Simple"
+          ],
+          "cons": [
+            "Slow and easy to get wrong",
+            "Boil-off is not replaced"
+          ],
+          "real": "The V-2 was fuelled in the field from road tankers by crews working right beside the rocket."
+        },
+        {
+          "id": "auto",
+          "name": "Storage spheres, auto top-off",
+          "fee": 70000,
+          "reliability": 0.004,
+          "note": "Big insulated spheres beside the pad feed the ship through pipes. A computer runs the fill, slows down near full and keeps topping up the boil-off until the last minutes.",
+          "pros": [
+            "Precise and repeatable",
+            "Tanks are full at liftoff"
+          ],
+          "cons": [
+            "Pad fee",
+            "Hours of loading"
+          ],
+          "real": "In the Shuttle era, LC-39A's spheres held 3.4 million litres of liquid oxygen and 3.2 million litres of liquid hydrogen at −253 °C; filling the Shuttle's external tank took about three hours."
+        },
+        {
+          "id": "loadgo",
+          "name": "Load-and-go, chilled",
+          "fee": 50000,
+          "reliability": 0.003,
+          "note": "Propellant is chilled far below its boiling point and pumped in fast in the last half hour. Colder propellant is denser and boils off less, but the timeline is tight.",
+          "pros": [
+            "Fast",
+            "Little boil-off"
+          ],
+          "cons": [
+            "A tight timeline: a short delay often means a scrub",
+            "Fast loading leaves little time to spot a problem"
+          ],
+          "real": "Falcon 9 loads liquid oxygen at about −207 °C (it boils at −183 °C), starting about 35 minutes before launch. In 2016 a Falcon 9 exploded on its pad while loading, before a test firing (Amos-6)."
+        }
+      ]
+    },
+    {
+      "key": "weather",
+      "name": "Weather watch",
+      "role": "Knowing the winds high up and the electric charge in the clouds, so the ship only flies when the sky is safe.",
+      "options": [
+        {
+          "id": "none",
+          "name": "Look at the sky",
+          "fee": 0,
+          "reliability": 0,
+          "note": "Someone looks up and decides. Strong winds high up, and clouds full of electric charge, cannot be seen from the ground.",
+          "pros": [
+            "Free"
+          ],
+          "cons": [
+            "Hidden wind shear and charged clouds go unnoticed"
+          ],
+          "real": "Apollo 12 (14 November 1969) launched into rain clouds and set off lightning twice in its first minute, at 36.5 and 52 seconds. The crew restored power and flew on to the Moon."
+        },
+        {
+          "id": "balloons",
+          "name": "Weather balloons, wind towers",
+          "fee": 25000,
+          "reliability": 0.003,
+          "note": "Balloons go up in the hours before launch to measure the wind at every height, and towers around the pad record the gusts. The ship's computer is loaded with the day's winds.",
+          "pros": [
+            "Cheap",
+            "Know the wind at every height"
+          ],
+          "cons": [
+            "Blind to electric charge in the clouds"
+          ],
+          "real": "For Apollo and the Shuttle, 'Jimsphere' balloons covered in small cones were tracked by radar to measure the wind layer by layer before launch."
+        },
+        {
+          "id": "radar",
+          "name": "Radar and field mills",
+          "fee": 60000,
+          "reliability": 0.005,
+          "note": "Adds weather radar and a ring of field mills that measure the electric charge in the air, plus a launch weather officer who applies the lightning rules. No launch through a charged cloud.",
+          "pros": [
+            "Spots the clouds that trigger lightning",
+            "Fewer surprises"
+          ],
+          "cons": [
+            "Pad fee"
+          ],
+          "real": "At Cape Canaveral, no launch may go if the field mills read more than 1,500 V/m within 9 km (5 nautical miles) in the last 15 minutes, or 1,000 V/m when certain clouds are near. The rules were written after Apollo 12 and the loss of Atlas-Centaur 67 to lightning in 1987."
         }
       ]
     }
