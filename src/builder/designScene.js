@@ -1,6 +1,6 @@
-// The design studio: the vehicle alone in a dark studio, turned by hand, zoomed with the wheel, and pulled apart
-// when a part is selected (its internals slide out along their own directions). Drawn by graphics.setView while the
-// design page is open; the page projects anchors from here into DOM labels. No listeners: the page feeds it.
+// The design studio: the vehicle alone on its launch pad in a dark studio, turned by hand, zoomed with the wheel.
+// The page tells it which section is open (the others fade back) and which part is selected (it glows; when the page
+// asks, its internals slide out). No DOM labels: the side panel carries all the text. No listeners: the page feeds it.
 import * as THREE from 'three';
 import { assets } from '/src/graphics/index.js';
 import { partArt } from './bay/partArt.js';
@@ -9,30 +9,30 @@ import { wantsNasaArt } from './bay/nasa.js';
 import { DEG, disposeObject } from './bay/util.js';
 
 const SELECTED = new THREE.Color(0xfbbf24);
-const HOVER = new THREE.Color(0x67e8f9);
+const SECTION_GLOW = new THREE.Color(0x67e8f9);
 const UP = new THREE.Vector3(0, 1, 0);
 
 export function createDesignScene() {
   const scene = new THREE.Scene();
   scene.name = 'design-studio';
   scene.background = new THREE.Color(0x070d12);
-  scene.fog = new THREE.Fog(0x070d12, 60, 140);
+  scene.fog = new THREE.Fog(0x070d12, 70, 160);
   const camera = new THREE.PerspectiveCamera(32, 1, 0.05, 400);
 
   // ----- studio: lights, a soft floor disc and a fine grid -----
   const key = new THREE.DirectionalLight(0xfff1e0, 2.2);
-  key.position.set(8, 14, 10);
+  key.position.set(8, 18, 10);
   key.castShadow = true;
   key.shadow.mapSize.set(1024, 1024);
-  key.shadow.camera.left = key.shadow.camera.bottom = -14;
-  key.shadow.camera.right = key.shadow.camera.top = 14;
-  key.shadow.camera.far = 60;
+  key.shadow.camera.left = key.shadow.camera.bottom = -16;
+  key.shadow.camera.right = key.shadow.camera.top = 16;
+  key.shadow.camera.far = 70;
   const fill = new THREE.DirectionalLight(0x9fb4d8, 0.8);
   fill.position.set(-10, 6, -6);
   const rim = new THREE.DirectionalLight(0x67e8f9, 1.1);
   rim.position.set(0, 9, -14);
   scene.add(key, fill, rim, new THREE.HemisphereLight(0xdfe9ff, 0x0b1016, 0.5), new THREE.AmbientLight(0x2a3340, 0.6));
-  const grid = new THREE.GridHelper(60, 60, 0x14303a, 0x0d1f27);
+  const grid = new THREE.GridHelper(80, 80, 0x14303a, 0x0d1f27);
   grid.position.y = -0.01;
   scene.add(grid);
   const discCanvas = document.createElement('canvas');
@@ -45,38 +45,62 @@ export function createDesignScene() {
   dctx.fillStyle = grad;
   dctx.fillRect(0, 0, 256, 256);
   const discTex = new THREE.CanvasTexture(discCanvas);
-  const disc = new THREE.Mesh(new THREE.CircleGeometry(9, 64), new THREE.MeshBasicMaterial({ map: discTex, transparent: true, depthWrite: false }));
+  const disc = new THREE.Mesh(new THREE.CircleGeometry(12, 64), new THREE.MeshBasicMaterial({ map: discTex, transparent: true, depthWrite: false }));
   disc.rotation.x = -Math.PI / 2;
   scene.add(disc);
-  const floor = new THREE.Mesh(new THREE.CircleGeometry(40, 48), new THREE.ShadowMaterial({ opacity: 0.35 }));
+  const floor = new THREE.Mesh(new THREE.CircleGeometry(50, 48), new THREE.ShadowMaterial({ opacity: 0.35 }));
   floor.rotation.x = -Math.PI / 2;
   floor.receiveShadow = true;
   scene.add(floor);
 
-  const vehicle = new THREE.Group();
+  const padHolder = new THREE.Group(); // the launch pad, on the floor
+  scene.add(padHolder);
+  let padTop = 0;
+  let padObject = null;
+  const vehicle = new THREE.Group(); // stands on the pad
   vehicle.name = 'vehicle';
   scene.add(vehicle);
-  const pieces = new THREE.Group(); // exploded internals of the selected part
-  scene.add(pieces);
+  const pieces = new THREE.Group(); // exploded internals of the selected part (same frame as the vehicle)
+  vehicle.add(pieces);
 
   const parts = new Map(); // id -> { holder, entry, art }
-  const anchors = []; // { kind, id, node, key, name, local: Vector3 }
   let layoutCache = [];
   let layoutKey = '';
   let selected = null;
+  let activeSection = null;
+  let padActive = false;
   let explode = 0, explodeTarget = 0;
-  let explodedFor = null; // part id whose pieces are built
-  let pieceList = []; // [{ key, name, object, dir, base: Vector3 }]
+  let explodedFor = null;
+  let pieceList = [];
+  let hotPiece = null;
   let missingArt = [];
+  let optionsResolver = () => ({});
 
   // ----- orbit camera -----
-  const orbit = { yaw: 0.6, pitch: 0.22, dist: 20, targetY: 6, fitDist: 20, fitY: 6, minDist: 3, auto: true, idle: 0 };
-  const smooth = { yaw: 0.6, pitch: 0.22, dist: 20, targetY: 6 };
+  const orbit = { yaw: 0.6, pitch: 0.2, dist: 20, targetY: 6, fitDist: 20, fitY: 6, minDist: 3, auto: true, idle: 0 };
+  const smooth = { yaw: 0.6, pitch: 0.2, dist: 20, targetY: 6 };
   const halfTan = Math.tan((camera.fov * Math.PI) / 360);
-  function fitTo(stackHeight, radius) {
-    const h = Math.max(4, stackHeight), r = Math.max(1.25, radius);
+  let stackHeight = 0, stackRadius = 1.25;
+  function fitTo(h0, r0) {
+    const h = Math.max(h0 > 0 ? 4 : 16, h0 + padTop), r = Math.max(1.25, r0);
     orbit.fitY = h * 0.5;
-    orbit.fitDist = Math.max((h * 1.28) / (2 * halfTan), r * 5) + 1.5;
+    orbit.fitDist = Math.max((h * 1.25) / (2 * halfTan), r * 5) + 2;
+  }
+  function fit() {
+    orbit.targetY = orbit.fitY;
+    orbit.dist = orbit.fitDist;
+    orbit.pitch = 0.2;
+    orbit.minDist = orbit.fitDist * 0.12;
+    orbit.idle = 0;
+  }
+  const spanToDist = (span) => (span * 1.15) / (2 * halfTan);
+  /** Frame a vertical slice [y0, y1] of the vehicle (metres above its base). */
+  function frame(y0, y1, width = stackRadius * 2) {
+    const span = Math.max(y1 - y0, width * 1.3, 2.5);
+    orbit.targetY = padTop + (y0 + y1) / 2;
+    orbit.dist = Math.min(orbit.fitDist * 1.05, Math.max(orbit.fitDist * 0.18, spanToDist(span)));
+    orbit.minDist = orbit.fitDist * 0.12;
+    orbit.idle = 0;
   }
   /** Frame one part: close enough to read it, far enough that its exploded internals stay in view. */
   function focusOn(id, { exploded = false } = {}) {
@@ -85,69 +109,84 @@ export function createDesignScene() {
     const e = p.entry;
     const reach = Math.max(1.2, e.radius * 1.6 + 0.4);
     const span = exploded ? e.height + 2 * reach : Math.max(e.height, e.radius * 2.4) + 1;
-    orbit.targetY = e.attach === 'radial' ? e.y + Math.min(e.height, 1.2) * 0.5 : e.centerY;
-    orbit.dist = Math.min(orbit.fitDist, Math.max(orbit.fitDist * 0.2, (span * 1.15) / (2 * halfTan)));
-    orbit.minDist = closestFor(id);
+    const mid = e.attach === 'radial' ? e.y + Math.min(e.height, 1.2) * 0.5 : e.centerY;
+    orbit.targetY = padTop + mid;
+    orbit.dist = Math.min(orbit.fitDist, Math.max(orbit.fitDist * 0.15, spanToDist(span)));
+    orbit.minDist = Math.max(orbit.fitDist * 0.12, spanToDist(e.def.internals ? e.height + 2 * reach : span) * 0.9);
     orbit.pitch = Math.max(orbit.pitch, 0.12);
     orbit.idle = 0;
   }
-  /** After looking inside: back out far enough that the part closes up again. */
-  function relax() {
-    orbit.dist = Math.max(orbit.dist, orbit.fitDist * 0.8);
-    orbit.idle = 0;
+  /** Frame a whole section (nose, body, tail) or the pad. */
+  function focusSection(id) {
+    if (id === 'pad') { frame(-padTop, Math.min(stackHeight, 8), Math.max(10, stackRadius * 8)); orbit.pitch = 0.32; return; }
+    const list = layoutCache.filter((e) => e.def.section === id);
+    if (!list.length) { fit(); return; }
+    let y0 = Infinity, y1 = -Infinity, w = stackRadius * 2;
+    for (const e of list) {
+      const base = e.attach === 'radial' ? e.y - 0.3 : e.y;
+      y0 = Math.min(y0, base);
+      y1 = Math.max(y1, base + e.height);
+      if (e.attach === 'radial') w = Math.max(w, (e.radius + 1) * 2);
+    }
+    frame(y0, y1, w);
   }
-  // The DOM covers part of the window (side panel, strips): keep the vehicle centred in what is left of the view.
-  let viewCentre = null;
-  function setViewCentre(cx, cy, fullW, fullH) {
-    const key = `${Math.round(cx)}:${Math.round(cy)}:${fullW}:${fullH}`;
-    if (viewCentre === key) return;
-    viewCentre = key;
-    camera.setViewOffset(fullW, fullH, fullW / 2 - cx, fullH / 2 - cy, fullW, fullH);
-  }
-  function clearViewCentre() { viewCentre = null; camera.clearViewOffset(); }
-  function fit() {
-    orbit.targetY = orbit.fitY;
-    orbit.dist = orbit.fitDist;
-    orbit.pitch = 0.22;
-  }
+  function relax() { orbit.dist = Math.max(orbit.dist, orbit.fitDist * 0.6); orbit.idle = 0; }
   function rotateBy(dxPx, dyPx) {
     orbit.yaw -= dxPx * 0.008;
-    orbit.pitch = Math.min(1.35, Math.max(-0.6, orbit.pitch + dyPx * 0.006));
+    orbit.pitch = Math.min(1.35, Math.max(-0.5, orbit.pitch + dyPx * 0.006));
     orbit.idle = 0;
   }
   function zoomBy(factor) {
     orbit.dist = Math.min(orbit.fitDist * 2.2, Math.max(orbit.minDist, orbit.dist * factor));
     orbit.idle = 0;
   }
-  /** The closest the wheel may come to a part: its exploded internals must still fit the view. */
-  function closestFor(id) {
-    const p = parts.get(id);
-    if (!p) return orbit.fitDist * 0.12;
-    const e = p.entry;
-    const reach = Math.max(1.2, e.radius * 1.6 + 0.4);
-    const span = e.def.internals ? e.height + 2 * reach : Math.max(e.height, e.radius * 2.4) + 1;
-    return Math.max(orbit.fitDist * 0.15, (span * 1.05) / (2 * halfTan));
+  /** 0 at the framing distance of the selected part, 1 when zoomed right into it (the page explodes it by this). */
+  const zoomFraction = () => {
+    const p = selected && parts.get(selected);
+    if (!p) return 0;
+    const far = Math.max(orbit.minDist * 1.6, orbit.minDist + 2);
+    return Math.min(1, Math.max(0, (far - orbit.dist) / (far - orbit.minDist)));
+  };
+  // The DOM covers part of the window (side panel, top bar): keep the vehicle centred in what is left of the view.
+  let viewCentre = null;
+  function setViewCentre(cx, cy, fullW, fullH) {
+    const k = `${Math.round(cx)}:${Math.round(cy)}:${fullW}:${fullH}`;
+    if (viewCentre === k) return;
+    viewCentre = k;
+    camera.setViewOffset(fullW, fullH, fullW / 2 - cx, fullH / 2 - cy, fullW, fullH);
   }
-  /** 0 at the fitted distance, 1 when fully zoomed into a part: the page uses it to decide how far to explode. */
-  const zoomFraction = () => Math.min(1, Math.max(0, (orbit.fitDist * 0.75 - orbit.dist) / (orbit.fitDist * 0.5)));
+  function clearViewCentre() { viewCentre = null; camera.clearViewOffset(); }
+
+  // ----- the pad -----
+  function setPad(made) {
+    if (padObject) { padHolder.remove(padObject); disposeObject(padObject); }
+    padObject = made?.object ?? null;
+    padTop = made?.top ?? 0;
+    if (padObject) {
+      padObject.traverse((o) => { o.userData.pad = true; });
+      padHolder.add(padObject);
+    }
+    vehicle.position.y = padTop;
+    fitTo(stackHeight, stackRadius);
+    applyLook();
+  }
 
   // ----- vehicle -----
   function setLayout(layout) {
-    const keyNow = layout.map((e) => `${e.id}:${e.type}:${e.angle}:${e.yFrac}:${e.y.toFixed(2)}:${e.material ?? ''}:${JSON.stringify(e.options ?? null)}`).join('|');
+    const keyNow = layout.map((e) => `${e.id}:${e.type}:${e.angle}:${e.yFrac}:${e.y.toFixed(2)}:${e.material ?? ''}:${JSON.stringify(e.options ?? null)}:${e.cluster?.count ?? 1}`).join('|');
     layoutCache = layout;
-    let stackHeight = 0, radius = 1.25;
-    for (const e of layout) if (e.attach === 'axial') { stackHeight = Math.max(stackHeight, e.y + e.height); radius = Math.max(radius, e.radius); }
-    fitTo(stackHeight, radius);
-    if (keyNow === layoutKey) return;
+    stackHeight = 0; stackRadius = 1.25;
+    for (const e of layout) if (e.attach === 'axial') { stackHeight = Math.max(stackHeight, e.y + e.height); stackRadius = Math.max(stackRadius, e.radius); }
+    fitTo(stackHeight, stackRadius);
+    if (keyNow === layoutKey) return false;
     layoutKey = keyNow;
-    for (const child of [...vehicle.children]) { vehicle.remove(child); disposeObject(child); }
+    for (const child of [...vehicle.children]) { if (child === pieces) continue; vehicle.remove(child); disposeObject(child); }
     parts.clear();
-    anchors.length = 0;
     missingArt = [];
     for (const e of layout) {
       const art = partArt(e);
       art.traverse((o) => { if (o.isMesh) { o.castShadow = true; o.receiveShadow = true; } });
-      if (wantsNasaArt(e.type) && !art.userData.nasa) missingArt.push(e.type);
+      if (wantsNasaArt(e.type) && !art.userData.nasa && !art.userData.cluster) missingArt.push(e.type);
       let holder = art;
       if (e.attach === 'radial') {
         const pivot = new THREE.Group();
@@ -168,31 +207,19 @@ export function createDesignScene() {
       holder.traverse((o) => { o.userData.partId = e.id; });
       vehicle.add(holder);
       parts.set(e.id, { holder, entry: e, art });
-      const local = e.attach === 'radial'
-        ? new THREE.Vector3(Math.cos(e.angle * DEG) * (e.radius + 0.55 + (art.userData.width ?? 0.6) * 0.5), e.y + Math.min(e.height, 1.2) * 0.5, -Math.sin(e.angle * DEG) * (e.radius + 0.55 + (art.userData.width ?? 0.6) * 0.5))
-        : new THREE.Vector3(-e.radius * 0.95, e.centerY, 0);
-      anchors.push({ kind: 'part', id: e.id, local, entry: e });
     }
+    if (selected && !parts.has(selected)) selected = null;
     explodedFor = null;
     rebuildPieces();
     applyLook();
+    return true;
   }
 
-  function setFreeNodes(freeNodes) {
-    for (let i = anchors.length - 1; i >= 0; i--) if (anchors[i].kind === 'slot') anchors.splice(i, 1);
-    for (const { partId, node } of freeNodes) {
-      const p = parts.get(partId);
-      if (!p || node === 'radial') continue;
-      const e = p.entry;
-      anchors.push({ kind: 'slot', id: partId, node, local: new THREE.Vector3(0, node === 'top' ? e.y + e.height + 0.35 : e.y - 0.35, 0), entry: e });
-    }
-  }
-
-  // ----- selection, dimming, explosion -----
+  // ----- looks: section fade, selection glow -----
   function cloneMaterials(root) {
     root.traverse((o) => {
       if (!o.isMesh || !o.material) return;
-      if (o.material.userData?.vdCloned) return;
+      if ((Array.isArray(o.material) ? o.material[0] : o.material)?.userData?.vdCloned) return;
       const mats = Array.isArray(o.material) ? o.material : [o.material];
       const cloned = mats.map((m) => {
         const c = m.clone();
@@ -205,13 +232,12 @@ export function createDesignScene() {
   function setLook(root, { opacity = 1, emissive = null, emissiveIntensity = 0 } = {}) {
     root.traverse((o) => {
       if (!o.isMesh || !o.material) return;
-      const mats = Array.isArray(o.material) ? o.material : [o.material];
-      for (const m of mats) {
+      for (const m of Array.isArray(o.material) ? o.material : [o.material]) {
         const u = m.userData;
         if (!u?.vdCloned) continue;
         m.transparent = opacity < 1 || u.baseTransparent;
         m.opacity = Math.min(u.baseOpacity, opacity);
-        m.depthWrite = opacity >= 1;
+        m.depthWrite = opacity >= 0.99;
         if (m.emissive && u.baseEmissive) {
           if (emissive) { m.emissive.copy(emissive); m.emissiveIntensity = emissiveIntensity; } else { m.emissive.copy(u.baseEmissive); m.emissiveIntensity = u.baseEmissiveIntensity; }
         }
@@ -222,23 +248,32 @@ export function createDesignScene() {
     const exploded = explode > 0.02 && selected && parts.has(selected);
     for (const [id, p] of parts) {
       cloneMaterials(p.holder);
-      if (id === selected) setLook(p.holder, { opacity: exploded ? Math.max(0.08, 1 - explode * 1.15) : 1, emissive: exploded ? null : SELECTED, emissiveIntensity: 0.55 });
-      else setLook(p.holder, { opacity: exploded ? 0.22 : 1 });
+      const inSection = !activeSection || p.entry.def.section === activeSection;
+      if (id === selected) setLook(p.holder, { opacity: exploded ? Math.max(0.08, 1 - explode * 1.15) : 1, emissive: exploded ? null : SELECTED, emissiveIntensity: 0.5 });
+      else if (exploded) setLook(p.holder, { opacity: 0.15 });
+      else if (padActive) setLook(p.holder, { opacity: 0.55 });
+      else setLook(p.holder, { opacity: inSection ? 1 : 0.22, emissive: inSection && activeSection && !selected ? SECTION_GLOW : null, emissiveIntensity: 0.06 });
     }
+    if (padObject) {
+      cloneMaterials(padObject);
+      setLook(padObject, { opacity: padActive || (!activeSection && !selected) ? 1 : 0.45, emissive: padActive ? SECTION_GLOW : null, emissiveIntensity: 0.05 });
+    }
+    for (const piece of pieceList) {
+      cloneMaterials(piece.object);
+      setLook(piece.object, { emissive: hotPiece === piece.key ? SELECTED : null, emissiveIntensity: 0.6 });
+    }
+  }
+  function setActiveSection(id) {
+    activeSection = id && id !== 'pad' ? id : null;
+    padActive = id === 'pad';
+    applyLook();
   }
   function select(id) {
     selected = id && parts.has(id) ? id : null;
     if (selected !== explodedFor) rebuildPieces();
     applyLook();
-    if (selected) {
-      const e = parts.get(selected).entry;
-      orbit.targetY = e.attach === 'radial' ? e.y + Math.min(e.height, 1.2) * 0.5 : e.centerY;
-      orbit.minDist = closestFor(selected);
-      if (orbit.dist < orbit.minDist) orbit.dist = orbit.minDist;
-    } else {
-      orbit.minDist = orbit.fitDist * 0.12;
-    }
   }
+  function highlightPiece(k) { hotPiece = k; applyLook(); }
   function rebuildPieces() {
     for (const child of [...pieces.children]) { pieces.remove(child); disposeObject(child); }
     pieceList = [];
@@ -246,85 +281,48 @@ export function createDesignScene() {
     const p = selected && parts.get(selected);
     if (!p || !p.entry.def.internals) return;
     const e = p.entry;
-    const kit = internalsArt(e.def, e.options ? optionsFor(e) : optionsFor(e), { radius: e.radius, height: e.height });
+    const kit = internalsArt(e.def, optionsResolver(e.id) ?? {}, { radius: e.radius, height: e.height });
     const base = new THREE.Group();
     if (e.attach === 'radial') { base.position.set(0, e.y, 0); base.rotation.y = e.angle * DEG; }
     const inner = new THREE.Group();
     if (e.attach === 'radial') inner.position.x = p.art.position.x; else inner.position.y = e.y;
     base.add(inner);
     for (const piece of kit) {
-      piece.object.userData.internalKey = piece.key;
       piece.object.traverse((o) => { o.userData.internalKey = piece.key; });
       piece.base = piece.object.position.clone();
       inner.add(piece.object);
       pieceList.push(piece);
     }
     pieces.add(base);
-    pieces.userData.inner = inner;
   }
-  let optionsResolver = () => ({});
-  const optionsFor = (e) => optionsResolver(e.id) ?? {};
-
   function setExplode(t) { explodeTarget = Math.min(1, Math.max(0, t)); }
 
-  // ----- picking and projection -----
+  // ----- picking -----
   const raycaster = new THREE.Raycaster();
   const ndc = new THREE.Vector2();
   function pick(clientX, clientY, rect) {
     ndc.set(((clientX - rect.left) / rect.width) * 2 - 1, -((clientY - rect.top) / rect.height) * 2 + 1);
     raycaster.setFromCamera(ndc, camera);
-    if (explode > 0.3 && pieces.children.length) {
+    if (explode > 0.3 && pieceList.length) {
       const hit = raycaster.intersectObjects(pieces.children, true)[0];
-      if (hit) {
-        let o = hit.object;
-        while (o && !o.userData.internalKey) o = o.parent;
-        if (o) return { internal: o.userData.internalKey, partId: selected };
-      }
+      if (hit?.object.userData.internalKey) return { internal: hit.object.userData.internalKey, partId: selected };
     }
-    const hits = raycaster.intersectObjects(vehicle.children, true);
+    const hits = raycaster.intersectObjects([...vehicle.children.filter((c) => c !== pieces), padHolder], true);
     for (const hit of hits) {
-      let o = hit.object;
-      while (o && !o.userData.partId) o = o.parent;
-      if (!o) continue;
-      const p = parts.get(o.userData.partId);
-      // dimmed parts behind an exploded one should not steal the click
-      if (explode > 0.3 && selected && o.userData.partId !== selected) continue;
-      if (p) return { partId: o.userData.partId };
+      if (hit.object.userData.pad) return { pad: true };
+      const id = hit.object.userData.partId;
+      if (!id || !parts.has(id)) continue;
+      if (explode > 0.3 && selected && id !== selected) continue; // faded parts behind an exploded one do not steal the click
+      return { partId: id, section: parts.get(id).entry.def.section };
     }
     return null;
-  }
-  const v = new THREE.Vector3();
-  function project(world, rect) {
-    v.copy(world).project(camera);
-    return { x: (v.x + 1) / 2 * rect.width, y: (1 - v.y) / 2 * rect.height, visible: v.z < 1 && v.z > -1 };
-  }
-  /** Screen anchors for the page: parts, slots and (when exploded) internal pieces. */
-  function screenAnchors(rect) {
-    scene.updateMatrixWorld(true);
-    const out = [];
-    const exploded = explode > 0.25 && selected;
-    for (const a of anchors) {
-      if (exploded && !(a.kind === 'part' && a.id === selected)) continue;
-      const world = a.local.clone().applyMatrix4(vehicle.matrixWorld);
-      out.push({ ...a, ...project(world, rect) });
-    }
-    if (exploded) {
-      for (const piece of pieceList) {
-        const world = new THREE.Vector3();
-        piece.object.getWorldPosition(world);
-        const box = new THREE.Box3().setFromObject(piece.object);
-        if (!box.isEmpty()) box.getCenter(world);
-        out.push({ kind: 'internal', id: selected, key: piece.key, name: piece.name, ...project(world, rect) });
-      }
-    }
-    return out;
   }
 
   // ----- frame -----
   function update(dt) {
     orbit.idle += dt;
-    if (orbit.auto && orbit.idle > 5 && explode < 0.05) orbit.yaw += dt * 0.12;
-    const k = 1 - Math.exp(-dt * 9);
+    if (orbit.auto && orbit.idle > 6 && explode < 0.05 && !selected) orbit.yaw += dt * 0.12;
+    const k = 1 - Math.exp(-dt * 8);
     smooth.yaw += (orbit.yaw - smooth.yaw) * k;
     smooth.pitch += (orbit.pitch - smooth.pitch) * k;
     smooth.dist += (orbit.dist - smooth.dist) * k;
@@ -346,20 +344,23 @@ export function createDesignScene() {
 
   function dispose() {
     for (const child of [...vehicle.children]) disposeObject(child);
-    for (const child of [...pieces.children]) disposeObject(child);
+    if (padObject) disposeObject(padObject);
     discTex.dispose();
   }
 
   return {
     scene, camera, orbit,
-    setLayout, setFreeNodes, select, setExplode, pick, screenAnchors, update, dispose, fit, rotateBy, zoomBy, zoomFraction, focusOn, relax, setViewCentre, clearViewCentre,
+    setLayout, setPad, select, setActiveSection, highlightPiece, setExplode, pick, update, dispose,
+    fit, frame, focusOn, focusSection, relax, rotateBy, zoomBy, zoomFraction, setViewCentre, clearViewCentre,
     setOptionsResolver: (fn) => { optionsResolver = fn; },
     setEnvironment: () => { scene.environment = assets.environment?.() ?? null; scene.environmentIntensity = 0.35; },
     get selected() { return selected; },
     get explode() { return explode; },
     get missingArt() { return missingArt; },
     get layout() { return layoutCache; },
+    get padTop() { return padTop; },
+    get pieces() { return pieceList.map((p) => ({ key: p.key, name: p.name })); },
     /** Forget the built vehicle so the next setLayout rebuilds it (after real models arrive). */
-    invalidate() { layoutKey = ''; },
+    invalidate() { layoutKey = ''; explodedFor = null; },
   };
 }

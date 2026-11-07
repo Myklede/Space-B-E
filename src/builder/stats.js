@@ -34,7 +34,7 @@ export function engineStats(def, engines, g0, mods = null) {
 
 const NO_MODS = Object.freeze({ massF: 1, massD: 0, costF: 1, costD: 0, rel: 0, isp: 0, thrustF: 1, powerF: 1, chuteF: 1 });
 
-/** Combined effect of a part's chosen internal options (data/internals.json): factors multiply, deltas add. */
+/** Combined effect of a part's chosen internal options (sections/<id>/internals.json): factors multiply, deltas add. */
 export function optionMods(options) {
   const m = { ...NO_MODS };
   for (const o of Object.values(options ?? {})) {
@@ -58,11 +58,17 @@ const sum = (xs, f) => xs.reduce((acc, x, i) => acc + f(x, i), 0);
  * computeShipSpec(assembly, { catalog, engines, launch, balance, planets, g0, materials })
  * → { spec, breakdown, blocks } where blocks are the hard blocks that need no money check (OVER_BUDGET is added by gonogo.js).
  * Solid motors (def.booster) add their thrust and propellant to the single stage the flight model flies; their casings
- * ride along as dry mass. Internal options (data/internals.json) modify mass, cost, reliability, Isp, thrust and power.
+ * ride along as dry mass. Internal options (sections/<id>/internals.json) modify mass, cost, reliability, Isp, thrust and power.
  */
-export function computeShipSpec(assembly, { catalog, engines, launch, balance, planets, g0, materials = null }) {
+export function computeShipSpec(assembly, { catalog, engines, launch, balance, planets, g0, materials = null, pad = null }) {
   const layout = assembly.layout();
-  const slot = (launch.slots ?? []).find((s) => s.id === assembly.launch.slot) ?? launch.slots?.[0] ?? { id: 'mild', tempC: 15, fee: 0 };
+  // launch site, window and pad equipment (sections/pad/section.json); without pad data, the old launch.json slots
+  const site = pad?.sites?.find((x) => x.id === assembly.launch.site) ?? pad?.sites?.[0] ?? null;
+  const slots = site?.slots ?? launch.slots ?? [];
+  const slot = slots.find((x) => x.id === assembly.launch.slot) ?? slots[0] ?? { id: 'mild', tempC: 15, fee: 0 };
+  const padChoices = (pad?.equipment ?? []).map((eq) => ({ eq, option: eq.options.find((o) => o.id === assembly.launch.pad?.[eq.key]) ?? eq.options[0] })).filter((c) => c.option);
+  const launchFee = (slot.fee ?? 0) + (site?.fee ?? 0) + sum(padChoices, (c) => c.option.fee ?? 0);
+  const padReliability = sum(padChoices, (c) => c.option.reliability ?? 0);
   const flags = (e) => e.def.flags ?? {};
   // material of a part: factors on dry mass, cost and reliability (data/materials.json); the first option is the default
   const materialOf = (e) => {
@@ -80,7 +86,9 @@ export function computeShipSpec(assembly, { catalog, engines, launch, balance, p
   // Liquid engines
   const engineDefOf = (e) => e.engine ?? { fuel: 'methalox', nozzle: 'vac', pump: String(e.def.size).toUpperCase() };
   const engineEntries = layout.filter((e) => e.def.engine);
+  const countOf = (e) => e.cluster?.count ?? 1; // engines in a cluster (the thrust structure above sets it)
   const engineSpecs = engineEntries.map((e) => engineStats(engineDefOf(e), engines, g0, mod(e)));
+  const engineCount = sum(engineEntries, countOf);
   // Solid motors: fixed thrust and Isp, their own propellant, a casing that stays
   const boosterEntries = layout.filter((e) => e.def.booster);
   const boosterSpecs = boosterEntries.map((e) => {
@@ -89,22 +97,23 @@ export function computeShipSpec(assembly, { catalog, engines, launch, balance, p
     const thrust = b.thrust * m.thrustF;
     return { id: e.id, thrust, thrustSL: thrust * (ispSL / ispVac), ispSL, ispVac, propellant: b.propellant, burnTime: b.burnTime ?? 0 };
   });
-  const thrust = sum(engineSpecs, (s) => s.thrust) + sum(boosterSpecs, (s) => s.thrust);
-  const thrustSL = sum(engineSpecs, (s) => s.thrustSL) + sum(boosterSpecs, (s) => s.thrustSL);
-  const ispVac = thrust > 0 ? (sum(engineSpecs, (s) => s.ispVac * s.thrust) + sum(boosterSpecs, (s) => s.ispVac * s.thrust)) / thrust : 0;
-  const ispSL = thrust > 0 ? (sum(engineSpecs, (s) => s.ispSL * s.thrust) + sum(boosterSpecs, (s) => s.ispSL * s.thrust)) / thrust : 0;
+  const n = (i) => countOf(engineEntries[i]);
+  const thrust = sum(engineSpecs, (s, i) => s.thrust * n(i)) + sum(boosterSpecs, (s) => s.thrust);
+  const thrustSL = sum(engineSpecs, (s, i) => s.thrustSL * n(i)) + sum(boosterSpecs, (s) => s.thrustSL);
+  const ispVac = thrust > 0 ? (sum(engineSpecs, (s, i) => s.ispVac * s.thrust * n(i)) + sum(boosterSpecs, (s) => s.ispVac * s.thrust)) / thrust : 0;
+  const ispSL = thrust > 0 ? (sum(engineSpecs, (s, i) => s.ispSL * s.thrust * n(i)) + sum(boosterSpecs, (s) => s.ispSL * s.thrust)) / thrust : 0;
   const mainFuel = engineSpecs[0]?.fuel ?? null;
 
   // Masses (engine hardware mass and cost scale with the chamber material; options add on top)
   const dryOf = (e) => (e.def.mass * massFactor(e) + mod(e).massD) * mod(e).massF;
-  const engineHardwareMass = (e, i) => engineSpecs[i].mass * massFactor(e);
+  const engineHardwareMass = (e, i) => engineSpecs[i].mass * massFactor(e) * countOf(e);
   const partMass = sum(layout, dryOf) + sum(engineEntries, engineHardwareMass);
   const usableFuel = sum(layout, (e) => (e.def.fuel && e.def.fuel.type === mainFuel ? e.def.fuel.mass : 0)) + sum(boosterSpecs, (s) => s.propellant);
   const deadFuel = sum(layout, (e) => (e.def.fuel && e.def.fuel.type !== mainFuel ? e.def.fuel.mass : 0));
   const dryMass = partMass + deadFuel; // fuel the engine can't burn is just weight
   const fuelMass = usableFuel;
   const wetMass = dryMass + fuelMass;
-  const cost = sum(layout, (e) => (e.def.cost * costFactor(e) + mod(e).costD) * mod(e).costF) + sum(engineEntries, (e, i) => engineSpecs[i].cost * costFactor(e));
+  const cost = sum(layout, (e) => (e.def.cost * costFactor(e) + mod(e).costD) * mod(e).costF) + sum(engineEntries, (e, i) => engineSpecs[i].cost * costFactor(e) * countOf(e));
 
   // Performance (one stage: the flight model burns everything with the thrust-weighted Isp)
   const deltaV = fuelMass > 0 && dryMass > 0 ? ispVac * g0 * Math.log(wetMass / dryMass) : 0;
@@ -113,7 +122,7 @@ export function computeShipSpec(assembly, { catalog, engines, launch, balance, p
 
   // Centre of mass and pressure (metres from the stack base)
   // Full mass of one part: structure + any propellant inside (usable or not) + the engine hardware.
-  const massOf = (e) => dryOf(e) + (e.def.fuel?.mass ?? 0) + (e.def.booster?.propellant ?? 0) + (e.def.engine ? engineStats(engineDefOf(e), engines, g0, mod(e)).mass * massFactor(e) : 0);
+  const massOf = (e) => dryOf(e) + (e.def.fuel?.mass ?? 0) + (e.def.booster?.propellant ?? 0) + (e.def.engine ? engineStats(engineDefOf(e), engines, g0, mod(e)).mass * massFactor(e) * countOf(e) : 0);
   const totalMass = sum(layout, massOf);
   const comY = totalMass > 0 ? sum(layout, (e) => massOf(e) * e.centerY) / totalMass : 0;
   const totalArea = sum(layout, (e) => e.def.aero.sideArea);
@@ -125,9 +134,18 @@ export function computeShipSpec(assembly, { catalog, engines, launch, balance, p
   // Flags
   const has = (key) => layout.some((e) => flags(e)[key]);
   const count = (key) => sum(layout, (e) => Number(flags(e)[key]) || 0);
-  const baseReliability = layout.reduce((r, e) => r * Math.min(1, Math.max(0.01, (e.def.reliability ?? 1) + reliabilityDelta(e) + mod(e).rel)), 1);
+  // A cluster of n engines: with engine-out capability (the thrust structure's flag) the ship survives one failure,
+  // so n engines count as about 1 + 0.2 (n - 1) single engines; without it every engine must work (r^n).
+  const partReliability = (e) => {
+    const r = Math.min(1, Math.max(0.01, (e.def.reliability ?? 1) + reliabilityDelta(e) + mod(e).rel));
+    const k = countOf(e);
+    if (k <= 1) return r;
+    const engineOut = layout.find((x) => x.id === e.parentId)?.def.flags?.engineOut;
+    return Math.pow(r, engineOut ? 1 + (k - 1) * 0.2 : k);
+  };
+  const baseReliability = layout.reduce((r, e) => r * partReliability(e), 1);
   const bonus = Math.min(BONUS_CAP, sum(layout, (e) => Number(flags(e).reliabilityBonus) || 0) + Math.min(0.015, sum(layout, (e) => Number(flags(e).rigidity) || 0)));
-  const reliability = Math.min(1, baseReliability * (1 + bonus));
+  const reliability = Math.min(1, baseReliability * (1 + bonus) * (1 + padReliability));
   const hasHeatShield = has('heatShield');
   const noseCdA = layout.find((e) => e.def.aero.cdA != null)?.def.aero.cdA;
   const shieldCdA = layout.find((e) => e.def.aero.entryCdA != null)?.def.aero.entryCdA;
@@ -173,10 +191,10 @@ export function computeShipSpec(assembly, { catalog, engines, launch, balance, p
       id: e.id, type: e.type, x: round(e.x), y: round(e.y), z: round(e.z), rotation: e.angle,
       variant: e.engine ? `${e.engine.fuel}-${e.engine.nozzle}` : e.def.fuel ? e.def.fuel.type : e.def.booster ? 'solid' : flags(e).fragileShield ? 'tiles' : flags(e).cheapSeals ? 'cheap_seals' : (materialOf(e)?.id ?? null),
     })),
-    engines: engineSpecs.map((s) => ({ fuel: s.fuel, nozzle: s.nozzle, pump: s.pump })),
+    engines: engineSpecs.flatMap((s, i) => Array.from({ length: n(i) }, () => ({ fuel: s.fuel, nozzle: s.nozzle, pump: s.pump }))),
     stats,
     warnings,
-    launch: { tempC: slot.tempC, slot: slot.id },
+    launch: { tempC: slot.tempC, slot: slot.id, ...(site ? { site: site.id } : {}), ...(padChoices.length ? { pad: Object.fromEntries(padChoices.map((c) => [c.eq.key, c.option.id])) } : {}) },
   };
 
   const breakdown = {
@@ -186,7 +204,7 @@ export function computeShipSpec(assembly, { catalog, engines, launch, balance, p
     finPartIds: layout.filter((e) => /fin/.test(e.type)).map((e) => e.id),
     capsulePartIds: layout.filter((e) => flags(e).capsule).map((e) => e.id),
     comY, copY, stackHeight, dvNeeded, oneWay, roundTrip: oneWay + dvNeeded.return,
-    usableFuel, deadFuel, slot, engineSpecs, boosterSpecs, mainFuel, thrustSL, baseReliability, reliabilityBonus: bonus,
+    usableFuel, deadFuel, slot, site, padChoices, launchFee, padReliability, engineSpecs, engineCount, boosterSpecs, mainFuel, thrustSL, baseReliability, reliabilityBonus: bonus,
     radius: layout.length ? Math.max(...layout.filter((e) => e.attach === 'axial').map((e) => partRadius(e.def))) : 1,
   };
 
@@ -194,7 +212,7 @@ export function computeShipSpec(assembly, { catalog, engines, launch, balance, p
 }
 
 /** Numbers for one catalogue part on its own (cards and the detail panel), with material and options applied. */
-export function partFigures(def, { engines, g0, materials = null, catalog = null, materialId = null, options = null, engineDef = null }) {
+export function partFigures(def, { engines, g0, materials = null, catalog = null, materialId = null, options = null, engineDef = null, count = 1 }) {
   const fam = materials?.families?.[def.materialFamily];
   const mat = fam ? (fam.options.find((o) => o.id === materialId) ?? fam.options[0]) : null;
   const m = def.internals && catalog?.optionsOf ? optionMods(catalog.optionsOf(def, options)) : NO_MODS;
@@ -204,8 +222,9 @@ export function partFigures(def, { engines, g0, materials = null, catalog = null
   let engine = null;
   if (def.engine) {
     engine = engineStats(engineDef ?? { fuel: 'methalox', nozzle: 'sl', pump: String(def.size).toUpperCase() }, engines, g0, m);
-    mass += engine.mass * matMass;
-    cost += engine.cost * matCost;
+    engine = { ...engine, count, totalThrust: engine.thrust * count, totalThrustSL: engine.thrustSL * count };
+    mass += engine.mass * matMass * count;
+    cost += engine.cost * matCost * count;
   }
   const booster = def.booster ? { thrust: def.booster.thrust * m.thrustF, ispSL: def.booster.ispSL + m.isp, ispVac: def.booster.ispVac + m.isp, propellant: def.booster.propellant, burnTime: def.booster.burnTime } : null;
   return {

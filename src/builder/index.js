@@ -5,17 +5,16 @@ import './builder.css';
 import { graphics } from '/src/graphics/index.js';
 import { audio } from '/src/audio/index.js';
 import { G0, PLANETS, contract, economy, events, input, requestState, save, setShip, ui } from '/src/core/index.js';
-import partsJson from './data/parts.json';
 import engines from './data/engines.json';
 import launch from './data/launch.json';
 import materials from './data/materials.json';
-import internals from './data/internals.json';
 import text from './data/text.json';
 import reliable from './data/presets/reliable.json';
 import coldMorning from './data/presets/coldMorning.json';
 import thinSkin from './data/presets/thinSkin.json';
 import workhorse from './data/presets/workhorse.json';
 import { Assembly, createCatalog } from './assembly.js';
+import { internalsJson, partsJson, sections } from './catalogData.js';
 import { computeShipSpec, engineStats } from './stats.js';
 import { evaluate } from './gonogo.js';
 import { fmtInt, fmtMoney } from './format.js';
@@ -26,15 +25,16 @@ import { createFormulaLens } from './formulaLens.js';
 import { createGonogoView } from './gonogoView.js';
 import { createWorkbench } from './workbench.js';
 import { createIconRenderer } from './partIcons.js';
-import { NASA_PARTS, hasNasaArt, nasaFailures, preloadNasaParts } from './bay/nasa.js';
+import { NASA_PARTS, hasNasaArt, nasaFailures, preloadNasaParts, registerNasaModels } from './bay/nasa.js';
 import { menu } from './menu.js';
 import { openPauseMenu, openSettings } from './settings.js';
 
 export { openPauseMenu, openSettings }; // other roles may open the Esc menu and settings from their states
 
-const catalog = createCatalog(partsJson, internals);
+const catalog = createCatalog(partsJson, internalsJson);
+registerNasaModels(catalog);
 const PRESETS = { reliable, workhorse, coldMorning, thinSkin };
-const deps = { catalog, engines, launch, balance: economy.balance, planets: PLANETS, g0: G0, materials };
+const deps = { catalog, engines, launch, balance: economy.balance, planets: PLANETS, g0: G0, materials, pad: sections.pad };
 
 let assembly = null; // the vehicle being built, kept across states
 let bay = null; // the engineering bay scene, built once
@@ -59,9 +59,9 @@ function persistDraft() {
 
 function compute() {
   const result = computeShipSpec(ensureAssembly(), deps);
-  const slot = result.breakdown.slot;
-  const poll = evaluate(result.spec, { blocks: result.blocks, money: economy.getMoney(), fee: slot?.fee ?? 0, text, oneWay: result.breakdown.oneWay, roundTrip: result.breakdown.roundTrip });
-  return { ...result, poll, fee: slot?.fee ?? 0 };
+  const fee = result.breakdown.launchFee ?? result.breakdown.slot?.fee ?? 0;
+  const poll = evaluate(result.spec, { blocks: result.blocks, money: economy.getMoney(), fee, text, oneWay: result.breakdown.oneWay, roundTrip: result.breakdown.roundTrip });
+  return { ...result, poll, fee };
 }
 
 function loadAssembly(json) {
@@ -128,7 +128,7 @@ function enterHangar() {
   audio.play('ambience.ship', { loop: true, volume: 0.3 });
 
   const hangar = createHangarScreen({
-    assembly: a, catalog, materials, engines, launch, text, scene: b, scene3d, g0: G0, icons, stations: b.stations, getMoney: () => economy.getMoney(), insolvencyFloor: economy.balance.insolvencyFloor ?? 0,
+    assembly: a, catalog, sections, materials, engines, launch, text, scene: b, scene3d, g0: G0, icons, stations: b.stations, getMoney: () => economy.getMoney(), insolvencyFloor: economy.balance.insolvencyFloor ?? 0,
     hooks: {
       onChange: refresh,
       onView: (s, c) => graphics.setView(s, c),
@@ -325,7 +325,7 @@ function enterHangar() {
   ];
   const esc = () => {
     if (hangar.dialogOpen) { hangar.closeDialog(); return; }
-    if (hangar.station && hangar.pickerOpen) { hangar.closePicker(); return; }
+    if (hangar.station && hangar.designOpen && hangar.designBack()) return;
     if (hangar.station) { hangar.closeStation(); return; }
     closePause = openPauseMenu({ onResume: () => { closePause = null; input.onEscape(esc); } });
   };

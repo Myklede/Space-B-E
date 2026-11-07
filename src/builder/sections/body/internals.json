@@ -1,0 +1,411 @@
+{
+  "kits": {
+    "tank": {
+      "name": "Inside the tank",
+      "slots": [
+        {
+          "key": "bulkhead",
+          "name": "Bulkhead between fuel and oxidizer",
+          "role": "How the two propellants are kept apart.",
+          "art": "dome",
+          "options": [
+            {
+              "id": "separate",
+              "name": "Separate domes",
+              "note": "Two tanks, two domes, a short section between them. Simple and safe.",
+              "pros": [
+                "Simple",
+                "Safe"
+              ],
+              "cons": [
+                "Heavier: two domes and a gap"
+              ],
+              "real": "Delta II, Atlas V"
+            },
+            {
+              "id": "common",
+              "name": "Common bulkhead",
+              "note": "One insulated wall shared by both propellants. Saves a dome and a metre of skin; the hardest thing to build in the tank.",
+              "pros": [
+                "−8 % tank mass"
+              ],
+              "cons": [
+                "+25 % cost",
+                "A leak mixes fuel and oxidizer"
+              ],
+              "massF": 0.92,
+              "costF": 1.25,
+              "rel": -0.004,
+              "real": "Saturn S-II, Falcon 9, Starship"
+            }
+          ]
+        },
+        {
+          "key": "pressurisation",
+          "name": "Pressurisation",
+          "role": "What fills the space as propellant drains.",
+          "art": "spheres",
+          "options": [
+            {
+              "id": "helium",
+              "name": "Helium bottles inside",
+              "note": "Cold helium bottles sit inside the oxygen tank, where they stay dense. Proven; the bottles are a hazard.",
+              "pros": [
+                "Proven"
+              ],
+              "cons": [
+                "Bottles inside the tank (AMOS-6)"
+              ],
+              "real": "Falcon 9, Delta II"
+            },
+            {
+              "id": "autogenous",
+              "name": "Autogenous (hot propellant gas)",
+              "note": "A little propellant is heated by the engine and piped back as gas. No helium at all.",
+              "pros": [
+                "−3 % mass",
+                "No helium to run out of"
+              ],
+              "cons": [
+                "+10 % cost",
+                "Only works once the engine runs"
+              ],
+              "massF": 0.97,
+              "costF": 1.1,
+              "rel": -0.003,
+              "real": "Starship, Shuttle ET"
+            }
+          ]
+        },
+        {
+          "key": "baffles",
+          "name": "Slosh baffles",
+          "role": "Rings inside the tank that stop the propellant sloshing.",
+          "art": "baffles",
+          "options": [
+            {
+              "id": "baffled",
+              "name": "Ring baffles",
+              "note": "Rings welded inside the wall break up the waves when the ship turns.",
+              "pros": [
+                "Steady propellant"
+              ],
+              "cons": [
+                "+2 % mass"
+              ],
+              "real": "Every crewed launcher"
+            },
+            {
+              "id": "none",
+              "name": "No baffles",
+              "note": "Save the mass and hope. Sloshing propellant knocked Falcon 1 flight 2 into a spin.",
+              "pros": [
+                "−2 % mass"
+              ],
+              "cons": [
+                "Reliability −0.6 %"
+              ],
+              "massF": 0.98,
+              "costF": 0.97,
+              "rel": -0.006,
+              "real": "Falcon 1 flight 2 (2007)"
+            }
+          ]
+        },
+        {
+          "key": "insulation",
+          "name": "Insulation",
+          "role": "What keeps cold propellant from boiling off.",
+          "art": "skin",
+          "options": [
+            {
+              "id": "bare",
+              "name": "Bare metal",
+              "note": "Fine for kerosene; cryogenic propellant boils off in the hours on the pad.",
+              "pros": [
+                "Lightest"
+              ],
+              "cons": [
+                "Cryogenic propellant boils off"
+              ],
+              "real": "Falcon 9 (kerosene stage)"
+            },
+            {
+              "id": "foam",
+              "name": "Spray-on foam",
+              "note": "The orange foam of the Shuttle tank. Keeps hydrogen and oxygen liquid for hours; a piece of it struck Columbia.",
+              "pros": [
+                "Cryogenic propellant stays liquid"
+              ],
+              "cons": [
+                "+3 % mass",
+                "Can shed pieces on ascent"
+              ],
+              "massF": 1.03,
+              "costF": 1.05,
+              "rel": 0.002,
+              "real": "Shuttle External Tank, SLS"
+            },
+            {
+              "id": "mli",
+              "name": "Multilayer blankets",
+              "note": "Gold foil layers for the long cruise: the only insulation that works in vacuum for weeks.",
+              "pros": [
+                "Weeks in space without boil-off"
+              ],
+              "cons": [
+                "+15 % cost",
+                "Useless in air"
+              ],
+              "massF": 1.01,
+              "costF": 1.15,
+              "rel": 0.001,
+              "real": "Centaur, lunar landers"
+            }
+          ]
+        },
+        {
+          "key": "feedline",
+          "name": "Feed lines",
+          "role": "The pipes that carry propellant from the tank to the engine.",
+          "art": "pipe",
+          "options": [
+            {
+              "id": "single",
+              "name": "Single feed line",
+              "note": "One big pipe per propellant.",
+              "pros": [
+                "Light"
+              ],
+              "cons": [
+                "One valve failure stops the engine"
+              ],
+              "real": "Most stages"
+            },
+            {
+              "id": "dual",
+              "name": "Redundant feed lines",
+              "note": "Two pipes and two valves per propellant, so one can fail.",
+              "pros": [
+                "Reliability +0.4 %"
+              ],
+              "cons": [
+                "+1.5 % mass",
+                "+8 % cost"
+              ],
+              "massF": 1.015,
+              "costF": 1.08,
+              "rel": 0.004,
+              "real": "Saturn V S-IC (five feed lines)"
+            }
+          ]
+        }
+      ]
+    },
+    "avionics": {
+      "name": "Inside the guidance ring",
+      "slots": [
+        {
+          "key": "computer",
+          "name": "Flight computer",
+          "role": "The launcher's guidance computer.",
+          "art": "computer",
+          "options": [
+            {
+              "id": "dual",
+              "name": "Dual string",
+              "note": "Two computers, each able to fly alone.",
+              "pros": [
+                "One can fail"
+              ],
+              "cons": [
+                "Which one is right?"
+              ],
+              "real": "Delta II RIFCA"
+            },
+            {
+              "id": "triple",
+              "name": "Triple voting",
+              "note": "Three computers vote.",
+              "pros": [
+                "Reliability +1 %"
+              ],
+              "cons": [
+                "+25 kg",
+                "+$80k"
+              ],
+              "massD": 25,
+              "costD": 80000,
+              "rel": 0.01,
+              "real": "Ariane 5, Falcon 9"
+            }
+          ]
+        },
+        {
+          "key": "imu",
+          "name": "Inertial measurement unit",
+          "role": "The gyroscopes and accelerometers that sense every turn and push.",
+          "art": "imu",
+          "options": [
+            {
+              "id": "rlg",
+              "name": "Ring-laser gyros",
+              "note": "Light beams racing around a triangle of mirrors. The launcher standard.",
+              "pros": [
+                "Accurate",
+                "Proven"
+              ],
+              "cons": [
+                "Heavy, dear"
+              ],
+              "real": "Delta II, Atlas V"
+            },
+            {
+              "id": "fog",
+              "name": "Fibre-optic gyros",
+              "note": "The same trick in a coil of fibre: lighter, no moving parts.",
+              "pros": [
+                "−15 kg"
+              ],
+              "cons": [
+                "Drifts a little more"
+              ],
+              "massD": -15,
+              "costD": -10000,
+              "rel": -0.002,
+              "real": "Falcon 9, many satellites"
+            },
+            {
+              "id": "mems",
+              "name": "MEMS chips",
+              "note": "Phone-grade silicon gyros, a hundred of them averaged.",
+              "pros": [
+                "−30 kg",
+                "−$60k"
+              ],
+              "cons": [
+                "Drifts: reliability −0.8 %"
+              ],
+              "massD": -30,
+              "costD": -60000,
+              "rel": -0.008,
+              "real": "Cubesats, Electron"
+            }
+          ]
+        },
+        {
+          "key": "transponder",
+          "name": "Telemetry & range safety",
+          "role": "The radios that report home and listen for the destruct command.",
+          "art": "radio",
+          "options": [
+            {
+              "id": "single",
+              "name": "Single transmitter",
+              "note": "One S-band transmitter and one command receiver.",
+              "pros": [
+                "Light"
+              ],
+              "cons": [
+                "One failure and the range loses the vehicle"
+              ],
+              "real": "Small launchers"
+            },
+            {
+              "id": "dual",
+              "name": "Dual, cross-strapped",
+              "note": "Two of everything, either able to serve the whole ring.",
+              "pros": [
+                "Reliability +0.5 %"
+              ],
+              "cons": [
+                "+12 kg",
+                "+$40k"
+              ],
+              "massD": 12,
+              "costD": 40000,
+              "rel": 0.005,
+              "real": "Delta II, Atlas V"
+            }
+          ]
+        }
+      ]
+    },
+    "solar": {
+      "name": "Inside the solar array",
+      "slots": [
+        {
+          "key": "cells",
+          "name": "Solar cells",
+          "role": "Which kind of cell covers the panel.",
+          "art": "cells",
+          "options": [
+            {
+              "id": "silicon",
+              "name": "Silicon",
+              "note": "20 % efficient. Cheap and tough.",
+              "pros": [
+                "Cheap"
+              ],
+              "cons": [
+                "20 % efficient"
+              ],
+              "real": "ISS original arrays"
+            },
+            {
+              "id": "triple",
+              "name": "Triple-junction GaAs",
+              "note": "Three layers, each catching a different colour: 30 %+ efficient.",
+              "pros": [
+                "+30 % power"
+              ],
+              "cons": [
+                "+60 % cost"
+              ],
+              "powerF": 1.3,
+              "costF": 1.6,
+              "real": "Every modern spacecraft"
+            }
+          ]
+        },
+        {
+          "key": "drive",
+          "name": "Array drive",
+          "role": "Whether the panel turns to follow the Sun.",
+          "art": "drive",
+          "options": [
+            {
+              "id": "fixed",
+              "name": "Fixed",
+              "note": "Bolted to the hull. Power depends on where the ship points.",
+              "pros": [
+                "Nothing to fail"
+              ],
+              "cons": [
+                "Power drops when pointing away"
+              ],
+              "real": ""
+            },
+            {
+              "id": "tracking",
+              "name": "Sun-tracking drive",
+              "note": "A motor and slip rings keep the panel facing the Sun.",
+              "pros": [
+                "+20 % average power"
+              ],
+              "cons": [
+                "+15 kg",
+                "A motor that must not jam"
+              ],
+              "powerF": 1.2,
+              "massD": 15,
+              "costD": 25000,
+              "rel": -0.003,
+              "real": "ISS SARJ, Dawn"
+            }
+          ]
+        }
+      ]
+    }
+  }
+}

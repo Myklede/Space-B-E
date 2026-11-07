@@ -1,12 +1,19 @@
-// 3D art for one catalogue part. Order of preference: real NASA hardware (bay/nasa.js) → detailed procedural
-// hardware (bay/partMeshes.js) → Role 3's rocketPart meshes (legs, and anything else not covered).
+// 3D art for one catalogue part. Order of preference: the part's own section art (sections/<id>/art.js) → real NASA
+// hardware (bay/nasa.js, from the part's `model` field) → detailed procedural hardware (bay/partMeshes.js) → Role 3's
+// rocketPart meshes (legs, and anything else not covered). An engine under a multi-engine thrust structure is drawn as
+// the whole cluster.
 import * as THREE from 'three';
 import { assets } from '/src/graphics/index.js';
 import { nasaPartArt } from './nasa.js';
 import {
-  airbagMesh, avionicsRingMesh, chuteMesh, finMesh, heatShieldMesh, hiadMesh, instrumentMesh, kickMotorMesh, moduleMesh, noseMesh,
-  pafMesh, ringMesh, rtgMesh, sectionMesh, solarWingMesh, sphereMesh, spinTableMesh, srbMesh, tankMesh, trussMesh, wiringTunnelMesh,
+  adapterMesh, airbagMesh, avionicsRingMesh, chuteMesh, finMesh, heatShieldMesh, hiadMesh, instrumentMesh, kickMotorMesh, moduleMesh, noseMesh,
+  pafMesh, ringMesh, rtgMesh, sectionMesh, solarWingMesh, sphereMesh, spinTableMesh, srbMesh, tankMesh, thrustMesh, trussMesh, wiringTunnelMesh,
 } from './partMeshes.js';
+import * as noseArt from '../sections/nose/art.js';
+import * as bodyArt from '../sections/body/art.js';
+import * as tailArt from '../sections/tail/art.js';
+
+const SECTION_ART = { nose: noseArt, body: bodyArt, tail: tailArt };
 
 const FAMILY_TINT = {
   control: 0x4b5563, thermal: 0x6b4a3a, recovery: 0xb45309, life: 0x1e5a6e, power: 0x1f4d8a, comms: 0x475569, protection: 0x3f3f46, science: 0x3b5a3a, seals: 0x5b2333, structure: 0x4b5563,
@@ -19,6 +26,8 @@ function proceduralArt(entry) {
   const type = entry.type.toLowerCase();
   const radius = entry.radius ?? 1.25;
   if (entry.attach === 'axial') {
+    if (def.adapter) return adapterMesh(def);
+    if (def.mounts) return thrustMesh(def, radius);
     if (def.fuel) return tankMesh(def, radius);
     if (/nose|fairing/.test(type)) return noseMesh(def, radius);
     if (/hiad/.test(type)) return hiadMesh(def, radius);
@@ -47,10 +56,12 @@ function proceduralArt(entry) {
   return moduleMesh(def, FAMILY_TINT[def.family] ?? 0x3b4148);
 }
 
-/** Returns an Object3D for a layout entry { type, attach, height, radius, def }. */
-export function partArt(entry) {
+/** Art for one part, without cluster handling. */
+function singleArt(entry) {
   const def = entry.def;
   const radius = entry.radius ?? 1.25;
+  const own = def?.section && SECTION_ART[def.section]?.partArt?.(entry);
+  if (own) return own;
   if (def?.flags?.cheapSeals) return ringMesh(def, radius, 0x8a6d3b);
   if (def?.flags?.gimbal) return ringMesh(def, radius, 0x6b7280);
   const real = nasaPartArt(entry.type);
@@ -62,6 +73,30 @@ export function partArt(entry) {
   const made = proceduralArt(entry);
   if (made) return made;
   return assets.get(`rocketPart:${entry.type}`); // Role 3's art (legs, capsules and engines until the real model loads)
+}
+
+/** Returns an Object3D for a layout entry { type, attach, height, radius, def, cluster? }. */
+export function partArt(entry) {
+  const c = entry.cluster;
+  if (!c || !entry.def?.engine || (c.count ?? 1) <= 1) return singleArt(entry);
+  // a cluster: the same engine at every mount, scaled to fit under the thrust structure, tops level with the frame
+  const g = new THREE.Group();
+  const r = c.hostRadius ?? entry.radius ?? 1.25;
+  const s = c.scale ?? 0.4;
+  const spots = (c.layout ?? []).slice(0, c.count);
+  for (const [fx, fz] of spots) {
+    const one = singleArt(entry);
+    one.scale.multiplyScalar(s);
+    one.position.set(fx * r, entry.height * (1 - s), fz * r);
+    g.add(one);
+  }
+  g.userData.cluster = c.count;
+  return g;
+}
+
+/** Section art may also provide the pieces inside a part (exploded view). Null = the shared default. */
+export function sectionInternalsArt(def, options, dims) {
+  return (def?.section && SECTION_ART[def.section]?.internalsArt?.(def, options, dims)) || null;
 }
 
 export const moduleBox = (entry) => moduleMesh(entry.def ?? { height: entry.height, name: entry.type, family: 'control', id: entry.type });

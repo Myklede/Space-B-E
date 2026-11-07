@@ -591,3 +591,47 @@ export function instrumentMesh(def, kind = 'camera') {
   g.userData.width = 0.5;
   return g;
 }
+
+// ---------- thrust structures and adapters (shared fallbacks; the tail and body sections may draw their own) ----------
+const SCALE_OF = { s: 0.75, m: 1, l: 1.35 };
+
+/** A thrust structure: a short conical skirt with stringers and an engine mount plate (holes for each engine). */
+export function thrustMesh(def, radius) {
+  const h = def.height;
+  const g = new THREE.Group();
+  const skin = lathe([[radius, h], [radius, h * 0.7], [radius * 0.94, 0.04], [radius * 0.9, 0]], std(0x2b3238, { roughness: 0.5, metalness: 0.55, side: THREE.DoubleSide }));
+  g.add(skin);
+  g.add(ringFrame(radius, h - 0.04, std(DARK, { roughness: 0.55, metalness: 0.6 }), 0.04));
+  const stringer = std(0x9aa0a6, { roughness: 0.45, metalness: 0.8 });
+  for (let i = 0; i < 16; i++) {
+    const a = (i / 16) * Math.PI * 2;
+    const s = new THREE.Mesh(new THREE.BoxGeometry(0.04, h * 0.9, 0.05), stringer);
+    s.position.set(Math.cos(a) * (radius * 0.97 + 0.02), h * 0.48, Math.sin(a) * (radius * 0.97 + 0.02));
+    s.rotation.y = -a;
+    g.add(s);
+  }
+  const plate = new THREE.Mesh(new THREE.CylinderGeometry(radius * 0.9, radius * 0.9, 0.08, 48), std(0x6b7280, { roughness: 0.5, metalness: 0.7 }));
+  plate.position.y = 0.04;
+  g.add(plate);
+  const m = def.mounts ?? { count: 1, layout: [[0, 0]], scale: 1 };
+  const holeMat = std(0x15181b, { roughness: 0.9 });
+  for (const [fx, fz] of (m.layout ?? []).slice(0, m.count ?? 1)) {
+    const hole = new THREE.Mesh(new THREE.CylinderGeometry(radius * 0.32 * (m.scale ?? 1), radius * 0.32 * (m.scale ?? 1), 0.1, 24), holeMat);
+    hole.position.set(fx * radius, 0.03, fz * radius);
+    g.add(hole);
+  }
+  return g;
+}
+
+/** A conical adapter between two diameters (def.adapter = { top, bottom } size letters). */
+export function adapterMesh(def) {
+  const h = def.height;
+  const rt = BASE_R * (SCALE_OF[def.adapter?.top] ?? 1), rb = BASE_R * (SCALE_OF[def.adapter?.bottom] ?? 1);
+  const g = new THREE.Group();
+  const bump = panelBump('adapter', 3, true);
+  bump.repeat.set(8, 1);
+  g.add(lathe([[rb, 0], [rb, 0.05], [rt, h - 0.05], [rt, h]], new THREE.MeshStandardMaterial({ color: 0xe9e7e1, roughness: 0.45, metalness: 0.2, bumpMap: bump, bumpScale: 0.004, side: THREE.DoubleSide })));
+  g.add(ringFrame(rb, 0.04, std(DARK, { roughness: 0.55, metalness: 0.6 }), 0.035), ringFrame(rt, h - 0.04, std(DARK, { roughness: 0.55, metalness: 0.6 }), 0.035));
+  return g;
+}
+const BASE_R = 1.25;

@@ -1,0 +1,459 @@
+{
+  "kits": {
+    "capsule": {
+      "name": "Inside the cabin",
+      "slots": [
+        {
+          "key": "computer",
+          "name": "Flight computer",
+          "role": "The computer that flies the ship and how many copies of it there are.",
+          "art": "computer",
+          "options": [
+            {
+              "id": "single",
+              "name": "Single computer",
+              "note": "One flight computer. If it fails, the crew flies by hand.",
+              "pros": [
+                "Cheap",
+                "Light"
+              ],
+              "cons": [
+                "No backup"
+              ],
+              "real": "Mercury, Gemini"
+            },
+            {
+              "id": "triple",
+              "name": "Triple redundant, voting",
+              "note": "Three computers vote on every command; one can fail without anyone noticing.",
+              "pros": [
+                "Reliability +2 %"
+              ],
+              "cons": [
+                "+60 kg",
+                "+$150k"
+              ],
+              "massD": 60,
+              "costD": 150000,
+              "rel": 0.02,
+              "real": "Dragon, Soyuz"
+            },
+            {
+              "id": "quad",
+              "name": "Four plus a backup",
+              "note": "Four identical computers and a fifth with different software, as the Shuttle flew.",
+              "pros": [
+                "Reliability +3 %"
+              ],
+              "cons": [
+                "+90 kg",
+                "+$260k"
+              ],
+              "massD": 90,
+              "costD": 260000,
+              "rel": 0.03,
+              "real": "Space Shuttle GPCs"
+            }
+          ]
+        },
+        {
+          "key": "lifeSupport",
+          "name": "Life-support loop",
+          "role": "Air and water: used once, or recycled.",
+          "art": "ecls",
+          "options": [
+            {
+              "id": "open",
+              "name": "Open loop",
+              "note": "Oxygen from tanks, CO₂ into canisters, water from bags. Simple; it lasts as long as the stores do.",
+              "pros": [
+                "Simple"
+              ],
+              "cons": [
+                "Stores for weeks, not months"
+              ],
+              "real": "Apollo, Dragon"
+            },
+            {
+              "id": "regenerative",
+              "name": "Regenerative loop",
+              "note": "Water split into oxygen, CO₂ scrubbed and recycled, like the station. Heavy, but it runs for months.",
+              "pros": [
+                "Runs for months"
+              ],
+              "cons": [
+                "+120 kg",
+                "+$200k"
+              ],
+              "massD": 120,
+              "costD": 200000,
+              "rel": 0.005,
+              "real": "ISS ECLSS"
+            }
+          ]
+        },
+        {
+          "key": "couches",
+          "name": "Crew couches",
+          "role": "What the crew sits in through launch and landing.",
+          "art": "couch",
+          "options": [
+            {
+              "id": "fixed",
+              "name": "Fixed couches",
+              "note": "Padded seats bolted to the floor.",
+              "pros": [
+                "Light"
+              ],
+              "cons": [
+                "A hard landing is felt in full"
+              ],
+              "real": "Gemini"
+            },
+            {
+              "id": "shock",
+              "name": "Shock-attenuating couches",
+              "note": "Seats hung on crushable struts that soak up a hard landing.",
+              "pros": [
+                "Survive a hard touchdown",
+                "Reliability +0.4 %"
+              ],
+              "cons": [
+                "+40 kg"
+              ],
+              "massD": 40,
+              "costD": 40000,
+              "rel": 0.004,
+              "real": "Apollo, Orion"
+            }
+          ]
+        },
+        {
+          "key": "windows",
+          "name": "Windows",
+          "role": "How much of the wall is glass.",
+          "art": "window",
+          "options": [
+            {
+              "id": "small",
+              "name": "Small ports",
+              "note": "Two small panes of fused silica. Strong wall, little view.",
+              "pros": [
+                "Strongest wall"
+              ],
+              "cons": [
+                "Little view"
+              ],
+              "real": "Soyuz"
+            },
+            {
+              "id": "panoramic",
+              "name": "Panoramic windows",
+              "note": "Big triple-pane windows. The view of a lifetime, and a weaker, heavier wall.",
+              "pros": [
+                "The view"
+              ],
+              "cons": [
+                "+50 kg",
+                "Reliability −0.4 %"
+              ],
+              "massD": 50,
+              "costD": 60000,
+              "rel": -0.004,
+              "real": "Dragon cupola"
+            }
+          ]
+        },
+        {
+          "key": "hatch",
+          "name": "Hatch",
+          "role": "Which way the door opens.",
+          "art": "hatch",
+          "options": [
+            {
+              "id": "outward",
+              "name": "Outward, quick release",
+              "note": "Opens outward in seconds, even against cabin pressure. The rule since 1967.",
+              "pros": [
+                "Crew out in seconds"
+              ],
+              "cons": [
+                "Needs a strong latch"
+              ],
+              "real": "Apollo (after Apollo 1), Dragon"
+            },
+            {
+              "id": "inward",
+              "name": "Inward plug hatch",
+              "note": "Cabin pressure seals it tighter. It cannot be opened against that pressure: the Apollo 1 crew died behind one.",
+              "pros": [
+                "−$20k",
+                "Seals itself"
+              ],
+              "cons": [
+                "Cannot open in a cabin fire",
+                "Reliability −1 %"
+              ],
+              "costD": -20000,
+              "rel": -0.01,
+              "real": "Apollo 1 (1967)"
+            }
+          ]
+        }
+      ]
+    },
+    "fairing": {
+      "name": "Inside the fairing",
+      "slots": [
+        {
+          "key": "split",
+          "name": "Separation",
+          "role": "How the fairing comes apart once the air is thin.",
+          "art": "split",
+          "options": [
+            {
+              "id": "bisector",
+              "name": "Two halves (bisector)",
+              "note": "The fairing splits down the middle and the halves swing away on hinges.",
+              "pros": [
+                "Standard"
+              ],
+              "cons": [],
+              "real": "Falcon 9, Delta II"
+            },
+            {
+              "id": "trisector",
+              "name": "Three petals",
+              "note": "Three lighter pieces, each needing its own pushers.",
+              "pros": [
+                "−5 % mass"
+              ],
+              "cons": [
+                "More mechanisms"
+              ],
+              "massF": 0.95,
+              "costF": 1.1,
+              "rel": -0.003,
+              "real": "Atlas V 4 m fairing"
+            }
+          ]
+        },
+        {
+          "key": "acoustic",
+          "name": "Acoustic blankets",
+          "note": "",
+          "role": "Padding against the roar of liftoff, which can shake a payload apart.",
+          "art": "blanket",
+          "options": [
+            {
+              "id": "none",
+              "name": "None",
+              "note": "Bare composite skin. Loud inside: 140 dB at liftoff.",
+              "pros": [
+                "Lightest"
+              ],
+              "cons": [
+                "Equipment shaken by sound"
+              ],
+              "real": ""
+            },
+            {
+              "id": "blankets",
+              "name": "Acoustic blankets",
+              "note": "Foam and fibre panels that cut the sound by 10 dB.",
+              "pros": [
+                "Reliability +0.3 %"
+              ],
+              "cons": [
+                "+30 kg"
+              ],
+              "massD": 30,
+              "costD": 20000,
+              "rel": 0.003,
+              "real": "Every modern fairing"
+            }
+          ]
+        },
+        {
+          "key": "pushers",
+          "name": "Release",
+          "role": "What throws the pieces clear.",
+          "art": "pusher",
+          "options": [
+            {
+              "id": "pyro",
+              "name": "Pyrotechnic",
+              "note": "Explosive bolts and a shaped cord. Sudden and loud.",
+              "pros": [
+                "Proven"
+              ],
+              "cons": [
+                "Shock to the payload"
+              ],
+              "real": "Delta II"
+            },
+            {
+              "id": "pneumatic",
+              "name": "Pneumatic pushers",
+              "note": "Gas pistons shove the halves away gently.",
+              "pros": [
+                "Gentle",
+                "Reliability +0.2 %"
+              ],
+              "cons": [
+                "+$15k"
+              ],
+              "costD": 15000,
+              "rel": 0.002,
+              "real": "Falcon 9"
+            }
+          ]
+        }
+      ]
+    },
+    "shield": {
+      "name": "Inside the heat shield",
+      "slots": [
+        {
+          "key": "thickness",
+          "name": "Ablator thickness",
+          "role": "How much material there is to burn away.",
+          "art": "layer",
+          "options": [
+            {
+              "id": "standard",
+              "name": "Standard",
+              "note": "Sized for one entry with margin.",
+              "pros": [],
+              "cons": [],
+              "real": ""
+            },
+            {
+              "id": "thick",
+              "name": "Thick",
+              "note": "A quarter more ablator for a steep or hot entry.",
+              "pros": [
+                "Reliability +1 %"
+              ],
+              "cons": [
+                "+25 % mass"
+              ],
+              "massF": 1.25,
+              "costF": 1.15,
+              "rel": 0.01,
+              "real": "Stardust (12.9 km/s entry)"
+            }
+          ]
+        },
+        {
+          "key": "gaps",
+          "name": "Seams",
+          "role": "How the blocks of shield are joined.",
+          "art": "gap",
+          "options": [
+            {
+              "id": "filler",
+              "name": "Gap filler",
+              "note": "Blocks of ablator with a soft filler between them.",
+              "pros": [
+                "Standard"
+              ],
+              "cons": [
+                "Fillers can protrude and trip the flow"
+              ],
+              "real": "Orion (Artemis I)"
+            },
+            {
+              "id": "monolithic",
+              "name": "One piece",
+              "note": "The whole shield cast as one block. No seams, hard to make.",
+              "pros": [
+                "No seams",
+                "Reliability +0.5 %"
+              ],
+              "cons": [
+                "+20 % cost"
+              ],
+              "costF": 1.2,
+              "rel": 0.005,
+              "real": "Apollo Avcoat honeycomb"
+            }
+          ]
+        }
+      ]
+    },
+    "chute": {
+      "name": "Inside the parachute",
+      "slots": [
+        {
+          "key": "canopy",
+          "name": "Canopy",
+          "role": "The shape of the chute.",
+          "art": "canopy",
+          "options": [
+            {
+              "id": "dgb",
+              "name": "Disk-gap-band",
+              "note": "The Mars standard: a disk, a gap, a band. Opens supersonic without tearing.",
+              "pros": [
+                "Opens at Mach 1.7"
+              ],
+              "cons": [],
+              "real": "Viking to Perseverance"
+            },
+            {
+              "id": "ringsail",
+              "name": "Ringsail",
+              "note": "Rings of sail cloth: more drag per kilogram, subsonic only.",
+              "pros": [
+                "+15 % drag"
+              ],
+              "cons": [
+                "Must open slower, lower"
+              ],
+              "chuteF": 1.15,
+              "massD": 10,
+              "costD": 12000,
+              "rel": -0.004,
+              "real": "Apollo, Orion mains"
+            }
+          ]
+        },
+        {
+          "key": "reefing",
+          "name": "Reefing",
+          "role": "Whether the chute opens in stages.",
+          "art": "reef",
+          "options": [
+            {
+              "id": "none",
+              "name": "Full open",
+              "note": "One hard jerk.",
+              "pros": [
+                "Simple"
+              ],
+              "cons": [
+                "Peak load tears a weak chute"
+              ],
+              "real": ""
+            },
+            {
+              "id": "staged",
+              "name": "Staged reefing",
+              "note": "Cutters release the canopy in two steps, halving the peak load.",
+              "pros": [
+                "Reliability +0.4 %"
+              ],
+              "cons": [
+                "+$8k"
+              ],
+              "costD": 8000,
+              "rel": 0.004,
+              "real": "Orion, Dragon"
+            }
+          ]
+        }
+      ]
+    }
+  }
+}

@@ -4,9 +4,9 @@ import { createDesignPage } from './designPage.js';
 import { createHandbook } from './handbook.js';
 import { fmtInt, fmtKN, fmtMass, fmtMoney, fmtMoneyShort, fmtPct } from './format.js';
 
-export const DESIGN_STATIONS = ['integration', 'propulsion', 'structures', 'crew', 'warehouse'];
-// what each design desk opens first: a checklist item's cards, or the whole warehouse
-const STATION_START = { propulsion: { family: 'engine' }, structures: { family: 'shield' }, crew: { family: 'capsule' }, warehouse: { browse: true }, integration: {} };
+export const DESIGN_STATIONS = ['integration', 'propulsion', 'structures', 'crew', 'warehouse', 'launchwindow'];
+// which card each desk opens on the design page (the integration console and the warehouse show the whole vehicle)
+const STATION_START = { propulsion: { card: 'tail' }, structures: { card: 'body' }, crew: { card: 'nose' }, launchwindow: { card: 'pad' }, warehouse: {}, integration: {} };
 
 const h = (tag, className, text) => {
   const el = document.createElement(tag);
@@ -22,7 +22,7 @@ const btn = (className, label, onClick, attrs = {}) => {
   return b;
 };
 
-export function createHangarScreen({ assembly, catalog, materials, engines, launch, text, scene, scene3d, g0, getMoney, insolvencyFloor = 0, icons, stations, hooks }) {
+export function createHangarScreen({ assembly, catalog, sections, materials, engines, launch, text, scene, scene3d, g0, getMoney, insolvencyFloor = 0, icons, stations, hooks }) {
   const el = h('div', 'bay-root hud');
   el.dataset.screen = 'hangar';
   el.dataset.stub = 'hangar'; // check:boot looks for [data-stub] in every state
@@ -64,7 +64,7 @@ export function createHangarScreen({ assembly, catalog, materials, engines, laun
 
   // ---------- the design page ----------
   const design = createDesignPage({
-    assembly, catalog, materials, engines, text, icons, scene3d, g0, getMoney,
+    assembly, catalog, sections, materials, engines, text, icons, scene3d, g0, getMoney,
     hooks: {
       onChange: () => hooks.onChange?.(),
       onSound: (id) => hooks.onSound?.(id),
@@ -75,6 +75,7 @@ export function createHangarScreen({ assembly, catalog, materials, engines, laun
       onPresets: () => hooks.onPresets?.(),
       onWorkbench: (id) => hooks.onWorkbench?.(id),
       onRename: () => openRename(),
+      onConfirm: (q, yes) => openConfirm(q, yes),
       onMore: () => openMore(),
       onOpen3d: (s, c) => hooks.onView?.(s, c),
       onClose3d: () => hooks.onViewRestore?.(),
@@ -101,7 +102,7 @@ export function createHangarScreen({ assembly, catalog, materials, engines, laun
     const { spec, breakdown, blocks } = result;
     const s = spec.stats;
     const grid = h('div', 'bld-stat-grid');
-    const fee = breakdown.slot?.fee ?? 0;
+    const fee = breakdown.launchFee ?? breakdown.slot?.fee ?? 0;
     const stat = (label, value, st = 'ok') => {
       const el_ = h('div', 'bld-stat');
       el_.dataset.state = st;
@@ -250,11 +251,10 @@ export function createHangarScreen({ assembly, catalog, materials, engines, laun
       body: (b) => {
         const list = h('div', 'bld-list');
         const item = (label, meta, fn) => { const r = btn('bld-list-item', null, () => { closeDialog(); fn(); }); r.append(h('span', null, label), h('span', 'bld-list-meta', meta)); list.append(r); };
+        item('Preset vehicles', 'Reliable, Workhorse, Cold Morning, Thin Skin', () => hooks.onPresets?.());
         item('Blueprints', 'save and load your designs', () => hooks.onBlueprints?.());
         item('Share code', 'copy a code for a friend, or paste one', () => hooks.onShare?.());
-        item('Launch window', `${launch.slots.find((s) => s.id === assembly.launch.slot)?.name ?? ''} · change the date and the weather`, () => openStation('launchwindow'));
         item('Redo', 'put back what you undid', () => { if (assembly.redo()) { sound('ui.click'); changed(); } });
-        item('Clear the stand', 'start again from nothing', () => openConfirm('Take the whole vehicle off the stand?', () => { assembly.clear(); changed(); }));
         b.append(list);
       },
       actions: [{ label: 'CLOSE' }],
@@ -265,7 +265,7 @@ export function createHangarScreen({ assembly, catalog, materials, engines, laun
   function renderMoney() {
     const m = getMoney();
     chipFunds.textContent = fmtMoney(m);
-    chipFunds.dataset.state = last && m < last.spec.stats.cost + (last.breakdown.slot?.fee ?? 0) ? 'bad' : m < insolvencyFloor * 1.5 ? 'low' : 'ok';
+    chipFunds.dataset.state = last && m < last.spec.stats.cost + (last.breakdown.launchFee ?? last.breakdown.slot?.fee ?? 0) ? 'bad' : m < insolvencyFloor * 1.5 ? 'low' : 'ok';
   }
   let insolventEl = null;
   function renderInsolvency() {
@@ -321,6 +321,7 @@ export function createHangarScreen({ assembly, catalog, materials, engines, laun
     get dialogOpen() { return !backdrop.hidden; },
     get pickerOpen() { return design.pickerOpen; },
     get designOpen() { return design.open; },
+    designBack: () => design.back(),
     closePicker: () => design.closePicker(),
     rotateDesign: (deg) => design.rotateBy(deg),
   };

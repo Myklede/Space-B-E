@@ -1,0 +1,237 @@
+{
+  "name": "Nose",
+  "short": "Nose",
+  "blurb": "The top of the ship: the fairing, the crew capsule, its heat shield and everything the crew needs.",
+  "rows": [
+    {
+      "id": "fairing",
+      "name": "Nose cone / fairing",
+      "role": "The shell that cuts through the air on the way up.",
+      "mode": "stack",
+      "pick": {
+        "families": [
+          "fairing"
+        ]
+      }
+    },
+    {
+      "id": "capsule",
+      "name": "Crew capsule",
+      "role": "Where the crew rides. Required.",
+      "mode": "stack",
+      "pick": {
+        "flags": [
+          "capsule"
+        ]
+      }
+    },
+    {
+      "id": "shield",
+      "name": "Heat shield",
+      "role": "Protects the capsule when it falls back through the air.",
+      "mode": "stack",
+      "pick": {
+        "flags": [
+          "heatShield"
+        ]
+      }
+    },
+    {
+      "id": "payload",
+      "name": "Payload adapter & kick stage",
+      "role": "The joint to the stage below, and an optional final solid motor.",
+      "mode": "stack",
+      "pick": {
+        "families": [
+          "stages",
+          "boosters"
+        ]
+      }
+    },
+    {
+      "id": "recovery",
+      "name": "Parachutes & floats",
+      "role": "Slowing down for the landing and staying afloat after splashdown.",
+      "mode": "radial",
+      "host": "capsule",
+      "pick": {
+        "flags": [
+          "parachute",
+          "floats"
+        ]
+      }
+    },
+    {
+      "id": "comms",
+      "name": "Antennas",
+      "role": "Talking to Earth.",
+      "mode": "radial",
+      "host": "capsule",
+      "pick": {
+        "flags": [
+          "antenna"
+        ]
+      }
+    },
+    {
+      "id": "crew",
+      "name": "Air, water & shelter",
+      "role": "Keeping the crew alive between the planets.",
+      "mode": "radial",
+      "host": "capsule",
+      "pick": {
+        "flags": [
+          "spareO2Tanks",
+          "scrubber",
+          "shelter",
+          "waterRecycler"
+        ]
+      }
+    },
+    {
+      "id": "attitude",
+      "name": "Steering in space",
+      "role": "Pointing the ship where there is no air.",
+      "mode": "radial",
+      "host": "capsule",
+      "pick": {
+        "flags": [
+          "rcs",
+          "reactionWheel",
+          "navigation"
+        ]
+      }
+    },
+    {
+      "id": "cooling",
+      "name": "Cabin cooling",
+      "role": "Getting rid of heat in a vacuum.",
+      "mode": "radial",
+      "host": "capsule",
+      "pick": {
+        "flags": [
+          "radiator"
+        ]
+      }
+    }
+  ],
+  "shapes": [
+    {
+      "id": "fairing_capsule",
+      "name": "Capsule under a pointed fairing",
+      "real": "Gemini on Titan II",
+      "desc": "A sharp nose over a two-seat capsule: low drag through the thick air.",
+      "pros": [
+        "Low drag"
+      ],
+      "cons": [
+        "The fairing is mass you carry to Mars"
+      ],
+      "stack": [
+        "nose_pointed_m",
+        "capsule_m",
+        "heat_shield_m"
+      ],
+      "radial": [
+        {
+          "type": "parachute",
+          "on": 1,
+          "angle": 180,
+          "yFrac": 0.55
+        },
+        {
+          "type": "antenna_low",
+          "on": 1,
+          "angle": 90,
+          "yFrac": 0.55
+        },
+        {
+          "type": "rcs_pack",
+          "on": 1,
+          "angle": 0,
+          "yFrac": 0.3
+        }
+      ]
+    },
+    {
+      "id": "bare_capsule",
+      "name": "Bare capsule",
+      "real": "Crew Dragon, Soyuz descent module",
+      "desc": "The capsule itself is the nose: no fairing at all.",
+      "pros": [
+        "Lightest nose",
+        "Cheapest"
+      ],
+      "cons": [
+        "More drag on the way up"
+      ],
+      "stack": [
+        "capsule_m",
+        "heat_shield_m"
+      ],
+      "radial": [
+        {
+          "type": "parachute",
+          "on": 0,
+          "angle": 180,
+          "yFrac": 0.55
+        },
+        {
+          "type": "antenna_low",
+          "on": 0,
+          "angle": 90,
+          "yFrac": 0.55
+        },
+        {
+          "type": "rcs_pack",
+          "on": 0,
+          "angle": 0,
+          "yFrac": 0.3
+        }
+      ]
+    },
+    {
+      "id": "big_cabin",
+      "name": "Big crew cabin",
+      "real": "Apollo command module, Orion",
+      "desc": "A large cabin with its own spare oxygen under a blunt cover.",
+      "pros": [
+        "Room and spare oxygen"
+      ],
+      "cons": [
+        "Heavy"
+      ],
+      "stack": [
+        "nose_blunt_m",
+        "capsule_l",
+        "heat_shield_l"
+      ],
+      "radial": [
+        {
+          "type": "parachute",
+          "on": 1,
+          "angle": 180,
+          "yFrac": 0.55
+        },
+        {
+          "type": "drogue_chute",
+          "on": 1,
+          "angle": 220,
+          "yFrac": 0.6
+        },
+        {
+          "type": "antenna_medium",
+          "on": 1,
+          "angle": 90,
+          "yFrac": 0.55
+        },
+        {
+          "type": "rcs_pack",
+          "on": 1,
+          "angle": 0,
+          "yFrac": 0.3
+        }
+      ]
+    }
+  ]
+}

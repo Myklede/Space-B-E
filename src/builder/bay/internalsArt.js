@@ -1,8 +1,9 @@
-// What a part looks like inside: small 3D pieces for every slot of a kit (data/internals.json), so the design page
+// What a part looks like inside: small 3D pieces for every slot of a kit (sections/<id>/internals.json), so the design page
 // can pull a selected part apart like an exploded engineering drawing. Each piece stands where it lives in the part
 // (metres, part base at y = 0) and carries the direction it slides out in when the view explodes.
 import * as THREE from 'three';
 import { std } from './util.js';
+import { sectionInternalsArt } from './partArt.js';
 
 const STEEL = std(0xaab1b8, { roughness: 0.35, metalness: 0.9 });
 const COPPER = std(0xb87333, { roughness: 0.35, metalness: 0.9 });
@@ -27,6 +28,8 @@ const group = (...objs) => { const g = new THREE.Group(); g.add(...objs); return
  * changes small details (a second computer, a longer skirt). `radius` and `height` are the part's.
  */
 export function internalsArt(def, options, { radius = 1.25, height = 1 } = {}) {
+  const own = sectionInternalsArt(def, options, { radius, height });
+  if (own) return own;
   const kit = def.internals;
   const h = height, r = radius;
   const opt = (k) => options?.[k]?.id;

@@ -13,11 +13,14 @@ const { PLANETS, G0 } = await import(pathToFileURL(path.join(ROOT, 'src/core/pla
 const { Assembly, createCatalog, SYMMETRIES } = await import(pathToFileURL(path.join(ROOT, 'src/builder/assembly.js')).href);
 const { computeShipSpec, engineStats, partFigures, optionMods } = await import(pathToFileURL(path.join(ROOT, 'src/builder/stats.js')).href);
 const { autoAttach } = await import(pathToFileURL(path.join(ROOT, 'src/builder/autoplace.js')).href);
+const SEC = await import(pathToFileURL(path.join(ROOT, 'src/builder/sections.js')).href);
 const { evaluate } = await import(pathToFileURL(path.join(ROOT, 'src/builder/gonogo.js')).href);
 
-const partsJson = read('src/builder/data/parts.json');
+const sectionFiles = Object.fromEntries(SEC.SECTION_IDS.map((id) => [id, { parts: read(`src/builder/sections/${id}/parts.json`), internals: read(`src/builder/sections/${id}/internals.json`), section: read(`src/builder/sections/${id}/section.json`) }]));
+const { partsJson, internalsJson } = SEC.mergeSectionData(read('src/builder/data/families.json'), sectionFiles);
+const sections = SEC.createSections(sectionFiles);
 const engines = read('src/builder/data/engines.json');
-const internals = read('src/builder/data/internals.json');
+const internals = internalsJson;
 const materials = read('src/builder/data/materials.json');
 const launch = read('src/builder/data/launch.json');
 const text = read('src/builder/data/text.json');
@@ -46,7 +49,8 @@ for (const p of catalog.parts) {
   if (!(p.height > 0)) fail(`${where}: height must be > 0`);
   if (!(p.reliability > 0 && p.reliability <= 1)) fail(`${where}: reliability must be in (0, 1]`);
   if (p.fuel && !contract.FUELS.includes(p.fuel.type)) fail(`${where}: fuel.type must be one of ${contract.FUELS.join(', ')}`);
-  if (p.engine && !/^engine_[sml]$/.test(p.id)) fail(`${where}: engine parts must be named engine_s, engine_m or engine_l`);
+  if (p.engine && !/^engine_[sml]/.test(p.id)) fail(`${where}: engine part ids start with engine_s, engine_m or engine_l (the pump size)`);
+  if (!SEC.VEHICLE_SECTIONS.includes(p.section)) fail(`${where}: section must be nose, body or tail`);
   if (p.engine && (p.mass !== 0 || p.cost !== 0)) fail(`${where}: engine parts keep mass and cost at 0 (the workbench adds them)`);
   if (p.internals && !internals.kits[p.internals]) fail(`${where}: unknown internals kit "${p.internals}"`);
   if (p.materialFamily && !materials.families[p.materialFamily]) fail(`${where}: unknown materialFamily "${p.materialFamily}"`);
@@ -169,8 +173,78 @@ ok(`text.json: ${contract.HARD_BLOCKS.length} blocks and ${contract.WARNINGS.len
   check(b2.validate().length === 0, 'the stack stays connected after automatic placement');
 }
 
+// ---------- sections ----------
+{
+  const depsS = { catalog, engines, launch, balance, planets: PLANETS, g0: G0, materials, pad: sections.pad };
+  for (const id of SEC.VEHICLE_SECTIONS) {
+    const sec = sections[id];
+    if (!sec.rows.length) fail(`section ${id}: no rows`);
+    for (const row of sec.rows) if (!SEC.rowCandidates(catalog, sec, row).length && row.mode !== 'auto') fail(`section ${id} row ${row.id}: no part matches its pick`);
+    for (const p of catalog.parts.filter((x) => x.section === id)) if (!SEC.rowOf(sec, p)) fail(`section ${id}: part ${p.id} is in no row, so the player can never pick it`);
+    if (!sec.shapes.length) fail(`section ${id}: no shapes`);
+    for (const shape of sec.shapes) {
+      const where = `section ${id} shape ${shape.id}`;
+      for (const t of shape.stack) { const d = catalog.get(t); if (!d) fail(`${where}: unknown part ${t}`); else if (d.section !== id) fail(`${where}: ${t} belongs to the ${d.section} section`); else if (d.attach !== 'axial') fail(`${where}: ${t} is not a stack part`); }
+      for (const r of shape.radial ?? []) { const d = catalog.get(r.type); if (!d || d.attach !== 'radial') fail(`${where}: radial ${r.type} is unknown or not side-mounted`); if (!(r.on >= 0 && r.on < shape.stack.length)) fail(`${where}: radial ${r.type} has a bad 'on' index`); }
+      // on its own, and on top of the Reliable preset
+      const alone = new Assembly(null, catalog);
+      SEC.applyShape(alone, sec, shape);
+      if (alone.validate().length) fail(`${where}: alone, the stack does not connect: ${alone.validate().join('; ')}`);
+      const types = alone.chain().map((p) => p.type);
+      if (types.join() !== shape.stack.join()) fail(`${where}: alone, got ${types.join()} instead of ${shape.stack.join()}`);
+      const radialWanted = (shape.radial ?? []).reduce((n, r) => n + (r.symmetry ?? 1), 0);
+      const radialGot = alone.parts.filter((p) => p.node === 'radial').length;
+      if (radialGot !== radialWanted) fail(`${where}: ${radialGot} side parts placed, expected ${radialWanted} (does every host have a radial node?)`);
+      const onPreset = new Assembly(presets.reliable, catalog);
+      SEC.applyShape(onPreset, sec, shape);
+      const r = computeShipSpec(onPreset, depsS);
+      if (r.blocks.includes('NOT_CONNECTED')) fail(`${where}: on Reliable, parts end up disconnected`);
+      if (!SEC.currentShape(onPreset, sec) || SEC.currentShape(onPreset, sec).id !== shape.id) fail(`${where}: currentShape does not recognise it after applying`);
+    }
+    ok(`section ${id}: ${sec.shapes.length} shapes, ${sec.rows.length} rows`);
+  }
+  // build a whole ship from nothing, section by section, in any order
+  const a = new Assembly(null, catalog);
+  SEC.applyShape(a, sections.tail, sections.tail.shapes[0]);
+  SEC.applyShape(a, sections.nose, sections.nose.shapes[0]);
+  SEC.applyShape(a, sections.body, sections.body.shapes[0]);
+  const order = a.chain().map((p) => catalog.get(p.type).section);
+  check(order.join() === [...order].sort((x, y) => SEC.VEHICLE_SECTIONS.indexOf(x) - SEC.VEHICLE_SECTIONS.indexOf(y)).join() && a.validate().length === 0, 'tail, then nose, then body: the stack comes out nose → body → tail');
+  check(a.chain().some((p) => catalog.get(p.type).adapter) || a.chain().every((p, i, arr) => i === 0 || catalog.get(p.type).size === catalog.get(arr[i - 1].type).size || catalog.get(p.type).engine || catalog.get(arr[i - 1].type).section === catalog.get(p.type).section), 'an adapter joins sections of different diameter');
+  // clusters
+  const octa = sections.tail.shapes.find((sh) => sh.stack.some((t) => (catalog.get(t).mounts?.count ?? 1) > 1));
+  if (octa) {
+    const b = new Assembly(presets.reliable, catalog);
+    SEC.applyShape(b, sections.tail, octa);
+    const n = catalog.get(octa.stack.find((t) => catalog.get(t).mounts)).mounts.count;
+    const r = computeShipSpec(b, depsS);
+    check(r.spec.engines.length === n && r.breakdown.engineCount === n, `a ${n}-engine tail lists ${n} engines in the ShipSpec`);
+    const single = new Assembly(presets.reliable, catalog);
+    SEC.applyShape(single, sections.tail, { ...octa, stack: [octa.stack[0], octa.stack[1]] });
+    check(r.spec.stats.thrust === n * engineStats(r.spec.engines[0], engines, G0).thrust, 'cluster thrust is engines × one engine');
+  }
+  // rows: add and clear
+  const c = new Assembly(presets.reliable, catalog);
+  const sciRow = sections.body.rows.find((r) => r.id === 'science');
+  const added = SEC.addThroughRow(c, sections.body, sciRow, 'seismometer');
+  check(added.ids.length === 1 && SEC.rowItems(c, sections.body, sciRow).some((it) => it.part.type === 'seismometer'), 'a science instrument added through its row shows in that row');
+  SEC.clearSection(c, sections.nose);
+  check(!c.chain().some((p) => catalog.get(p.type).section === 'nose') && c.validate().length === 0, 'clearing the nose leaves a connected body and tail');
+  // pad
+  const pad = sections.pad;
+  check(pad.sites.length > 0 && pad.sites.every((st) => st.slots.length > 0), 'pad: every site has launch windows');
+  for (const eq of pad.equipment) if (!eq.options.length || (eq.options[0].fee ?? 0) !== 0 || (eq.options[0].reliability ?? 0) !== 0) fail(`pad equipment ${eq.key}: the first option must be the free, neutral default`);
+  const d = new Assembly(presets.reliable, catalog);
+  const base = computeShipSpec(d, depsS);
+  const eq = pad.equipment[0];
+  d.setPadOption(eq.key, eq.options[eq.options.length - 1].id);
+  const after = computeShipSpec(d, depsS);
+  check(after.breakdown.launchFee > base.breakdown.launchFee && after.spec.stats.reliability > base.spec.stats.reliability, 'pad equipment adds a fee and reliability');
+  check(new Assembly(d.toJSON(), catalog).launch.pad[eq.key] === eq.options[eq.options.length - 1].id, 'pad choices survive save and share codes');
+}
+
 // ---------- presets ----------
-const deps = { catalog, engines, launch, balance, planets: PLANETS, g0: G0, materials };
+const deps = { catalog, engines, launch, balance, planets: PLANETS, g0: G0, materials, pad: sections.pad };
 const shapeKeys = Object.keys(contract.SHIP_SPEC_SHAPE.stats);
 for (const [key, json] of Object.entries(presets)) {
   const a = new Assembly(json, catalog);

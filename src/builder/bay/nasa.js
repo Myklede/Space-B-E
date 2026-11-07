@@ -13,42 +13,18 @@ const loader = new GLTFLoader();
 loader.setDRACOLoader(draco);
 
 /**
- * Which model each part uses. `nodes` selects children by name (whole file when absent); `up` says which model axis
+ * Which model each part uses (filled from the parts' `model` field by registerNasaModels). `nodes` selects children by name (whole file when absent); `up` says which model axis
  * becomes the vertical: 'x' | 'y' | 'z' | 'long' (longest side) | 'short' (shortest side); `thin` optionally turns the
  * thinnest side towards +x (outward, for panels and dishes); `flip` turns the part upside down; `tint` recolours
  * untextured models; `fit` scales by 'height' (default) or 'width'.
  */
-export const NASA_PARTS = {
-  engine_s: { model: 'shuttle_engines', up: 'x', tint: 0x8d9399, forceTint: true, metalness: 0.7, roughness: 0.42 }, // a Space Shuttle main engine
-  engine_m: { model: 'shuttle_engines', up: 'x', tint: 0x8d9399, forceTint: true, metalness: 0.7, roughness: 0.42 },
-  engine_l: { model: 'shuttle_engines', up: 'x', tint: 0x8d9399, forceTint: true, metalness: 0.7, roughness: 0.42 },
-  capsule_s: { model: 'stardust_capsule', up: 'short', tint: 0xe6e3dc, roughness: 0.5 },
-  capsule_m: { model: 'esas_crew_module', up: 'z', flip: true, tint: 0xd3d1cb, roughness: 0.6, metalness: 0.15 },
-  capsule_l: { model: 'esas_crew_module', up: 'z', flip: true, tint: 0xd3d1cb, roughness: 0.6, metalness: 0.15 },
-  rcs_pack: { model: 'shuttle_rcs', up: 'x', tint: 0xb9bcc0 },
-  solar_panel: { model: 'satkit_wings1', up: 'long', thin: true },
-  radiator: { model: 'satkit_wings1', up: 'long', thin: true, tint: 0xd8dde2 },
-  antenna_low: { model: 'satkit_radio1', up: 'long' },
-  antenna_medium: { model: 'satkit_radio2', up: 'long', thin: true, tint: 0xd9dde2 },
-  antenna_high: { model: 'voyager_antenna', nodes: ['dish001', 'dish.001'], up: 'y', tint: 0xe4e7ea, roughness: 0.4, metalness: 0.5 }, // Voyager's dish (GLTFLoader strips the dot from node names)
-  relay_sat: { model: 'ladee', up: 'long', tint: 0xcfd3d8 },
-  battery: { model: 'oru', up: 'y', tint: 0xcfd3d8 },
-  co2_scrubber: { model: 'oru', up: 'y', tint: 0xbfc7cf },
-  water_recycler: { model: 'oru', up: 'y', tint: 0xc9d6df },
-  fuel_cell: { model: 'oru', up: 'y', tint: 0x9fb6c7 },
-  radiation_shelter: { model: 'docking_system', up: 'x', tint: 0xd9dcdf },
-  o2_bottle: { model: 'satkit_body1', up: 'long', tint: 0xe4e7ea },
-  o2_tank_l: { model: 'satkit_body1', up: 'long', tint: 0xf1f0ec },
-  reaction_wheel: { model: 'satkit_body3', up: 'long', tint: 0xb9bec4 },
-  spectrometer: { model: 'cos_spectrograph', up: 'long', tint: 0x9fb6c7, forceTint: true, metalness: 0.5, roughness: 0.45 }, // Hubble's Cosmic Origins Spectrograph
-  ground_radar: { model: 'satkit_radio2', up: 'long', thin: true },
-  drill: { model: 'satkit_body1', up: 'long', tint: 0x8d9298 },
-  camera_mast: { model: 'wfpc', up: 'long', tint: 0xcfd3d8, forceTint: true, metalness: 0.5, roughness: 0.45 }, // Hubble's Wide Field Planetary Camera
-  sample_container: { model: 'satkit_body2', up: 'long', tint: 0xd0d4d8 },
-  sample_container_l: { model: 'satkit_body2', up: 'long', tint: 0xe4e7ea },
-  srb_s: { model: 'srb', up: 'x', tint: 0xece9e2, forceTint: true, metalness: 0.15, roughness: 0.45 }, // a Space Shuttle solid rocket booster
-  srb_m: { model: 'srb', up: 'x', tint: 0xece9e2, forceTint: true, metalness: 0.15, roughness: 0.45 },
-};
+export const NASA_PARTS = {};
+
+/** Reads each part's `model` field (sections/<id>/parts.json) into NASA_PARTS. Call once with the catalogue. */
+export function registerNasaModels(catalog) {
+  for (const def of catalog.parts) if (def.model?.model) NASA_PARTS[def.id] = def.model;
+  return Object.keys(NASA_PARTS).length;
+}
 
 const files = new Map(); // model slug -> Promise<scene|null>
 const protos = new Map(); // part id -> normalised Object3D (prototype)

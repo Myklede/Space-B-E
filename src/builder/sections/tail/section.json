@@ -1,0 +1,174 @@
+{
+  "name": "Tail",
+  "short": "Tail",
+  "blurb": "The bottom of the ship: the thrust structure, the engines, fins, landing legs and strap-on solids.",
+  "rows": [
+    {
+      "id": "thrust",
+      "name": "Thrust structure",
+      "role": "The frame the engines push on. It sets how many engines there are.",
+      "mode": "stack",
+      "pick": {
+        "has": [
+          "mounts"
+        ]
+      }
+    },
+    {
+      "id": "engines",
+      "name": "Engines",
+      "role": "One type for the whole cluster. Required.",
+      "mode": "stack",
+      "pick": {
+        "has": [
+          "engine"
+        ]
+      }
+    },
+    {
+      "id": "gimbal",
+      "name": "Engine gimbal",
+      "role": "Swivels the engines to steer.",
+      "mode": "radial",
+      "host": "engine",
+      "pick": {
+        "flags": [
+          "gimbal"
+        ]
+      }
+    },
+    {
+      "id": "boosters",
+      "name": "Strap-on solid motors",
+      "role": "Extra thrust off the pad.",
+      "mode": "radial",
+      "host": "thrust",
+      "symmetry": 2,
+      "pick": {
+        "has": [
+          "booster"
+        ]
+      }
+    },
+    {
+      "id": "fins",
+      "name": "Fins",
+      "role": "Keep the ship pointing nose-first in thick air.",
+      "mode": "radial",
+      "host": "thrust",
+      "symmetry": 4,
+      "pick": {
+        "match": "^fin_"
+      }
+    },
+    {
+      "id": "landing",
+      "name": "Landing gear",
+      "role": "Legs or airbags for the touchdown on Mars.",
+      "mode": "radial",
+      "host": "engine",
+      "pick": {
+        "flags": [
+          "legs"
+        ]
+      }
+    }
+  ],
+  "shapes": [
+    {
+      "id": "single_engine",
+      "name": "One big engine",
+      "real": "Delta II (RS-27A), Atlas V (RD-180)",
+      "desc": "One large engine on a conical thrust frame, four fins and landing legs.",
+      "pros": [
+        "Simple",
+        "Light"
+      ],
+      "cons": [
+        "No engine-out"
+      ],
+      "stack": [
+        "thrust_single_m",
+        "engine_l"
+      ],
+      "radial": [
+        {
+          "type": "fin_m",
+          "on": 0,
+          "angle": 0,
+          "yFrac": 0.2,
+          "symmetry": 4
+        },
+        {
+          "type": "legs_m",
+          "on": 1,
+          "angle": 45,
+          "yFrac": 0.35
+        }
+      ]
+    },
+    {
+      "id": "octaweb",
+      "name": "Nine engines (Octaweb)",
+      "real": "Falcon 9",
+      "desc": "Nine small engines in a ring of eight around one, landing legs folded along the side.",
+      "pros": [
+        "Engine-out capable",
+        "Cheap engines"
+      ],
+      "cons": [
+        "Heavier frame"
+      ],
+      "stack": [
+        "thrust_octaweb_m",
+        "engine_s"
+      ],
+      "radial": [
+        {
+          "type": "legs_m",
+          "on": 1,
+          "angle": 45,
+          "yFrac": 0.35
+        }
+      ]
+    },
+    {
+      "id": "single_solids",
+      "name": "One engine + strap-on solids",
+      "real": "Delta II 7925 (one RS-27A, nine GEM-40)",
+      "desc": "One large engine helped off the pad by solid boosters around the base.",
+      "pros": [
+        "Huge thrust off the pad"
+      ],
+      "cons": [
+        "Solid casings stay on as dead mass"
+      ],
+      "stack": [
+        "thrust_single_m",
+        "engine_l"
+      ],
+      "radial": [
+        {
+          "type": "srb_s",
+          "on": 0,
+          "angle": 0,
+          "yFrac": 0.1,
+          "symmetry": 3
+        },
+        {
+          "type": "fin_m",
+          "on": 0,
+          "angle": 60,
+          "yFrac": 0.2,
+          "symmetry": 3
+        },
+        {
+          "type": "legs_m",
+          "on": 1,
+          "angle": 45,
+          "yFrac": 0.35
+        }
+      ]
+    }
+  ]
+}

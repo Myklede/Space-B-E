@@ -1,0 +1,444 @@
+{
+  "kits": {
+    "engine": {
+      "name": "Inside the engine",
+      "slots": [
+        {
+          "key": "cycle",
+          "name": "Turbopump cycle",
+          "role": "How the pump that feeds the chamber is driven.",
+          "art": "pump",
+          "options": [
+            {
+              "id": "gg",
+              "name": "Gas generator",
+              "note": "A small burner spins the turbine, then its exhaust is dumped overboard. Merlin, Vulcain, F-1.",
+              "pros": [
+                "Simple and proven",
+                "Cheap"
+              ],
+              "cons": [
+                "Throws away 2–3 % of the propellant unburned"
+              ],
+              "real": "Merlin 1D, Vulcain 2, F-1"
+            },
+            {
+              "id": "sc",
+              "name": "Staged combustion",
+              "note": "The turbine exhaust goes into the main chamber, so nothing is wasted. Higher pressure, higher Isp, far harder to build.",
+              "pros": [
+                "+12 s of Isp",
+                "Nothing wasted"
+              ],
+              "cons": [
+                "Red-hot oxygen-rich plumbing",
+                "+40 % cost"
+              ],
+              "isp": 12,
+              "massF": 1.12,
+              "costF": 1.4,
+              "rel": -0.005,
+              "real": "RS-25, RD-180, Raptor"
+            },
+            {
+              "id": "expander",
+              "name": "Expander",
+              "note": "Hydrogen heated in the chamber walls spins the turbine. Gentle and endlessly restartable, but only enough power for a small engine.",
+              "pros": [
+                "+8 s of Isp",
+                "Restarts forever",
+                "Most reliable cycle"
+              ],
+              "cons": [
+                "Thrust −15 %: the cycle cannot drive a big pump"
+              ],
+              "isp": 8,
+              "thrustF": 0.85,
+              "costF": 1.2,
+              "rel": 0.01,
+              "real": "RL10, Vinci"
+            },
+            {
+              "id": "electric",
+              "name": "Electric pump",
+              "note": "Battery-driven motors spin the pumps. The simplest plumbing there is; the batteries are heavy.",
+              "pros": [
+                "Simplest plumbing",
+                "Cheapest"
+              ],
+              "cons": [
+                "Thrust −25 %",
+                "Heavy batteries"
+              ],
+              "thrustF": 0.75,
+              "massF": 1.1,
+              "costF": 0.75,
+              "rel": 0.005,
+              "real": "Rutherford (Electron)"
+            },
+            {
+              "id": "pressure",
+              "name": "Pressure-fed (no pump)",
+              "note": "No pump at all: tank pressure pushes propellant into the chamber. Unlimited restarts, but the thick tanks and low pressure cost thrust and Isp.",
+              "pros": [
+                "Unlimited restarts",
+                "Almost nothing to fail"
+              ],
+              "cons": [
+                "Thrust −50 %",
+                "Isp −10 s"
+              ],
+              "thrustF": 0.5,
+              "isp": -10,
+              "costF": 0.6,
+              "rel": 0.015,
+              "real": "AJ10 (Delta II second stage), Apollo SPS"
+            }
+          ]
+        },
+        {
+          "key": "injector",
+          "name": "Injector",
+          "role": "The plate that sprays fuel and oxidizer into the chamber.",
+          "art": "injector",
+          "options": [
+            {
+              "id": "coaxial",
+              "name": "Coaxial swirl",
+              "note": "Hundreds of small elements, oxidizer inside, fuel swirling around it. Smooth combustion.",
+              "pros": [
+                "Smooth, efficient burn"
+              ],
+              "cons": [
+                "Hundreds of precision parts"
+              ],
+              "real": "RS-25, RD-180"
+            },
+            {
+              "id": "pintle",
+              "name": "Pintle",
+              "note": "One central element: a pin with a sleeve. Deep throttling, cheap to make, hard to make unstable.",
+              "pros": [
+                "Throttles deeply",
+                "Cheap",
+                "Stable"
+              ],
+              "cons": [
+                "Slightly lower mixing efficiency"
+              ],
+              "isp": -2,
+              "costD": -15000,
+              "rel": 0.004,
+              "real": "Merlin, Apollo LM descent engine"
+            },
+            {
+              "id": "impinging",
+              "name": "Impinging jets",
+              "note": "Jets of fuel and oxidizer collide and mix. Simple; prone to rough combustion.",
+              "pros": [
+                "Cheapest"
+              ],
+              "cons": [
+                "Prone to combustion instability"
+              ],
+              "costD": -25000,
+              "rel": -0.004,
+              "real": "F-1 (after years of baffle tests)"
+            }
+          ]
+        },
+        {
+          "key": "nozzleExt",
+          "name": "Nozzle extension",
+          "role": "The lower skirt of the bell and how it is kept from melting.",
+          "art": "skirt",
+          "options": [
+            {
+              "id": "regen",
+              "name": "Regeneratively cooled",
+              "note": "Fuel runs through channels in the bell wall before it burns, keeping the metal cool and preheating the fuel.",
+              "pros": [
+                "Runs as long as there is fuel"
+              ],
+              "cons": [
+                "Heavy: hundreds of brazed tubes"
+              ],
+              "real": "RS-25, Merlin"
+            },
+            {
+              "id": "radiative",
+              "name": "Radiatively cooled niobium",
+              "note": "A thin skirt of C-103 niobium that simply glows orange and radiates the heat away. Light; only for vacuum.",
+              "pros": [
+                "−60 kg"
+              ],
+              "cons": [
+                "Vacuum only",
+                "Glows at 1,300 °C"
+              ],
+              "massD": -60,
+              "costD": 30000,
+              "rel": -0.003,
+              "real": "Merlin Vacuum skirt, Apollo SPS"
+            },
+            {
+              "id": "carbon",
+              "name": "Carbon-carbon skirt",
+              "note": "Woven carbon fibre in a carbon matrix: half the mass of metal and happy at 2,000 °C.",
+              "pros": [
+                "−100 kg",
+                "+4 s of Isp from a longer bell"
+              ],
+              "cons": [
+                "Brittle",
+                "Expensive"
+              ],
+              "massD": -100,
+              "isp": 4,
+              "costD": 90000,
+              "rel": -0.006,
+              "real": "RL10B-2, Vinci"
+            },
+            {
+              "id": "extendable",
+              "name": "Extendable nozzle",
+              "note": "A second skirt that slides down after staging, so a huge bell fits in a short interstage.",
+              "pros": [
+                "+10 s of Isp in vacuum"
+              ],
+              "cons": [
+                "One more mechanism that must work",
+                "+40 kg"
+              ],
+              "isp": 10,
+              "massD": 40,
+              "costD": 120000,
+              "rel": -0.01,
+              "real": "RL10B-2 (Delta IV)"
+            }
+          ]
+        },
+        {
+          "key": "igniter",
+          "name": "Igniter",
+          "role": "How the engine is lit, and how many times.",
+          "art": "igniter",
+          "options": [
+            {
+              "id": "spark",
+              "name": "Spark torch",
+              "note": "A small spark-lit torch in the chamber wall. Restartable as long as there is power.",
+              "pros": [
+                "Restartable"
+              ],
+              "cons": [
+                "Needs power and a pilot flow"
+              ],
+              "real": "RS-25, Raptor"
+            },
+            {
+              "id": "pyro",
+              "name": "Pyrotechnic",
+              "note": "A one-shot cartridge. The simplest igniter; one start only.",
+              "pros": [
+                "Simplest",
+                "−$10k"
+              ],
+              "cons": [
+                "One ignition only"
+              ],
+              "costD": -10000,
+              "rel": 0.002,
+              "real": "F-1, Vulcain"
+            },
+            {
+              "id": "tea_teb",
+              "name": "TEA-TEB slugs",
+              "note": "Chemicals that burst into green flame on contact with oxygen. Reliable relights, limited by how many slugs you carry.",
+              "pros": [
+                "Reliable relight",
+                "Reliability +0.4 %"
+              ],
+              "cons": [
+                "Limited number of slugs"
+              ],
+              "costD": 15000,
+              "rel": 0.004,
+              "real": "Merlin (the green flash at ignition)"
+            }
+          ]
+        }
+      ]
+    },
+    "booster": {
+      "name": "Inside the solid motor",
+      "slots": [
+        {
+          "key": "grain",
+          "name": "Propellant grain",
+          "role": "The shape of the hole cast through the propellant, which sets the thrust curve.",
+          "art": "grain",
+          "options": [
+            {
+              "id": "star",
+              "name": "Star grain",
+              "note": "A star-shaped bore gives steady thrust the whole burn.",
+              "pros": [
+                "Steady thrust"
+              ],
+              "cons": [],
+              "real": "Castor, GEM"
+            },
+            {
+              "id": "highthrust",
+              "name": "High-thrust grain",
+              "note": "More burning surface: +15 % thrust, a shorter burn, slightly less Isp.",
+              "pros": [
+                "+15 % thrust"
+              ],
+              "cons": [
+                "Isp −4 s",
+                "Higher case pressure"
+              ],
+              "thrustF": 1.15,
+              "isp": -4,
+              "rel": -0.004,
+              "real": "GEM-40 ground-lit variants"
+            },
+            {
+              "id": "longburn",
+              "name": "Long-burn grain",
+              "note": "Less surface, a long gentle burn: −15 % thrust, +3 s Isp.",
+              "pros": [
+                "+3 s of Isp",
+                "Gentler loads"
+              ],
+              "cons": [
+                "−15 % thrust"
+              ],
+              "thrustF": 0.85,
+              "isp": 3,
+              "rel": 0.002,
+              "real": "Star 48 long-burn"
+            }
+          ]
+        },
+        {
+          "key": "nozzle",
+          "name": "Nozzle",
+          "role": "Fixed, or swivelling to steer.",
+          "art": "tvc",
+          "options": [
+            {
+              "id": "fixed",
+              "name": "Fixed nozzle",
+              "note": "Bolted straight. The core engine steers.",
+              "pros": [
+                "Simple"
+              ],
+              "cons": [
+                "No steering"
+              ],
+              "real": "GEM-40"
+            },
+            {
+              "id": "tvc",
+              "name": "Vectoring nozzle",
+              "note": "A flexible seal lets the nozzle swing a few degrees. Needed when the solids give most of the thrust.",
+              "pros": [
+                "Steers with the boosters",
+                "Reliability +0.3 %"
+              ],
+              "cons": [
+                "+40 kg",
+                "+$60k"
+              ],
+              "massD": 40,
+              "costD": 60000,
+              "rel": 0.003,
+              "real": "Shuttle SRB, Vega"
+            }
+          ]
+        }
+      ]
+    },
+    "legs": {
+      "name": "Inside the legs",
+      "slots": [
+        {
+          "key": "shock",
+          "name": "Shock absorber",
+          "role": "What soaks up the touchdown.",
+          "art": "shock",
+          "options": [
+            {
+              "id": "honeycomb",
+              "name": "Crushable honeycomb",
+              "note": "Aluminium honeycomb that crushes once. Light and certain.",
+              "pros": [
+                "Light",
+                "Certain"
+              ],
+              "cons": [
+                "Single use"
+              ],
+              "real": "Apollo LM"
+            },
+            {
+              "id": "hydraulic",
+              "name": "Hydraulic struts",
+              "note": "Oil and gas struts that reset. Heavier; reusable.",
+              "pros": [
+                "Reusable",
+                "Reliability +0.3 %"
+              ],
+              "cons": [
+                "+60 kg"
+              ],
+              "massD": 60,
+              "costD": 30000,
+              "rel": 0.003,
+              "real": "Falcon 9"
+            }
+          ]
+        },
+        {
+          "key": "pads",
+          "name": "Foot pads",
+          "role": "How big the feet are.",
+          "art": "pad",
+          "options": [
+            {
+              "id": "small",
+              "name": "Small pads",
+              "note": "Fine on rock.",
+              "pros": [
+                "Light"
+              ],
+              "cons": [
+                "Sink in soft sand"
+              ],
+              "real": ""
+            },
+            {
+              "id": "large",
+              "name": "Large pads",
+              "note": "Snowshoes for dust.",
+              "pros": [
+                "Lands on soft ground",
+                "Reliability +0.3 %"
+              ],
+              "cons": [
+                "+30 kg"
+              ],
+              "massD": 30,
+              "costD": 8000,
+              "rel": 0.003,
+              "real": "Apollo LM 94 cm pads"
+            }
+          ]
+        }
+      ]
+    }
+  }
+}

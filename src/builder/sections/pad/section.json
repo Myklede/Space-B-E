@@ -1,0 +1,107 @@
+{
+  "name": "Launch pad",
+  "short": "Pad",
+  "blurb": "Where and when the ship leaves Earth, and the equipment that holds it until it does.",
+  "sites": [
+    {
+      "id": "cape",
+      "name": "Cape Canaveral, Florida",
+      "real": "LC-39A / SLC-41",
+      "note": "Warm, humid, thunderstorms in summer.",
+      "fee": 0,
+      "slots": [
+        {
+          "id": "cold",
+          "name": "Tomorrow 06:10",
+          "tempC": 2,
+          "fee": 0,
+          "note": "Clear and cold. No waiting, no fees."
+        },
+        {
+          "id": "mild",
+          "name": "In 3 days 11:40",
+          "tempC": 18,
+          "fee": 150000,
+          "note": "Pad fees for the wait."
+        },
+        {
+          "id": "warm",
+          "name": "In 6 days 14:00",
+          "tempC": 27,
+          "fee": 300000,
+          "note": "Pad fees for the wait."
+        }
+      ]
+    }
+  ],
+  "equipment": [
+    {
+      "key": "clamps",
+      "name": "Hold-down clamps",
+      "role": "Hold the ship on the pad until every engine is at full thrust.",
+      "options": [
+        {
+          "id": "none",
+          "name": "No hold-down (release at ignition)",
+          "fee": 0,
+          "reliability": 0,
+          "note": "The ship lifts as soon as thrust exceeds weight, whatever the engines are doing.",
+          "pros": [
+            "Free"
+          ],
+          "cons": [
+            "A failing engine is found out in the air"
+          ]
+        },
+        {
+          "id": "hold",
+          "name": "Hold-down clamps",
+          "fee": 80000,
+          "reliability": 0.01,
+          "note": "Clamps hold the ship for a few seconds while the computer checks every engine; a bad start shuts down on the pad.",
+          "pros": [
+            "Catches bad starts on the ground"
+          ],
+          "cons": [
+            "Pad fee"
+          ],
+          "real": "Saturn V hold-down arms, Falcon 9 clamps"
+        }
+      ]
+    },
+    {
+      "key": "deluge",
+      "name": "Sound suppression water",
+      "role": "A flood of water under the engines that soaks up the roar.",
+      "options": [
+        {
+          "id": "none",
+          "name": "No water",
+          "fee": 0,
+          "reliability": 0,
+          "note": "The sound of the engines reflects off the pad and shakes the ship.",
+          "pros": [
+            "Free"
+          ],
+          "cons": [
+            "Vibration on the payload"
+          ]
+        },
+        {
+          "id": "water",
+          "name": "Water deluge",
+          "fee": 60000,
+          "reliability": 0.006,
+          "note": "Hundreds of tonnes of water in seconds: the white cloud at every Shuttle launch was steam.",
+          "pros": [
+            "Less vibration"
+          ],
+          "cons": [
+            "Pad fee"
+          ],
+          "real": "LC-39A sound suppression system"
+        }
+      ]
+    }
+  ]
+}

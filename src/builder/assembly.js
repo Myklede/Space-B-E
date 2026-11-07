@@ -9,8 +9,8 @@ const SHARE_PREFIX = 'SBE1.';
 const HISTORY_LIMIT = 60;
 
 /**
- * Normalises data/parts.json into { byId, parts, families } with every optional field filled in.
- * `internals` (data/internals.json) is optional: when given, `kit(def)` returns the part's kit (slots with options)
+ * Normalises the merged parts (sections/<id>/parts.json, see sections.js mergeSectionData) into { byId, parts, families } with every optional field filled in.
+ * `internals` (the merged sections/<id>/internals.json kits) is optional: when given, `kit(def)` returns the part's kit (slots with options)
  * and `defaults(def)` the default option per slot.
  */
 export function createCatalog(json, internals = null) {
@@ -55,6 +55,8 @@ export function createCatalog(json, internals = null) {
 
 export const partRadius = (def) => BASE_RADIUS * (SIZE_SCALE[def.size] ?? 1);
 
+const cloneLaunch = (l) => ({ slot: l?.slot ?? 'mild', site: l?.site ?? null, pad: { ...(l?.pad ?? {}) } });
+
 function clonePart(p) {
   return { ...p, engine: p.engine ? { ...p.engine } : undefined, options: p.options ? { ...p.options } : undefined };
 }
@@ -80,11 +82,12 @@ export class Assembly {
     this.catalog = catalog;
     this.name = json?.name ?? 'Untitled';
     this.symmetry = SYMMETRIES.includes(json?.symmetry) ? json.symmetry : 1;
-    this.launch = { slot: json?.launch?.slot ?? 'mild' };
+    this.launch = cloneLaunch(json?.launch);
     this.parts = (json?.parts ?? []).map((p) => ({
       id: p.id, type: p.type, parent: p.parent ?? null, node: p.node ?? null,
       angle: Number(p.angle) || 0, yFrac: p.yFrac == null ? 0.5 : Number(p.yFrac), variant: p.variant ?? null, group: p.group ?? null,
       material: p.material ?? null,
+      ...(p.origin ? { origin: p.origin } : {}),
       ...(p.options && typeof p.options === 'object' ? { options: { ...p.options } } : {}),
       ...(p.engine ? { engine: { fuel: p.engine.fuel, nozzle: p.engine.nozzle, pump: p.engine.pump } } : {}),
     }));
@@ -150,13 +153,13 @@ export class Assembly {
 
   // ---------- history ----------
   #snapshot() {
-    return { name: this.name, symmetry: this.symmetry, launch: { ...this.launch }, parts: this.parts.map(clonePart) };
+    return { name: this.name, symmetry: this.symmetry, launch: cloneLaunch(this.launch), parts: this.parts.map(clonePart) };
   }
 
   #restore(s) {
     this.name = s.name;
     this.symmetry = s.symmetry;
-    this.launch = { ...s.launch };
+    this.launch = cloneLaunch(s.launch);
     this.parts = s.parts.map(clonePart);
     this.version += 1;
   }
@@ -302,7 +305,7 @@ export class Assembly {
     return true;
   }
 
-  /** Choose one internal option of a part (slot key and option id from its kit in data/internals.json). Twins change together. */
+  /** Choose one internal option of a part (slot key and option id from its kit in sections/<id>/internals.json). Twins change together. */
   setOption(id, key, optionId) {
     const p = this.part(id);
     const def = p && this.catalog.get(p.type);
@@ -380,6 +383,85 @@ export class Assembly {
     this.#commit();
   }
 
+  /** Launch site (an id from sections/pad/section.json). The window resets to the site's first slot when it does not exist there. */
+  setLaunchSite(site, firstSlot = null) {
+    this.#begin();
+    this.launch.site = site;
+    if (firstSlot) this.launch.slot = firstSlot;
+    this.#commit();
+  }
+
+  /** One piece of pad equipment: key (equipment id) → option id. */
+  setPadOption(key, optionId) {
+    this.#begin();
+    this.launch.pad = { ...this.launch.pad, [key]: optionId };
+    this.#commit();
+  }
+
+  // ---------- sections ----------
+  /** The axial parts from the top of the stack to the bottom. */
+  chain() {
+    return this.layout().filter((e) => e.attach === 'axial').sort((a, b) => b.y - a.y).map((e) => this.part(e.id));
+  }
+
+  /**
+   * Replace the whole axial stack with `items` (top → bottom). An item is an existing part object (kept, with its radial
+   * children) or { type, material?, options?, engine?, origin? } for a new part. Radial parts whose host disappears are
+   * passed to rehost(part, newIdsByType) which returns a host id (kept there) or null (dropped). `radials` adds new radial
+   * parts: { type, on (index into items), angle, yFrac, symmetry, origin }. One undo step. Returns the new chain ids.
+   */
+  restack(items, { rehost = () => null, radials = [], dropRadial = () => false, before = null } = {}) {
+    this.#begin();
+    before?.(); // edits to kept parts that belong to the same undo step
+    let next = 0;
+    for (const p of this.parts) { const n = Number(/^p(\d+)$/.exec(p.id)?.[1]); if (n > next) next = n; }
+    let nextGroup = 0;
+    for (const p of this.parts) { const n = Number(/^g(\d+)$/.exec(p.group ?? '')?.[1]); if (n > nextGroup) nextGroup = n; }
+    const keepIds = new Set(items.filter((it) => it.id && this.part(it.id)).map((it) => it.id));
+    const chain = items.map((it) => {
+      if (it.id && this.part(it.id)) return this.part(it.id);
+      const def = this.catalog.get(it.type);
+      const p = { id: `p${++next}`, type: it.type, parent: null, node: null, angle: 0, yFrac: 0.5, variant: null, group: null, material: it.material ?? null };
+      if (it.origin) p.origin = it.origin;
+      if (it.options) p.options = { ...it.options };
+      if (def?.engine) p.engine = it.engine ? { ...it.engine, pump: String(def.size ?? 'm').toUpperCase() } : defaultEngine(def);
+      return p;
+    });
+    chain.forEach((p, i) => { p.parent = i === 0 ? null : chain[i - 1].id; p.node = i === 0 ? null : 'bottom'; });
+    const chainIds = new Set(chain.map((p) => p.id));
+    const radial = this.parts.filter((p) => p.node === 'radial');
+    const keptRadial = [];
+    for (const r of radial) {
+      if (dropRadial(r)) continue;
+      if (chainIds.has(r.parent) || (keepIds.has(r.parent) && chainIds.has(r.parent))) { keptRadial.push(r); continue; }
+      const parentIsRadialKept = radial.some((q) => q.id === r.parent);
+      if (parentIsRadialKept) continue; // radial parts take no children
+      const host = rehost(r, chain);
+      if (host && chainIds.has(host)) { r.parent = host; keptRadial.push(r); }
+    }
+    // twins follow their group: if one copy was dropped, drop all
+    const droppedGroups = new Set(radial.filter((r) => r.group && !keptRadial.includes(r)).map((r) => r.group));
+    const finalRadial = keptRadial.filter((r) => !r.group || !droppedGroups.has(r.group));
+    const added = [];
+    for (const r of radials) {
+      const host = chain[r.on];
+      const hostDef = host && this.catalog.get(host.type);
+      const def = this.catalog.get(r.type);
+      if (!host || !def || def.attach !== 'radial' || !hostDef?.nodes.includes('radial')) continue;
+      const n = Math.max(1, r.symmetry ?? 1);
+      const group = n > 1 ? `g${++nextGroup}` : null;
+      for (let k = 0; k < n; k++) {
+        const p = { id: `p${++next}`, type: r.type, parent: host.id, node: 'radial', angle: ((r.angle ?? 0) + (360 / n) * k) % 360, yFrac: r.yFrac ?? def.attachFrac ?? 0.5, variant: null, group, material: r.material ?? null };
+        if (r.origin) p.origin = r.origin;
+        added.push(p);
+      }
+    }
+    this.parts = [...chain, ...finalRadial, ...added];
+    this.#dropInvalid();
+    this.#commit();
+    return chain.map((p) => p.id);
+  }
+
   rename(name) {
     this.name = String(name || 'Untitled').slice(0, 40);
     this.version += 1;
@@ -422,6 +504,12 @@ export class Assembly {
       }
     };
     place(root, 0);
+    for (const e of out) {
+      if (!e.def.engine || e.node !== 'bottom') continue;
+      const host = byId.get(e.parentId);
+      const m = host?.def.mounts;
+      if (m && (m.count ?? 1) > 1) e.cluster = { count: m.count, layout: m.layout ?? [], scale: m.scale ?? 0.4, hostRadius: host.radius };
+    }
     let min = Infinity;
     for (const e of out) if (e.attach === 'axial') min = Math.min(min, e.y);
     if (!Number.isFinite(min)) min = 0;
@@ -482,7 +570,7 @@ export class Assembly {
   }
 
   toJSON() {
-    return { name: this.name, symmetry: this.symmetry, launch: { ...this.launch }, parts: this.parts.map(clonePart) };
+    return { name: this.name, symmetry: this.symmetry, launch: cloneLaunch(this.launch), parts: this.parts.map(clonePart) };
   }
 
   clone() {

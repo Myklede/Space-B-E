@@ -1,0 +1,198 @@
+{
+  "name": "Body",
+  "short": "Body",
+  "blurb": "The middle of the ship: the propellant tanks, the structure that joins them and the guidance electronics.",
+  "rows": [
+    {
+      "id": "avionics",
+      "name": "Guidance electronics",
+      "role": "The flight computer and gyros that fly the stack.",
+      "mode": "stack",
+      "pick": {
+        "flags": [
+          "avionics"
+        ]
+      }
+    },
+    {
+      "id": "structure",
+      "name": "Stage structure",
+      "role": "Truss, interstage and centerbody: the skeleton between tanks.",
+      "mode": "stack",
+      "pick": {
+        "families": [
+          "stages"
+        ]
+      }
+    },
+    {
+      "id": "tanks",
+      "name": "Propellant tanks",
+      "role": "Fuel and oxidizer for the engines. Match the engine fuel.",
+      "mode": "stack",
+      "pick": {
+        "has": [
+          "fuel"
+        ]
+      }
+    },
+    {
+      "id": "adapters",
+      "name": "Adapters (automatic)",
+      "role": "Added where two diameters meet.",
+      "mode": "auto",
+      "pick": {
+        "has": [
+          "adapter"
+        ]
+      }
+    },
+    {
+      "id": "plumbing",
+      "name": "Plumbing & pressure",
+      "role": "Cable tunnels and the gas that keeps the tanks pressurised.",
+      "mode": "radial",
+      "pick": {
+        "ids": [
+          "wiring_tunnel",
+          "helium_copv",
+          "nitrogen_sphere"
+        ]
+      }
+    },
+    {
+      "id": "power",
+      "name": "Power",
+      "role": "Electricity for everything on board.",
+      "mode": "radial",
+      "pick": {
+        "families": [
+          "power"
+        ]
+      }
+    },
+    {
+      "id": "science",
+      "name": "Science instruments",
+      "role": "What the mission is for on Mars.",
+      "mode": "radial",
+      "pick": {
+        "families": [
+          "science"
+        ]
+      }
+    },
+    {
+      "id": "protection",
+      "name": "Protection & insulation",
+      "role": "Debris shields and blankets.",
+      "mode": "radial",
+      "pick": {
+        "families": [
+          "protection"
+        ],
+        "ids": [
+          "mli_blanket"
+        ]
+      }
+    },
+    {
+      "id": "seals",
+      "name": "Tank joint seals",
+      "role": "Cheap seals save money and fail in the cold.",
+      "mode": "radial",
+      "pick": {
+        "families": [
+          "seals"
+        ]
+      }
+    }
+  ],
+  "shapes": [
+    {
+      "id": "methalox_core",
+      "name": "Methane core",
+      "real": "Starship-style methane and oxygen tanks",
+      "desc": "A big and a medium methalox tank: refillable on Mars.",
+      "pros": [
+        "Refillable on Mars"
+      ],
+      "cons": [
+        "Long stack"
+      ],
+      "diameter": "l",
+      "stack": [
+        "tank_l_methalox",
+        "tank_m_methalox"
+      ],
+      "radial": [
+        {
+          "type": "wiring_tunnel",
+          "on": 0,
+          "angle": 100,
+          "yFrac": 0.5
+        },
+        {
+          "type": "helium_copv",
+          "on": 1,
+          "angle": 220,
+          "yFrac": 0.7
+        }
+      ]
+    },
+    {
+      "id": "delta_core",
+      "name": "Fuel tank, centerbody, oxidizer tank",
+      "real": "Delta II first stage",
+      "desc": "Two kerosene tanks joined by a stiff centerbody, with the guidance ring on top.",
+      "pros": [
+        "Dense, cheap kerosene",
+        "Strong centerbody for strap-on boosters"
+      ],
+      "cons": [
+        "Heavy structure"
+      ],
+      "diameter": "l",
+      "stack": [
+        "avionics_ring_m",
+        "tank_l_kerolox",
+        "centerbody_m",
+        "tank_l_kerolox"
+      ],
+      "radial": [
+        {
+          "type": "wiring_tunnel",
+          "on": 1,
+          "angle": 100,
+          "yFrac": 0.5
+        }
+      ]
+    },
+    {
+      "id": "hydrolox_core",
+      "name": "Hydrogen core",
+      "real": "Space Shuttle External Tank, Delta IV",
+      "desc": "Two huge insulated hydrogen tanks: the best Isp, the bulkiest ship.",
+      "pros": [
+        "Best Isp"
+      ],
+      "cons": [
+        "Huge and expensive",
+        "Little propellant mass for the size"
+      ],
+      "diameter": "l",
+      "stack": [
+        "tank_l_hydrolox",
+        "tank_l_hydrolox"
+      ],
+      "radial": [
+        {
+          "type": "wiring_tunnel",
+          "on": 0,
+          "angle": 100,
+          "yFrac": 0.5
+        }
+      ]
+    }
+  ]
+}
