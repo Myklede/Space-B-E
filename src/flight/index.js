@@ -7,9 +7,9 @@
 //   LANDING powered descent and touchdown; E after landing → INTERIOR (Role 2 surface).
 // Failures emit flight:failed; Role 4's story module charges the penalty and shows the ending.
 import * as THREE from 'three';
-import { assets, createLaunchSite, createSpaceScene, getTerrainHeight, graphics } from '/src/graphics/index.js';
+import { assets, createLaunchSite, createSpaceScene, getTerrainHeight, graphics, cinematic } from '/src/graphics/index.js';
 import { audio } from '/src/audio/index.js';
-import { G0, PLANETS, economy, events, getShip, input, requestState, ui } from '/src/core/index.js';
+import { G0, PLANETS, contract, economy, events, getShip, input, requestState, ui } from '/src/core/index.js';
 import { astronaut } from '/src/surface/astronaut.js';
 import { getMars } from '/src/surface/scenes.js';
 import { FlightController } from './FlightController.js';
@@ -24,6 +24,7 @@ import { clearPhaseRatings, createPhaseTracker, getPhaseRatings } from './rating
 import { dot } from './vec.js';
 import { STARTS } from './presets.js';
 import { createFlightHUD } from './hud/createFlightHUD.js';
+import { createPhase0Ritual } from './phase0Ritual.js';
 import { stackParts } from './rocketStack.js';
 import { ZOOM_DEFAULT, ZOOM_PAD, applyMouse, createChaseState, createOrbit, horizonFrame, liftAboveGround, resetOrbit, stepZoom, updateChase } from './chaseCam.js';
 
@@ -58,6 +59,7 @@ const ENTRY_FPA = -22.8; // deg at the atmosphere's edge: inside the corridor bu
 const ENTRY_APPROACH = 40; // s of approach before the atmosphere (time to trim the corridor)
 const CARD_SECONDS = 6;
 const WARP_KEYS = { Period: 1, Comma: -1 };
+let launchAttempts = 0;
 let s = null; // per-state session (scene, camera, HUD, controls)
 
 const v3 = (p) => new THREE.Vector3(p.x, p.y, p.z);
@@ -352,15 +354,16 @@ export default {
   init() {
     if (new URLSearchParams(location.search).get('debug') === '1') window.__role2flight = {
       get look() { return s?.look; }, get fc() { return s?.fc; }, get orbit() { return s?.orbit; }, get session() { return s; },
+      skipPhase0() { s?.phase0?.skip(); },
       // set the outside camera for screenshots: orbit(yawDeg, pitchDeg, dist); `wheel` fakes a wheel step; chase(on) toggles the view
       orbit(yawDeg, pitchDeg, dist) { if (s) { s.orbit.yaw = THREE.MathUtils.degToRad(yawDeg); s.orbit.pitch = THREE.MathUtils.degToRad(pitchDeg); if (dist) s.orbit.dist = dist; s.cam.ready = false; } return s?.orbit; },
       wheel(delta) { if (s) s.orbit.dist = stepZoom(s.orbit.dist, delta); return s?.orbit.dist; },
-      chase(on) { if (s && s.chase !== on) { s.chase = on; if (on) { resetOrbit(s.orbit); s.cam.ready = false; } } return s?.chase; },
+      chase(on) { if (s && !s.phase0?.active && s.chase !== on) { s.chase = on; if (on) { resetOrbit(s.orbit); s.cam.ready = false; } } return s?.chase; },
     }; // debug only
     setTimeout(prepareLaunchSite, 0); // after boot finished its own work
   },
 
-  enter(state) {
+  enter(state, data) {
     const fc = controllerFor(state);
     if ((state === 'ORBIT' || state === 'ENTRY') && fc.throttle === 0) faceTheLimb(fc);
     if (state === 'LANDING' && !fc.landed && fc.throttle === 0) faceTheGround(fc);
@@ -384,25 +387,43 @@ export default {
     s.hud.root.append(guideMark);
     s.controls = createCockpitControls({
       input,
-      onToggleAssist: () => { s.assist = !s.assist; },
+      onToggleAssist: () => { if (s.phase0?.active) return; s.assist = !s.assist; },
       isLanded: () => fc.landed,
       onStandUp: () => requestState('INTERIOR'),
     });
     if (state === 'LAUNCH') s.cam.heading.set(0, 0, 1); // on the pad "behind" is the clear side, away from the tower and tanks
     input.onPress('KeyC', () => {
+      if (s.phase0?.active) return;
       s.chase = !s.chase;
       if (s.chase) { resetOrbit(s.orbit); s.cam.ready = false; } // behind and above, zoom kept
     });
-    input.onPress('Period', () => s.pacer.stepManual(WARP_KEYS.Period)); // manual warp: 1 · 2 · 4 · 10 · 50 · 100 (the physics caps it in the air)
-    input.onPress('Comma', () => s.pacer.stepManual(WARP_KEYS.Comma));
-    input.onPress('KeyB', () => fc.setObstacles(createDebrisField({ fc, seed: Math.floor(Math.random() * 1e6) })));
+    input.onPress('Period', () => { if (!s.phase0?.active) s.pacer.stepManual(WARP_KEYS.Period); }); // manual warp: 1 · 2 · 4 · 10 · 50 · 100 (the physics caps it in the air)
+    input.onPress('Comma', () => { if (!s.phase0?.active) s.pacer.stepManual(WARP_KEYS.Comma); });
+    input.onPress('KeyB', () => { if (!s.phase0?.active) fc.setObstacles(createDebrisField({ fc, seed: Math.floor(Math.random() * 1e6) })); });
     if (state === 'ORBIT') input.onPress('KeyT', transferBurn);
-    s.lockOnClick = () => input.lockPointer();
+    s.lockOnClick = (event) => { if (!event.target.closest?.('button,textarea,input,select,a')) input.lockPointer(); };
     window.addEventListener('click', s.lockOnClick);
 
     if (state === 'LAUNCH' && fc.onGround && fc.liftoffT === null) {
-      s.countdown = COUNTDOWN;
       fc.holdDown = true;
+      fc.throttle = 0;
+      const session = s;
+      s.phase0 = createPhase0Ritual({ parent: hudLayer, hud: s.hud, input, audio, graphics, cinematic, contract, economy,
+        ship: getShip(), attempt: ++launchAttempts, data,
+        getSite: () => {
+          if (!siteCache.ready) return null;
+          session.site ??= buildSiteView();
+          return session.site;
+        },
+        setBoardingView: (site) => {
+          showModel(site.cockpit, false); showModel(site.rocketRoot, true);
+          site.rig.position.set(0, 0, 0); site.rig.quaternion.identity();
+          graphics.setSunDirection(new THREE.Vector3(0.5, 0.55, -0.67));
+          graphics.setView(site.scene, site.camera); session.mode = 'site';
+        },
+        onCountdown: () => { if (s === session && session.countdown === undefined) { session.countdown = COUNTDOWN; session.countdownAt = performance.now(); } },
+        onScrub: () => requestState('HANGAR'),
+      });
     }
     fc.onNotice = (type) => {
       if (CALLOUTS[type]) s.callout = { text: CALLOUTS[type], t: CALLOUT_SECONDS };
@@ -416,7 +437,7 @@ export default {
     // Dev shortcut (only with ?debug=1): Enter skips to the next state, or starts the transfer burn in ORBIT.
     if (new URLSearchParams(location.search).get('debug') === '1') {
       const next = { LAUNCH: 'ORBIT', ENTRY: 'LANDING', LANDING: 'INTERIOR' }[state];
-      input.onPress('Enter', () => (next ? requestState(next) : transferBurn()));
+      input.onPress('Enter', () => { if (!s?.phase0?.active) return next ? requestState(next) : transferBurn(); });
     }
   },
 
@@ -433,9 +454,31 @@ export default {
     }
     if (s.chase) s.orbit.dist = stepZoom(s.orbit.dist, input.wheelDelta?.()); // core input adds wheelDelta; none yet = no zoom
 
+    if (s.phase0?.active) {
+      fc.holdDown = true; fc.throttle = 0;
+      s.controls.endFrame();
+      s.phase0.update();
+      s.hud.update(fc.telemetry, assistReadout(fc), true, { objective: s.phase0.objective });
+      if (s.phase0.boarding) return; // cinematic owns the camera
+      const site = s.site;
+      const ritualView = site ?? view;
+      if (site) {
+        site.rig.position.copy(site.rocketBase).add(new THREE.Vector3(0, site.eyeY, 0));
+        site.rig.quaternion.copy(toCockpit); s.siteChase = false;
+      } else {
+        view.planet.position.set(-fc.pos.x, -fc.pos.y, -fc.pos.z);
+        view.frame.position.copy(view.planet.position);
+        ritualView.rig.quaternion.copy(toCockpit);
+      }
+      showModel(ritualView.cockpit, true); showModel(ritualView.rocketRoot, false);
+      ritualView.camera.position.set(0, 0, 0); ritualView.camera.up.set(0, 1, 0);
+      ritualView.camera.quaternion.setFromEuler(new THREE.Euler(s.look.pitch, s.look.yaw, 0, 'YXZ'));
+      graphics.setView(ritualView.scene, ritualView.camera);
+      return; // no physics, pacing, ratings, body or telemetry time during the ritual
+    }
     s.controls.poll();
     if (s.countdown > 0) {
-      s.countdown -= dt;
+      s.countdown = Math.max(0, COUNTDOWN - (performance.now() - s.countdownAt) / 1000);
       if (s.countdown <= IGNITION_AT && fc.throttle === 0) fc.throttle = 1; // main engine start at T-3
       if (s.countdown <= 0) fc.holdDown = false; // T-0: clamps release
     }
@@ -650,6 +693,7 @@ export default {
     if (!s) return;
     // graphics.camera is our flight camera now; hand it back un-parented and level so the next state's owner
     // (for example the ENDING screen) doesn't inherit the ship's attitude and look at the cockpit's rear wall.
+    s.phase0?.dispose();
     const cam = graphics.camera;
     cam.removeFromParent();
     cam.position.set(0, 0, 0);
