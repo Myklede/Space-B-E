@@ -674,13 +674,14 @@ export function createDesignPage({ assembly, catalog, sections, materials, engin
     renderStats(result);
     scene3d.setLayout(assembly.layout());
     const st = padState(assembly, sections.pad);
-    const key = `${st.site?.id}:${st.equipment.map((c) => c.option?.id).join(',')}:${scene3d.layout.length ? 1 : 0}`;
+    // the pad is redrawn when the site, the equipment or the ship's size changes (the tower and its arms fit the ship)
+    const lay = scene3d.layout.filter((e) => e.attach === 'axial');
+    const radius = lay.reduce((r, e) => Math.max(r, e.radius), 1.25);
+    const height = lay.reduce((t, e) => Math.max(t, e.y + e.height), 0);
+    const key = `${st.site?.id}:${st.slot?.id}:${st.equipment.map((c) => c.option?.id).join(',')}:${radius.toFixed(2)}:${height.toFixed(1)}`;
     if (key !== padKey) {
       padKey = key;
-      const lay = scene3d.layout.filter((e) => e.attach === 'axial');
-      const radius = lay.reduce((r, e) => Math.max(r, e.radius), 1.25);
-      const height = lay.reduce((t, e) => Math.max(t, e.y + e.height), 0);
-      scene3d.setPad(padArt(st, { radius, height }));
+      scene3d.setPad(padArt(st, { radius, height, layout: scene3d.layout }));
     }
     if (scene3d.missingArt.length) hooks.onNeedArt?.(scene3d.missingArt);
     emptyHint.hidden = assembly.parts.length > 0;

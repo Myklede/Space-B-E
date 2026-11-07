@@ -160,18 +160,7 @@ export function createHangarScreen({ assembly, catalog, sections, materials, eng
     }
   }
 
-  function renderLaunchWindow() {
-    body.replaceChildren();
-    body.className = 'bay-station-body bay-station-body--range';
-    const list = h('div', 'bld-list');
-    for (const slot of launch.slots) {
-      const item = btn('bld-list-item', null, () => { assembly.setLaunchSlot(slot.id); sound('ui.click'); changed(); renderLaunchWindow(); });
-      item.setAttribute('aria-pressed', String(assembly.launch.slot === slot.id));
-      item.append(h('span', null, `${slot.name} · ${fmtInt(slot.tempC)} °C`), h('span', 'bld-list-meta', `${slot.fee ? fmtMoneyShort(slot.fee) + ' pad fees' : 'no fees'} · ${slot.note}`));
-      list.append(item);
-    }
-    body.append(h('p', 'bay-test-intro', 'The range gives you three windows. The first is tomorrow at dawn, free, and cold. Seals that are not rated for cold lose their flexibility below 5 °C. That is the whole story of Challenger.'), list);
-  }
+  // the range terminal (launch window, site and pad equipment) is the Launch pad card of the design page now
 
   let handbook = null;
   function renderHandbook() {
@@ -197,7 +186,6 @@ export function createHangarScreen({ assembly, catalog, sections, materials, eng
       panel.hidden = false;
       panel.dataset.station = id;
       if (id === 'teststand') renderTest();
-      else if (id === 'launchwindow') renderLaunchWindow();
       else if (id === 'handbook') renderHandbook();
     }
     hooks.onStationOpen?.(id);
