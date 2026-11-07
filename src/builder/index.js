@@ -1,6 +1,6 @@
 // Role 1: Rocket Builder. Owns MENU, HANGAR and GONOGO (contract.js STATE_OWNERS). See README-ARCH.md.
-// Keeps the current Assembly, recomputes the ShipSpec after every change, and is the only file here that talks to
-// core (economy, setShip, requestState, events) or to the other roles.
+// HANGAR is the engineering bay: a round integration hall the engineer walks through in first person, with one
+// machine per job (integration stand, propulsion, structures, crew systems, warehouse, test stand, range, handbook).
 import './builder.css';
 import { graphics } from '/src/graphics/index.js';
 import { audio } from '/src/audio/index.js';
@@ -15,12 +15,13 @@ import thinSkin from './data/presets/thinSkin.json';
 import { Assembly, createCatalog } from './assembly.js';
 import { computeShipSpec, engineStats } from './stats.js';
 import { evaluate } from './gonogo.js';
-import { fmtMoney } from './format.js';
+import { fmtInt, fmtMoney } from './format.js';
 import { createHangarScene } from './hangarScene.js';
 import { createHangarScreen } from './hangarScreen.js';
 import { createFormulaLens } from './formulaLens.js';
 import { createGonogoView } from './gonogoView.js';
 import { createWorkbench } from './workbench.js';
+import { createIconRenderer } from './partIcons.js';
 import { menu } from './menu.js';
 import { openPauseMenu, openSettings } from './settings.js';
 
@@ -30,20 +31,18 @@ const catalog = createCatalog(partsJson);
 const PRESETS = { reliable, coldMorning, thinSkin };
 const deps = { catalog, engines, launch, balance: economy.balance, planets: PLANETS, g0: G0 };
 
-let assembly = null; // the rocket being built, kept across states
-let scene = null; // the 3D hangar, built once
+let assembly = null; // the vehicle being built, kept across states
+let bay = null; // the engineering bay scene, built once
+let icons = null; // part pictures, rendered once
 let screen = null; // { update, dispose } of the active state
 let closePause = null;
 
-// ---------- the current rocket ----------
-function builderSave() {
-  return save.load().builder ?? {};
-}
+// ---------- the current vehicle ----------
+const builderSave = () => save.load().builder ?? {};
 
 function ensureAssembly() {
   if (assembly) return assembly;
-  const draft = builderSave().draft;
-  assembly = new Assembly(draft ?? reliable, catalog);
+  assembly = new Assembly(builderSave().draft ?? reliable, catalog);
   if (!assembly.parts.length) assembly = new Assembly(reliable, catalog);
   return assembly;
 }
@@ -65,24 +64,46 @@ function loadAssembly(json) {
   persistDraft();
 }
 
-function hangarScene() {
-  if (!scene) scene = createHangarScene();
-  return scene;
+function ensureBay() {
+  if (!bay) bay = createHangarScene({ renderer: graphics.renderer });
+  if (!icons) icons = createIconRenderer({ renderer: graphics.renderer });
+  return bay;
 }
 
 function highlight(ids) {
   for (const partId of ids) events.emit('builder:highlightPart', { partId });
 }
 
+/** Pushes the current vehicle to the stand, the wall screen, the station screens and the tablet. */
+function syncBay(result) {
+  const b = ensureBay();
+  const a = ensureAssembly();
+  b.setLayout(a.layout(), a.freeNodes());
+  const stackHeight = a.stackHeight;
+  b.wall.setTelemetry({ spec: result.spec, breakdown: result.breakdown, poll: result.poll, money: economy.getMoney() });
+  b.wall.refresh(stackHeight);
+  const s = result.spec.stats;
+  const station = (id) => b.stations.find((st) => st.id === id);
+  station('integration')?.setScreen({ lines: [`Vehicle: ${a.name}`, `${a.parts.length} parts · ${fmtInt(stackHeight * 10) / 10} m tall`, `Δv ${fmtInt(s.deltaV)} m/s · TWR ${s.twrEarth.toFixed(2)}`, `Cost ${fmtMoney(s.cost)}`], status: { text: result.blocks.length ? 'BLOCKED' : result.spec.warnings.length ? 'NO-GO ×' + result.spec.warnings.length : 'GO', color: result.blocks.length ? '#f87171' : result.spec.warnings.length ? '#fbbf24' : '#4ade80' } });
+  const eng = result.breakdown.engineSpecs[0];
+  station('propulsion')?.setScreen({ lines: eng ? [`Engine: ${eng.fuel} · ${eng.nozzle} nozzle · pump ${eng.pump}`, `Thrust ${fmtInt(eng.thrust / 1000)} kN · Isp ${eng.ispSL}/${eng.ispVac} s`, `Propellant ${fmtInt(s.fuelMass)} kg`] : ['No engine installed.'] });
+  station('structures')?.setScreen({ lines: [`Heat shield: ${s.hasHeatShield ? (s.heatShieldDamaged ? 'ceramic tiles (fragile)' : 'ablative') : 'NONE'}`, `Legs: ${s.hasLegs ? 'yes' : 'NO'} · Parachute: ${s.hasParachute ? 'yes' : 'no'}`, `Stability: ${result.breakdown.copY < result.breakdown.comY ? 'stable' : 'UNSTABLE'}`] });
+  station('crew')?.setScreen({ lines: [`Spare O₂ ${s.spareO2Tanks} · Shelter ${s.hasShelter ? 'yes' : 'NO'}`, `Antenna ${s.hasAntenna ? 'yes' : 'NO'} · Power ${fmtInt(s.power)} W`, `Reliability ${fmtInt(s.reliability * 100)} %`] });
+  station('teststand')?.setScreen({ lines: [`TWR ${s.twrEarth.toFixed(2)} · Δv ${fmtInt(s.deltaV)} / ${fmtInt(result.breakdown.oneWay)} m/s`, result.poll.blocks.length ? `${result.poll.blocks.length} hard block(s)` : `${result.spec.warnings.length} warning(s)`] });
+  station('launchwindow')?.setScreen({ lines: [`Window: ${result.breakdown.slot?.name}`, `${fmtInt(result.breakdown.slot?.tempC)} °C · fees ${fmtMoney(result.breakdown.slot?.fee ?? 0)}`, s.coldRatedSeals ? 'Seals: cold-rated' : 'Seals: CHEAP, not rated below 5 °C'] });
+  station('warehouse')?.setScreen({ lines: [`${catalog.parts.length} part types in stock`, `Funds ${fmtMoney(economy.getMoney())}`] });
+  b.player.setTablet({ title: a.name, lines: [`Cost ${fmtMoney(s.cost)} · Funds ${fmtMoney(economy.getMoney())}`, `Δv ${fmtInt(s.deltaV)} m/s (Mars ${fmtInt(result.breakdown.oneWay)})`, `TWR ${s.twrEarth.toFixed(2)} · Reliability ${fmtInt(s.reliability * 100)} %`, result.blocks.length ? `Blocked: ${result.blocks.join(', ')}` : result.spec.warnings.length ? `Warnings: ${result.spec.warnings.length}` : 'Ready for the poll'] });
+}
+
 // ---------- HANGAR ----------
 function enterHangar() {
   const a = ensureAssembly();
-  const sc = hangarScene();
-  graphics.setView(sc.scene, sc.camera);
+  const b = ensureBay();
+  graphics.setView(b.scene, b.camera);
+  audio.play('ambience.ship', { loop: true, volume: 0.3 });
 
-  let lens = null;
   const hangar = createHangarScreen({
-    assembly: a, catalog, launch, text, scene: sc, getMoney: () => economy.getMoney(), insolvencyFloor: economy.balance.insolvencyFloor ?? 0,
+    assembly: a, catalog, launch, text, scene: b, icons, stations: b.stations, getMoney: () => economy.getMoney(), insolvencyFloor: economy.balance.insolvencyFloor ?? 0,
     hooks: {
       onChange: refresh,
       onSound: (id) => audio.play(id),
@@ -92,10 +113,14 @@ function enterHangar() {
       onBlueprints: openBlueprints,
       onShare: openShare,
       onBankrupt: declareBankruptcy,
+      onGuidebook: (entryId) => events.emit('guidebook:open', { entryId }),
+      onStartTest: startTest,
+      onStationOpen: (id) => { input.unlockPointer(); if (id === 'integration' || id === 'teststand') b.player.lookAt(0, 0); audio.play('ui.click'); },
+      onStationClose: () => audio.play('ui.click'),
     },
   });
   ui.mount(hangar.el);
-  lens = createFormulaLens({
+  const lens = createFormulaLens({
     parent: hangar.lensHost, g0: G0, planets: PLANETS, balance: economy.balance, text: text.formulas,
     onHighlight: highlight, onGuidebook: (entryId) => events.emit('guidebook:open', { entryId }),
   });
@@ -105,6 +130,7 @@ function enterHangar() {
     const result = compute();
     hangar.refresh(result);
     lens.update(result.spec, result.breakdown);
+    syncBay(result);
   }
 
   function openWorkbench(partId) {
@@ -114,63 +140,56 @@ function enterHangar() {
     const body = hangar.openDialog({ title: 'Engine workbench', body: null, actions: [] });
     wb = createWorkbench({
       parent: body, engines, current: part.engine, compute: (def) => engineStats(def, engines, G0),
-      onApply: (def) => { a.setEngine(partId, def); audio.play('ui.snap'); wb.dispose(); hangar.closeDialog(); refresh(); },
+      onApply: (def) => { a.setEngine(partId, def); audio.play('ui.snap'); wb.dispose(); hangar.closeDialog(); hangar.say('Engine rebuilt.'); refresh(); },
       onClose: () => { wb.dispose(); hangar.closeDialog(); },
     });
   }
 
-  function openPresets() {
+  function listDialog(title, items, { empty = 'Nothing here yet.', footer = null } = {}) {
     hangar.openDialog({
-      title: 'Preset ships',
+      title,
       body: (body) => {
         const list = document.createElement('div');
         list.className = 'bld-list';
-        for (const [key, json] of Object.entries(PRESETS)) {
-          const { spec } = computeShipSpec(new Assembly(json, catalog), deps);
-          const item = document.createElement('button');
-          item.type = 'button';
-          item.className = 'bld-list-item';
-          item.innerHTML = `<span>${json.name}</span><span class="bld-list-meta">${fmtMoney(spec.stats.cost)} · ${spec.warnings.length ? spec.warnings.length + ' warning(s)' : 'no warnings'}</span>`;
-          item.addEventListener('click', () => { loadAssembly(json); hangar.closeDialog(); audio.play('ui.snap'); rebind(); });
-          list.append(item);
+        if (!items.length) list.append(Object.assign(document.createElement('div'), { className: 'bld-list-meta', textContent: empty }));
+        for (const item of items) {
+          const row = document.createElement('button');
+          row.type = 'button';
+          row.className = 'bld-list-item';
+          row.innerHTML = `<span>${item.label}</span><span class="bld-list-meta">${item.meta ?? ''}</span>`;
+          row.addEventListener('click', () => item.onClick());
+          if (item.extra) row.append(item.extra);
+          list.append(row);
         }
         body.append(list);
+        if (footer) footer(body);
       },
       actions: [{ label: 'CLOSE' }],
     });
   }
 
+  function openPresets() {
+    listDialog('Preset vehicles', Object.values(PRESETS).map((json) => {
+      const { spec } = computeShipSpec(new Assembly(json, catalog), deps);
+      return { label: json.name, meta: `${fmtMoney(spec.stats.cost)} · ${spec.warnings.length ? spec.warnings.length + ' warning(s)' : 'no warnings'}`, onClick: () => { loadAssembly(json); hangar.closeDialog(); audio.play('ui.snap'); rebind(); } };
+    }));
+  }
+
   function openBlueprints() {
-    hangar.openDialog({
-      title: 'Blueprints',
-      body: (body) => {
-        const blueprints = builderSave().blueprints ?? [];
-        const list = document.createElement('div');
-        list.className = 'bld-list';
-        if (!blueprints.length) list.append(Object.assign(document.createElement('div'), { className: 'bld-list-meta', textContent: 'No saved blueprints yet.' }));
-        blueprints.forEach((json, index) => {
-          const item = document.createElement('button');
-          item.type = 'button';
-          item.className = 'bld-list-item';
-          item.innerHTML = `<span>${json.name}</span><span class="bld-list-meta">${json.parts?.length ?? 0} parts · load</span>`;
-          item.addEventListener('click', () => { loadAssembly(json); hangar.closeDialog(); audio.play('ui.snap'); rebind(); });
-          const del = document.createElement('button');
-          del.type = 'button';
-          del.className = 'bld-tool';
-          del.textContent = 'DELETE';
-          del.addEventListener('click', (e) => {
-            e.stopPropagation();
-            const next = blueprints.filter((_, i) => i !== index);
-            save.update({ builder: { ...builderSave(), blueprints: next } });
-            hangar.closeDialog();
-            openBlueprints();
-          });
-          item.append(del);
-          list.append(item);
-        });
+    const blueprints = builderSave().blueprints ?? [];
+    listDialog('Blueprints', blueprints.map((json, index) => {
+      const del = document.createElement('button');
+      del.type = 'button';
+      del.className = 'bld-tool';
+      del.textContent = 'DELETE';
+      del.addEventListener('click', (e) => { e.stopPropagation(); save.update({ builder: { ...builderSave(), blueprints: blueprints.filter((_, i) => i !== index) } }); hangar.closeDialog(); openBlueprints(); });
+      return { label: json.name, meta: `${json.parts?.length ?? 0} parts`, extra: del, onClick: () => { loadAssembly(json); hangar.closeDialog(); audio.play('ui.snap'); rebind(); } };
+    }), {
+      empty: 'No saved blueprints yet.',
+      footer: (body) => {
         const name = document.createElement('input');
         name.className = 'bld-input';
-        name.placeholder = 'Save the current rocket as…';
+        name.placeholder = 'Save the current vehicle as…';
         name.value = a.name;
         const saveBtn = document.createElement('button');
         saveBtn.type = 'button';
@@ -178,15 +197,14 @@ function enterHangar() {
         saveBtn.textContent = 'SAVE BLUEPRINT';
         saveBtn.addEventListener('click', () => {
           a.rename(name.value || a.name);
-          const next = [...(builderSave().blueprints ?? []).filter((b) => b.name !== a.name), a.toJSON()];
-          save.update({ builder: { ...builderSave(), blueprints: next } });
+          save.update({ builder: { ...builderSave(), blueprints: [...(builderSave().blueprints ?? []).filter((b) => b.name !== a.name), a.toJSON()] } });
           audio.play('ui.snap');
           hangar.closeDialog();
+          hangar.say(`Blueprint "${a.name}" saved.`);
           refresh();
         });
-        body.append(list, name, saveBtn);
+        body.append(name, saveBtn);
       },
-      actions: [{ label: 'CLOSE' }],
     });
   }
 
@@ -226,36 +244,83 @@ function enterHangar() {
   }
 
   function declareBankruptcy() {
-    events.emit('ending:show', { endingId: contract.ENDINGS.bankrupt, cause: 'The agency can no longer afford a ship.', cost: 0, historyLessonId: null });
+    events.emit('ending:show', { endingId: contract.ENDINGS.bankrupt, cause: 'The agency can no longer afford a vehicle.', cost: 0, historyLessonId: null });
     requestState('ENDING');
   }
 
-  // Loading a preset or blueprint replaces the Assembly object, so the screen is rebuilt around the new one.
+  function startTest() {
+    const result = compute();
+    hangar.closeStation();
+    // step up to the railing on the test conductor's side, where the engine and the clamps are in view
+    const st = b.stations.find((s) => s.id === 'teststand');
+    if (st) { const p = b.hall.pitRadius + 1.4; b.player.teleport(Math.cos(st.deg * Math.PI / 180) * p, Math.sin(st.deg * Math.PI / 180) * p); }
+    b.player.lookAt(0, 0, -0.12);
+    const phaseText = { countdown: 'T-3… hold-down clamps locked', ignition: 'IGNITION', hold: 'Full thrust · clamps holding', release: 'CLAMPS RELEASED', cutoff: 'CUTOFF', settle: 'Securing the vehicle' };
+    b.test.start({
+      spec: result.spec, breakdown: result.breakdown, layout: a.layout(),
+      onPhase: (phase) => hangar.setTestStatus(`STATIC FIRE · ${phaseText[phase] ?? phase}`),
+      onDone: (report) => { hangar.showTestResult(report); hangar.openStation('teststand'); input.unlockPointer(); },
+    });
+    hangar.setTestStatus('STATIC FIRE · T-3… hold-down clamps locked');
+  }
+
   function rebind() {
     screen.dispose();
     enterHangar();
   }
 
-  // Key handlers are unregistered in dispose, because rebind() re-enters this screen within the same state.
+  const sensitivity = () => save.load().sensitivity ?? 1;
+  const invertY = () => !!save.load().invertY;
+  // ?debug=1: let the console (and screenshot scripts) walk to a machine and open it: window.__game.builder.placeAt('propulsion')
+  if (new URLSearchParams(location.search).get('debug') === '1' && window.__game) {
+    window.__game.builder = { openStation: hangar.openStation, closeStation: hangar.closeStation, placeAt: (id) => b.placeAtStation(id), startTest, bay: b, refresh };
+  }
+  const lockOnClick = () => { if (!hangar.station && !b.test.active) input.lockPointer(); };
+  window.addEventListener('click', lockOnClick);
+
   const offs = [
-    input.onPress('KeyZ', () => { if (a.undo()) { audio.play('ui.click'); refresh(); } }),
-    input.onPress('KeyY', () => { if (a.redo()) { audio.play('ui.click'); refresh(); } }),
-    input.onPress('Delete', () => { const id = hangar.selectedPart; if (id && a.remove(id).length) { audio.play('ui.click'); refresh(); } }),
-    input.onPress('KeyQ', () => sc.rotateBy(-30)),
-    input.onPress('KeyE', () => sc.rotateBy(30)),
-    input.onPress('Enter', () => { if (a.parts.length) requestState('GONOGO'); }),
+    input.onPress('KeyE', () => {
+      if (hangar.station === 'integration') { b.rotateBy(30); return; }
+      if (hangar.station || b.test.active) return;
+      const s = b.nearestStation();
+      if (s) hangar.openStation(s.id);
+    }),
+    input.onPress('KeyQ', () => { if (hangar.station === 'integration') b.rotateBy(-30); }),
+    input.onPress('KeyH', () => { if (hangar.station === 'handbook') hangar.closeStation(); else if (!b.test.active) { hangar.openStation('handbook'); } }),
+    input.onPress('KeyZ', () => { if (hangar.station === 'integration' && a.undo()) { audio.play('ui.click'); refresh(); } }),
+    input.onPress('KeyY', () => { if (hangar.station === 'integration' && a.redo()) { audio.play('ui.click'); refresh(); } }),
+    input.onPress('Delete', () => { if (hangar.station === 'integration') hangar.removeSelected(); }),
     events.on('economy:changed', () => hangar.renderMoney()),
   ];
   const esc = () => {
-    if (hangar.el.querySelector('.bld-dialog-backdrop:not([hidden])')) { hangar.closeDialog(); return; }
+    if (hangar.station) { hangar.closeStation(); return; }
     closePause = openPauseMenu({ onResume: () => { closePause = null; input.onEscape(esc); } });
   };
   input.onEscape(esc);
-  audio.play('ambience.ship', { loop: true, volume: 0.35 });
 
   screen = {
-    update: (dt) => hangar.update(dt),
-    dispose: () => { offs.forEach((off) => off()); lens.dispose(); hangar.dispose(); audio.stop('ambience.ship'); },
+    update: (dt) => {
+      const frozen = !!hangar.station || b.test.active || !!closePause;
+      const k = input.isDown;
+      const delta = input.mouseDelta();
+      b.update(dt, {
+        forward: (k('KeyW') ? 1 : 0) - (k('KeyS') ? 1 : 0),
+        right: (k('KeyD') ? 1 : 0) - (k('KeyA') ? 1 : 0),
+        run: k('ShiftLeft') || k('ShiftRight'),
+        lookDelta: frozen || !input.isLocked() ? { x: 0, y: 0 } : delta,
+        sensitivity: sensitivity(), invertY: invertY(), frozen,
+      });
+      hangar.update(dt, { prompt: frozen ? null : b.nearestStation()?.prompt ?? null });
+    },
+    dispose: () => {
+      offs.forEach((off) => off());
+      window.removeEventListener('click', lockOnClick);
+      b.test.cancel();
+      lens.dispose();
+      hangar.dispose();
+      audio.stop('ambience.ship');
+      graphics.setEffects({ shake: 0 });
+    },
   };
   refresh();
 }
@@ -263,12 +328,15 @@ function enterHangar() {
 // ---------- GONOGO ----------
 function enterGonogo() {
   const a = ensureAssembly();
-  const sc = hangarScene();
-  sc.setLayout(a.layout(), []);
-  sc.select(null);
-  graphics.setView(sc.scene, sc.camera);
+  const b = ensureBay();
   const result = compute();
   const { spec, poll, fee } = result;
+  b.setLayout(a.layout(), []);
+  b.select(null);
+  b.placeAtStation('teststand');
+  b.update(0, { frozen: true });
+  graphics.setView(b.scene, b.camera);
+  audio.play('ambience.ship', { loop: true, volume: 0.3 });
 
   const root = document.createElement('div');
   root.className = 'gng-root hud';
@@ -276,7 +344,7 @@ function enterGonogo() {
   root.dataset.stub = 'gonogo';
   const header = document.createElement('div');
   header.className = 'gng-header';
-  header.textContent = `Go / No-Go poll · ${spec.name}`;
+  header.textContent = `Launch readiness poll · ${spec.name}`;
   const consoleEl = document.createElement('div');
   consoleEl.className = 'gng-console hud-panel';
   const summary = document.createElement('div');
@@ -294,15 +362,14 @@ function enterGonogo() {
     onReveal: (line) => audio.play(line.status === 'GO' ? 'gonogo.tick' : 'ui.error'),
     onDone: () => {
       done = true;
-      const total = poll.total;
       summary.textContent = poll.canConfirm
-        ? `${poll.needsOverride ? `${poll.warnings.length} NO-GO call(s). Overriding warnings is how real accidents started.` : 'All consoles GO.'} Ship ${fmtMoney(spec.stats.cost)}${fee ? ` + pad fees ${fmtMoney(fee)}` : ''} = ${fmtMoney(total)}. Funds ${fmtMoney(economy.getMoney())}.`
-        : `${poll.blocks.length} hard block(s). The launch director refuses. Fix them in the hangar.`;
+        ? `${poll.needsOverride ? `${poll.warnings.length} NO-GO call(s). Overriding warnings is how real accidents started.` : 'All consoles GO.'} Vehicle ${fmtMoney(spec.stats.cost)}${fee ? ` + pad fees ${fmtMoney(fee)}` : ''} = ${fmtMoney(poll.total)}. Funds ${fmtMoney(economy.getMoney())}.`
+        : `${poll.blocks.length} hard block(s). The launch director refuses. Fix them in the bay.`;
       const back = document.createElement('button');
       back.type = 'button';
       back.className = 'hud-button';
       back.dataset.action = 'back';
-      back.textContent = 'BACK TO HANGAR [B]';
+      back.textContent = 'BACK TO THE BAY [B]';
       back.addEventListener('click', () => requestState('HANGAR'));
       actions.append(back);
       if (poll.canConfirm) {
@@ -310,7 +377,7 @@ function enterGonogo() {
         confirm.type = 'button';
         confirm.className = `hud-button ${poll.needsOverride ? 'hud-caution' : 'hud-good'}`;
         confirm.dataset.action = poll.needsOverride ? 'override' : 'confirm';
-        confirm.textContent = `${poll.needsOverride ? 'OVERRIDE & LAUNCH' : 'CONFIRM & LAUNCH'} · ${fmtMoney(total)} [Enter]`;
+        confirm.textContent = `${poll.needsOverride ? 'OVERRIDE & LAUNCH' : 'CONFIRM & LAUNCH'} · ${fmtMoney(poll.total)} [Enter]`;
         confirm.addEventListener('click', confirmLaunch);
         actions.append(confirm);
       }
@@ -332,10 +399,9 @@ function enterGonogo() {
   input.onPress('KeyB', () => requestState('HANGAR'));
   const esc = () => { closePause = openPauseMenu({ onResume: () => { closePause = null; input.onEscape(esc); } }); };
   input.onEscape(esc);
-  audio.play('ambience.ship', { loop: true, volume: 0.35 });
 
   screen = {
-    update: (dt) => view.update(dt),
+    update: (dt) => { view.update(dt); b.update(dt, { frozen: true }); },
     dispose: () => { view.dispose(); root.remove(); audio.stop('ambience.ship'); },
   };
 }
@@ -343,8 +409,8 @@ function enterGonogo() {
 // ---------- module ----------
 export default {
   init() {
-    events.on('builder:highlightPart', ({ partId }) => scene?.highlight([partId]));
-    events.on('ending:show', ({ endingId }) => save.update({ lastEnding: endingId })); // the menu shows the last outcome
+    events.on('builder:highlightPart', ({ partId }) => bay?.highlight([partId]));
+    events.on('ending:show', ({ endingId }) => save.update({ lastEnding: endingId }));
     const volume = save.load().volume;
     if (typeof volume === 'number') audio.setVolume(volume);
   },
@@ -357,7 +423,6 @@ export default {
 
   update(dt, state) {
     if (state === contract.STATES.MENU) return menu.update?.(dt);
-    scene?.update(dt);
     screen?.update(dt);
   },
 

@@ -8,6 +8,7 @@
 .lens-numbers { color: var(--hud-muted); line-height: 1.7; }
 .lens-result { font-size: var(--hud-text-md); font-weight: 500; color: var(--hud-accent); text-shadow: 0 0 8px color-mix(in srgb, var(--hud-accent) 40%, transparent); }
 .lens-real { color: var(--hud-muted); font-style: italic; border-left: 2px solid var(--hud-line); padding-left: 8px; }
+.lens-plain { margin: 0; color: var(--hud-ink); line-height: 1.5; font-size: var(--hud-text-xs); }
 .lens-body { display: flex; flex-direction: column; gap: 6px; }
 .lens-body:empty { display: none; }
 

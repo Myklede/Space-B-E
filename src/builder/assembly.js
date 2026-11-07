@@ -213,6 +213,20 @@ export class Assembly {
     return ids;
   }
 
+  /** Insert an axial part between `belowId` and its parent (e.g. a tank above the engine). Returns the new ids. */
+  insertAbove(belowId, typeId) {
+    const below = this.part(belowId);
+    const def = this.catalog.get(typeId);
+    if (!below || !def || def.attach !== 'axial' || !def.nodes.includes('top') || !def.nodes.includes('bottom')) return [];
+    if (below.parent === null || below.node !== 'bottom') return [];
+    this.#begin();
+    const id = this.#nextId();
+    this.parts.push({ id, type: typeId, parent: below.parent, node: 'bottom', angle: 0, yFrac: 0.5, variant: null, group: null, ...(def.engine ? { engine: defaultEngine(def) } : {}) });
+    below.parent = id;
+    this.#commit();
+    return [id];
+  }
+
   /** Remove a part with everything hanging on it, and its symmetry twins. Returns the removed ids. */
   remove(id) {
     const target = this.part(id);

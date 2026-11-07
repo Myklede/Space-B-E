@@ -80,6 +80,27 @@ Listens: `builder:highlightPart`, `economy:changed`.
 
 `builder: { draft: Assembly, blueprints: [Assembly], slot }`. Settings written by `settings.js`: `sensitivity`, `invertY`, `quality`, `volume`, `skipSensitive`, `warningSeen` (other roles may read `sensitivity` and `invertY`).
 
+## The engineering bay (HANGAR)
+
+The hangar is a round integration hall the engineer walks through in first person (`src/builder/bay/`):
+
+| File | What |
+|---|---|
+| `bay/room.js` | the hall: floor, platform with railing and stairs, walls with ribs and the blue band, catwalk, trusses, lights, hangar door, pipes; the hold-down stand and service tower (`createStand`) |
+| `bay/stations.js` | the machines, one per job (`STATIONS`): integration, propulsion, structures, crew systems, warehouse, test stand, range, handbook desk; each has a canvas screen (`setScreen`) |
+| `bay/player.js` | first-person controller: WASD, mouse look through core `input`, collisions, a visible body and hands with a tablet (`setTablet`) |
+| `bay/screen.js` | the big curved wall screen: a render-to-texture camera feed of the stand (refreshed only when the vehicle changes) and a telemetry board |
+| `bay/teststand.js` | static fire + hold-down liftoff test with Role 3's engine VFX and sounds |
+| `bay/partArt.js` | 3D art for a part: Role 3's `rocketPart:` meshes for the stack, fins and legs; a sealed module for the rest |
+| `bay/loader.js` | Poly Haven assets listed in `data/bayAssets.json` (HDRI, PBR sets, glTF props) with procedural fallbacks |
+| `hangarScene.js` | puts it together: `createHangarScene({ renderer })` → scene, camera, player, stations, wall, test, `setLayout`, `worldAnchors`, `nearestStation`, `placeAtStation` |
+| `hangarScreen.js` | the HUD (crosshair, prompt, chip, toasts) and the station panels: integration (markers on the real vehicle + palette + stats + Formula Lens), catalogues with pictures (`partIcons.js`) and plain-language roles, test console, range terminal, handbook (`handbook.js`, notes saved as `builderNotes`) |
+| `autoplace.js` | "ADD TO VEHICLE" from a card: puts the part where a technician would (`insertAbove` for tanks above the engine) |
+
+Flow: walk up to a machine → `E` opens its panel (pointer unlocks, the player stands still) → `Esc` closes it. `H` opens the handbook anywhere. The readiness poll (GONOGO) is shown from the test conductor's console in the same hall. With `?debug=1`, `window.__game.builder.placeAt(id)` / `openStation(id)` / `startTest()` drive it from the console.
+
+Assets: `public/assets/polyhaven/` (CC0, 18 MB, see `CREDITS.md`); `data/bayAssets.json` is the manifest the loader trusts, so a missing file never produces a console error.
+
 ## Rules the checks enforce
 
 `npm run check:static` rejects: unknown event/state names, imports into other roles' folders, `requestAnimationFrame` outside core, keyboard/mouse/pointer listeners outside `core/input.js`, `localStorage` outside `core/save.js`, the literals `9.81`, `3.71`, `9.80665` outside `core/planets.js`. `npm run check:boot` walks the loop in Chrome and needs a `[data-stub]` element in HANGAR and GONOGO (our roots carry `data-stub` and `data-screen`), no console errors, and the failure penalty computed from the Reliable mock (so never call `setShip` outside confirm).

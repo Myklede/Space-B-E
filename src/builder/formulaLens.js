@@ -27,7 +27,9 @@ export function createFormulaLens({ parent, g0, planets, balance, text, onHighli
     const result = h('div', 'lens-result');
     const body = h('div', 'lens-body');
     const real = h('div', 'lens-real', t.real);
-    el.append(h('div', 'hud-label', t.title), formula, numbers, result, body, real);
+    el.append(h('div', 'hud-label', t.title), formula, numbers, result, body);
+    if (t.plain) el.append(h('p', 'lens-plain', t.plain));
+    el.append(real);
     if (t.guidebook) {
       const link = h('button', 'lens-link', 'Guidebook ›');
       link.type = 'button';
