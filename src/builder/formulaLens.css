@@ -1,0 +1,12 @@
+/* SEED: Sub-AI 1 owns this file. Formula Lens cards; every class is prefixed lens-. */
+.lens-root { display: flex; flex-direction: column; gap: 8px; }
+.lens-card { display: flex; flex-direction: column; gap: 4px; font-size: var(--hud-text-xs); }
+.lens-card[data-state='warn'] { --hud-accent: var(--hud-amber); }
+.lens-card[data-state='bad'] { --hud-accent: var(--hud-red); }
+.lens-formula { color: var(--hud-ink); font-size: var(--hud-text-sm); }
+.lens-numbers { color: var(--hud-muted); }
+.lens-result { font-size: var(--hud-text-md); }
+.lens-real { color: var(--hud-muted); font-style: italic; }
+.lens-var { font: inherit; color: var(--hud-cyan); cursor: pointer; background: none; border: 0; border-bottom: 1px dotted var(--hud-cyan); padding: 0; }
+.lens-var:hover { background: color-mix(in srgb, var(--hud-cyan) 20%, transparent); }
+.lens-link { align-self: flex-start; font: 500 var(--hud-text-xs) var(--hud-font); color: var(--hud-cyan); background: none; border: 0; padding: 0; cursor: pointer; text-decoration: underline; }
