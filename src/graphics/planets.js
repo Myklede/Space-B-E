@@ -1,5 +1,5 @@
 import * as THREE from 'three';
-import { bakeTexture, getRenderer, GLSL_NOISE, qualitySettings, sharedUniforms } from './shared.js';
+import { bakeTexture, getRenderer, GLSL_NOISE, qualitySettings, sharedUniforms, skyState } from './shared.js';
 
 const EARTH_COLOR = /* glsl */ `
 varying vec2 vUv;
@@ -94,7 +94,7 @@ void main() {
   float c = texture2D(uClouds, vUv).r;
   float clouds = smoothstep(.06, .92, c);
   vec3 n = texture2D(uNight, vUv).rgb;
-  float lights = smoothstep(.06, .5, dot(n, vec3(.2126, .7152, .0722)));
+  float lights = smoothstep(.03, .8, dot(n, vec3(.2126, .7152, .0722))); // soft curve: the shader adds the fine structure
   lights *= step(.001, texture2D(uMap, vUv).a); // never over open water
   gl_FragColor = vec4(clouds, lights, 0., 1.);
 }`;
@@ -118,8 +118,12 @@ varying vec3 vQ;
 varying vec3 vWorld;
 varying vec3 vT;
 varying vec3 vB;
+varying vec3 vCenter;
+varying float vRad;
 void main() {
   vUv = uv;
+  vCenter = modelMatrix[3].xyz;
+  vRad = length(modelMatrix[0].xyz);
   float lon = uv.x * 6.2831853, lat = (uv.y - .5) * 3.14159265;
   vT = mat3(modelMatrix) * vec3(sin(lon), 0., cos(lon));
   vB = mat3(modelMatrix) * vec3(cos(lon) * sin(lat), cos(lat), -sin(lon) * sin(lat));
@@ -141,48 +145,232 @@ uniform float uTime;
 uniform vec3 uSunDir;
 uniform float uTexel;
 uniform float uClose;
+uniform float uAlt;   // camera height above the surface, in planet radii
+uniform float uHigh;  // 1 on High quality: more octaves, filtered taps, relief normals
 varying vec2 vUv;
 ${GLSL_NOISE}
 varying vec3 vQ;
 varying vec3 vWorld;
 varying vec3 vT;
 varying vec3 vB;
-// Slope from neighbouring texels. Screen derivatives of a filtered map come out blocky up close.
-vec3 bumped(vec3 N, vec3 T, vec3 B, float scale) {
-  float e = max(uTexel, max(fwidth(vUv.x), fwidth(vUv.y)));
+varying vec3 vCenter;
+varying float vRad;
+
+// fbm that fades each octave out once it is smaller than a pixel, so detail never shimmers or aliases. fw: pixel footprint in noise cells.
+float fbmA(vec3 p, float fw, int octaves) {
+  float a = .5, s = 0., n = 0.;
+  for (int i = 0; i < 6; i++) {
+    if (i >= octaves) break;
+    s += a * mix(.5, vnoise(p), 1. - smoothstep(.35, 1., fw));
+    n += a;
+    p = p * 2.02 + vec3(13.1, 7.3, 2.9);
+    fw *= 2.02;
+    a *= .5;
+  }
+  return s / n;
+}
+vec3 rotY(vec3 d, float a) {
+  float c = cos(a), s = sin(a);
+  return vec3(d.x * c + d.z * s, d.y, d.z * c - d.x * s);
+}
+// Slope from a blurred copy of the map, so the relief has no texel stair-steps.
+vec3 bumped(vec3 N, vec3 T, vec3 B, float scale, float lod) {
+  float e = max(uTexel * (1. + lod), max(fwidth(vUv.x), fwidth(vUv.y)));
   float c = max(cos((vUv.y - .5) * 3.14159265), .06);
-  float dT = (texture2D(uColor, vUv + vec2(e, 0.)).a - texture2D(uColor, vUv - vec2(e, 0.)).a) / (2. * e * 6.2831853 * c);
-  float dB = (texture2D(uColor, vUv + vec2(0., e)).a - texture2D(uColor, vUv - vec2(0., e)).a) / (2. * e * 3.14159265);
+  float dT = (textureLod(uColor, vUv + vec2(e, 0.), lod).a - textureLod(uColor, vUv - vec2(e, 0.), lod).a) / (2. * e * 6.2831853 * c);
+  float dB = (textureLod(uColor, vUv + vec2(0., e), lod).a - textureLod(uColor, vUv - vec2(0., e), lod).a) / (2. * e * 3.14159265);
   return normalize(N - scale * (dT * T + dB * B));
 }
+// Relief from noise: height at the point and one step along each tangent, tilted into the normal. cells: noise frequency.
+float reliefH(vec3 p, float pix, int oct) {
+  return fbmA(p * 420., pix * 420., oct) + .12 * fbmA(p * 3300. + 1.7, pix * 3300., 3);
+}
+vec3 noiseRelief(vec3 N, vec3 T, vec3 B, float pix, float amp, int oct) {
+  float e = .4 / 3300.; // a step well under the smallest feature, or the difference ghosts the noise into streaks
+  float h0 = reliefH(N, pix, oct);
+  float hT = reliefH(N + T * e, pix, oct);
+  float hB = reliefH(N + B * e, pix, oct);
+  vec3 tilt = amp * ((hT - h0) * T + (hB - h0) * B) / (e * 420.);
+  return normalize(N - tilt * min(1., .35 / max(length(tilt), 1e-4))); // never tipped past about 20 degrees
+}
+
+// ---- Earth land: fields, forest, scrub and rock from the base colour ----
+vec3 landDetail(vec3 c, vec3 N, float pix, float D, int oct) {
+  float broad = fbmA(N * 90., pix * 90., oct);
+  float mid = fbmA(N * 700. + 3.7, pix * 700., oct);
+  float fine = fbmA(N * 4200. + 9.1, pix * 4200., 3);
+  float lum = dot(c, vec3(.2126, .7152, .0722));
+  float snow = smoothstep(.22, .45, lum);
+  float green = smoothstep(.0, .025, c.g - c.r * .95);
+  float patchv = smoothstep(.42, .58, mid + (broad - .5) * .5);
+  float grain = .78 + .5 * fine;
+  vec3 gcol = mix(c * vec3(.62, .78, .5), c * vec3(1.5, 1.4, .8), patchv) * grain;
+  vec3 dcol = mix(c * vec3(.72, .68, .6), c * vec3(1.3, 1.22, 1.08), patchv) * (.82 + .4 * fine);
+  vec3 res = mix(dcol, gcol, green);
+  res = mix(res, c * (.88 + .24 * fine), snow);
+  return mix(c, res, D);
+}
+
+// ---- Night lights: clusters of points and streets, never texel tiles ----
+float dotLayer(vec3 p, float fw, float density) {
+  vec3 i = floor(p), f = fract(p);
+  vec3 o = .3 + .4 * hash33(i);
+  float d = length(f - o);
+  float on = step(hash13(i + 3.1), density) * (.45 + .55 * hash13(i + 9.2));
+  return mix(on * smoothstep(.32, .06, d), density * .07, smoothstep(.4, 1., fw));
+}
+float cityLights(vec3 N, float pix, float field) {
+  float cluster = mix(.3, 1., fbmA(N * 900. + 7., pix * 900., 3));
+  float f = field * cluster;
+  float l = f * .1;
+  l += dotLayer(N * 800., pix * 800., f * 1.2) * .95;
+  l += dotLayer(N * 2600., pix * 2600., f * 1.15) * .9;
+  l += dotLayer(N * 9500., pix * 9500., f) * .75 * (1. - smoothstep(.5, 1., pix * 9500.));
+  float street = 1. - abs(2. * vnoise(N * 1500. + 4.) - 1.);
+  l += smoothstep(.9, 1., street) * f * f * .55 * (1. - smoothstep(.4, 1., pix * 1500.));
+  return l;
+}
+
+// ---- Clouds: the map gives where, noise gives the billows ----
+// Returns the cover; shade goes 0..1 from the dark underside to the lit top.
+float cloudDensity(vec3 Nd, float c, float pix, int oct) {
+  float n = fbmA(Nd * 130., pix * 130., oct);
+  float m = fbmA(Nd * 800. + 5.3, pix * 800., oct);
+  return c + (n - .5) * .85 + (m - .5) * .45;
+}
+float cloudAt(vec3 Nd, vec2 uvc, float pix, float D, int oct, vec3 toSun, out float shade) {
+  shade = .75;
+  if (D < .001) return texture2D(uClouds, uvc).r;
+  float c = textureLod(uClouds, uvc, 1.).r;
+  float dd = cloudDensity(Nd, c, pix, oct);
+  // Lit where the cloud rises away from the Sun: compare with a point a little toward it.
+  if (oct > 3) shade = clamp(.75 + (dd - cloudDensity(normalize(Nd + toSun * .0006), c, pix, 3)) * 5., .4, 1.1);
+  return mix(c, smoothstep(.34, .62, dd), D);
+}
+
 void main() {
+  // The mesh is a coarse polyhedron: up close its normal-from-position drifts by tens of metres, which smears fine noise into streaks.
+  // So find the exact point where the pixel's ray meets the true sphere.
   vec3 N = normalize(vQ);
+  {
+    vec3 ro = (cameraPosition - vCenter) / vRad, rd = normalize(vWorld - cameraPosition);
+    float b = dot(ro, rd), h = b * b - (dot(ro, ro) - 1.);
+    if (h > 0.) N = normalize(ro + rd * (-b - sqrt(h)));
+  }
   vec3 V = normalize(cameraPosition - vWorld);
   vec3 L = uSunDir;
   vec3 sun = vec3(1., .97, .92) * 1.75;
-  vec4 base = texture2D(uColor, vUv);
-  // Near the ground a 4K map is about 1 km a pixel. Noise on the direction adds the missing grain, only when close.
-  if (uClose > .001 && (uIsEarth < .5 || base.a > .001)) {
-    float g = vnoise(N * 1500.) * .5 + vnoise(N * 5200.) * .3 + vnoise(N * 17000.) * .2;
-    base.rgb *= 1. + uClose * (g - .5) * .7;
-  }
-  vec3 Nb = bumped(N, normalize(vT), normalize(vB), uBump);
-  float lit = max(dot(Nb, L), 0.);
-  vec3 col = base.rgb * sun * lit;
+  vec3 T = normalize(vT), B = normalize(vB);
+  vec3 fwN = fwidth(N);
+  float pix = max(fwN.x, max(fwN.y, fwN.z));
+  int oct = uHigh > .5 ? 5 : 3;
+  float ndl = dot(N, L);
+  vec3 col;
+
   if (uIsEarth > .5) {
-    vec2 drift = vec2(uTime * .00022, 0.);
-    float clouds = texture2D(uClouds, vUv + drift).r;
-    float cloudShadow = texture2D(uClouds, vUv + drift + vec2(.0015, -.001)).r;
-    col *= 1. - .55 * cloudShadow;
-    float ocean = 1. - step(.001, base.a);
+    float D = 1. - smoothstep(.03, .1, uAlt); // procedural detail takes over below about 60 km
+    // Land and sea from a blurred copy of the map: smooth coast, no texel zigzag.
+    vec2 e = vec2(uTexel * 1.4, 0.);
+    vec4 t0 = texture2D(uColor, vUv);
+    float aB = t0.a;
+    vec3 landCol = t0.rgb, seaCol = t0.rgb;
+    float field = textureLod(uClouds, vUv, 0.).g;
+    if (uHigh > .5) {
+      vec4 t1 = texture2D(uColor, vUv + e.xy), t2 = texture2D(uColor, vUv - e.xy);
+      vec4 t3 = texture2D(uColor, vUv + e.yx), t4 = texture2D(uColor, vUv - e.yx);
+      aB = (t0.a * 2. + t1.a + t2.a + t3.a + t4.a) / 6.;
+      float wsum = t0.a * 2. + t1.a + t2.a + t3.a + t4.a;
+      landCol = wsum > .0005 ? (t0.rgb * t0.a * 2. + t1.rgb * t1.a + t2.rgb * t2.a + t3.rgb * t3.a + t4.rgb * t4.a) / wsum : t0.rgb;
+      vec4 w = 1. - smoothstep(0., .03, vec4(t1.a, t2.a, t3.a, t4.a));
+      float w0 = 1. - smoothstep(0., .03, t0.a);
+      float ws = w0 * 2. + w.x + w.y + w.z + w.w;
+      seaCol = ws > .001 ? (t0.rgb * w0 * 2. + t1.rgb * w.x + t2.rgb * w.y + t3.rgb * w.z + t4.rgb * w.w) / ws : t0.rgb;
+      field = (field * 2. + textureLod(uClouds, vUv + e.xy, 0.).g + textureLod(uClouds, vUv - e.xy, 0.).g
+        + textureLod(uClouds, vUv + e.yx, 0.).g + textureLod(uClouds, vUv - e.yx, 0.).g) / 6.;
+    }
+    float coastNoise = D > .001 ? fbmA(N * 650. + 2., pix * 650., min(oct, 4)) - .5 : 0.;
+    float landMask = smoothstep(.022, .04, aB + coastNoise * .06 * D);
+    float landSoft = smoothstep(.008, .04, aB + coastNoise * .06 * D);
+
+    // Albedo
+    vec3 land = D > .001 ? landDetail(landCol, N, pix, D, oct) : landCol;
+    vec3 sea = seaCol;
+    if (D > .001) {
+      float aW = textureLod(uColor, vUv, 4.).a;
+      float shallow = smoothstep(.002, .04, aW);
+      vec3 deep = vec3(.006, .04, .1) * (.8 + .5 * fbmA(N * 120., pix * 120., 3));
+      vec3 shoal = vec3(.02, .13, .15) * (.7 + .6 * fbmA(N * 900., pix * 900., 3));
+      sea = mix(sea, mix(deep, shoal, shallow), D * .85); // also hides the map's JPEG blocks
+    }
+
+    // Surface normals: noise relief on land when close, gentle map slope otherwise.
+    vec3 Nb = bumped(N, T, B, uBump, 1.);
+    if (D > .001 && uHigh > .5) {
+      float broad = fbmA(N * 45., pix * 45., 3);
+      float amp = D * (.05 + .2 * smoothstep(.45, .7, broad));
+      Nb = noiseRelief(Nb, T, B, pix, amp, 4);
+    }
+    // Wave-tilted normal for the sea: breaks the sun glint into sparkle.
+    vec3 Nw = N;
+    if (D > .001) {
+      vec3 p = N * 2600. + vec3(uTime * .05, 0., uTime * .03);
+      float aa = 1. - smoothstep(.3, 1., pix * 2600.);
+      Nw = normalize(N + (T * (vnoise(p) - .5) + B * (vnoise(p + 17.3) - .5)) * .2 * D * aa);
+    }
+
+    vec3 albedo = mix(sea, land, landMask);
+    float lit = mix(max(ndl, 0.), max(dot(Nb, L), 0.), landMask);
+    col = albedo * sun * lit;
+
+    // Clouds
+    float drift = uTime * .00022 * 6.2831853;
+    vec3 Nd = rotY(N, drift);
+    float shade;
+    float clouds = cloudAt(Nd, vUv + vec2(uTime * .00022, 0.), pix, D, oct, normalize(rotY(L - N * ndl, drift)), shade);
+    float shadowShade;
+    float cloudShadow;
+    if (D > .001) {
+      vec3 Ns = normalize(Nd - (L - N * ndl) * .004);
+      cloudShadow = cloudAt(Ns, vUv + vec2(uTime * .00022 + .0012, -.0008), pix, D, 3, Ns, shadowShade);
+    } else {
+      cloudShadow = texture2D(uClouds, vUv + vec2(uTime * .00022 + .0015, -.001)).r;
+    }
+    col *= 1. - mix(.55, .4, D) * cloudShadow;
+    clouds *= mix(1., smoothstep(.003, .02, uAlt), D * .5); // a camera low in the cloud deck sees it thin out
+
+    float seaLit = 1. - landMask;
     vec3 H = normalize(L + V);
-    float glint = (pow(max(dot(N, H), 0.), 1100.) + pow(max(dot(N, H), 0.), 90.) * .012) * ocean * (1. - clouds);
+    float nh = max(dot(Nw, H), 0.);
+    float glint = (pow(nh, 1100.) + pow(nh, 90.) * .012) * seaLit * (1. - clouds);
     float fresnel = pow(1. - max(dot(N, V), 0.), 5.);
-    col += vec3(1., .88, .72) * glint * 3. * step(0., dot(N, L));
-    col += vec3(.16, .3, .5) * fresnel * ocean * .5 * max(dot(N, L), 0.);
-    col = mix(col, vec3(.72, .74, .77) * sun * (max(dot(N, L), 0.) * .94 + .008), clouds * .9);
-    float night = 1. - smoothstep(-.1, .1, dot(N, L));
-    col += vec3(1., .68, .34) * texture2D(uClouds, vUv).g * night * (1. - clouds * .85) * .95;
+    col += vec3(1., .88, .72) * glint * 3. * step(0., ndl);
+    col += vec3(.16, .3, .5) * fresnel * seaLit * .5 * max(ndl, 0.);
+    float topShade = mix(1., shade * 1.2, D);
+    vec3 cloudCol = vec3(.72, .74, .77) * topShade * sun * (max(ndl, 0.) * .94 + .008);
+    col = mix(col, cloudCol, clouds * .9);
+
+    float night = 1. - smoothstep(-.1, .1, ndl);
+    if (night > .001 && field > .002) {
+      float lights = cityLights(N, pix, field * landSoft) * 2.5;
+      col += vec3(1., .68, .34) * min(lights, 1.3) * night * (1. - clouds * .85) * .95;
+    }
+  } else {
+    // Mars: the photo gives the colours; dust patches and relief fill in below it as you descend.
+    float D = 1. - smoothstep(.03, .4, uAlt);
+    vec4 base = texture2D(uColor, vUv);
+    if (uHigh > .5) {
+      vec2 e = vec2(uTexel * 1.2, 0.);
+      base = (base * 2. + texture2D(uColor, vUv + e.xy) + texture2D(uColor, vUv - e.xy) + texture2D(uColor, vUv + e.yx) + texture2D(uColor, vUv - e.yx)) / 6.;
+    }
+    vec3 Nb = bumped(N, T, B, uBump, .4);
+    if (D > .001) {
+      float g = fbmA(N * 260., pix * 260., oct) * .55 + fbmA(N * 2400. + 4., pix * 2400., 3) * .3 + fbmA(N * 9000., pix * 9000., 2) * .15;
+      float dust = fbmA(N * 40. + 8., pix * 40., 3);
+      base.rgb *= 1. + D * ((g - .5) * .6);
+      base.rgb = mix(base.rgb, base.rgb * vec3(1.18, 1.0, .82), D * smoothstep(.45, .65, dust) * .6);
+      if (uHigh > .5) Nb = noiseRelief(Nb, T, B, pix, D * .12, 4);
+    }
+    col = base.rgb * sun * max(dot(Nb, L), 0.);
   }
   gl_FragColor = vec4(col, 1.);
   #include <logdepthbuf_fragment>
@@ -355,6 +543,8 @@ export function createPlanet(name) {
       fragmentShader: SURFACE_FRAGMENT,
       uniforms: {
         uClose: { value: 0 },
+        uAlt: { value: 10 },
+        uHigh: { value: qualitySettings().planetTexture > 2048 ? 1 : 0 },
         uColor: { value: maps.color },
         uClouds: { value: maps.clouds ?? maps.color },
         uIsEarth: { value: name === 'earth' ? 1 : 0 },
@@ -397,7 +587,15 @@ export function createPlanet(name) {
     camera.getWorldPosition(cam);
     group.worldToLocal(cam);
     shellMaterial.uniforms.uCamObj.value.copy(cam);
+    surface.material.uniforms.uAlt.value = cam.length() - 1;
     surface.material.uniforms.uClose.value = 1 - THREE.MathUtils.smoothstep(cam.length() - 1, 0.04, 0.2);
+    if (name === 'earth') {
+      // How bright the sky is at the camera: stars (sky.js) fade out in daylight under thick air and return in space or at night.
+      const alt = cam.length() - 1;
+      const sunUp = THREE.MathUtils.smoothstep(cam.clone().normalize().dot(sharedUniforms.uSunDir.value), -0.12, 0.15);
+      skyState.daylight = sunUp * THREE.MathUtils.smoothstep(Math.exp(-alt * 75), 0.01, 0.12);
+      skyState.stamp = sharedUniforms.uTime.value;
+    }
     shellMaterial.side = cam.length() < cfg.top ? THREE.BackSide : THREE.FrontSide;
   };
   return group;

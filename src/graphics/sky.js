@@ -1,5 +1,5 @@
 import * as THREE from 'three';
-import { bakeTexture, GLSL_NOISE, qualitySettings, sharedUniforms } from './shared.js';
+import { bakeTexture, GLSL_NOISE, qualitySettings, sharedUniforms, skyState } from './shared.js';
 
 const DOME_VERTEX = /* glsl */ `
 varying vec2 vUv;
@@ -36,11 +36,12 @@ void main() {
 const SPACE_DOME = /* glsl */ `
 uniform sampler2D uMap;
 uniform vec3 uSunDir;
+uniform float uStarFade;
 varying vec2 vUv;
 varying vec3 vDir;
 void main() {
   vec3 d = normalize(vDir);
-  vec3 col = texture2D(uMap, vUv).rgb;
+  vec3 col = texture2D(uMap, vUv).rgb * uStarFade;
   float m = max(dot(d, uSunDir), 0.);
   col += vec3(1., .96, .88) * smoothstep(.99988, .99994, m) * 90.;
   col += vec3(1., .86, .66) * (pow(m, 700.) * 1.6 + pow(m, 60.) * .035);
@@ -60,11 +61,19 @@ void main() {
 
 const STAR_FRAGMENT = /* glsl */ `
 varying vec3 vColor;
+uniform float uStarFade;
 void main() {
   float q = 1. - length(gl_PointCoord - .5) * 2.;
   if (q <= 0.) discard;
-  gl_FragColor = vec4(vColor * q * q, 1.);
+  gl_FragColor = vec4(vColor * q * q * uStarFade, 1.);
 }`;
+
+// Stars and Milky Way dim in a bright sky. The Earth planet reports the daylight; a stale report (no Earth in view) counts as night.
+const fadeUniform = { value: 1 };
+const updateFade = () => {
+  const fresh = sharedUniforms.uTime.value - skyState.stamp < 0.5;
+  fadeUniform.value = 1 - (fresh ? skyState.daylight : 0) * 0.98;
+};
 
 function createStars(count) {
   let seed = 90210;
@@ -94,7 +103,7 @@ function createStars(count) {
     new THREE.ShaderMaterial({
       vertexShader: STAR_VERTEX,
       fragmentShader: STAR_FRAGMENT,
-      uniforms: { uScale: { value: Math.min(window.devicePixelRatio, qualitySettings().pixelRatio) } },
+      uniforms: { uScale: { value: Math.min(window.devicePixelRatio, qualitySettings().pixelRatio) }, uStarFade: fadeUniform },
       blending: THREE.AdditiveBlending,
       depthTest: false,
       depthWrite: false,
@@ -102,6 +111,7 @@ function createStars(count) {
   );
   stars.frustumCulled = false;
   stars.renderOrder = -999;
+  stars.onBeforeRender = updateFade;
   return stars;
 }
 
@@ -118,7 +128,7 @@ export function createSpaceSky() {
     new THREE.ShaderMaterial({
       vertexShader: DOME_VERTEX,
       fragmentShader: SPACE_DOME,
-      uniforms: { uMap: { value: milkyWay }, uSunDir: sharedUniforms.uSunDir },
+      uniforms: { uMap: { value: milkyWay }, uSunDir: sharedUniforms.uSunDir, uStarFade: fadeUniform },
       side: THREE.BackSide,
       depthTest: false,
       depthWrite: false,
@@ -126,6 +136,7 @@ export function createSpaceSky() {
   );
   dome.frustumCulled = false;
   dome.renderOrder = -1000;
+  dome.onBeforeRender = updateFade;
   group.add(dome, createStars(7000));
   return group;
 }

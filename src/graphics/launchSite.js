@@ -3,6 +3,7 @@ import { mergeGeometries } from 'three/addons/utils/BufferGeometryUtils.js';
 import { GLSL_NOISE, qualitySettings, sharedUniforms } from './shared.js';
 import { assets } from './assets.js';
 import { pbr } from './interiors.js';
+import { COVER_HALF, buildCoverTexture, buildEarthGround, buildTrees, drop as curve, earthHeight, roadX, shoreX } from './earthLand.js';
 
 /**
  * A coastal launch complex on Earth, for the ascent. The pad is at the origin, +Y is up and Earth's centre is 637 km below.
@@ -15,9 +16,8 @@ const GROUND_LIFT = 1; // the planet sits this far below the pad, so the ground 
 const FENCE = 105;
 const TWO_PI = Math.PI * 2;
 
-const drop = (x, z) => Math.sqrt(R * R - x * x - z * z) - R; // Earth curves away: 3 m at 2 km
-const shoreX = (z) => 1250 + 300 * Math.sin(z * 0.0011 + 1.3) + 130 * Math.sin(z * 0.0041 + 0.4) + 45 * Math.sin(z * 0.013);
-const roadX = (z) => 82 + 55 * Math.sin(z / 330) + 40 * Math.sin(z / 910 + 1);
+// Earth curves away (3 m at 2 km), and the land rises in hills beyond the complex (earthLand.js).
+const drop = (x, z) => curve(x, z) + earthHeight(x, z);
 
 function rng(seed) {
   let s = seed >>> 0;
@@ -392,29 +392,6 @@ function instancedBoxes(list, material, shadow = true) {
 
 /* ---------------------------------------------------------------- ground */
 
-function buildGround(segments, extent, warp) {
-  const count = (segments + 1) ** 2;
-  const positions = new Float32Array(count * 3);
-  const indices = new Uint32Array(segments * segments * 6);
-  let v = 0, n = 0;
-  for (let j = 0; j <= segments; j++) {
-    for (let i = 0; i <= segments; i++) {
-      const x = warp(i / segments * 2 - 1) * extent, z = warp(j / segments * 2 - 1) * extent;
-      positions[v++] = x; positions[v++] = drop(x, z); positions[v++] = z;
-    }
-  }
-  for (let j = 0; j < segments; j++) for (let i = 0; i < segments; i++) {
-    const a = j * (segments + 1) + i, b = a + 1, c = a + segments + 1, d = c + 1;
-    indices.set([a, c, b, b, c, d], n);
-    n += 6;
-  }
-  const g = new THREE.BufferGeometry();
-  g.setAttribute('position', new THREE.BufferAttribute(positions, 3));
-  g.setIndex(new THREE.BufferAttribute(indices, 1));
-  g.computeVertexNormals();
-  return g;
-}
-
 function groundMaterial() {
   const material = new THREE.MeshStandardMaterial({ color: 0xffffff, roughness: 0.95, metalness: 0, transparent: true, fog: false });
   const uniforms = {
@@ -423,16 +400,18 @@ function groundMaterial() {
     uFade: { value: 1 },
     uAir: { value: 1 },
     uTime: sharedUniforms.uTime,
+    uCover: { value: buildCoverTexture() },
   };
   material.userData.uniforms = uniforms;
   material.onBeforeCompile = (shader) => {
     Object.assign(shader.uniforms, uniforms);
     shader.vertexShader = shader.vertexShader
-      .replace('#include <common>', '#include <common>\nvarying vec3 vWP;')
-      .replace('#include <begin_vertex>', '#include <begin_vertex>\nvWP = (modelMatrix * vec4(transformed, 1.)).xyz;');
+      .replace('#include <common>', '#include <common>\nvarying vec3 vWP;\nvarying vec3 vWN;\nvarying float vHt;')
+      .replace('#include <begin_vertex>', '#include <begin_vertex>\nvWP = (modelMatrix * vec4(transformed, 1.)).xyz;\nvWN = normalize(mat3(modelMatrix) * objectNormal);\nvHt = transformed.y + dot(transformed.xz, transformed.xz) / 1274000.;');
     shader.fragmentShader = shader.fragmentShader
       .replace('#include <common>', /* glsl */ `#include <common>
-        varying vec3 vWP;
+        varying vec3 vWP; varying vec3 vWN; varying float vHt;
+        uniform sampler2D uCover;
         uniform vec3 uHaze; uniform vec3 uSunCol; uniform float uFade; uniform float uAir;
         uniform float uTime;
         float ocean_ = 0.;
@@ -456,18 +435,33 @@ function groundMaterial() {
           float wet = smoothstep(.3, .1, broad);
           vec3 grass = mix(vec3(.095, .15, .045), vec3(.16, .215, .075), n3);
           grass = mix(grass, vec3(.075, .14, .06), wet * .6);
-          vec3 straw = mix(vec3(.36, .31, .17), vec3(.45, .39, .22), n3);
-          vec3 land = mix(grass, straw * .85, dry * .8);
+          vec3 straw = mix(vec3(.2, .19, .09), vec3(.26, .24, .12), n3);
+          vec3 land = mix(grass, straw * .85, dry * .5);
           float clump = smoothstep(.5, .78, n4 * .55 + n5 * .45);
           land = mix(land, grass * vec3(.55, .7, .5), clump * .45);
           land *= (.84 + .32 * n2) * (.92 + .16 * n4) * (.93 + .14 * n5);
           float wash = smoothstep(.62, .78, fbm(vec3(p / 60. + 31., 7.), 3));
           land = mix(land, vec3(.5, .44, .27), wash * .3);
+          // Land cover from the same map the trees are placed from: farm fields, then woodland floor.
+          vec4 cv = texture2D(uCover, (p + ${COVER_HALF}.) / ${2 * COVER_HALF}.) * step(max(abs(p.x), abs(p.y)), ${COVER_HALF - 2}.);
+          float fh = cv.g;
+          vec3 crop = fh < .25 ? vec3(.12, .2, .06) : fh < .5 ? vec3(.2, .27, .08) : fh < .75 ? vec3(.26, .19, .11) : vec3(.4, .35, .19);
+          crop *= .88 + .24 * n4 + .06 * sin(dot(p, vec2(.9, .43)) * 1.3);
+          land = mix(land, crop, cv.b * (1. - smoothstep(.1, .5, cv.r)) * .9);
+          land = mix(land, mix(vec3(.04, .07, .03), vec3(.06, .1, .04), n3) * (.85 + .3 * n5), smoothstep(.1, .6, cv.r) * .92);
+          // Hills: forest on the slopes, bare rock on steep faces and high ground.
+          float hillF = smoothstep(14., 90., vHt) * (1. - smoothstep(330., 520., vHt));
+          land = mix(land, vec3(.045, .085, .04) * (.8 + .5 * n2), hillF * (.55 + .3 * n3));
+          float rock = max(smoothstep(.2, .4, 1. - vWN.y), smoothstep(420., 640., vHt + (n2 - .5) * 120.));
+          land = mix(land, vec3(.3, .27, .23) * (.8 + .4 * n3), rock * smoothstep(40., 140., vHt));
+          // From height the plain reads as Florida green: scrub and woodland merge towards the colour of the globe's land.
+          float far_ = smoothstep(1200., 6000., r0);
+          land = mix(land, mix(vec3(.05, .09, .035), vec3(.075, .12, .05), n2) * (.85 + .3 * n3), far_ * .75);
           float bare = 1. - smoothstep(18., 70., r0 + (n2 - .5) * 70.);
           vec3 dirt = mix(vec3(.3, .25, .16), vec3(.4, .34, .22), n3) * (.92 + .16 * n5) * (.92 + .16 * n4);
           land = mix(land, dirt, bare);
           float beach = smoothstep(-210., -40., dd);
-          vec3 sand = mix(vec3(.56, .47, .32), vec3(.7, .62, .45), n3) * (.88 + .24 * n5);
+          vec3 sand = mix(vec3(.4, .34, .23), vec3(.5, .44, .32), n3) * (.88 + .24 * n5);
           sand = mix(sand, vec3(.26, .21, .15), smoothstep(-34., -2., dd) * .8);
           vec3 col = mix(land, sand, beach);
           float w = smoothstep(-2., 2., dd);
@@ -477,7 +471,7 @@ function groundMaterial() {
           ocean_ = w;
           col = mix(col, water, w);
           diffuseColor.rgb = col;
-          diffuseColor.a = (1. - smoothstep(7000., 14600., r0)) * uFade;
+          diffuseColor.a = (1. - smoothstep(11500., 14800., r0)) * uFade;
         }`)
       .replace('#include <roughnessmap_fragment>', '#include <roughnessmap_fragment>\nroughnessFactor = mix(roughnessFactor, .16, ocean_);')
       .replace('#include <normal_fragment_maps>', /* glsl */ `#include <normal_fragment_maps>
@@ -499,7 +493,7 @@ function groundMaterial() {
         {
           vec3 Vv = normalize(vViewPosition);
           float fr = pow(1. - clamp(dot(Vv, normal), 0., 1.), 5.);
-          totalEmissiveRadiance += ocean_ * uHaze * (.01 + .6 * fr);
+          totalEmissiveRadiance += ocean_ * uHaze * (.01 + .6 * fr) * (.2 + .8 * uAir);
           #if NUM_DIR_LIGHTS > 0
           vec3 Hh = normalize(directionalLights[0].direction + Vv);
           float nh = max(dot(normal, Hh), 0.);
@@ -510,7 +504,7 @@ function groundMaterial() {
       .replace('#include <opaque_fragment>', /* glsl */ `
         {
           float hz_ = 1. - exp(-length(vViewPosition) * .00018 * uAir * (1. - .55 * ocean_));
-          outgoingLight = mix(outgoingLight, uHaze, hz_);
+          outgoingLight = mix(outgoingLight, uHaze * vec3(.5, .68, .9), hz_);
         }
         #include <opaque_fragment>`);
   };
@@ -844,12 +838,15 @@ export function createLaunchSite() {
   const detail = new THREE.Group();
   detail.name = 'launch-site-detail';
   const material = groundMaterial();
-  const segments = high ? 112 : 72;
-  const ground = new THREE.Mesh(buildGround(segments, 15000, (t) => Math.sign(t) * Math.pow(Math.abs(t), 2.4)), material);
-  ground.receiveShadow = true;
-  ground.frustumCulled = false;
-  ground.position.y = 0;
-  detail.add(ground, buildApron(m), buildMount(m), buildTower(m), buildLights(m), buildMasts(m), buildSupport(m, high), buildRoad(m), buildScrub(m, high ? 2200 : 700));
+  const ground = new THREE.Group();
+  for (const geometry of buildEarthGround(high)) {
+    const tier = new THREE.Mesh(geometry, material);
+    tier.receiveShadow = true;
+    tier.frustumCulled = false;
+    ground.add(tier);
+  }
+  const trees = buildTrees(high);
+  detail.add(ground, trees, buildApron(m), buildMount(m), buildTower(m), buildLights(m), buildMasts(m), buildSupport(m, high), buildRoad(m), buildScrub(m, high ? 2200 : 700));
   root.add(detail);
 
   // Blinking aviation lights, sun-driven lighting and haze.
@@ -889,8 +886,9 @@ export function createLaunchSite() {
   const setAltitude = (metres) => {
     root.position.y = -metres;
     material.userData.uniforms.uFade.value = 1 - THREE.MathUtils.smoothstep(metres, 28000, 40000);
-    material.userData.uniforms.uAir.value = Math.exp(-metres / 5000);
+    material.userData.uniforms.uAir.value = Math.exp(-metres / 2200);
     detail.visible = metres < 40000;
+    trees.visible = metres < 9000; // specks by then
   };
 
   scene.add(sky, root);

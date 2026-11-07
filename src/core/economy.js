@@ -3,8 +3,20 @@ import balance from './balance.json';
 import { emit } from './events.js';
 import { save } from './save.js';
 
+// Testing money: in development (`npm run dev`) or with ?debug=1, every page load starts with $1,000,000,000 so
+// tests never run out. ?money=N picks another amount there (e.g. ?money=5000000 to test the real economy). The built
+// game (npm run build) ignores both and uses balance.startMoney and the save as before.
+function testStartMoney() {
+  if (typeof location === 'undefined') return null; // Node tests
+  const query = new URLSearchParams(location.search);
+  if (!(import.meta.env?.DEV || query.get('debug') === '1')) return null;
+  const asked = Number(query.get('money'));
+  return query.has('money') && Number.isFinite(asked) ? asked : 1e9;
+}
+const testMoney = testStartMoney();
 const saved = save.load().money;
-let money = typeof saved === 'number' ? saved : balance.startMoney;
+let money = testMoney ?? (typeof saved === 'number' ? saved : balance.startMoney);
+if (testMoney !== null) save.update({ money });
 
 function set(next, reason) {
   money = next;
@@ -33,7 +45,7 @@ export const economy = {
   isBankrupt: () => money < 0,
   /** Back to the starting money. */
   reset() {
-    set(balance.startMoney, 'reset');
+    set(testMoney ?? balance.startMoney, 'reset');
   },
   /** Debug only: set money directly. */
   debugSet(amount) {

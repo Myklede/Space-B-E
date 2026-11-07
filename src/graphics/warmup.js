@@ -9,6 +9,10 @@ import { events, getShip, getState } from '/src/core/index.js';
 import { assets } from './assets.js';
 import { latestLaunchSite } from './launchSite.js';
 
+// [rocket visible, cockpit visible]. On the pad the cockpit view also shows the engine flame (1 more point light, 4 in all),
+// so that combination needs its own programs too.
+const VIEWS = [[false, true], [true, false], [true, true]];
+
 let done = new WeakSet();
 let pending = null; // the temporary warm-up objects while they sit in the site scene
 
@@ -45,9 +49,9 @@ function warm(graphics) {
   const compiles = [];
   try {
     renderer.setRenderTarget(target);
-    for (const rocketVisible of [false, true]) {
+    for (const [rocketVisible, cockpitVisible] of VIEWS) {
       rocket.visible = rocketVisible;
-      cockpit.visible = !rocketVisible;
+      cockpit.visible = cockpitVisible;
       compiles.push(renderer.compileAsync(site.scene, graphics.camera).catch(() => {}));
     }
   } finally {
@@ -73,9 +77,9 @@ function drawOnce(renderer, probe, scene, camera, rocket, cockpit) {
   const previous = renderer.getRenderTarget();
   try {
     renderer.setRenderTarget(probe);
-    for (const rocketVisible of [false, true]) {
+    for (const [rocketVisible, cockpitVisible] of VIEWS) {
       rocket.visible = rocketVisible;
-      cockpit.visible = !rocketVisible;
+      cockpit.visible = cockpitVisible;
       renderer.render(scene, camera);
     }
   } finally {

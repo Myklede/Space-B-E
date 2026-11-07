@@ -1,10 +1,11 @@
 import * as THREE from 'three';
 import { mergeVertices } from 'three/addons/utils/BufferGeometryUtils.js';
 import { bakeTexture, GLSL_NOISE, qualitySettings, sharedUniforms } from './shared.js';
-import { getTerrainHeight } from './terrain.js';
+import { CRATERS, channelDistance, craterRimAmount, duneAmount, getTerrainHeight } from './terrain.js';
 import { createMarsSky } from './sky.js';
+import { buildTier } from './groundTier.js';
 
-const WALK_AREA = 900; // half-width, in metres, of the mesh that matches getTerrainHeight closely
+const WALK_AREA = 900; // half-width, in metres, of the area where rocks are scattered (the ground itself is exact everywhere)
 const HORIZON = 11000;
 
 // Tileable ground detail: R fine grit, G pebbles, B blotches, A speckle.
@@ -43,15 +44,19 @@ void main() {
 
 let detailTexture = null;
 
-export function regolithMaterial({ rock = 0, roughness = 0.96 } = {}) {
+export function regolithMaterial({ rock = 0, roughness = 0.96, terrain = false } = {}) {
   detailTexture ??= bakeTexture({ width: 1024, height: 1024, fragment: DETAIL, wrap: THREE.RepeatWrapping });
   const material = new THREE.MeshStandardMaterial({ roughness, metalness: 0, flatShading: rock > 0 });
+  if (terrain) material.defines = { TERR: '' };
   material.onBeforeCompile = (shader) => {
     shader.uniforms.uDetail = { value: detailTexture };
     shader.uniforms.uRock = { value: rock };
     shader.vertexShader = shader.vertexShader
-      .replace('#include <common>', '#include <common>\nvarying vec3 vWPos;\nvarying float vUp;')
+      .replace('#include <common>', '#include <common>\nvarying vec3 vWPos;\nvarying float vUp;\n#ifdef TERR\nattribute vec3 aTerr;\nvarying vec3 vTerr;\n#endif')
       .replace('#include <begin_vertex>', /* glsl */ `#include <begin_vertex>
+        #ifdef TERR
+          vTerr = aTerr;
+        #endif
         vec4 wp_ = vec4(transformed, 1.);
         vec3 wn_ = objectNormal;
         #ifdef USE_INSTANCING
@@ -62,7 +67,7 @@ export function regolithMaterial({ rock = 0, roughness = 0.96 } = {}) {
         vWPos = wp_.xyz;
         vUp = normalize(mat3(modelMatrix) * wn_).y;`);
     shader.fragmentShader = shader.fragmentShader
-      .replace('#include <common>', '#include <common>\nvarying vec3 vWPos;\nvarying float vUp;\nuniform sampler2D uDetail;\nuniform float uRock;\nvec4 dA_, dB_, dC_;')
+      .replace('#include <common>', '#include <common>\n#ifdef TERR\nvarying vec3 vTerr;\n#endif\nvarying vec3 vWPos;\nvarying float vUp;\nuniform sampler2D uDetail;\nuniform float uRock;\nvec4 dA_, dB_, dC_;')
       .replace('#include <color_fragment>', /* glsl */ `#include <color_fragment>
         dA_ = texture2D(uDetail, vWPos.xz / 7.);
         dB_ = texture2D(uDetail, vWPos.xz / 53. + .37);
@@ -77,6 +82,25 @@ export function regolithMaterial({ rock = 0, roughness = 0.96 } = {}) {
         alb_ = mix(alb_, mix(vec3(.2, .125, .085), vec3(.31, .2, .135), strata_) * (.72 + .5 * dA_.b), cliff_);
         vec3 rockCol_ = mix(vec3(.12, .1, .09), vec3(.2, .145, .11), dA_.b) * (.75 + .5 * dA_.r);
         rockCol_ = mix(rockCol_, vec3(.46, .27, .15), smoothstep(.45, .95, vUp) * .55 * (.3 + dC_.b)); // dust settles on top
+        #ifdef TERR
+          // Banded cliffs: thin beds every few metres on steep faces (channel banks, mesa sides, crater walls).
+          float band_ = .5 + .5 * sin(vWPos.y * 2.2 + dB_.b * 7. + dC_.b * 12.);
+          band_ = smoothstep(.3, .7, band_ * .7 + strata_ * .3);
+          vec3 cliffCol_ = mix(vec3(.17, .105, .075), vec3(.40, .26, .165), band_) * (.72 + .5 * dA_.b);
+          alb_ = mix(alb_, cliffCol_, cliff_ * .75);
+          // Reddish-tan dust settles in hollows and low flats; dune sand is a touch darker and warmer.
+          float hollow_ = smoothstep(.1, .65, vTerr.x);
+          float ridge_ = smoothstep(.1, .65, -vTerr.x);
+          alb_ = mix(alb_, vec3(.60, .355, .215) * (.86 + .28 * dA_.r), hollow_ * .6 * (1. - cliff_));
+          alb_ = mix(alb_, vec3(.42, .25, .15) * (.82 + .34 * dA_.r), vTerr.y * .55 * (1. - cliff_));
+          // Dark basalt on crater rims, ridges and the steepest faces.
+          float basalt_ = clamp(vTerr.z * .85 + ridge_ * .3 * smoothstep(.05, .2, 1. - vUp) + smoothstep(.22, .42, 1. - vUp) * .55, 0., .88);
+          alb_ = mix(alb_, vec3(.085, .066, .058) * (.8 + .6 * dA_.b) + vec3(.03, .015, .008) * dA_.g, basalt_);
+          // Far highlands (the crater rim): grey-brown banded rock above the plain.
+          float hi_ = smoothstep(70., 330., vWPos.y);
+          vec3 hiCol_ = mix(vec3(.16, .115, .095), vec3(.30, .20, .145), band_) * (.8 + .4 * dC_.b);
+          alb_ = mix(alb_, hiCol_, hi_ * .8);
+        #endif
         diffuseColor.rgb = mix(alb_, rockCol_, uRock);`)
       .replace('#include <normal_fragment_maps>', /* glsl */ `#include <normal_fragment_maps>
         float hd_ = dA_.r * .028 + dA_.g * .045 + dB_.r * .055 * smoothstep(.42, .62, dC_.b) + dB_.b * .3 + dC_.b * 1.2;
@@ -88,62 +112,40 @@ export function regolithMaterial({ rock = 0, roughness = 0.96 } = {}) {
   return material;
 }
 
-function buildGrid(segments, position) {
-  const count = (segments + 1) * (segments + 1);
-  const vertices = new Float32Array(count * 3);
-  const indices = new Uint32Array(segments * segments * 6);
-  let v = 0, n = 0;
-  for (let j = 0; j <= segments; j++) {
-    for (let i = 0; i <= segments; i++) {
-      const [x, y, z] = position(i / segments * 2 - 1, j / segments * 2 - 1);
-      vertices[v++] = x;
-      vertices[v++] = y;
-      vertices[v++] = z;
-    }
-  }
-  for (let j = 0; j < segments; j++) {
-    for (let i = 0; i < segments; i++) {
-      const a = j * (segments + 1) + i, b = a + 1, c = a + segments + 1, d = c + 1;
-      indices.set([a, c, b, b, c, d], n);
-      n += 6;
-    }
-  }
-  const geometry = new THREE.BufferGeometry();
-  geometry.setAttribute('position', new THREE.BufferAttribute(vertices, 3));
-  geometry.setIndex(new THREE.BufferAttribute(indices, 1));
-  geometry.computeVertexNormals();
-  return geometry;
-}
+const marsCues = (x, z, hollow, out) => { out[0] = hollow; out[1] = duneAmount(x, z); out[2] = craterRimAmount(x, z); };
 
+/**
+ * The ground in three tiers: fine around the player, medium out to the delta, and a coarse ring to the horizon
+ * that carries the crater-rim mountains. All three sample getTerrainHeight, so craters, the channel and dunes you
+ * see are the ones you walk over.
+ */
 function createGround() {
-  const { terrainSegments, terrainShadows } = qualitySettings();
+  const { terrainShadows, terrainSegments } = qualitySettings();
+  const terrainScale = 512 / terrainSegments; // 1 at high quality, 2 at low: cells twice as wide
   const group = new THREE.Group();
-  const material = regolithMaterial();
+  const material = regolithMaterial({ terrain: true });
 
-  const walk = new THREE.Mesh(
-    buildGrid(terrainSegments, (u, v) => {
-      const x = u * WALK_AREA, z = v * WALK_AREA;
-      return [x, getTerrainHeight(x, z), z];
-    }),
-    material,
-  );
-  walk.receiveShadow = true;
-  walk.castShadow = terrainShadows;
-  walk.frustumCulled = false;
-
-  // Vertices bunch towards the centre; under the walk area they drop out of sight.
-  const far = new THREE.Mesh(
-    buildGrid(Math.round(terrainSegments / 2), (u, v) => {
-      const warp = (t) => Math.sign(t) * Math.pow(Math.abs(t), 2.4) * HORIZON;
-      const x = warp(u), z = warp(v);
-      const inside = Math.abs(x) < WALK_AREA - 12 && Math.abs(z) < WALK_AREA - 12;
-      return [x, getTerrainHeight(x, z) - (inside ? 6 : 0.4), z];
-    }),
-    material,
-  );
-  far.receiveShadow = true;
-  far.frustumCulled = false;
-  group.add(walk, far);
+  const nearHalf = 200, midHalf = 1200;
+  const nearCell = 1.25 * terrainScale, midCell = 5 * terrainScale;
+  const near = new THREE.Mesh(buildTier({
+    segments: Math.round(nearHalf * 2 / nearCell), cell: nearCell, skirt: 4, height: getTerrainHeight, extra: marsCues,
+    coord: (t) => t * nearHalf,
+  }), material);
+  const mid = new THREE.Mesh(buildTier({
+    segments: Math.round(midHalf * 2 / midCell), cell: midCell, hole: nearHalf, skirt: 12, height: getTerrainHeight, extra: marsCues,
+    coord: (t) => t * midHalf,
+  }), material);
+  // Vertices bunch towards the centre; the ones under the medium tier drop out of sight.
+  const farSegments = Math.round(240 / terrainScale);
+  const far = new THREE.Mesh(buildTier({
+    segments: farSegments, cell: 60, hole: midHalf, sink: 14, height: getTerrainHeight, extra: marsCues,
+    coord: (t) => Math.sign(t) * Math.pow(Math.abs(t), 2.1) * HORIZON,
+  }), material);
+  near.receiveShadow = true;
+  near.castShadow = terrainShadows;
+  mid.receiveShadow = far.receiveShadow = true;
+  for (const mesh of [near, mid, far]) mesh.frustumCulled = false;
+  group.add(near, mid, far);
   return group;
 }
 
@@ -177,25 +179,45 @@ function createRocks() {
     seed = (seed * 1664525 + 1013904223) >>> 0;
     return seed / 4294967296;
   };
+  // Every rock is { x, z, size, ... }: first the scattered ones, then the boulder fields thrown out around fresh craters.
+  const rocks = [];
+  for (let i = 0; i < total; i++) {
+    // Bias towards the camera's likely path, with a clear landing pad.
+    const r = 24 + Math.pow(rnd(), 1.5) * (WALK_AREA - 40), a = rnd() * Math.PI * 2;
+    const x = Math.cos(a) * r, z = Math.sin(a) * r;
+    if (channelDistance(x, z) < 10 && rnd() < 0.6) continue; // the channel floor is sandier
+    rocks.push({ x, z, size: 0.05 + Math.pow(rnd(), 11) * 3.2 + Math.pow(rnd(), 3) * 0.3, sink: 0.08 });
+  }
+  const lowQuality = total < 1000;
+  for (const c of CRATERS) {
+    if (!c.fresh || c.R < 6 || Math.hypot(c.x, c.z) > (lowQuality ? 450 : 800)) continue;
+    const count = Math.round((4 + Math.min(c.R, 60) * 0.6) * (lowQuality ? 0.5 : 1));
+    for (let k = 0; k < count; k++) {
+      const a = rnd() * Math.PI * 2, t = 0.95 + Math.pow(rnd(), 1.8) * 1.5; // thickest on the rim, thinning with distance
+      const x = c.x + Math.cos(a) * c.R * t, z = c.z + Math.sin(a) * c.R * t;
+      const size = (0.25 + Math.pow(rnd(), 3) * Math.min(2.4, c.R * 0.05 + 0.6)) * (1.2 - 0.3 * (t - 0.95));
+      rocks.push({ x, z, size, sink: 0.15 });
+    }
+  }
+  // Big rocks get the smoother 320-triangle mesh; small ones are fine with 80.
+  const variants = [{ seed: 0.17, detail: 2, pick: (s) => s > 0.7 }, { seed: 0.41, detail: 1, pick: (s, i) => s <= 0.7 && i % 2 === 0 }, { seed: 0.73, detail: 1, pick: (s, i) => s <= 0.7 && i % 2 === 1 }];
   const matrix = new THREE.Matrix4();
   const q = new THREE.Quaternion();
   const euler = new THREE.Euler();
-  const variants = [0.17, 0.41, 0.73];
   for (const variant of variants) {
-    const mesh = new THREE.InstancedMesh(rockGeometry(variant, 2), material, Math.floor(total / variants.length));
+    const mine = rocks.filter((rock, i) => variant.pick(rock.size, i));
+    if (!mine.length) continue;
+    const mesh = new THREE.InstancedMesh(rockGeometry(variant.seed, variant.detail), material, mine.length);
     mesh.castShadow = true;
     mesh.receiveShadow = true;
     mesh.frustumCulled = false;
-    for (let i = 0; i < mesh.count; i++) {
-      // Bias towards the camera's likely path, with a clear landing pad.
-      const r = 24 + Math.pow(rnd(), 1.5) * (WALK_AREA - 40), a = rnd() * Math.PI * 2;
-      const x = Math.cos(a) * r, z = Math.sin(a) * r;
-      const size = 0.05 + Math.pow(rnd(), 11) * 3.2 + Math.pow(rnd(), 3) * 0.3;
+    mine.forEach((rock, i) => {
+      const { x, z, size } = rock;
       euler.set(rnd() * 0.5, rnd() * 6.28, rnd() * 0.5);
       q.setFromEuler(euler);
-      matrix.compose(new THREE.Vector3(x, getTerrainHeight(x, z) + size * 0.08, z), q, new THREE.Vector3(size * (0.7 + rnd() * 0.7), size * (0.45 + rnd() * 0.6), size * (0.7 + rnd() * 0.7)));
+      matrix.compose(new THREE.Vector3(x, getTerrainHeight(x, z) + size * rock.sink, z), q, new THREE.Vector3(size * (0.7 + rnd() * 0.7), size * (0.45 + rnd() * 0.6), size * (0.7 + rnd() * 0.7)));
       mesh.setMatrixAt(i, matrix);
-    }
+    });
     group.add(mesh);
   }
   return group;

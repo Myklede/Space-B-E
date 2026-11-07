@@ -5,6 +5,7 @@ import GUI from 'lil-gui';
 import '/src/ui/theme.css';
 import { assets, cinematic, createLaunchSite, createMarsScene, createSpaceScene, getTerrainHeight, graphics } from '/src/graphics/index.js';
 import { audio } from '/src/audio/index.js';
+import { CRATERS, channelAt } from '/src/graphics/terrain.js';
 
 const params = new URLSearchParams(location.search);
 graphics.init({ container: document.getElementById('stage'), quality: params.get('q') || 'high' });
@@ -107,10 +108,11 @@ const VIEWS = {
   launch: {
     label: 'Sky at 9 km',
     build() {
-      const { scene, planet } = planetBelow('earth', EARTH_R, 9e3, [0.5, 0.55, -0.67], -90);
-      planet.userData.surface.rotation.x = 1; // away from the ice cap at the pole
+      // The real launch site at 9 km, so the ground below is the game's own (Cape Canaveral, green coast), not an
+      // arbitrary spot on the globe.
+      const scene = launchSite(9000);
       pivot();
-      look([0, 0, 0], [0, 0.1, -1]);
+      look([0, 0, 0], [0.5, -0.35, -1]);
       return scene;
     },
   },
@@ -151,6 +153,57 @@ const VIEWS = {
       wreck.position.set(430, getTerrainHeight(430, -320), -320);
       scene.add(wreck);
       walkTo(scene, [395, -290], [720, 22, -570]);
+      return scene;
+    },
+  },
+  marsair: {
+    label: 'Mars overview',
+    build() {
+      const { scene } = createMarsScene({ sunElevation: 24, sunAzimuth: 118 });
+      placeLander(scene);
+      orbit();
+      look([-300, 700, 1100], [250, 0, -250]);
+      return scene;
+    },
+  },
+  crater: {
+    label: 'Fresh crater',
+    build() {
+      const { scene } = createMarsScene({ sunElevation: 18, sunAzimuth: 118 });
+      placeLander(scene);
+      // The nearest fresh crater of 12 m radius or more: stand on the side facing the lander, look across its bowl.
+      const c = CRATERS.filter((k) => k.fresh && k.R >= 12).sort((a, b) => Math.hypot(a.x, a.z) - Math.hypot(b.x, b.z))[0];
+      const d = Math.hypot(c.x, c.z), ux = c.x / d, uz = c.z / d;
+      walkTo(scene, [c.x - ux * c.R * 1.15, c.z - uz * c.R * 1.15], [c.x, 0, c.z]);
+      return scene;
+    },
+  },
+  channel: {
+    label: 'River channel',
+    build() {
+      const { scene } = createMarsScene({ sunElevation: 20, sunAzimuth: 150 });
+      placeLander(scene);
+      const p = channelAt(0.5);
+      // On the south bank, looking up the valley.
+      walkTo(scene, [p.x - p.dz * 55, p.z + p.dx * 55], [p.x + p.dx * 200, 0, p.z + p.dz * 200]);
+      return scene;
+    },
+  },
+  padair: {
+    label: 'Launch site from above',
+    build() {
+      const scene = launchSite(0);
+      orbit();
+      look([-700, 260, 300], [300, 0, -100]);
+      return scene;
+    },
+  },
+  padtrees: {
+    label: 'Launch site, trees',
+    build() {
+      const scene = launchSite(0);
+      pivot();
+      look([60, 3, 380], [-200, 25, 900]);
       return scene;
     },
   },
@@ -327,7 +380,20 @@ const VIEWS = {
       const { scene } = createMarsScene({ sunElevation: 30, sunAzimuth: 120 });
       const rover = spawnRover(scene, 10, 8);
       pivot();
-      look([10 - 0.32, rover.position.y + 1.48, 8 + 0.22], [10 - 0.32, rover.position.y + 1.2, 8 - 10]);
+      look([10 - 0.32, rover.position.y + 1.45, 8 - 0.45], [10 - 0.32, rover.position.y + 1.2, 8 - 10]);
+      return scene;
+    },
+  },
+  roverLrv: {
+    label: 'Rover: Apollo LRV',
+    build() {
+      const { scene } = createMarsScene({ sunElevation: 30, sunAzimuth: 120 });
+      const rover = spawnRover(scene, 10, 8, 'rover:lrv');
+      const g = rover.position.y;
+      orbit();
+      controls.autoRotate = true;
+      controls.autoRotateSpeed = 1.5;
+      look([15.5, g + 2.2, 13.5], [10, g + 0.6, 8]);
       return scene;
     },
   },
@@ -353,8 +419,8 @@ const VIEWS = {
 };
 
 // The rover on Mars ground; wheels steer left and right and spin so both pivots can be checked by eye.
-function spawnRover(scene, x, z) {
-  const rover = assets.get('rover');
+function spawnRover(scene, x, z, name = 'rover') {
+  const rover = assets.get(name);
   rover.position.set(x, getTerrainHeight(x, z), z);
   scene.add(rover);
   roverItems.push(rover);
@@ -363,7 +429,7 @@ function spawnRover(scene, x, z) {
   ticks.push((dt) => {
     t += dt;
     spin -= dt * 3;
-    const steer = Math.sin(t * 0.7) * 0.5;
+    const steer = Math.sin(t * 0.7) * 0.354; // Role 2's full lock: atan(2.29 / (2 × 3.1)) ≈ 20.3°
     wheels.forEach((w, i) => { w.rotation.y = i < 2 ? steer : -steer; w.children[0].rotation.x = spin; });
   });
   return rover;
@@ -380,18 +446,56 @@ let walking = null;
 function walkTo(scene, [x, z], lookAt) {
   pivot();
   camera.position.set(x, getTerrainHeight(x, z) + 1.7, z);
-  controls.target.set(...lookAt);
+  // Look around in place: OrbitControls turns the camera around its target, so the target sits 5 cm in front of the
+  // eye. A far target made a drag swing the camera along a circle of that radius (about 150 m).
+  const ahead = new THREE.Vector3(...lookAt).sub(camera.position).normalize().multiplyScalar(0.05);
+  controls.target.copy(camera.position).add(ahead);
+  controls.minPolarAngle = 0.15;
+  controls.maxPolarAngle = Math.PI - 0.15;
   controls.update();
   walking = scene;
+  flying = false;
+  updateFlyHint();
 }
 
 const keys = new Set();
-addEventListener('keydown', (e) => keys.add(e.code));
+// Walking views: F switches between walking on the ground and flying freely (WASD along the view, Space up, C down,
+// Shift fast, the mouse wheel changes the flying speed). Flying never goes below the ground.
+let flying = false, flySpeed = 40;
+const flyHint = document.createElement('div');
+flyHint.style.cssText = 'position:fixed;left:12px;bottom:34px;font:12px "IBM Plex Mono",monospace;color:#9fe8f2;background:#071419bb;padding:6px 9px;border:1px solid #72e6e033;pointer-events:none;z-index:5';
+document.body.append(flyHint);
+function updateFlyHint() {
+  flyHint.hidden = !walking;
+  flyHint.textContent = flying
+    ? `FLYING ${flySpeed} m/s · WASD move · Space up · C down · Shift ×5 · wheel speed · F walk`
+    : 'WALKING · drag to look · WASD move · Shift run · F fly';
+}
+addEventListener('keydown', (e) => {
+  keys.add(e.code);
+  if (e.code === 'KeyF' && walking) {
+    flying = !flying;
+    if (!flying) snapToGround();
+    updateFlyHint();
+  }
+  if (e.code === 'Space' && walking) e.preventDefault();
+});
 addEventListener('keyup', (e) => keys.delete(e.code));
+addEventListener('wheel', (e) => {
+  if (!walking || !flying) return;
+  flySpeed = Math.round(Math.min(2000, Math.max(5, flySpeed * (e.deltaY > 0 ? 0.8 : 1.25))));
+  updateFlyHint();
+}, { passive: true });
+function snapToGround() {
+  const before = camera.position.clone();
+  camera.position.y = getTerrainHeight(camera.position.x, camera.position.z) + 1.7;
+  controls.target.add(camera.position.clone().sub(before));
+}
 const forward = new THREE.Vector3(), side = new THREE.Vector3(), step = new THREE.Vector3();
 
 function walk(dt) {
   if (!walking) return;
+  if (flying) return fly(dt);
   camera.getWorldDirection(forward).setY(0).normalize();
   side.crossVectors(forward, camera.up);
   step.set(0, 0, 0);
@@ -407,12 +511,34 @@ function walk(dt) {
   controls.target.add(camera.position.clone().sub(before));
 }
 
+function fly(dt) {
+  camera.getWorldDirection(forward);
+  side.crossVectors(forward, camera.up).normalize();
+  step.set(0, 0, 0);
+  if (keys.has('KeyW')) step.add(forward);
+  if (keys.has('KeyS')) step.sub(forward);
+  if (keys.has('KeyD')) step.add(side);
+  if (keys.has('KeyA')) step.sub(side);
+  if (keys.has('Space')) step.y += 1;
+  if (keys.has('KeyC')) step.y -= 1;
+  if (step.lengthSq() === 0) return;
+  step.normalize().multiplyScalar(flySpeed * (keys.has('ShiftLeft') ? 5 : 1) * dt);
+  const before = camera.position.clone();
+  camera.position.add(step);
+  camera.position.y = Math.max(camera.position.y, getTerrainHeight(camera.position.x, camera.position.z) + 1.7);
+  controls.target.add(camera.position.clone().sub(before));
+}
+
 const nav = document.getElementById('views');
 const hudSample = document.getElementById('hudSample');
 const buttons = {};
 
 function show(name) {
   walking = null;
+  flying = false;
+  flyHint.hidden = true;
+  controls.minPolarAngle = 0;
+  controls.maxPolarAngle = Math.PI;
   site = null;
   vfx.length = 0;
   propItems.length = 0;
