@@ -29,7 +29,10 @@ export function createSections(sectionFiles) {
     const s = sectionFiles[id]?.section ?? {};
     out[id] = {
       id, name: s.name ?? id, short: s.short ?? s.name ?? id, blurb: s.blurb ?? '', order: SECTION_IDS.indexOf(id),
-      shapes: (s.shapes ?? []).map((sh) => ({ stack: [], radial: [], pros: [], cons: [], ...sh })),
+      shapes: (s.shapes ?? []).map((sh) => {
+        const items = (sh.stack ?? []).map((it) => (typeof it === 'string' ? { type: it } : { ...it }));
+        return { radial: [], pros: [], cons: [], ...sh, stack: items.map((it) => it.type), stackItems: items };
+      }),
       rows: (s.rows ?? []).map((r) => ({ mode: 'radial', pick: {}, ...r })),
       ...(id === 'pad' ? { sites: s.sites ?? [], equipment: s.equipment ?? [] } : {}),
     };
@@ -184,9 +187,10 @@ export function applyShape(assembly, section, shape) {
   // engines burn what the tanks hold: a technician would set the chamber to match
   const bodyFuel = section.id === 'body' ? mainFuelOf(catalog, shape.stack.map((type) => ({ type }))) : mainFuelOf(catalog, by.body);
   const tailEngines = section.id === 'body' ? by.tail.filter((p) => catalog.get(p.type)?.engine && p.engine && bodyFuel && p.engine.fuel !== bodyFuel) : [];
-  by[section.id] = shape.stack.map((type) => {
+  by[section.id] = shape.stack.map((type, i) => {
     const def = catalog.get(type);
-    const it = { type, origin: section.id };
+    const extra = shape.stackItems?.[i] ?? {};
+    const it = { type, origin: section.id, ...(extra.options ? { options: { ...extra.options } } : {}), ...(extra.material ? { material: extra.material } : {}) };
     if (def?.engine && oldEngine?.engine) it.engine = { fuel: oldEngine.engine.fuel, nozzle: oldEngine.engine.nozzle };
     if (def?.engine && shape.engine) it.engine = { fuel: shape.engine.fuel ?? it.engine?.fuel ?? 'methalox', nozzle: shape.engine.nozzle ?? it.engine?.nozzle ?? 'sl' };
     if (def?.engine && bodyFuel) it.engine = { nozzle: 'sl', ...(it.engine ?? {}), fuel: bodyFuel };

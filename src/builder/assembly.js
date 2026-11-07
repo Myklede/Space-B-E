@@ -510,6 +510,8 @@ export class Assembly {
       const m = host?.def.mounts;
       if (m && (m.count ?? 1) > 1) e.cluster = { count: m.count, layout: m.layout ?? [], scale: m.scale ?? 0.4, hostRadius: host.radius };
     }
+    const stack = out.filter((e) => e.attach === 'axial').sort((a, b) => b.y - a.y);
+    stack.forEach((e, i) => { e.above = stack[i - 1]?.type ?? null; e.below = stack[i + 1]?.type ?? null; });
     let min = Infinity;
     for (const e of out) if (e.attach === 'axial') min = Math.min(min, e.y);
     if (!Number.isFinite(min)) min = 0;

@@ -173,7 +173,7 @@ export function createDesignScene() {
 
   // ----- vehicle -----
   function setLayout(layout) {
-    const keyNow = layout.map((e) => `${e.id}:${e.type}:${e.angle}:${e.yFrac}:${e.y.toFixed(2)}:${e.material ?? ''}:${JSON.stringify(e.options ?? null)}:${e.cluster?.count ?? 1}:${e.engine ? `${e.engine.fuel}-${e.engine.nozzle}` : ''}`).join('|');
+    const keyNow = layout.map((e) => `${e.id}:${e.type}:${e.angle}:${e.yFrac}:${e.y.toFixed(2)}:${e.material ?? ''}:${JSON.stringify(e.options ?? null)}:${e.cluster?.count ?? 1}:${e.engine ? `${e.engine.fuel}-${e.engine.nozzle}` : ''}:${e.above ?? ''}:${e.below ?? ''}`).join('|');
     layoutCache = layout;
     stackHeight = 0; stackRadius = 1.25;
     for (const e of layout) if (e.attach === 'axial') { stackHeight = Math.max(stackHeight, e.y + e.height); stackRadius = Math.max(stackRadius, e.radius); }
@@ -252,7 +252,7 @@ export function createDesignScene() {
       if (id === selected) setLook(p.holder, { opacity: exploded ? Math.max(0.08, 1 - explode * 1.15) : 1, emissive: exploded ? null : SELECTED, emissiveIntensity: 0.5 });
       else if (exploded) setLook(p.holder, { opacity: 0.15 });
       else if (padActive) setLook(p.holder, { opacity: 0.55 });
-      else setLook(p.holder, { opacity: inSection ? 1 : 0.22, emissive: inSection && activeSection && !selected ? SECTION_GLOW : null, emissiveIntensity: 0.06 });
+      else setLook(p.holder, { opacity: inSection ? 1 : 0.22 });
     }
     if (padObject) {
       cloneMaterials(padObject);
