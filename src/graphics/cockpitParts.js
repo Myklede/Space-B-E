@@ -265,7 +265,7 @@ function grilleTexture() {
 
 /**
  * @param {object} d  { pbr, glow, matte, trim, panel, shell, low }
- * @returns {{ group: THREE.Group, blinkers: THREE.Mesh[], bind: (root: THREE.Object3D) => { setControls: Function, update: Function } }}
+ * @returns {{ group: THREE.Group, blinkers: THREE.Mesh[], bind: (root: THREE.Object3D) => { setControls: Function, setButton: Function, press: Function, update: Function } }}
  */
 export function buildCockpitInterior({ pbr, glow, matte, trim, panel, shell, low = false }) {
   const group = new THREE.Group();
@@ -495,6 +495,7 @@ export function buildCockpitInterior({ pbr, glow, matte, trim, panel, shell, low
     for (let r = 0; r < rows; r++) {
       for (let i = 0; i < 6; i++) {
         const x = cx + s * (0.2 - r * 0.2), zz = -0.45 + (i - 2.5) * 0.17, up = (i + r) % 2;
+        if (r === 1 && i === 3) continue; // the flight-switch pads sit here (z -0.42..-0.25)
         rb(0.026, 0.012, 0.026, dark, x, -0.86, zz, 0.004);
         cyl(0.0035, 0.0035, 0.034, metal, x, -0.845, zz, up ? 0.45 : -0.45, 0, 0, 6);
         lampAt([lamp.cyan, lamp.green, lamp.amber, lamp.cyan, lamp.off, lamp.red][(i * 2 + r + side) % 6], x, -0.858, zz + 0.04);
@@ -663,19 +664,36 @@ export function buildCockpitInterior({ pbr, glow, matte, trim, panel, shell, low
   const lampT = (mat, lx, ly, lz) => put(lampBox.clone(), mat, ...dashPos(lx, ly, lz), T);
   rbT(1.84, 0.1, 0.05, dark, 0, -0.3, 0.0, 0.015); // ledge
   rbT(1.78, 0.012, 0.052, trim, 0, -0.35, 0.0, 0.004);
-  const caps = [red, yellow, metal, yellow, metal, red, metal, yellow, metal, metal, red, metal, yellow, metal];
-  const btnNames = ['O2', 'CABIN', 'FIRE', 'DUMP', 'RCS A', 'RCS B', 'MAIN', 'APU', 'PWR', 'COMMS', 'HATCH', 'DOCK', 'PARA', 'ENTRY'];
+  // Each button is its own small group named `btn:<id>` (cap + lamp), so cockpit.userData.setButton/press can drive it per instance.
+  // Left to right (8, then 7 after the emergency handle in the middle). The last field is the lamp colour it shows until setButton is called.
+  const BUTTONS = [
+    ['fire', 'FIRE', metal, 'green'], ['dump', 'DUMP', yellow, 'cyan'], ['rcs-a', 'RCS A', metal, 'amber'], ['rcs-b', 'RCS B', red, 'green'],
+    ['main', 'MAIN', metal, 'cyan'], ['apu', 'APU', yellow, 'off'], ['pwr', 'PWR', metal, 'green'], ['comms', 'COMMS', metal, 'cyan'],
+    ['hatch', 'HATCH', red, 'off'], ['cabin', 'CABIN', yellow, 'off'], ['o2', 'O2', red, 'off'], ['arm', 'ARM ENG', red, 'off'],
+    ['dock', 'DOCK', metal, 'green'], ['para', 'PARA', yellow, 'cyan'], ['entry', 'ENTRY', metal, 'amber'],
+  ];
   const labelItems = [];
-  let bi = 0;
-  for (let i = 0; i < 16; i++) {
-    const lx = -0.78 + i * 0.104;
-    if (Math.abs(lx) < 0.11) continue;
-    rbT(0.05, 0.03, 0.022, dark, lx, -0.305, 0.034, 0.006); // guard base
-    rbT(0.036, 0.02, 0.02, caps[bi % caps.length], lx, -0.305, 0.05, 0.007); // button cap
-    lampT([lamp.green, lamp.cyan, lamp.amber, lamp.green, lamp.cyan, lamp.off, lamp.green][bi % 7], lx, -0.272, 0.027);
-    labelItems.push({ t: btnNames[bi % btnNames.length], x: ((lx + 0.87) / 1.74) * 1280, y: 24, s: 17 });
-    bi++;
-  }
+  const capGeo = new RoundedBoxGeometry(0.036, 0.02, 0.02, 1, 0.007);
+  BUTTONS.forEach((def, i) => {
+    const [id, label, capMat, initial] = def;
+    const cx = i < 8 ? -(0.13 + (7 - i) * 0.098) : 0.13 + (i - 8) * 0.098; // 8 left and 7 right of the centre handle
+    rbT(0.05, 0.03, 0.022, dark, cx, -0.305, 0.034, 0.006); // guard base
+    const btn = new THREE.Group();
+    btn.name = `btn:${id}`;
+    btn.userData.initial = initial;
+    btn.position.set(...dashPos(cx, -0.305, 0));
+    btn.rotation.x = T;
+    const cap = new THREE.Mesh(capGeo, capMat);
+    cap.name = 'btnCap';
+    cap.position.set(0, 0, 0.05);
+    const light = new THREE.Mesh(lampBox, lamp[initial] ?? lamp.off); // shared material until bind() gives this instance its own
+    light.name = 'btnLamp';
+    light.position.set(0, 0.033, 0.027);
+    light.scale.set(1.5, 1.5, 1.5);
+    btn.add(cap, light);
+    group.add(btn);
+    labelItems.push({ t: label, x: ((cx + 0.87) / 1.74) * 1280, y: 24, s: label.length > 6 ? 13 : 17 });
+  });
   labelItems.push({ t: 'EMERGENCY', x: 640, y: 24, s: 15, c: '#e8b400' });
   const labelStrip = new THREE.Mesh(new THREE.PlaneGeometry(1.74, 0.0475), labelMaterial(1280, 48, labelItems, '#9fb4c7', '#06090c'));
   labelStrip.position.set(...dashPos(0, -0.34, 0.0262));
@@ -818,6 +836,73 @@ export function buildCockpitInterior({ pbr, glow, matte, trim, panel, shell, low
     t.name = 'tick';
     group.add(t);
   }
+
+  // ---- flight switches within reach of the hands (X engine cut-off, Space retro brake, F flight assist).
+  // Left pad beside the throttle: a guarded red CUT-OFF toggle and an amber RETRO push button. Right pad beside the stick: a cyan ASSIST push button.
+  // The parts named cutoffGuard, cutoffSwitch, retroButton and assistButton move in bind() (setControls); cutoffLamp, retroCap and assistCap light up.
+  const padGeo = new RoundedBoxGeometry(0.24, 0.02, 0.17, 2, 0.008);
+  const posGeo = new THREE.BoxGeometry(0.008, 0.06, 0.008);
+  const guardGeo = new RoundedBoxGeometry(0.05, 0.005, 0.058, 1, 0.002);
+  const leverGeo = new THREE.CylinderGeometry(0.004, 0.005, 0.022, 8);
+  const knobGeo = new THREE.SphereGeometry(0.0085, 10, 8);
+  const ringGeo = new THREE.CylinderGeometry(0.022, 0.024, 0.006, 20);
+  const baseGeo = new THREE.CylinderGeometry(0.017, 0.019, 0.01, 16);
+  const pushGeo = new THREE.CylinderGeometry(0.0165, 0.0165, 0.012, 20);
+  const dimLamp = new THREE.MeshBasicMaterial({ color: 0x2a0f0e });
+  const makePad = (x, labelItemsPad, w, labelZ = 0.058) => {
+    const pad = new THREE.Group();
+    pad.position.set(x, -0.835, -0.335);
+    pad.rotation.x = 0.18; // tilts the panel up towards the pilot; the block below fills the gap to the console
+    pad.add(new THREE.Mesh(padGeo, dark));
+    const under = new THREE.Mesh(new THREE.BoxGeometry(w - 0.02, 0.05, 0.15), dark);
+    under.position.y = -0.03;
+    pad.add(under);
+    pad.children[0].scale.x = w / 0.24;
+    const label = new THREE.Mesh(new THREE.PlaneGeometry(w - 0.02, 0.034), labelMaterial(Math.round(w * 2000), 68, labelItemsPad));
+    label.rotation.x = -Math.PI / 2;
+    label.position.set(0, 0.0115, labelZ);
+    pad.add(label);
+    return pad;
+  };
+  const pushButton = (pad, name, x, mat, z = -0.012) => { // ring + moving cap (the cap's own material is replaced per instance in bind())
+    const ring = new THREE.Mesh(ringGeo, metal);
+    ring.position.set(x, 0.008, z);
+    const holder = new THREE.Group();
+    holder.name = name;
+    holder.position.set(x, 0.019, z);
+    const cap = new THREE.Mesh(pushGeo, mat);
+    cap.name = name.replace('Button', 'Cap');
+    holder.add(cap);
+    pad.add(ring, holder);
+  };
+  const leftPad = makePad(-0.55, [{ t: 'CUT-OFF  X', x: 87, y: 34, s: 22, c: '#f87171' }, { t: 'RETRO  SPACE', x: 371, y: 34, s: 22, c: '#fbbf24' }], 0.24);
+  const hingeZ = -0.045;
+  const tx = -0.07; // toggle x on the pad
+  const toggleBase = new THREE.Mesh(baseGeo, metal);
+  toggleBase.position.set(tx, 0.01, -0.012);
+  const hinge = new THREE.Group(); // the guard flips up and forward about its front edge
+  hinge.name = 'cutoffGuard';
+  hinge.position.set(tx, 0.056, hingeZ);
+  const guardPlate = new THREE.Mesh(guardGeo, red);
+  guardPlate.position.set(0, 0, 0.029);
+  hinge.add(guardPlate);
+  [-1, 1].forEach((sg) => { const post = new THREE.Mesh(posGeo, metal); post.position.set(tx + sg * 0.029, 0.03, hingeZ); leftPad.add(post); });
+  const lever = new THREE.Group(); // toggle lever, pivot on the base
+  lever.name = 'cutoffSwitch';
+  lever.position.set(tx, 0.017, -0.012);
+  const stem = new THREE.Mesh(leverGeo, metal); stem.position.y = 0.011;
+  const knob = new THREE.Mesh(knobGeo, red); knob.position.y = 0.025;
+  lever.add(stem, knob);
+  const cutLamp = new THREE.Mesh(lampBox, dimLamp);
+  cutLamp.name = 'cutoffLamp';
+  cutLamp.scale.set(1.6, 1.6, 1.6);
+  cutLamp.position.set(tx, 0.0115, 0.03);
+  leftPad.add(toggleBase, lever, hinge, cutLamp);
+  pushButton(leftPad, 'retroButton', 0.06, dimLamp);
+  group.add(leftPad);
+  const rightPad = makePad(0.57, [{ t: 'ASSIST  F', x: 240, y: 34, s: 22, c: '#67e8f9' }], 0.24, 0.03); // the button sits at the front edge: the gloved hand covers the near part of this pad
+  pushButton(rightPad, 'assistButton', 0, dimLamp, -0.05);
+  group.add(rightPad);
   // a few slowly blinking lamps
   [[0.39, -0.862, -0.9], [0.39, -0.862, -0.6], [-0.39, -0.862, -0.75]].forEach(([x, y, z], i) => {
     const m = new THREE.Mesh(lampBox, [lamp.amber, lamp.green, lamp.red][i].clone());
@@ -835,6 +920,63 @@ export function buildCockpitInterior({ pbr, glow, matte, trim, panel, shell, low
     const target = { pitch: 0, yaw: 0, throttle: 0 }, cur = { pitch: 0, yaw: 0, throttle: 0 };
     const clampTo = (x, lo, hi) => (Number.isFinite(x) ? Math.min(hi, Math.max(lo, x)) : lo);
     let lit = -1;
+
+    // Flight switches. Materials are per instance (they change colour), geometry stays shared.
+    const guard = root.getObjectByName('cutoffGuard'), toggle = root.getObjectByName('cutoffSwitch');
+    const retro = root.getObjectByName('retroButton'), assist = root.getObjectByName('assistButton');
+    const cutLampMesh = root.getObjectByName('cutoffLamp');
+    const glowMat = (hex, k) => new THREE.MeshBasicMaterial({ color: new THREE.Color(hex).multiplyScalar(k) });
+    const own = {
+      cut: [glowMat('#f87171', 0.16), glowMat('#f87171', 1.5)],
+      retro: [glowMat('#fbbf24', 0.3), glowMat('#fbbf24', 1.3)], // big caps: a small factor, or they wash out to white
+      assist: [glowMat('#22d3ee', 0.3), glowMat('#22d3ee', 1.3)],
+    };
+    if (cutLampMesh) cutLampMesh.material = own.cut[0];
+    if (retro) retro.children[0].material = own.retro[0];
+    if (assist) assist.children[0].material = own.assist[0];
+    const sw = { cutoff: false, brake: false, assist: false }; // requested
+    const pos = { guard: 0, toggle: 0, retro: 0, assist: 0 }; // 0..1 animation positions
+    const PUSH_DEPTH = 0.008, GUARD_OPEN = -1.9, TOGGLE_FLIP = 0.55;
+    const shown = { cut: false, retro: false, assist: false };
+    function applySwitches(dt) {
+      // the guard lifts first and the toggle flips after; on release the toggle goes back before the guard closes
+      const guardGoal = sw.cutoff || pos.toggle > 0.15 ? 1 : 0;
+      const toggleGoal = sw.cutoff && pos.guard > 0.7 ? 1 : 0;
+      const kG = 1 - Math.exp(-14 * dt), kT = 1 - Math.exp(-22 * dt), kP = 1 - Math.exp(-30 * dt);
+      pos.guard += (guardGoal - pos.guard) * kG;
+      pos.toggle += (toggleGoal - pos.toggle) * kT;
+      pos.retro += ((sw.brake ? 1 : 0) - pos.retro) * kP;
+      pos.assist += ((sw.assist ? 1 : 0) - pos.assist) * kP;
+      if (guard) guard.rotation.x = pos.guard * GUARD_OPEN;
+      if (toggle) toggle.rotation.x = (pos.toggle * 2 - 1) * TOGGLE_FLIP; // forward = RUN, back towards the pilot = CUT-OFF
+      if (retro) retro.position.y = 0.019 - pos.retro * PUSH_DEPTH;
+      if (assist) assist.position.y = 0.019 - pos.assist * PUSH_DEPTH;
+      const cutOn = pos.toggle > 0.5;
+      if (cutOn !== shown.cut && cutLampMesh) { shown.cut = cutOn; cutLampMesh.material = own.cut[+cutOn]; }
+      if (sw.brake !== shown.retro && retro) { shown.retro = sw.brake; retro.children[0].material = own.retro[+sw.brake]; }
+      if (sw.assist !== shown.assist && assist) { shown.assist = sw.assist; assist.children[0].material = own.assist[+sw.assist]; }
+    }
+
+    // Phase 0 buttons: lamp colour (emissive only) and a short press-in animation.
+    const LAMP = { off: '#1b2630', amber: '#fbbf24', green: '#34d399', red: '#f87171', cyan: '#22d3ee' };
+    const LAMP_POWER = { off: 1, amber: 1.2, green: 1.1, red: 1.3, cyan: 1.2 };
+    const buttons = new Map();
+    root.traverse((o) => {
+      if (!o.name.startsWith('btn:')) return;
+      const lampMesh = o.getObjectByName('btnLamp'), cap = o.getObjectByName('btnCap');
+      if (!lampMesh || !cap) return;
+      lampMesh.material = new THREE.MeshBasicMaterial({ color: 0xffffff });
+      const b = { id: o.name.slice(4), cap, lampMesh, state: null, pressT: -1, capZ: cap.position.z };
+      buttons.set(b.id, b);
+      setLamp(b, o.userData.initial ?? 'off');
+    });
+    function setLamp(b, state) {
+      if (!LAMP[state]) return;
+      b.state = state;
+      b.lampMesh.material.color.set(LAMP[state]).multiplyScalar(LAMP_POWER[state]);
+    }
+    const find = (id) => buttons.get(String(id ?? '').toLowerCase().replace(/^btn:/, ''));
+
     function apply() {
       stick.rotation.set(cur.pitch * 0.26, cur.yaw * 0.2, -cur.yaw * 0.1); // pitch about X, yaw as a small twist and side tilt
       lever.rotation.set(0.55 - cur.throttle * 1.1, 0, 0); // idle back toward the pilot, full forward
@@ -845,11 +987,30 @@ export function buildCockpitInterior({ pbr, glow, matte, trim, panel, shell, low
       }
     }
     apply();
+    applySwitches(1);
     return {
-      setControls({ pitch, yaw, throttle } = {}) {
+      // Stable API: every cockpit redesign must keep these arguments. Omitted keys keep their last value.
+      setControls({ pitch, yaw, throttle, cutoff, brake, assist: assistOn } = {}) {
         if (pitch !== undefined) target.pitch = clampTo(pitch, -1, 1);
         if (yaw !== undefined) target.yaw = clampTo(yaw, -1, 1);
         if (throttle !== undefined) target.throttle = clampTo(throttle, 0, 1);
+        if (cutoff !== undefined) sw.cutoff = !!cutoff;
+        if (brake !== undefined) sw.brake = !!brake;
+        if (assistOn !== undefined) sw.assist = !!assistOn;
+      },
+      /** state: 'off' | 'amber' | 'green' | 'red'. Ids work with or without the `btn:` prefix. Returns false for an unknown id or state. */
+      setButton(id, state) {
+        const b = find(id);
+        if (!b || !LAMP[state]) return false;
+        setLamp(b, state);
+        return true;
+      },
+      /** A short press-in and out (about 0.15 s each way). */
+      press(id) {
+        const b = find(id);
+        if (!b) return false;
+        b.pressT = 0;
+        return true;
       },
       update(dt) {
         const k = 1 - Math.exp(-12 * Math.min(dt, 0.1));
@@ -857,6 +1018,15 @@ export function buildCockpitInterior({ pbr, glow, matte, trim, panel, shell, low
         cur.yaw += (target.yaw - cur.yaw) * k;
         cur.throttle += (target.throttle - cur.throttle) * k;
         apply();
+        applySwitches(Math.min(dt, 0.1));
+        for (const b of buttons.values()) {
+          if (b.pressT < 0) continue;
+          b.pressT += dt;
+          const u = b.pressT / 0.15;
+          const depth = u >= 2 ? 0 : u < 1 ? u : 2 - u;
+          if (u >= 2) b.pressT = -1;
+          b.cap.position.z = b.capZ - 0.011 * depth;
+        }
       },
     };
   }
