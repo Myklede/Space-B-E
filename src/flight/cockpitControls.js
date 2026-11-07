@@ -30,3 +30,10 @@ export function createCockpitControls({ input, onToggleAssist, onStandUp, isLand
     dispose() { offs.forEach((off) => off?.()); },
   };
 }
+
+// Cockpit stick/lever values for Role 3's cockpit.userData.setControls: pitch/yaw -1..1 (W = nose down = -1, D = +1), throttle 0..1.
+export function cockpitStickValues(input, throttle) {
+  const n = (v) => (Number.isFinite(v) ? Math.max(-1, Math.min(1, v)) : 0);
+  const th = Number.isFinite(throttle) ? Math.max(0, Math.min(1, throttle)) : 0;
+  return { pitch: n(input?.pitch), yaw: n(input?.yaw), throttle: th };
+}

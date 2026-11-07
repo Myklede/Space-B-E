@@ -93,7 +93,7 @@ test('cabin: airlock needs the suit, cycles for 3 s, then onExit; seat calls onS
   const ia = createInteractables();
   const o2 = createOxygen({ bus, spareTanks: 2 });
   let exits = 0, seats = 0;
-  const cabin = createShipInterior({ bus, interactables: ia, oxygen: o2, onExit: () => exits++, onSeat: () => seats++ });
+  const cabin = createShipInterior({ bus, interactables: ia, oxygen: o2, prebreatheSeconds: 0, onExit: () => exits++, onSeat: () => seats++ });
   const lookAt = (pos) => {
     const eye = { x: pos.x * 0.6, y: pos.y, z: Math.abs(pos.x) > 1 ? pos.z : pos.z - Math.sign(pos.z) * 0.8 };
     const d = { x: pos.x - eye.x, y: 0, z: pos.z - eye.z };

@@ -1,8 +1,11 @@
 import * as THREE from 'three';
 import { createPlanet, loadPlanetMaps } from './planets.js';
 import { createSpaceSky } from './sky.js';
-import { createCabin, createCockpit, interiorEnvironment, pbr } from './interiors.js';
+import { createCockpit, interiorEnvironment, pbr } from './interiors.js';
+import { createCabin } from './cabin.js';
 import { PROPS } from './props.js';
+import { createRover, loadRoverModel } from './rover.js';
+import { createLunarRover, loadLunarRoverModel } from './roverLrv.js';
 import { createEngineFlame, createEntryPlasma, createExhaust, createLandingDust } from './vfx.js';
 
 const factories = new Map();
@@ -255,6 +258,106 @@ const PARTS = {
   },
 };
 
+// Side-mounted equipment with no dedicated art above: antennas, chutes, RCS, solar wings and the generic gear.
+// Local frame: origin at the attachment point, +x outward, y up from the part's base; nothing goes below y = 0 or x < 0.
+const EQUIP_HEIGHT = {
+  rcs_pack: 0.6, gimbal_ring: 0.5, parachute: 0.7, o2_bottle: 0.9, co2_scrubber: 0.6, radiation_shelter: 1.2, solar_panel: 1.4,
+  battery: 0.5, antenna_low: 0.8, antenna_high: 1, antenna_s: 0.8, armor_plate: 1, spectrometer: 0.5, ground_radar: 0.6,
+  drill: 1, reaction_wheel: 0.5, radiator: 1.2, water_recycler: 0.7, splash_floats: 0.6, sample_container: 0.6, seals_cheap: 0.3,
+};
+const EQUIP_MATCHERS = [[/antenna|dish/, 'antenna'], [/parachute|chute/, 'parachute'], [/rcs|thruster/, 'rcs'], [/solar|panel/, 'solar']];
+// Family tints, so a glance tells life support (blue) from power (amber), science (teal), thermal, protection.
+const TINT = { life: 0x6f93b8, power: 0xc98a2e, science: 0x4fa6a0, thermal: 0xb9bfc5, protection: 0x5a5f66, control: 0x7d848c, recovery: 0xd9702b, comms: 0xd8d6cf, generic: 0x9aa0a6 };
+
+function equipment(key, kind) {
+  const h = EQUIP_HEIGHT[key] ?? 0.7;
+  const g = new THREE.Group();
+  const tint = (family) => cached(`equip:${family}`, () => pbr(TINT[family], 0.5, 0.55));
+  const add = (geometry, material, x, y, z = 0, rx = 0, rz = 0) => {
+    const m = new THREE.Mesh(geometry, material);
+    m.position.set(x, y, z);
+    m.rotation.set(rx, 0, rz);
+    g.add(m);
+    return m;
+  };
+  const box = (w, hh, d, material, x, y, z = 0) => add(new THREE.BoxGeometry(w, hh, d), material, x, y, z);
+  const cyl = (r, hh, material, x, y, z = 0, seg = 18) => add(new THREE.CylinderGeometry(r, r, hh, seg), material, x, y, z);
+  const mount = (w = 0.3) => box(0.06, Math.min(h, 0.5), w, steelMat(), 0.03, Math.min(h, 0.5) / 2); // saddle on the hull
+  let family = 'generic', depth = 0.4;
+  if (kind === 'antenna') {
+    const high = /high/.test(key);
+    family = 'comms';
+    box(0.2, 0.05, 0.2, steelMat(), 0.1, 0.025);
+    cyl(0.025, h * 0.85, steelMat(), 0.12, h * 0.425, 0, 8);
+    if (high) { // dish on a short boom, tilted up and outward
+      const dishR = 0.34;
+      const dish = lathe([[0, 0], [dishR * 0.5, 0.03], [dishR, 0.12], [dishR * 0.98, 0.125], [dishR * 0.48, 0.045], [0, 0.012]], tint('comms'), 28);
+      dish.material = cached('dishMat', () => pbr(0xe4e2dc, 0.4, 0.4, { side: THREE.DoubleSide }));
+      dish.rotation.z = -0.9;
+      dish.position.set(0.3, h * 0.85, 0);
+      g.add(dish);
+      const feed = cyl(0.012, 0.22, steelMat(), 0.3 + 0.1, h * 0.85 + 0.12, 0, 6);
+      feed.rotation.z = -0.9;
+      depth = 0.7;
+    } else { // low gain: whip with a small ball and a disc
+      add(new THREE.SphereGeometry(0.05, 12, 8), tint('comms'), 0.12, h * 0.88);
+      cyl(0.1, 0.02, tint('comms'), 0.12, h * 0.55, 0, 16);
+      depth = 0.25;
+    }
+  } else if (kind === 'parachute') {
+    family = 'recovery'; depth = 0.5;
+    mount(0.2);
+    cyl(0.21, h * 0.78, tint('recovery'), 0.27, h * 0.39, 0, 24);
+    cyl(0.215, 0.05, cached('stripe', () => pbr(0xf2efe6, 0.5, 0.1)), 0.27, h * 0.5, 0, 24);
+    const cap = add(new THREE.SphereGeometry(0.21, 20, 10, 0, Math.PI * 2, 0, Math.PI / 2), steelMat(), 0.27, h * 0.78);
+    cap.scale.y = 0.55;
+    cyl(0.04, 0.05, darkMat(), 0.27, h * 0.78 + 0.1, 0, 10);
+  } else if (kind === 'rcs') {
+    family = 'control'; depth = 0.42;
+    mount(0.34);
+    box(0.34, h * 0.8, 0.34, tint('control'), 0.2, h * 0.5);
+    for (const [y, z, tilt] of [[h * 0.92, 0, 0], [h * 0.08, 0, 0], [h * 0.5, 0.2, 1], [h * 0.5, -0.2, -1]]) { // four small nozzles
+      const n = add(new THREE.CylinderGeometry(0.03, 0.055, 0.1, 10), steelMat(), 0.2, y, tilt ? z + tilt * 0.06 : 0);
+      if (tilt) n.rotation.x = -tilt * Math.PI / 2;
+    }
+    box(0.1, 0.1, 0.06, darkMat(), 0.34, h * 0.5, 0);
+  } else if (kind === 'solar') {
+    family = 'power'; depth = 1.0;
+    cyl(0.03, 0.3, steelMat(), 0.06, 0.15, 0, 8); // hinge post
+    box(0.22, 0.06, 0.1, steelMat(), 0.11, 0.3);
+    const cells = cached('solarCells', () => pbr(0x14284f, 0.35, 0.6, { emissive: 0x050c1a, emissiveIntensity: 1 }));
+    const wingH = h - 0.2;
+    box(0.04, wingH, 0.9, steelMat(), 0.5, 0.3 + wingH / 2, 0); // frame
+    for (let i = 0; i < 3; i++) box(0.05, wingH - 0.08, 0.27, cells, 0.5, 0.3 + wingH / 2, (i - 1) * 0.3); // three cell strips
+    box(0.045, 0.02, 0.9, steelMat(), 0.5, 0.3 + wingH / 2);
+    // the wing leans out slightly so it reads as deployed, not as a fin
+    g.children.slice(2).forEach((m) => { m.position.x += (m.position.y - 0.3) * 0.12; });
+  } else {
+    // generic equipment, one look per part
+    switch (key) {
+      case 'o2_bottle': family = 'life'; depth = 0.4; mount(0.2); cyl(0.17, h * 0.8, tint(family), 0.25, h * 0.45, 0, 20); add(new THREE.SphereGeometry(0.17, 20, 10, 0, Math.PI * 2, 0, Math.PI / 2), tint(family), 0.25, h * 0.85).scale.y = 0.8; cyl(0.04, 0.08, steelMat(), 0.25, h, 0, 10); cyl(0.172, 0.04, cached('white', () => pbr(0xf0eee8, 0.5, 0.1)), 0.25, h * 0.6, 0, 20); break;
+      case 'co2_scrubber': family = 'life'; depth = 0.45; mount(0.3); box(0.3, h * 0.85, 0.3, tint(family), 0.22, h * 0.5); for (let i = 0; i < 5; i++) box(0.02, 0.025, 0.24, darkMat(), 0.38, h * 0.22 + i * h * 0.12); break;
+      case 'water_recycler': family = 'life'; depth = 0.5; mount(0.3); cyl(0.22, h * 0.9, tint(family), 0.3, h * 0.5, 0, 24); for (const y of [0.2, 0.5]) cyl(0.225, 0.04, steelMat(), 0.3, h * y, 0, 24); box(0.06, 0.12, 0.12, darkMat(), 0.52, h * 0.5); break;
+      case 'radiation_shelter': family = 'protection'; depth = 0.8; mount(0.7); box(0.6, h * 0.95, 0.75, cached('shelter', () => pbr(0x6b6f74, 0.7, 0.4)), 0.4, h * 0.5); for (let i = 0; i < 4; i++) box(0.04, h * 0.95, 0.12, cached('hazard', () => pbr(0xd8b22a, 0.55, 0.2)), 0.72, h * 0.5, (i - 1.5) * 0.19); box(0.62, 0.05, 0.78, steelMat(), 0.4, h * 0.97); break;
+      case 'battery': family = 'power'; depth = 0.4; box(0.3, h * 0.9, 0.5, tint(family), 0.17, h * 0.5); for (let i = 0; i < 3; i++) box(0.02, h * 0.7, 0.1, darkMat(), 0.33, h * 0.5, (i - 1) * 0.15); cyl(0.03, 0.05, steelMat(), 0.17, h * 0.97, 0.15, 8); cyl(0.03, 0.05, steelMat(), 0.17, h * 0.97, -0.15, 8); break;
+      case 'spectrometer': family = 'science'; depth = 0.55; mount(0.25); box(0.3, h * 0.8, 0.25, tint(family), 0.2, h * 0.5); cyl(0.07, 0.25, darkMat(), 0.45, h * 0.55, 0, 14).rotation.z = Math.PI / 2; add(new THREE.CircleGeometry(0.055, 14), glassMat(), 0.575, h * 0.55, 0).rotation.y = Math.PI / 2; break;
+      case 'ground_radar': family = 'science'; depth = 0.55; mount(0.3); box(0.3, h * 0.45, 0.3, tint(family), 0.17, h * 0.7); { const pl = box(0.5, 0.04, 0.4, cached('radarPlate', () => pbr(0x2b3a3c, 0.4, 0.6)), 0.3, h * 0.35); pl.rotation.z = 0.35; } cyl(0.02, h * 0.3, steelMat(), 0.17, h * 0.45, 0, 6); break;
+      case 'drill': family = 'science'; depth = 0.45; mount(0.3); box(0.3, h * 0.35, 0.3, tint(family), 0.2, h * 0.85); cyl(0.05, h * 0.65, steelMat(), 0.2, h * 0.4, 0, 10); add(new THREE.ConeGeometry(0.05, 0.14, 10), steelMat(), 0.2, 0.07, 0, Math.PI); cyl(0.07, 0.04, darkMat(), 0.2, h * 0.6, 0, 10); break;
+      case 'sample_container': family = 'science'; depth = 0.4; mount(0.2); cyl(0.17, h * 0.8, tint(family), 0.23, h * 0.4, 0, 20); cyl(0.185, 0.07, steelMat(), 0.23, h * 0.84, 0, 20); box(0.05, 0.05, 0.1, darkMat(), 0.23, h * 0.95); break;
+      case 'gimbal_ring': family = 'control'; depth = 0.5; { const t = add(new THREE.TorusGeometry(0.22, 0.035, 10, 28), steelMat(), 0.26, h * 0.5); t.rotation.y = Math.PI / 2; } cyl(0.04, 0.12, tint(family), 0.04, h * 0.5, 0, 10).rotation.z = Math.PI / 2; box(0.08, 0.08, 0.08, tint(family), 0.26, h * 0.5 + 0.22); break;
+      case 'reaction_wheel': family = 'control'; depth = 0.5; mount(0.3); cyl(0.22, 0.2, tint(family), 0.28, h * 0.5, 0, 24); cyl(0.09, 0.24, steelMat(), 0.28, h * 0.5, 0, 12); cyl(0.225, 0.03, darkMat(), 0.28, h * 0.5 + 0.1, 0, 24); break;
+      case 'radiator': family = 'thermal'; depth = 0.6; cyl(0.03, 0.2, steelMat(), 0.05, 0.1, 0, 8); box(0.03, h - 0.15, 0.7, tint(family), 0.4, 0.15 + (h - 0.15) / 2); for (let i = 0; i < 7; i++) box(0.045, h - 0.2, 0.025, steelMat(), 0.4, 0.15 + (h - 0.15) / 2, (i - 3) * 0.1); break;
+      case 'splash_floats': family = 'recovery'; depth = 0.55; mount(0.3); for (const z of [-0.18, 0.18]) { const b = add(new THREE.CapsuleGeometry(0.11, h * 0.5, 6, 14), tint(family), 0.25, h * 0.5, z); b.rotation.z = 0; } box(0.14, 0.04, 0.5, darkMat(), 0.2, h * 0.95); break;
+      case 'armor_plate': family = 'protection'; depth = 0.2; { const plate = box(0.07, h, 0.7, tint(family), 0.1, h / 2); plate.scale.z = 1; } for (const y of [0.15, 0.5, 0.85]) for (const z of [-0.28, 0.28]) cyl(0.03, 0.03, steelMat(), 0.15, h * y, z, 8).rotation.z = Math.PI / 2; break;
+      case 'seals_cheap': family = 'generic'; depth = 0.2; { const ring = add(new THREE.TorusGeometry(0.1, 0.025, 8, 20), cached('seal', () => pbr(0x2c2a28, 0.9, 0)), 0.1, h / 2); ring.rotation.y = Math.PI / 2; } break;
+      default: family = 'generic'; depth = 0.4; box(0.3, h * 0.85, 0.35, tint('generic'), 0.2, h * 0.5); box(0.06, 0.1, 0.1, darkMat(), 0.36, h * 0.5);
+    }
+  }
+  g.userData.height = h;
+  g.userData.width = depth;
+  return g;
+}
+
 // Where the next part stacks on top, in metres at size 1. Fins and legs attach to the side, so they add nothing.
 const PART_HEIGHT = { capsule: 1.98, tank: 4, engine: 2.2, nose: 2.9, fin: 0, legs: 0, heatshield: 0.34 };
 
@@ -263,10 +366,26 @@ const PART_MATCHERS = [
   [/nose|cone/, 'nose'], [/fin/, 'fin'], [/leg/, 'legs'], [/tank|fuel/, 'tank'],
 ];
 
+// Built once per id; every call returns a clone that shares the geometry and materials, so the GPU upload and the
+// launch warm-up (warmup.js) done for one rocket also cover the next.
+const partTemplates = new Map();
 function createRocketPart(id) {
+  if (!partTemplates.has(id)) partTemplates.set(id, buildRocketPart(id));
+  return partTemplates.get(id).clone(true);
+}
+
+function buildRocketPart(id) {
   const key = id.toLowerCase();
   const match = PART_MATCHERS.find(([pattern]) => pattern.test(key));
-  if (!match) return hologram(`rocketPart:${id}`, [1.2, 0.8, 1.2]);
+  if (!match) {
+    // Side equipment (antenna, parachute, RCS, solar, batteries, bottles, science gear): procedural art per family.
+    const kind = EQUIP_MATCHERS.find(([pattern]) => pattern.test(key))?.[1];
+    if (!kind && !(key in EQUIP_HEIGHT)) return hologram(`rocketPart:${id}`, [1.2, 0.8, 1.2]);
+    const gear = equipment(key, kind);
+    gear.name = `rocketPart:${id}`;
+    gear.traverse((o) => { if (o.isMesh) { o.castShadow = true; o.receiveShadow = true; } });
+    return gear;
+  }
   const size = /(^|[_-])s($|[_-])|small/.test(key) ? 0.75 : /(^|[_-])l($|[_-])|large/.test(key) ? 1.35 : 1;
   const part = PARTS[match[1]](size);
   part.name = `rocketPart:${id}`;
@@ -326,15 +445,55 @@ register('planet:earth', () => createPlanet('earth'));
 register('planet:mars', () => createPlanet('mars'));
 register('sky:space', createSpaceSky);
 register('lander', () => createLander());
+register('rover', createRover); // the futuristic crewed rover (Blender model, rover.glb): src/graphics/rover.js
+register('rover:lrv', createLunarRover); // the traditional Apollo-style rover, same interface: src/graphics/roverLrv.js
 for (const [name, factory] of Object.entries(PROPS)) register(name, factory); // mission props: src/graphics/props.js
 
 /**
  * Visuals behind names. Gameplay asks for a name and always gets an Object3D back, so art can be swapped later
  * with nobody else's code changing. Each call returns a new object.
  */
+let rocketPartArt = null;
+const partArtWarned = new Set();
+
+/** Runs the external part-art hook (Role 1's models); null when there is none or it has nothing for this type. */
+function externalRocketPart(type) {
+  if (!rocketPartArt) return null;
+  let obj = null;
+  try {
+    obj = rocketPartArt(type);
+  } catch (err) {
+    if (!partArtWarned.has(type)) {
+      partArtWarned.add(type);
+      console.warn(`[assets] rocket part art hook threw for "${type}", using the built-in part`, err);
+    }
+    return null;
+  }
+  if (!obj || !obj.isObject3D) return null;
+  obj.name = `rocketPart:${type}`;
+  obj.traverse((o) => { if (o.isMesh) { o.castShadow = true; o.receiveShadow = true; } });
+  if (!(typeof obj.userData.height === 'number' && obj.userData.height >= 0)) {
+    obj.updateMatrixWorld(true);
+    const box = new THREE.Box3().setFromObject(obj);
+    // Origin sits at the base of an axial part, so the height is how far the model reaches above it.
+    obj.userData.height = box.isEmpty() ? 0 : Math.max(0, box.max.y - obj.position.y);
+  }
+  return obj;
+}
+
 export const assets = {
+  /**
+   * Lets another role supply the model for `rocketPart:<type>` (see README). fn(type) must return an Object3D,
+   * or null to use the built-in part. Pass null to clear.
+   */
+  setRocketPartArt(fn) {
+    rocketPartArt = typeof fn === 'function' ? fn : null;
+  },
   get(name) {
-    if (name.startsWith('rocketPart:')) return createRocketPart(name.slice('rocketPart:'.length));
+    if (name.startsWith('rocketPart:')) {
+      const type = name.slice('rocketPart:'.length);
+      return externalRocketPart(type) ?? createRocketPart(type);
+    }
     const factory = factories.get(name);
     if (factory) return factory();
     if (!warned.has(name)) {
@@ -343,8 +502,8 @@ export const assets = {
     }
     return hologram(name);
   },
-  /** Resolves when the real maps of the given `planet:*` names are ready, so get() never shows a placeholder. Other names are ignored. */
-  preload: (names) => Promise.all(names.filter((n) => n.startsWith('planet:')).map((n) => loadPlanetMaps(n.slice(7)))).then(() => {}),
+  /** Resolves when the real maps of the given `planet:*` names are ready, so get() never shows a placeholder. Other names are ignored. Also waits for the Blender rover model (rover.glb, falls back to the code-built rover if it is missing). */
+  preload: (names) => Promise.all([...names.filter((n) => n.startsWith('planet:')).map((n) => loadPlanetMaps(n.slice(7))), loadRoverModel(), loadLunarRoverModel()]).then(() => {}),
   has: (name) => factories.has(name) || name.startsWith('rocketPart:'),
   names: () => [...factories.keys(), 'rocketPart:<id>'],
   register,

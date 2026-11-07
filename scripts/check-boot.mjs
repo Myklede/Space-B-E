@@ -49,11 +49,23 @@ async function main() {
 
   const args = ['--enable-gpu', '--ignore-gpu-blocklist', '--enable-unsafe-swiftshader'];
   if (process.platform === 'darwin') args.push('--use-angle=metal');
-  try {
-    browser = await chromium.launch({ channel: 'chrome', headless: true, args });
-  } catch (error) {
+  // Browser order: CHROME_PATH (explicit, so a wrong path fails instead of silently using another browser),
+  // then Google Chrome, then Playwright's own Chromium (npx playwright-core install chromium).
+  const fixes = 'Fix: set CHROME_PATH to a Chrome/Chromium binary, or install Google Chrome, or run `npx playwright-core install chromium`.';
+  const chromePath = process.env.CHROME_PATH;
+  const attempts = chromePath ? [{ executablePath: chromePath }] : [{ channel: 'chrome' }, {}];
+  let lastError;
+  for (const how of attempts) {
+    try {
+      browser = await chromium.launch({ ...how, headless: true, args });
+      break;
+    } catch (error) {
+      lastError = error;
+    }
+  }
+  if (!browser) {
     // Passing without walking the loop would prove nothing, so a missing browser is a failure.
-    return finish(1, `FAILED  check:boot: Chrome could not start (${String(error.message).split('\n')[0]}). Install Google Chrome and run this again.`);
+    return finish(1, `FAILED  check:boot: no browser could start (${String(lastError.message).split('\n')[0]}).\n  ${fixes}`);
   }
 
   const page = await (await browser.newContext({ viewport: { width: 1280, height: 720 } })).newPage();
@@ -87,8 +99,8 @@ async function main() {
     const ok = await page.evaluate((target) => window.__game.requestState(target), to);
     const now = await state();
     if (!ok || now !== to) return fail(`${label}: expected state ${to}, got ${now}.`);
-    const panels = await page.locator('[data-stub]').count();
-    if (panels < 1) return fail(`${label}: no stub screen is mounted in ${to}.`);
+    const panels = await page.locator('[data-stub], [data-screen]').count(); // stub panel or a real screen
+    if (panels < 1) return fail(`${label}: no screen is mounted in ${to} (a real screen sets data-screen="${to}" on its root).`);
     await framesAdvance(label);
     await checkErrors(label);
     console.log(`ok    ${String(to).padEnd(10)} frames=${await frames()}`);

@@ -3,7 +3,8 @@ import { RoundedBoxGeometry } from 'three/addons/geometries/RoundedBoxGeometry.j
 import { RoomEnvironment } from 'three/addons/environments/RoomEnvironment.js';
 import { mergeGeometries } from 'three/addons/utils/BufferGeometryUtils.js';
 import { getRenderer, sharedUniforms } from './shared.js';
-import { events } from '/src/core/index.js';
+import { buildCockpitInterior, buildWindow, DASH } from './cockpitParts.js';
+import { events, getShip } from '/src/core/index.js';
 
 let environment = null;
 
@@ -29,10 +30,24 @@ function box(w, h, d, material, x = 0, y = 0, z = 0, radius = 0.025) {
   return mesh;
 }
 
-function screen(width, height, draw, power = 1.5) {
+// A faint diagonal sheen over the black glass.
+function reflectionTexture() {
+  const c = document.createElement('canvas');
+  c.width = 256; c.height = 64;
+  const x = c.getContext('2d');
+  const g = x.createLinearGradient(0, 0, 256, 64);
+  g.addColorStop(0, 'rgba(255,255,255,0)'); g.addColorStop(0.3, 'rgba(180,220,255,.07)'); g.addColorStop(0.45, 'rgba(255,255,255,0)');
+  g.addColorStop(0.6, 'rgba(180,220,255,.05)'); g.addColorStop(1, 'rgba(255,255,255,0)');
+  x.fillStyle = g; x.fillRect(0, 0, 256, 64);
+  const t = new THREE.CanvasTexture(c);
+  t.colorSpace = THREE.SRGBColorSpace;
+  return t;
+}
+
+function screen(width, height, draw, power = 1.5, res = 512) {
   const canvas = document.createElement('canvas');
-  canvas.width = 512;
-  canvas.height = Math.round(512 * height / width);
+  canvas.width = res;
+  canvas.height = Math.round(res * height / width);
   const c = canvas.getContext('2d');
   c.fillStyle = '#04100f';
   c.fillRect(0, 0, canvas.width, canvas.height);
@@ -58,11 +73,11 @@ const CYAN = '#67e8f9', AMBER = '#fbbf24';
 // Latest values from flight:telemetry (sent about twice a second). Missing fields stay null and print as "--".
 const MAXQ_PA = 40000; // matches the flight model's structural limit; used when telemetry sends no maxQ
 const HISTORY = 240; // altitude samples kept for the plot (about 2 minutes)
-const live = { version: 0, t: null, altitude: null, speed: null, gForce: null, q: null, maxQ: null, fuelKg: null, fuelMax: 0, engineTemp: null, o2: null, history: [] };
+const live = { version: 0, t: null, altitude: null, speed: null, gForce: null, q: null, maxQ: null, fuelKg: null, fuelMax: 0, engineTemp: null, history: [] };
 const num = (v) => (typeof v === 'number' && Number.isFinite(v) ? v : null);
 
 function resetLive() {
-  Object.assign(live, { t: null, altitude: null, speed: null, gForce: null, q: null, maxQ: null, fuelKg: null, fuelMax: 0, engineTemp: null, o2: null, history: [] });
+  Object.assign(live, { t: null, altitude: null, speed: null, gForce: null, q: null, maxQ: null, fuelKg: null, fuelMax: 0, engineTemp: null, history: [] });
   live.version++;
 }
 
@@ -78,8 +93,7 @@ events.on('flight:telemetry', (p) => {
   live.maxQ = num(p.maxQ);
   live.fuelKg = num(p.fuelKg);
   live.engineTemp = num(p.engineTemp);
-  live.o2 = num(p.o2Percent);
-  if (live.fuelKg !== null) live.fuelMax = Math.max(live.fuelMax, live.fuelKg);
+  if (live.fuelKg !== null) live.fuelMax = Math.max(live.fuelMax, live.fuelKg); // fallback when the ship has no tank size
   if (live.altitude !== null) {
     live.history.push(live.altitude);
     if (live.history.length > HISTORY) live.history.shift();
@@ -91,80 +105,139 @@ const fmt = (v, digits = 0, unit = '') => (v === null ? '--' : v.toFixed(digits)
 const clamp01 = (v) => (v === null ? null : Math.min(1, Math.max(0, v)));
 const RED = '#f87171';
 
-// One labelled bar. `fraction` is null when there is no data; amber and red zones start at `amberAt` and `redAt`.
-function bar(c, w, y, label, text, fraction, amberAt = 2, redAt = 2, zones = false) {
-  const x0 = 118, bw = w - x0 - 18, bh = 20;
-  c.font = '500 22px "IBM Plex Mono", monospace';
+// ---- Glass-cockpit UI: dark panels, thin cyan lines, large white numerals (Crew Dragon style) --------------------
+const UI = { cyan: '#7ee7f7', dim: 'rgba(126,231,247,.35)', faint: 'rgba(126,231,247,.12)', white: '#eef8fc', amber: '#fbbf24', red: '#f87171' };
+const UI_FONT = '"IBM Plex Mono", monospace';
+
+// Dark gradient backdrop with a thin title row and corner ticks.
+function uiBackdrop(c, w, h, title, right = '') {
+  const g = c.createLinearGradient(0, 0, 0, h);
+  g.addColorStop(0, '#030a10');
+  g.addColorStop(1, '#071a24');
+  c.fillStyle = g;
+  c.fillRect(0, 0, w, h);
+  c.strokeStyle = UI.dim;
+  c.lineWidth = 2;
+  c.beginPath(); c.moveTo(24, 62); c.lineTo(w - 24, 62); c.stroke();
+  c.fillStyle = UI.cyan;
+  c.fillRect(24, 28, 8, 8);
   c.textBaseline = 'alphabetic';
-  c.fillStyle = CYAN;
   c.textAlign = 'left';
-  c.fillText(label, 18, y + 16);
-  c.fillStyle = 'rgba(103,232,249,.16)';
-  c.fillRect(x0, y, bw, bh);
-  if (zones) { // faint amber and red zones behind the fill
-    c.fillStyle = 'rgba(251,191,36,.22)';
-    c.fillRect(x0 + bw * amberAt, y, bw * (redAt - amberAt), bh);
-    c.fillStyle = 'rgba(248,113,113,.3)';
-    c.fillRect(x0 + bw * redAt, y, bw * (1 - redAt), bh);
+  c.font = `500 22px ${UI_FONT}`;
+  c.fillText(title, 44, 44);
+  c.textAlign = 'right';
+  c.fillStyle = UI.dim;
+  c.fillText(right, w - 24, 44);
+  c.textAlign = 'left';
+  c.strokeStyle = UI.cyan;
+  c.lineWidth = 3;
+  for (const [x, y, dx, dy] of [[4, 4, 1, 1], [w - 4, 4, -1, 1], [4, h - 4, 1, -1], [w - 4, h - 4, -1, -1]]) {
+    c.beginPath(); c.moveTo(x + dx * 22, y); c.lineTo(x, y); c.lineTo(x, y + dy * 22); c.stroke();
   }
-  if (fraction !== null) {
-    c.fillStyle = fraction >= redAt ? RED : fraction >= amberAt ? AMBER : CYAN;
-    c.fillRect(x0, y, bw * fraction, bh);
+}
+
+// One gauge: small label, large numerals, a thin tick bar. `zone` (0..1) picks the colour; `fill` (0..1) is the bar length.
+function gauge(c, w, y, label, value, unit, sub, fill, zone, amberAt, redAt) {
+  const x = 34, bw = w - 68;
+  const col = zone === null ? UI.dim : zone >= redAt ? UI.red : zone >= amberAt ? UI.amber : UI.cyan;
+  c.textAlign = 'left';
+  c.fillStyle = UI.cyan;
+  c.font = `500 24px ${UI_FONT}`;
+  c.fillText(label, x, y);
+  c.textAlign = 'right';
+  c.fillStyle = UI.dim;
+  c.font = `500 22px ${UI_FONT}`;
+  c.fillText(sub, w - 34, y);
+  c.textAlign = 'left';
+  c.fillStyle = col === UI.dim ? UI.dim : UI.white;
+  c.font = `600 86px ${UI_FONT}`;
+  c.fillText(value, x, y + 84);
+  const vw = c.measureText(value).width;
+  c.fillStyle = UI.cyan;
+  c.font = `500 28px ${UI_FONT}`;
+  c.fillText(unit, x + vw + 12, y + 84);
+  const by = y + 112;
+  c.fillStyle = UI.faint;
+  c.fillRect(x, by, bw, 8);
+  if (fill !== null) {
+    c.fillStyle = col;
+    c.fillRect(x, by, bw * fill, 8);
+    c.fillRect(x + bw * fill - 2, by - 8, 4, 24); // marker
   }
-  c.font = '500 18px "IBM Plex Mono", monospace';
-  c.fillStyle = fraction !== null && fraction >= redAt ? RED : fraction !== null && fraction >= amberAt ? AMBER : CYAN;
-  c.fillText(text, x0, y + bh + 20);
+  c.fillStyle = UI.dim;
+  for (let i = 0; i <= 10; i++) c.fillRect(x + (bw * i) / 10 - 1, by + 14, 2, i % 5 === 0 ? 12 : 6);
+  if (amberAt < 1) { c.fillStyle = 'rgba(251,191,36,.7)'; c.fillRect(x + bw * amberAt - 1, by - 6, 2, 8); }
+  if (redAt < 1) { c.fillStyle = 'rgba(248,113,113,.8)'; c.fillRect(x + bw * redAt - 1, by - 6, 2, 8); }
 }
 
 function drawReadout(c, w, h) {
-  const fuel = live.fuelKg !== null && live.fuelMax > 0 ? clamp01(live.fuelKg / live.fuelMax) : null;
-  const rows = h / 3;
-  bar(c, w, 14, 'FUEL', fuel === null ? '--' : `${(fuel * 100).toFixed(0)}%  ${fmt(live.fuelKg !== null ? live.fuelKg / 1000 : null, 1)} t`, fuel === null ? null : 1 - fuel, 0.6, 0.85);
-  bar(c, w, 14 + rows, 'O2', fmt(live.o2, 0, '%'), live.o2 === null ? null : 1 - clamp01(live.o2 / 100), 0.7, 0.85);
-  bar(c, w, 14 + rows * 2, 'TEMP', live.engineTemp === null ? '--' : `ENG ${(live.engineTemp * 100).toFixed(0)}%`, clamp01(live.engineTemp), 0.7, 0.85);
+  // The tank size from the ship's stats is the real 100 %; without it the highest fuel seen this flight stands in.
+  const tank = getShip()?.stats?.fuelMass;
+  const capacity = typeof tank === 'number' && tank > 0 ? tank : live.fuelMax;
+  const fuel = live.fuelKg !== null && capacity > 0 ? clamp01(live.fuelKg / capacity) : null;
+  uiBackdrop(c, w, h, 'PROPULSION', 'MAIN ENGINE');
+  gauge(c, w, 112, 'FUEL', fuel === null ? '--' : (fuel * 100).toFixed(0), '%', fuel === null ? '' : `${fmt(live.fuelKg / 1000, 1)} t`, fuel, fuel === null ? null : 1 - fuel, 0.6, 0.85);
+  // engineTemp is 0..1 where 1 is engine failure
+  const heat = clamp01(live.engineTemp);
+  gauge(c, w, 112 + (h - 112) / 2, 'ENG HEAT', heat === null ? '--' : (heat * 100).toFixed(0), '%', 'LIMIT 100', heat, heat, 0.7, 0.85);
 }
 
 function drawTrajectory(c, w, h) {
-  c.strokeStyle = 'rgba(103,232,249,.22)';
-  c.lineWidth = 1;
-  for (let x = 0; x < w; x += 32) { c.beginPath(); c.moveTo(x, 0); c.lineTo(x, h); c.stroke(); }
-  for (let y = 0; y < h; y += 32) { c.beginPath(); c.moveTo(0, y); c.lineTo(w, y); c.stroke(); }
-  c.textBaseline = 'alphabetic';
+  uiBackdrop(c, w, h, 'TRAJECTORY', 'ALTITUDE / TIME');
+  const alt = live.altitude === null ? '--' : live.altitude >= 10000 ? `${(live.altitude / 1000).toFixed(1)}` : `${live.altitude.toFixed(0)}`;
+  const altUnit = live.altitude !== null && live.altitude >= 10000 ? 'km' : 'm';
+  const spd = live.speed === null ? '--' : live.speed.toFixed(0);
   c.textAlign = 'left';
-  c.font = '500 22px "IBM Plex Mono", monospace';
-  c.fillStyle = CYAN;
-  const alt = live.altitude === null ? '--' : live.altitude >= 10000 ? `${(live.altitude / 1000).toFixed(1)} km` : `${live.altitude.toFixed(0)} m`;
-  c.fillText('ALT', 16, 30);
-  c.fillText('SPD', w / 2 + 6, 30);
-  c.font = '600 28px "IBM Plex Mono", monospace';
-  c.fillStyle = AMBER;
-  c.fillText(alt, 16, 62);
-  c.fillText(live.speed === null ? '--' : `${live.speed.toFixed(0)} m/s`, w / 2 + 6, 62);
-  // altitude over time, scaled to the highest point so far
-  const top = 76, bottom = h - 16, left = 16, right = w - 16;
-  const data = live.history;
-  c.strokeStyle = 'rgba(103,232,249,.5)';
+  c.fillStyle = UI.cyan;
+  c.font = `500 22px ${UI_FONT}`;
+  c.fillText('ALT', 34, 100);
+  c.fillText('SPD', w / 2 + 14, 100);
+  c.fillStyle = UI.white;
+  c.font = `600 64px ${UI_FONT}`;
+  c.fillText(alt, 34, 160);
+  const aw = c.measureText(alt).width;
+  c.fillText(spd, w / 2 + 14, 160);
+  const sw = c.measureText(spd).width;
+  c.fillStyle = UI.cyan;
+  c.font = `500 26px ${UI_FONT}`;
+  c.fillText(altUnit, 34 + aw + 10, 160);
+  c.fillText('m/s', w / 2 + 14 + sw + 10, 160);
+  // map: a stylised planet limb with orbit rings behind the altitude curve
+  const top = 190, bottom = h - 30, left = 34, right = w - 34;
+  c.save();
+  c.beginPath(); c.rect(left, top, right - left, bottom - top); c.clip();
+  const cx = (left + right) / 2, cy = bottom + (right - left) * 0.9, R = (right - left) * 1.05;
+  const planet = c.createRadialGradient(cx, cy - R * 0.2, R * 0.2, cx, cy, R);
+  planet.addColorStop(0, '#0e3d5e'); planet.addColorStop(0.9, '#082436'); planet.addColorStop(1, '#4cc3e6');
+  c.fillStyle = planet;
+  c.beginPath(); c.arc(cx, cy, R, 0, Math.PI * 2); c.fill();
+  c.strokeStyle = UI.faint; c.lineWidth = 1.5;
+  for (let k = 1; k <= 3; k++) { c.beginPath(); c.ellipse(cx, cy, R + k * 46, R * 0.9 + k * 40, 0, 0, Math.PI * 2); c.stroke(); }
+  for (let x = left; x <= right; x += (right - left) / 8) { c.beginPath(); c.moveTo(x, top); c.lineTo(x, bottom); c.stroke(); }
+  for (let y = top; y <= bottom; y += (bottom - top) / 4) { c.beginPath(); c.moveTo(left, y); c.lineTo(right, y); c.stroke(); }
+  c.restore();
+  c.strokeStyle = UI.dim; c.lineWidth = 2;
   c.strokeRect(left, top, right - left, bottom - top);
+  const data = live.history;
   if (data.length >= 2) {
     const max = Math.max(...data, 1);
-    c.strokeStyle = CYAN;
-    c.lineWidth = 3;
-    c.beginPath();
-    data.forEach((v, i) => {
-      const x = left + ((right - left) * i) / (HISTORY - 1);
-      const y = bottom - ((bottom - top - 6) * v) / max - 3;
-      if (i) c.lineTo(x, y); else c.moveTo(x, y);
-    });
-    c.stroke();
+    const px = (i) => left + ((right - left) * i) / (HISTORY - 1);
+    const py = (v) => bottom - ((bottom - top - 14) * v) / max - 7;
+    c.strokeStyle = 'rgba(126,231,247,.25)'; c.lineWidth = 9; c.lineJoin = 'round';
+    c.beginPath(); data.forEach((v, i) => (i ? c.lineTo(px(i), py(v)) : c.moveTo(px(i), py(v)))); c.stroke();
+    c.strokeStyle = UI.white; c.lineWidth = 3;
+    c.beginPath(); data.forEach((v, i) => (i ? c.lineTo(px(i), py(v)) : c.moveTo(px(i), py(v)))); c.stroke();
     const last = data.length - 1;
-    c.fillStyle = AMBER;
-    c.beginPath();
-    c.arc(left + ((right - left) * last) / (HISTORY - 1), bottom - ((bottom - top - 6) * data[last]) / max - 3, 6, 0, Math.PI * 2);
-    c.fill();
+    c.strokeStyle = UI.amber; c.lineWidth = 3;
+    c.beginPath(); c.arc(px(last), py(data[last]), 10, 0, Math.PI * 2); c.stroke();
+    c.fillStyle = UI.amber;
+    c.beginPath(); c.arc(px(last), py(data[last]), 4, 0, Math.PI * 2); c.fill();
   } else {
-    c.fillStyle = 'rgba(103,232,249,.5)';
-    c.font = '500 18px "IBM Plex Mono", monospace';
-    c.fillText('WAITING FOR DATA', left + 12, (top + bottom) / 2);
+    c.fillStyle = UI.dim;
+    c.font = `500 22px ${UI_FONT}`;
+    c.textAlign = 'center';
+    c.fillText('WAITING FOR DATA', (left + right) / 2, (top + bottom) / 2);
+    c.textAlign = 'left';
   }
 }
 
@@ -172,12 +245,86 @@ function drawBars(c, w, h) {
   const maxQ = live.maxQ ?? MAXQ_PA;
   const g = live.gForce;
   const q = live.q;
-  bar(c, w, 18, 'G', g === null ? '--' : `${g.toFixed(1)} g`, g === null ? null : clamp01(g / 9), 4.5 / 9, 7 / 9, true);
-  bar(c, w, 18 + h / 2, 'MAX-Q', q === null ? '--' : `${(q / 1000).toFixed(1)} / ${(maxQ / 1000).toFixed(0)} kPa`, q === null ? null : clamp01(q / maxQ / 1.25), 0.8 / 1.25, 1 / 1.25, true);
+  uiBackdrop(c, w, h, 'LOADS', 'STRUCTURE');
+  gauge(c, w, 112, 'G-FORCE', g === null ? '--' : g.toFixed(1), 'g', 'LIMIT 9', g === null ? null : clamp01(g / 9), g === null ? null : clamp01(g / 9), 4.5 / 9, 7 / 9);
+  const qf = q === null ? null : clamp01(q / maxQ / 1.25);
+  gauge(c, w, 112 + (h - 112) / 2, 'MAX-Q', q === null ? '--' : (q / 1000).toFixed(1), 'kPa', `LIMIT ${(maxQ / 1000).toFixed(0)}`, qf, qf, 0.8 / 1.25, 1 / 1.25);
+}
+
+// Everything heavy (canvas textures, merged geometry, materials) is built once; each createCockpit() clones the group, which
+// shares them. Flight makes a new cockpit on every LAUNCH, ORBIT and ENTRY, so this keeps those frames short.
+let cockpitTemplate = null;
+export function warmCockpit() {
+  cockpitTemplate ??= buildCockpitTemplate();
+  return cockpitTemplate;
+}
+
+// Uploads the shared textures and geometry and compiles the shaders by drawing the cockpit once into a tiny target, so
+// the first real frame after LAUNCH or ORBIT has nothing left to upload. Runs in idle time after boot.
+let cockpitUploaded = false;
+export function uploadCockpit() {
+  if (cockpitUploaded) return;
+  const renderer = getRenderer();
+  if (!renderer) return;
+  cockpitUploaded = true;
+  const probe = createCockpit();
+  const scene = new THREE.Scene();
+  scene.add(probe);
+  const camera = new THREE.PerspectiveCamera(70, 1, 0.05, 20);
+  const target = new THREE.WebGLRenderTarget(32, 32);
+  const lookDirs = [[0, 0, -1], [0, -1, -0.2], [0, 0, 1], [-1, 0, 0], [1, 0, 0], [0, 1, 0]]; // every part gets drawn once
+  const previous = renderer.getRenderTarget();
+  try {
+    for (const d of lookDirs) {
+      camera.lookAt(d[0], d[1], d[2]);
+      camera.updateMatrixWorld();
+      renderer.setRenderTarget(target);
+      renderer.render(scene, camera);
+    }
+  } finally {
+    renderer.setRenderTarget(previous);
+    target.dispose();
+  }
+}
+if (typeof window !== 'undefined') { // build, then upload, in idle time soon after boot, long before the first LAUNCH
+  const idle = (fn) => (window.requestIdleCallback ?? setTimeout)(fn);
+  setTimeout(() => idle(() => {
+    try { warmCockpit(); } catch (err) { console.error('[cockpit] warm failed', err); return; }
+    setTimeout(() => idle(() => { try { uploadCockpit(); } catch (err) { console.error('[cockpit] upload failed', err); } }), 300);
+  }), 1500);
 }
 
 /** Seated cockpit. The group's origin is the pilot's eye and forward is -Z. Add it under the camera's parent. */
 export function createCockpit() {
+  const t = warmCockpit();
+  const group = t.group.clone(true); // shares geometry, materials and textures with the template
+  const ctl = t.bind(group);
+  group.userData.setControls = ctl.setControls; // ({ pitch -1..1, yaw -1..1, throttle 0..1 }), smoothed
+  const blinkers = [];
+  group.traverse((o) => { if (o.name === 'blinker') blinkers.push(o); });
+  const cabinLight = group.getObjectByName('cabinLight'), alarmLight = group.getObjectByName('alarmLight');
+  const { liveScreens } = t;
+  let alarm = false;
+  group.userData.setAlarm = (on) => { alarm = on; };
+  let drawnVersion = -1, drawnAt = 0, lastFrame = performance.now();
+  group.userData.onFrame = () => {
+    const tm = sharedUniforms.uTime.value;
+    const now = performance.now();
+    ctl.update((now - lastFrame) / 1000);
+    lastFrame = now;
+    if (live.version !== drawnVersion && now - drawnAt >= 250) { // at most 4 redraws a second, only when the data changed
+      drawnVersion = live.version;
+      drawnAt = now;
+      liveScreens.forEach((m) => m.userData.redraw());
+    }
+    blinkers.forEach((lamp, i) => { lamp.visible = Math.sin(tm * (1.3 + i * 0.37) + i) > -0.3; });
+    alarmLight.intensity = alarm ? 3 * (0.5 + 0.5 * Math.sign(Math.sin(tm * 5))) : 0;
+    cabinLight.intensity = alarm ? 0.35 : 2.6;
+  };
+  return group;
+}
+
+function buildCockpitTemplate() {
   const group = new THREE.Group();
   group.name = 'cockpit';
   const shell = pbr(0x20252b, 0.62, 0.35);
@@ -188,46 +335,62 @@ export function createCockpit() {
   // Everything below the window sits under the default view (about -38 degrees and lower): look down to read it.
   group.add(box(2.1, 0.6, 0.48, matte, 0, -0.77, -1.19, 0.05)); // dash hood under the glare shield
   group.add(box(2.1, 0.3, 0.9, panel, 0, -1.3, -0.85, 0.05)); // footwell, so looking down never shows a void
-  const console_ = box(2.1, 0.7, 0.06, panel, 0, -0.88, -0.78, 0.02); // tilted instrument face
-  console_.rotation.x = -0.75;
-  group.add(console_);
   group.add(box(2.1, 0.07, 0.56, matte, 0, -0.44, -1.07, 0.03)); // glare shield, its top is the window sill
   [-1.08, 1.08].forEach((x) => group.add(box(0.22, 1.9, 2.4, shell, x, -0.05, -0.55, 0.06)));
-  group.add(box(2.4, 0.2, 2.2, shell, 0, 0.94, -0.65, 0.06)); // overhead
-  group.add(box(2.4, 2.2, 0.15, shell, 0, -0.05, 0.75, 0.05)); // rear bulkhead
+  // Two-tone cabin: light padded ceiling and rear wall, dark everything under the window (the HTML HUD sits over it).
+  const lightShell = pbr(0x6a7078, 0.7, 0.05, { envMapIntensity: 0.15 });
+  group.add(box(2.4, 0.2, 2.2, lightShell, 0, 0.94, -0.65, 0.06)); // overhead
+  group.add(box(2.4, 2.2, 0.15, lightShell, 0, -0.05, 0.75, 0.05)); // rear bulkhead
 
-  // Window frame around a wide view.
-  const frameZ = -1.34;
-  group.add(box(2.1, 0.09, 0.09, trim, 0, 0.8, frameZ));
-  group.add(box(2.1, 0.06, 0.07, trim, 0, -0.42, frameZ));
-  [-1.0, -0.42, 0.42, 1.0].forEach((x) => group.add(box(0.05, 1.22, 0.07, trim, x, 0.19, frameZ)));
-  const glass = new THREE.Mesh(
-    new THREE.PlaneGeometry(2.1, 1.22),
-    new THREE.MeshPhysicalMaterial({ color: 0xbfd9ff, transparent: true, opacity: 0.05, roughness: 0.06, metalness: 0, envMap: interiorEnvironment(), envMapIntensity: 0.4, depthWrite: false }),
-  );
-  glass.position.set(0, 0.19, frameZ - 0.02);
-  group.add(glass);
+  // One panoramic window in a soft, curved, padded surround (no bars, no hard square cut).
+  group.add(buildWindow({
+    plateMat: pbr(0x161a1f, 0.8, 0.1, { envMapIntensity: 0.1 }),
+    padMat: pbr(0x757b83, 0.75, 0.05, { envMapIntensity: 0.15 }),
+    revealMat: pbr(0x2b3036, 0.8, 0.1, { envMapIntensity: 0.1 }),
+    sealMat: pbr(0x050607, 0.9, 0.0, { envMapIntensity: 0.05 }),
+  }));
 
-  // Instruments, tilted back towards the pilot.
+  // Glass cockpit: one black-glass panel with three displays, tilted towards the pilot, under the glare shield.
+  const dash = new THREE.Group();
+  dash.name = 'dash';
+  dash.position.set(DASH.x, DASH.y, DASH.z);
+  dash.rotation.x = -DASH.tilt;
+  group.add(dash);
+  dash.add(box(1.92, 0.66, 0.3, matte, 0, -0.08, -0.17, 0.04)); // housing behind the glass
+  dash.add(box(1.84, 0.52, 0.03, pbr(0x1b2128, 0.4, 0.7, { envMapIntensity: 0.4 }), 0, 0, -0.012, 0.03)); // bezel
+  const blackGlass = pbr(0x020407, 0.1, 0.5, { envMapIntensity: 0.7 });
+  dash.add(box(1.78, 0.46, 0.02, blackGlass, 0, 0, 0.0, 0.025));
   const screens = [
-    [screen(0.46, 0.32, drawReadout), -0.54],
-    [screen(0.56, 0.36, drawTrajectory), 0],
-    [screen(0.46, 0.32, drawBars), 0.54],
+    [screen(0.52, 0.38, drawReadout, 1.2, 768), -0.57],
+    [screen(0.6, 0.38, drawTrajectory, 1.2, 768), 0],
+    [screen(0.52, 0.38, drawBars, 1.2, 768), 0.57],
   ];
   const liveScreens = screens.map(([mesh]) => mesh);
   if (typeof window !== 'undefined' && new URLSearchParams(location.search).get('debug') === '1') window.__cockpitCanvases = liveScreens.map((m) => m.userData.canvas); // for tests
   for (const [mesh, x] of screens) {
-    mesh.position.set(x, -0.855, -0.752);
-    mesh.rotation.x = -0.75;
-    group.add(mesh);
-    const bezel = box(mesh.geometry.parameters.width + 0.04, mesh.geometry.parameters.height + 0.04, 0.02, trim, 0, 0, -0.016, 0.008);
-    mesh.add(bezel);
+    mesh.position.set(x, 0, 0.0115);
+    dash.add(mesh);
   }
+  const reflection = new THREE.Mesh(new THREE.PlaneGeometry(1.78, 0.46), new THREE.MeshBasicMaterial({ map: reflectionTexture(), transparent: true, depthWrite: false }));
+  reflection.position.z = 0.013;
+  dash.add(reflection);
 
   // Recessed dark switch panels on both side walls, with small lamps sitting flush in a grid.
   const lamps = [glow('#22d3ee', 2.4), glow('#fbbf24', 2.4), glow('#34d399', 2.2), glow('#f87171', 2.6)];
   const blinkers = [];
   const button = new THREE.BoxGeometry(0.01, 0.01, 0.01);
+  // Seat, suited body, controllers, pedestal, consoles, floor and lower walls (cockpitParts.js).
+  const low = typeof location !== 'undefined' && new URLSearchParams(location.search).get('q') === 'low';
+  let interior;
+  try {
+    interior = buildCockpitInterior({ pbr, glow, matte, trim, panel, shell, low });
+  } catch (err) { // the seat and controls are decoration: never let them stop a state from starting
+    console.error('[cockpit] interior failed', err);
+    interior = { group: new THREE.Group(), blinkers: [], bind: () => ({ setControls() {}, update() {} }) };
+  }
+  group.add(interior.group);
+  group.userData.triangles = interior.group.userData.triangles;
+  blinkers.push(...interior.blinkers);
   const darkPanel = pbr(0x090c0f, 0.9, 0.1, { envMapIntensity: 0.05 });
   [-1, 1].forEach((side) => {
     group.add(box(0.012, 0.3, 0.9, pbr(0x1b2026, 0.9, 0.1, { envMapIntensity: 0.1 }), side * 0.964, -0.71, -0.79, 0.004)); // bezel
@@ -245,52 +408,25 @@ export function createCockpit() {
     }
   });
 
-  // Detail on the dash hood: seams, raised switch guards and a grab bar. All dark, so the HUD stays readable over it.
-  const seam = pbr(0x050709, 0.9, 0.1, { envMapIntensity: 0.05 });
-  const guard = pbr(0x1b2026, 0.85, 0.2, { envMapIntensity: 0.1 });
   const hoodZ = -0.95;
-  [-0.7, -0.35, 0, 0.35, 0.7].forEach((x) => group.add(box(0.006, 0.5, 0.006, seam, x, -0.77, hoodZ + 0.003, 0)));
-  [-0.62, -0.92].forEach((y) => group.add(box(2.06, 0.006, 0.006, seam, 0, y, hoodZ + 0.003, 0)));
-  for (let i = 0; i < 12; i++) {
-    const x = -0.96 + i * 0.175 + (i > 5 ? 0.1 : 0);
-    group.add(box(0.05, 0.05, 0.035, guard, x, -0.7, hoodZ + 0.018, 0.008));
-    group.add(box(0.012, 0.012, 0.03, trim, x, -0.7, hoodZ + 0.05, 0.004));
-  }
-  const bar = new THREE.Mesh(new THREE.CylinderGeometry(0.011, 0.011, 1.5, 10), guard);
-  bar.rotation.z = Math.PI / 2;
-  bar.position.set(0, -0.84, hoodZ + 0.06);
-  group.add(bar);
-  [-0.7, 0.7].forEach((x) => group.add(box(0.02, 0.02, 0.06, guard, x, -0.84, hoodZ + 0.03, 0.004)));
   for (let i = 0; i < 12; i++) {
     const lamp = new THREE.Mesh(button, lamps[(i * 5) % 3].clone());
     lamp.position.set(-0.55 + i * 0.1, 0.835, -0.95);
     group.add(lamp);
   }
 
-  const cabinLight = new THREE.PointLight(0xffdcb8, 1.5, 4, 2);
-  cabinLight.position.set(0, 0.7, -0.2);
-  const screenLight = new THREE.PointLight(0x67e8f9, 0.32, 2.2, 2);
-  screenLight.position.set(0, -0.62, -0.45);
+  const cabinLight = new THREE.PointLight(0xfff0e2, 2.6, 5, 1.6);
+  cabinLight.position.set(0, 0.45, 0.05);
+  const screenLight = new THREE.PointLight(0x67e8f9, 0.22, 2.0, 2);
+  screenLight.position.set(0, -0.6, -0.6);
   const alarmLight = new THREE.PointLight(0xff2a1f, 0, 5, 2);
   alarmLight.position.set(0, 0.75, -0.4);
+  cabinLight.name = 'cabinLight';
+  alarmLight.name = 'alarmLight';
   group.add(cabinLight, screenLight, alarmLight);
 
-  let alarm = false;
-  group.userData.setAlarm = (on) => { alarm = on; };
-  let drawnVersion = -1, drawnAt = 0;
-  group.userData.onFrame = () => {
-    const t = sharedUniforms.uTime.value;
-    const now = performance.now();
-    if (live.version !== drawnVersion && now - drawnAt >= 250) { // at most 4 redraws a second, only when the data changed
-      drawnVersion = live.version;
-      drawnAt = now;
-      liveScreens.forEach((m) => m.userData.redraw());
-    }
-    blinkers.forEach((lamp, i) => { lamp.visible = Math.sin(t * (1.3 + i * 0.37) + i) > -0.3; });
-    alarmLight.intensity = alarm ? 3 * (0.5 + 0.5 * Math.sign(Math.sin(t * 5))) : 0;
-    cabinLight.intensity = alarm ? 0.35 : 1.5;
-  };
-  return group;
+  blinkers.forEach((m) => { m.name = 'blinker'; });
+  return { group, liveScreens, bind: interior.bind };
 }
 
 

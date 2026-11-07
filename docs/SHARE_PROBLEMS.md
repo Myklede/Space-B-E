@@ -55,7 +55,7 @@ Copy this block. Keep each line short and factual. Don't commit screenshots.
 - **Expected:** each value inside its own box
 - **Actual:** "$2.97M +$150k" runs into FUNDS, "5,400" into TWR, and "943 kN" into "88 %" under RELIABILITY
 - **Suggested fix:** let the boxes grow to fit (`min-width: max-content`), or put the pad fee and thrust on a second line
-- **Status:** fixed in the design-page rebuild (chips are `min-width: max-content`, pad fee and pad thrust moved to a second line, the Mass chip moved into the side panel), dtri please verify
+- **Status:** open
 
 ### About 63 MB downloads before the hangar is ready
 - **For:** Role 1 · **From:** Role 3 (dtri) · **Found:** 2026-11-07 on dev 0722c4e · **Severity:** polish
@@ -64,9 +64,36 @@ Copy this block. Keep each line short and factual. Don't commit screenshots.
 - **Expected:** the bay usable within a few seconds on a demo Wi-Fi
 - **Actual:** 38 MB load during the menu and 25 MB more on entering HANGAR (largest: `rassor.glb` 6.3 MB, `stardust_capsule.glb` 2.3 MB, `ingenuity.glb` 2 MB). On a fast local server it runs at 60 fps, but over about 50 Mbit/s that is 10 s or more. Separately, about 27 MB of NASA models are not referenced anywhere in `src/builder` (the "reserve" set: `eva_suit`, `habitat1/2`, `lro`, `iss_b`, `parker` and others), and every clone and build carries them.
 - **Suggested fix:** load the decorative bay props after the hangar first draws, drop or shrink the largest ones, and remove the unused reserve models until a scene uses them
-- **Status:** mostly fixed, dtri please verify: Poly Haven prop textures shrunk to 512 px (36 MB to 3 MB, `src/builder/tools/shrink-textures.mjs`); NASA models now download per part only when it is on the stand or inspected (`requestPartArt` in `bay/nasa.js`); card pictures are baked PNGs (1.9 MB for 148); RASSOR (6.3 MB) is no longer placed in the hall (a 57 kB stowed Mars Global Surveyor stands there); the `shuttle_door` model with missing textures is no longer used. Still open: the unused reserve GLBs are still in the repo (about 35 MB on disk, never downloaded by the game); Role 1 will delete them in a separate commit.
+- **Status:** open
+
+### The rocket on the pad does not look like the one built in the hangar
+- **For:** Role 1 · **From:** Role 3 (dtri) · **Found:** 2026-11-07 on dev 6fb54a4 · **Severity:** polish
+- **Where:** `src/builder/bay/partArt.js` (hangar art) vs `src/flight/index.js` `buildRocket` (uses `assets.get('rocketPart:<type>')`)
+- **Steps:** build a ship, launch, press C for the outside camera
+- **Expected:** the same NASA hardware and procedural parts the player chose in the bay
+- **Actual:** flight draws Role 3's simpler built-in parts
+- **Suggested fix:** Role 3 added `assets.setRocketPartArt(fn)` (README, "Role 3 APIs you can use now"). Call it once from your init with a function that returns your art for a part type, or `null` when the model is not loaded yet. Follow the origin rules in that README row: axial parts start at their base and set `userData.height`; radial parts start at the attachment point with +x outward, so bake in the offsets `hangarScene.js` adds around line 60. Also, built-in `rocketPart:` objects now share geometry and materials, so `disposeObject` on them only frees GPU buffers that are uploaded again; skip disposing objects that came from `assets.get`.
+- **Status:** open
 
 ## Role 2: Flight & Astronaut
+
+### The cockpit's joystick and throttle lever never move
+- **For:** Role 2 · **From:** Role 3 (dtri) · **Found:** 2026-11-07 on dev 8e9af5c · **Severity:** polish
+- **Where:** `src/flight/index.js`, where the cockpit is created (`assets.get('cockpit')`) and the flight update loop
+- **Steps:** `/?debug=1&state=LAUNCH`, look down (the gloved hands sit on a joystick at the right and a throttle lever at the left), then throttle up with Q and pitch with W/S
+- **Expected:** the stick tilts with pitch/yaw input and the throttle lever slides with the throttle
+- **Actual:** they stay still, because nothing calls the new cockpit API
+- **Suggested fix:** every frame call `cockpit.userData.setControls({ pitch: state.pitch, yaw: state.yaw, throttle: fc.throttle })` (pitch and yaw -1…1, W = nose down = -1; throttle 0…1; motion is smoothed inside the cockpit). See the `cockpit` row in README "Role 3 APIs".
+- **Status:** fixed in 057a5f2 (setControls every flight frame, LAUNCH/ORBIT/ENTRY/LANDING), Role 3 (dtri) please verify
+
+### Check your Mars positions on the new terrain
+- **For:** Role 2 · **From:** Role 3 (dtri) · **Found:** 2026-11-07 on dev 8e9af5c · **Severity:** polish
+- **Where:** `getTerrainHeight` (`src/graphics/terrain.js`) now has about 480 craters, a river channel, buttes and dunes; anything you place on Mars by coordinates
+- **Steps:** `/?debug=1&state=SURFACE`, walk or drive to each task / interactable / prop you place outside the cabin
+- **Expected:** every position stays on walkable ground (Role 3 kept the landing zone flat within 60 m and crater-free within 150 m, and measured the lander, hatch, rover parking and the Halcyon wreck)
+- **Actual:** Role 3 only measured the positions it could find. The Halcyon wreck at (430, -320) now sits on a levelled 40 m bench (the delta scarp under it was 24°); anything else you placed far out may now be in a crater or on a bank.
+- **Suggested fix:** if a position is bad, move it (or tell Role 3 and we'll flatten a spot like the wreck bench)
+- **Status:** fixed in 057a5f2: Role 2 measured every position it places (lander, hatch, walker start, LRV parking (6.5, 7), MR-01 parking (-7, 7): slopes ≤ 0.7°, nothing had to move) and drove 1.3 km over the new craters and dunes with no rollover; Role 4's tasks and wreck measured too (max 10° at the hematite sample). Role 3 (dtri) please verify
 
 ### Two new ShipSpec details the builder now sends (information, no action needed)
 - **For:** Role 2 · **From:** Role 1 (Myklede) · **Found:** 2026-11-07 on dev 6fb54a4 · **Severity:** polish
@@ -74,24 +101,6 @@ Copy this block. Keep each line short and factual. Don't commit screenshots.
 - **Steps:** presets, Workhorse, readiness poll, launch
 - **Expected:** `stats.chuteCdA` is now set (300 for the main chute, 110 for a drogue, summed) and `shipParams` already reads it; strap-on solid motors are folded into the single stage: their thrust is in `stats.thrust`, their propellant in `stats.fuelMass`, their casings in `stats.dryMass`, and `stats.ispSL/ispVac` are thrust-weighted across liquid engines and solids (lower than the liquid engine alone). `spec.engines` still lists only the liquid engines.
 - **Actual:** nothing wrong today; if you add staging later, `breakdown.boosterSpecs` in the builder has each solid's thrust, Isp, propellant and burn time ready for you
-- **Status:** open
-
-### The trajectory line is a thin vertical line down the cockpit window
-- **For:** Role 2 · **From:** Role 3 (dtri) · **Found:** 2026-11-07 on dev 691ae19 · **Severity:** polish
-- **Where:** `src/flight/index.js:134` (the cyan predicted path), in ORBIT and ENTRY
-- **Steps:** `/?debug=1&state=ORBIT`, look ahead through the window
-- **Expected:** a clear view of Earth's limb from the cockpit
-- **Actual:** the ship now points along its motion, so the path lies in a plane through the camera and is seen edge-on: one thin cyan line from the top of the window to the bottom
-- **Suggested fix:** hide the path in the cockpit view and keep it for the outside camera (C)
-- **Status:** open
-
-### LANDING under the parachute shows only flat sky
-- **For:** Role 2 · **From:** Role 3 (dtri) · **Found:** 2026-11-07 on dev 691ae19 · **Severity:** polish
-- **Where:** `src/flight/index.js` (LANDING view)
-- **Steps:** `/?debug=1&state=LANDING`, wait 5 s
-- **Expected:** some ground or horizon while descending from about 3 km
-- **Actual:** the window shows a uniform butterscotch sky until touchdown
-- **Suggested fix:** tilt the default look so the ground shows, or hint that C switches to the outside camera
 - **Status:** open
 
 ### `stats.reliability` never matters in flight
@@ -105,14 +114,52 @@ Copy this block. Keep each line short and factual. Don't commit screenshots.
 
 ## Role 3: Graphics, Audio & Core
 
-### `rocketPart:` names with no match show as holograms in the flight views
-- **For:** Role 3 · **From:** Role 1 (Myklede) · **Found:** 2026-11-07 on dev 6fb54a4 · **Severity:** polish
-- **Where:** `src/graphics/assets.js` `createRocketPart` (`PART_MATCHERS`)
-- **Steps:** build a ship with a guidance ring, interstage, truss, helium sphere or strap-on solid (presets, Workhorse), launch, press C for the outside camera
-- **Expected:** a plain cylinder or box of about the right size for a part type the matcher does not know (the builder's `ShipSpec.parts` now carries types such as `avionics_ring_m`, `interstage_m`, `truss_m`, `centerbody_m`, `paf_m`, `helium_copv`, `srb_s`, `kick_motor_s`)
-- **Actual:** `hologram('rocketPart:<id>')` for every unmatched id, so the outside view shows glowing placeholder boxes in the stack
-- **Suggested fix:** add matchers for `ring|interstage|truss|centerbody|paf|spin` (a short cylinder, height from a `PART_HEIGHT` default of 1 m), `sphere|copv` (a small sphere) and `srb|kick_motor` (a slim cylinder with a cone); or accept a `height` hint in the id lookup
-- **More ids (2026-11-07, Role 1, dev 3d4fa59):** the design page now builds whole sections from real rockets, so about 80 more types can reach `ShipSpec.parts` with no match. Prefixes that would cover them: `thrust_` (thrust structures, a short wide cylinder), `adapter_`, `interstage`, `avionics`, `truss`, `centerbody`, `intertank`, `paf`, `spin_table`, `cable_raceway`, `feedline` (short cylinder); `srb`, `booster_liquid`, `kick_motor`, `les_tower`, `las_`, `abort_pusher` (slim cylinder with a cone); `fairing`, `nosecap`, `bpc_` (nose); `copv`, `sphere` (small sphere); `aft_fairing`, `verniers`, `jet_vanes`, `gimbal` (small engine-side parts, can be skipped). An engine cluster (up to nine engines) is one entry in `ShipSpec.parts` on the axis but repeats in `ShipSpec.engines`, one per engine, if you want to draw several bells.
+### New cockpit: please include the CUT-OFF, RETRO and ASSIST controls
+- **For:** Role 3 · **From:** Role 2 (Minh Vuong) · **Found:** 2026-11-07 on dev 1fb9625 · **Severity:** polish
+- **Where:** the new cockpit interior you are building (`src/graphics/cockpitParts.js`)
+- **Steps:** in flight, look down at the hands while pressing X, holding Space or pressing F
+- **Expected:** players who look down see what each input does: the stick and throttle already move through `setControls`; X (engine cut-off), Space (retro brake) and F (Flight Assist) should also have a visible control near the hands
+- **Actual:** nothing moves for X, Space or F. Role 2 paused its own add-on switches so they don't clash with the new cockpit.
+- **Suggested fix:** model a guarded red ENGINE CUT-OFF toggle, an amber RETRO button and a cyan ASSIST button near the hands, either animated by extending `setControls({ pitch, yaw, throttle, cutoff, brake, assist })` (Role 2 will pass the three booleans) or named (`cutoffSwitch`, `retroButton`, `assistButton`) so Role 2 can animate them. Your call.
+- **Status:** open
+
+### Core input has no mouse wheel (Role 2 needs it to zoom the outside camera)
+- **For:** Role 3 · **From:** Role 2 (Minh Vuong) · **Found:** 2026-11-07 on dev 1fb9625 · **Severity:** polish
+- **Where:** `src/core/input.js` (only `onPress`, `onEscape`, `mouseDelta`, `lockPointer`, `unlockPointer`, `clear`; no wheel)
+- **Steps:** in flight press C (outside camera) and scroll the mouse wheel
+- **Expected:** the wheel zooms the outside camera in and out (the player asked for the wheel, not keys)
+- **Actual:** core input doesn't read the wheel, and Role 2 may not add its own listener
+- **Suggested fix:** add `input.wheelDelta()` that returns the summed `deltaY` since the last frame and resets like `mouseDelta()` (call `preventDefault` on wheel over the game so the page doesn't scroll; normalise `deltaMode` lines/pages to pixels). Role 2's camera already calls `input.wheelDelta?.()`, so zoom starts working as soon as it exists.
+- **Status:** open
+
+### Steering moves to the cockpit trajectory screen: keep its API stable in every cockpit update
+- **For:** Role 3 · **From:** Role 2 (Minh Vuong) · **Found:** 2026-11-07 on dev a439097 · **Severity:** bug (flight control will depend on it)
+- **Where:** `src/graphics/interiors.js`, `drawTrajectory` (the centre display of the new cockpit), and the `cockpit` row in README "Role 3 APIs"
+- **Steps:** (design agreement, nothing to reproduce yet)
+- **Expected:** the player's design: the centre HUD markers go away and the player **flies by the cockpit screen**, keeping the ship icon on a dashed reference trajectory. The centre display shows (1) the planned trajectory as a dashed line, (2) a predicted line ("where you go if you hold these inputs"), (3) the ship icon, (4) one short key hint, e.g. "Low: hold S ▲" or "✓ On track". Role 2 computes all of it from the physics (ascent profile, orbit, entry and landing) and sends it a few times per second.
+- **Actual:** the centre display draws an altitude curve from `flight:telemetry`; it can't show a planned or predicted line or a hint yet, so Role 2 can't wire the steering to it
+- **Suggested fix:**
+  - Add `cockpit.userData.setTrajectory({ planned: [[x, y], …], predicted: [[x, y], …], ship: { x, y, heading }, view: 'side' | 'top', hint: { text, level: 'ok' | 'warn' } })` (points in screen units 0–1, or metres plus a scale; tell Role 2 which you prefer and Role 2 will match it). Calling it with `null` hands the display back to your own telemetry drawing.
+  - **Treat it like `setControls`: a stable API.** Every future cockpit redesign must keep `setTrajectory` and `setControls` working with the same arguments, keep the trajectory display large and readable from the default pilot view (dashed and predicted lines distinguishable, hint text legible at 1280×720), and document both in the README `cockpit` row. If an argument must change, write it here first so Role 2 updates the steering in the same push.
+  - Role 2 will keep a fallback: if `setTrajectory` is missing, the old HUD markers come back, so a cockpit without it never leaves the player unable to fly.
+- **Status:** open
+
+### Phase 0 (strap-in): pressable cockpit buttons HATCH, CABIN, O2 and a new ARM ENGINE
+- **For:** Role 3 · **From:** Role 2 + Role 4 (Minh Vuong; our team now also keeps Role 4) · **Found:** 2026-11-07 on dev 3d4fa59 · **Severity:** polish
+- **Where:** the button row under the cockpit displays (`src/graphics/cockpitParts.js` / `interiors.js`): it already has O2, CABIN, HATCH (and FIRE, DUMP, DOCK, PARA, ENTRY); there is no ARM ENGINE button
+- **Steps:** `/?debug=1&state=LAUNCH`, look down at the button row
+- **Expected:** the agreed Phase 0 pre-launch checklist: before the countdown the player closes the HATCH, pressurises the CABIN, opens O2 and presses ARM ENGINE, each light turning from amber to green (red for ARMED), with a short press animation
+- **Actual:** the buttons are static models without names or an API, and ARM ENGINE doesn't exist
+- **Suggested fix:** name the buttons (`btn:hatch`, `btn:cabin`, `btn:o2`, `btn:arm`, …), add an ARM ENGINE button, and expose `cockpit.userData.setButton(id, state)` with `state` `'off' | 'amber' | 'green' | 'red'` plus a `press(id)` animation. Until then Role 2 shows the checklist on the HUD (keys 1–4) and calls `setButton?.()` so it lights up as soon as it exists.
+- **Status:** open
+
+### Phase 0 sounds: harness click, hatch lock, cabin pressurise hiss, O2 flow, switch toggle
+- **For:** Role 3 · **From:** Role 2 + Role 4 (Minh Vuong) · **Found:** 2026-11-07 on dev 3d4fa59 · **Severity:** polish
+- **Where:** `src/audio/index.js` (today: alarm.master, ambience.mars, ambience.ship, engine.rumble, gonogo.tick, impact.small, radio.blip, radio.static, suit.breath, ui.click, ui.error, ui.hover, ui.snap)
+- **Steps:** the Phase 0 strap-in and checklist
+- **Expected:** `crew.harness` (buckle click), `cockpit.hatch` (heavy latch), `cockpit.pressurise` (2–3 s hiss), `suit.o2flow` (soft flow, loopable), `cockpit.switch` (toggle click)
+- **Actual:** none of these exist; Role 2 falls back to `ui.click`
+- **Suggested fix:** add the five ids (CC0 sounds, credit in CREDITS.md). Role 2 plays them by these names and falls back to `ui.click` while they are missing.
 - **Status:** open
 
 ## Role 4: Story, Cruise & Knowledge
@@ -124,7 +171,7 @@ Copy this block. Keep each line short and factual. Don't commit screenshots.
 - **Expected:** the ending's own view
 - **Actual:** it assumes `graphics.camera` is fresh, but it is the camera the last state set. Role 2 now hands it back level, so it no longer shows a black wall, but the ending still shows the cockpit facing Earth from orbit after a failed launch.
 - **Suggested fix:** create the ending's own camera and pass it to `graphics.setView`
-- **Status:** open
+- **Status:** fixed on `role4-story` (story, cruise and report each use their own camera; the ending view hides the cockpit), Role 3 please verify
 
 ### Reset money on the bankrupt ending
 - **For:** Role 4 · **From:** Role 1 (in `docs/DECISIONS.md`) · **Found:** 2026-11-07 on dev 0722c4e · **Severity:** bug
@@ -133,6 +180,26 @@ Copy this block. Keep each line short and factual. Don't commit screenshots.
 - **Expected:** the player can start over
 - **Actual:** the contract resets money only when it is below $0, but bankruptcy is declared below $1.0M (`balance.insolvencyFloor`), so the player stays stuck
 - **Suggested fix:** on `bankrupt`, reset money to `balance.startMoney`
-- **Status:** open
+- **Status:** fixed on `role4-story` (`endingId: 'bankrupt'` or money below $0 resets to `balance.startMoney` and returns to HANGAR), Role 1 please verify
 
 ## Needs the whole team
+
+### How the game should use the two rovers
+- **For:** all four roles · **From:** Role 3 (dtri) · **Found:** 2026-11-07 on dev 8e9af5c · **Severity:** decision
+- **Where:** `assets.get('rover')` is the futuristic space-SUV rover (Blender model, the default Role 2 drives today); `assets.get('rover:lrv')` is a realistic Apollo LRV with the same interface (same size, wheel pivots, `setDust`; its seat is the default eye). Both drive with Role 2's `RoverController` unchanged.
+- **Steps:** see both in `/sandbox/role3.html?view=rover` and `?view=roverLrv`
+- **Expected:** a team decision on how the LRV appears in the game
+- **Actual:** only `rover` is used. Options: (1) the player chooses a rover before the EVA (Role 1 or Role 2 UI); (2) both are parked by the lander and the player drives whichever they walk to (Role 2); (3) the LRV is a relic of an earlier mission parked near the Halcyon-1 wreck, still drivable, with a story log (Role 2 places it, Role 4 writes the log).
+- **Suggested fix:** pick one; no contract change is needed for any of them
+- **Decision (Role 2's human, Minh Vuong, 2026-11-07):** both rovers are parked by the lander. The **Apollo LRV** (`rover:lrv`) is drivable from the start; the **MR-01** (`rover`) is locked until Mars Exploration reaches 50 % (then a calm unlock notice), with concept specs (about 20 km/h, 30 kWh) so unlocking it matters. Implemented by Role 2 in f2ca02c; `?debug=1` + U unlocks it.
+- **Status:** decided, built in f2ca02c; the team please confirm or object
+
+### Allow PRELAUNCH → HANGAR (and LAUNCH → HANGAR before liftoff) so the player can SCRUB a launch
+- **For:** all four roles · **From:** Role 2 + Role 4 (Minh Vuong) · **Found:** 2026-11-07 on dev 3d4fa59 · **Severity:** decision
+- **Where:** `src/core/contract.js` `TRANSITIONS` (`PRELAUNCH: ['LAUNCH']`, `LAUNCH: ['ORBIT']`)
+- **Steps:** the agreed Phase 0: the launch director polls the stations ("Booster? GO. Guidance? GO. Weather? NO-GO: 2 °C, seals not rated"), then asks "Flight crew, are you GO?"
+- **Expected:** the player can answer GO or **SCRUB** (postpone). SCRUB costs a scrub fee and returns to the hangar to fix the ship, like a real launch scrub ("NASA has scrubbed hundreds of launches"). Going on despite a NO-GO is how the Challenger lesson happens.
+- **Actual:** the contract has no way back from PRELAUNCH or LAUNCH to HANGAR except through ENDING, and there is no scrub ending
+- **Suggested fix:** add `'HANGAR'` to `PRELAUNCH` and `LAUNCH` in `TRANSITIONS` (Role 2 only requests it before liftoff), and a `scrubFee` (proposed $100,000) in `src/core/balance.json`. Role 2/4 will show the SCRUB choice only when the contract allows it, so nothing breaks before the team agrees.
+- **Status:** open, needs all four people to agree
+
