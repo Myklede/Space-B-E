@@ -115,7 +115,7 @@ Copy this block. Keep each line short and factual. Don't commit screenshots.
 - **Expected:** the ending's own view
 - **Actual:** it assumes `graphics.camera` is fresh, but it is the camera the last state set. Role 2 now hands it back level, so it no longer shows a black wall, but the ending still shows the cockpit facing Earth from orbit after a failed launch.
 - **Suggested fix:** create the ending's own camera and pass it to `graphics.setView`
-- **Status:** open
+- **Status:** fixed on `role4-story` (story, cruise and report each use their own camera; the ending view hides the cockpit), Role 3 please verify
 
 ### Reset money on the bankrupt ending
 - **For:** Role 4 · **From:** Role 1 (in `docs/DECISIONS.md`) · **Found:** 2026-11-07 on dev 0722c4e · **Severity:** bug
@@ -124,7 +124,7 @@ Copy this block. Keep each line short and factual. Don't commit screenshots.
 - **Expected:** the player can start over
 - **Actual:** the contract resets money only when it is below $0, but bankruptcy is declared below $1.0M (`balance.insolvencyFloor`), so the player stays stuck
 - **Suggested fix:** on `bankrupt`, reset money to `balance.startMoney`
-- **Status:** open
+- **Status:** fixed on `role4-story` (`endingId: 'bankrupt'` or money below $0 resets to `balance.startMoney` and returns to HANGAR), Role 1 please verify
 
 ### Cabin props open Guidebook entries that don't exist yet
 - **For:** Role 4 · **From:** Role 2 (Minh Vuong) · **Found:** 2026-11-07 on dev 691ae19 · **Severity:** polish
@@ -133,7 +133,7 @@ Copy this block. Keep each line short and factual. Don't commit screenshots.
 - **Expected:** a short real fact about crew life (spec §7.1, §13)
 - **Actual:** `guidebook:open` arrives with `crew-exercise`, `crew-water`, `crew-food` or `family-photo`, and the stub shows only the id
 - **Suggested fix:** create entries with those ids (or tell Role 2 the ids you prefer). Mars tasks can use `registerInteractable({ id, state: 'SURFACE', position, prompt, hold, onUse })`, see README "Role 2 APIs".
-- **Status:** open
+- **Status:** fixed on `role4-story` (all four ids are in `src/guidebook/entries.json` and show as a card; Q closes it), Role 2 please verify
 
 ### Pale Blue Dot text lives in Role 2's code; Role 4 owns the wording
 - **For:** Role 4 · **From:** Role 2 (Minh Vuong) · **Found:** 2026-11-07 on dev c0b99d6 (feature in Role 2's push after f93ee5a) · **Severity:** polish

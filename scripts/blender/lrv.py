@@ -311,11 +311,15 @@ material('wdisc', (1, 1, 1), 0.75, 0.25, a_dc, a_aln, 0.3, vcol=False, ao=False)
 material('whub', (0.22, 0.21, 0.20), 0.6, 0.5, vcol=False, ao=False)
 
 # ------------------------------------------------------------------ geometry accumulator (game coordinates)
+CURRENT = ['']   # name of the builder function currently adding parts (for reports)
+
 class Acc:
     def __init__(self):
         self.m = {}
+        self.parts = []   # (tag, material, verts, faces) per added part, for the floating-part check
     def add(self, mat, geo, uv=None):
         verts, faces = geo
+        self.parts.append((CURRENT[0], mat, [tuple(v) for v in verts], [tuple(f) for f in faces]))
         d = self.m.setdefault(mat, {'v': [], 'f': [], 'uv': []})
         o = len(d['v'])
         d['v'] += [tuple(v) for v in verts]
@@ -442,7 +446,7 @@ class B:
         self.acc.add(mat, geo, uv)
     def bolt(self, p, nrm, r=0.008, h=0.005, mat='steel'):
         p = Vector(p); n = Vector(nrm).normalized()
-        self.tube(mat, p, p + n * h, r, 6)
+        self.tube(mat, p - n * 0.003, p + n * h, r, 6)
     def cable(self, pts, r=0.006, mat='rubber', samples=5):
         """Catmull-Rom curve through pts, as a chain of thin tubes."""
         P = [Vector(p) for p in pts]
@@ -647,11 +651,11 @@ def fender_parts(sx, sz):
         fender_shell(b, 28, 180, ramp=1)
     else:
         fender_shell(b, 0, 152, ramp=-1)
-    xk = -sx * 0.15
-    for dz in (-0.10, 0.10):          # struts from the fender's inner rim to the knuckle
-        b.tube('alu', (xk, 0.40, dz), (-sx * 0.225, 0.20, dz * 0.2), 0.011, 6)
+    xk = -sx * 0.14
+    for dz in (-0.035, 0.035):        # struts from the fender's inner rim to the knuckle
+        b.tube('alu', (xk, 0.40, dz), (-sx * 0.225, 0.20, dz * 0.3), 0.011, 6)
     b.box('steel', 0.03, 0.03, 0.10, xk, 0.405, 0.0, bevel=0.004)
-    b.bolt((xk, 0.42, -0.04), (0, 1, 0)); b.bolt((xk, 0.42, 0.04), (0, 1, 0))
+    b.bolt((xk, 0.42, -0.04), (0, 1, 0), 0.006, 0.004); b.bolt((xk, 0.42, 0.04), (0, 1, 0), 0.006, 0.004)
     return b
 
 def rbox(b, mat, w, h, d, x, y, z, r=0.02, rx=0, ry=0, rz=0):
@@ -668,7 +672,7 @@ def chassis(b):
                 b.tube('alu', (sx * 0.50, 0.50, z), (sx * 0.50, 0.565, z), 0.012)
         for z in (-0.49, 0.83):   # hinge brackets between the three sections
             b.box('steel', 0.09, 0.10, 0.12, sx * 0.50, 0.50, z, bevel=0.01)
-            b.bolt((sx * 0.50, 0.555, z - 0.03), (0, 1, 0)); b.bolt((sx * 0.50, 0.555, z + 0.03), (0, 1, 0))
+            b.bolt((sx * 0.50, 0.55, z - 0.03), (0, 1, 0)); b.bolt((sx * 0.50, 0.55, z + 0.03), (0, 1, 0))
     for z0, z1 in sect:
         L, zc = z1 - z0, (z0 + z1) / 2
         for z in (z0 + 0.02, z1 - 0.02, zc):
@@ -678,9 +682,9 @@ def chassis(b):
             za, zb = z0 + L * k / n, z0 + L * (k + 1) / n
             b.tube('alu', (-0.50, 0.47, za), (0.50, 0.47, zb), 0.011, 6)
             b.tube('alu', (0.50, 0.47, za), (-0.50, 0.47, zb), 0.011, 6)
-    b.box('floor', 0.90, 0.014, 0.76, 0, 0.545, -0.91, bevel=0.003)
-    b.box('floor', 0.90, 0.014, 1.24, 0, 0.545, 0.17, bevel=0.003)
-    b.box('floor', 0.90, 0.014, 0.50, 0, 0.545, 1.13, bevel=0.003)
+    b.box('floor', 0.98, 0.014, 0.76, 0, 0.545, -0.91, bevel=0.003)
+    b.box('floor', 0.98, 0.014, 1.24, 0, 0.545, 0.17, bevel=0.003)
+    b.box('floor', 0.98, 0.014, 0.50, 0, 0.545, 1.13, bevel=0.003)
     for z in (-1.2, -0.7, -0.35, 0.0, 0.35, 0.7, 1.0, 1.25):   # fasteners along the floor panel edges
         for sx in (-1, 1):
             b.bolt((sx * 0.445, 0.552, z), (0, 1, 0), 0.007, 0.004)
@@ -743,7 +747,7 @@ def console(b):
     b.box('beta', 0.40, 0.012, 0.20, 0, 0.99, -0.54, rx=-0.10, bevel=0.003)
     for sx in (-1, 1):
         b.tube('alu', (sx * 0.20, 0.97, -0.44), (sx * 0.22, 0.99, -0.62), 0.006, 5)
-    face = [(-0.19, 0.835, -0.398), (0.19, 0.835, -0.398), (0.19, 0.965, -0.398), (-0.19, 0.965, -0.398)]
+    face = [(-0.19, 0.835, -0.4005), (0.19, 0.835, -0.4005), (0.19, 0.965, -0.4005), (-0.19, 0.965, -0.4005)]
     b.raw('dial', (face, [(0, 1, 2, 3)]), [[(0, 0), (1, 0), (1, 1), (0, 1)]])
     for sx in (-1, 0, 1):
         b.box('steel', 0.03, 0.03, 0.02, sx * 0.14, 0.82, -0.40, bevel=0.004)
@@ -759,10 +763,11 @@ def blanket_box(b, x, y, z, w, h, d, mirror=True, tag=True):
         b.box('steel', 0.02, 0.035, 0.03, x + sx * (w / 2 - 0.02), y - h / 2 + 0.02, z - d / 2 + 0.03, bevel=0.003)
         b.bar('strap', (x + sx * 0.06, y + h / 2 + 0.008, z - d / 2 + 0.02), (x + sx * 0.06, y + h / 2 + 0.008, z + d / 2 - 0.02), 0.03, 0.006, 0.001)
     if mirror:   # dust-cover mirror hinged along the top rear edge
-        b.box('mirror', min(w * 0.55, 0.22), 0.004, 0.13, x, y + h / 2 + 0.05, z + d / 2 - 0.05, rx=-0.45, bevel=0.001)
-        b.tube('steel', (x - 0.1, y + h / 2 + 0.005, z + d / 2 - 0.015), (x + 0.1, y + h / 2 + 0.005, z + d / 2 - 0.015), 0.006, 6)
+        hy, hz = y + h / 2 + 0.004, z + d / 2 - 0.02          # hinge line along the top rear edge
+        b.box('mirror', min(w * 0.55, 0.22), 0.004, 0.13, x, hy + 0.0283, hz - 0.0585, rx=0.45, bevel=0.0005)
+        b.tube('steel', (x - 0.1, hy, hz), (x + 0.1, hy, hz), 0.006, 6)
     if tag:
-        xx_ = x - w / 2 - 0.002
+        xx_ = x - w / 2 - 0.0008
         b.raw('placard', ([(xx_, y + 0.02, z - 0.07), (xx_, y + 0.02, z + 0.07), (xx_, y + 0.08, z + 0.07), (xx_, y + 0.08, z - 0.07)], [(0, 1, 2, 3)]), [[(0, 0), (1, 0), (1, 1), (0, 1)]])
 
 def front_equipment(b):
@@ -781,7 +786,7 @@ def front_equipment(b):
     b.lathe('tvblack', [(0, 0), (0.055, 0), (0.055, 0.16), (0.05, 0.175), (0.0, 0.175)], (0.30, 0.93, -1.34), (0, 0.02, -1), 20)
     b.lathe('lens', [(0, 0.175), (0.036, 0.175), (0.044, 0.20), (0.0, 0.2)], (0.30, 0.93, -1.34), (0, 0.02, -1), 16)
     b.lathe('steel', [(0.058, 0.11), (0.058, 0.125), (0.05, 0.125), (0.05, 0.11)], (0.30, 0.93, -1.34), (0, 0.02, -1), 16)
-    b.box('tvblack', 0.06, 0.05, 0.08, 0.30, 0.995, -1.28, bevel=0.005)      # viewfinder hood
+    b.box('tvblack', 0.06, 0.05, 0.08, 0.30, 0.99, -1.40, bevel=0.005)      # viewfinder hood
 
 def antennas(b):
     # high-gain umbrella antenna: braced tall mast at the front right, tilted ribbed mesh dish
@@ -827,6 +832,8 @@ def antennas(b):
         pts.append((lx + 0.035 * math.cos(a), 1.15 + q * 0.5, lz + 0.035 * math.sin(a)))
     for a_, b_ in zip(pts, pts[1:]):
         b.tube('brass', a_, b_, 0.0025, 3)
+    for q in (0, 20, 40, 60):          # thin spokes tie the helix to the mast
+        b.tube('brass', (lx, pts[q][1], lz), pts[q], 0.0025, 3)
     b.lathe('beta', [(0, 0), (0.024, 0), (0.024, 0.20), (0.0, 0.20)], (lx, 1.90, lz), (0, 1, 0), 10)
     b.lathe('steel', [(0.0, 0), (0.032, 0), (0.032, 0.025), (0.0, 0.025)], (lx, 1.88, lz), (0, 1, 0), 10)
     b.tube('alu', (lx, 0.9, lz), (lx + 0.12, 0.62, lz + 0.2), 0.005, 5)
@@ -835,8 +842,8 @@ def pallet(b):
     blanket_box(b, 0.35, 0.80, 0.98, 0.34, 0.50, 0.22, mirror=False)
     rbox(b, 'alu', 0.34, 0.56, 0.20, -0.30, 0.83, 0.96, 0.012)
     for sx in (-1, 1):
-        b.tube('alu', (sx * 0.55, 0.57, 0.84), (sx * 0.55, 1.28, 0.90), 0.014)
-        b.tube('alu', (sx * 0.55, 0.57, 1.10), (sx * 0.55, 1.28, 0.95), 0.012)
+        b.tube('alu', (sx * 0.50, 0.56, 0.89), (sx * 0.50, 1.28, 0.90), 0.014)
+        b.tube('alu', (sx * 0.50, 0.56, 1.10), (sx * 0.50, 1.28, 0.95), 0.012)
     b.tube('alu', (-0.55, 1.28, 0.90), (0.55, 1.28, 0.90), 0.014)
     b.tube('alu', (-0.55, 0.95, 0.88), (0.55, 0.95, 0.88), 0.011)
     rbox(b, 'foil', 0.30, 0.22, 0.26, 0.30, 0.68, 1.24, 0.03)
@@ -844,14 +851,14 @@ def pallet(b):
     for dz in (-0.12, 0.12):
         b.box('steel', 0.05, 0.03, 0.03, -0.20, 0.82, 1.22 + dz, bevel=0.004)
     for tx, ln in [(-0.40, 1.05), (-0.34, 0.95), (-0.28, 1.0), (-0.22, 0.85), (-0.16, 0.98)]:   # long-handled tools in clips
-        b.tube('alu', (tx, 0.80, 1.42), (tx + 0.05, 0.80 + ln * 0.5, 1.50), 0.011, 6)
-        b.box('steel', 0.07, 0.07, 0.02, tx + 0.05, 0.80 + ln * 0.5 + 0.04, 1.50, bevel=0.004)
-    b.box('alu', 0.10, 0.012, 0.16, -0.30, 1.22, 1.52, rx=-0.5, bevel=0.003)       # scoop
+        b.tube('alu', (tx, 0.78, 1.36), (tx + 0.05, 0.80 + ln * 0.5, 1.50), 0.011, 6)
+        hw_ = 0.12 if tx == -0.34 else 0.07          # the second tool carries the wide scoop head
+        b.box('steel', hw_, 0.07, 0.02, tx + 0.05, 0.80 + ln * 0.5 + 0.03, 1.50, bevel=0.004)
     for dx in (0.0, 0.22):          # sample bags with drawstrings
         rbox(b, 'beta', 0.20, 0.16, 0.22, 0.12 + dx, 0.64, 1.28 if dx == 0 else 1.36, 0.03)
-        b.tube('strap', (0.12 + dx - 0.1, 0.73, 1.28), (0.12 + dx + 0.1, 0.73, 1.28), 0.004, 4)
-    b.tube('alu', (-0.50, 0.55, 1.50), (0.50, 0.55, 1.50), 0.015)
-    b.raw('placard', ([(0.45, 0.60, 1.43), (0.45, 0.60, 1.46), (0.45, 0.66, 1.46), (0.45, 0.66, 1.43)], [(0, 1, 2, 3)]), [[(0, 0), (1, 0), (1, 1), (0, 1)]])
+        b.tube('strap', (0.12 + dx - 0.1, 0.716, 1.28 if dx == 0 else 1.36), (0.12 + dx + 0.1, 0.716, 1.28 if dx == 0 else 1.36), 0.005, 4)
+    b.tube('alu', (-0.50, 0.50, 1.43), (0.50, 0.50, 1.43), 0.015)
+    b.raw('placard', ([(0.4408, 0.60, 1.33), (0.4408, 0.60, 1.36), (0.4408, 0.66, 1.36), (0.4408, 0.66, 1.33)], [(0, 1, 2, 3)]), [[(0, 0), (1, 0), (1, 1), (0, 1)]])
 
 def cables(b):
     b.cable([(0.46, 0.70, -1.10), (0.55, 0.60, -0.9), (0.35, 0.585, -0.75), (0.15, 0.62, -0.62), (0.05, 0.80, -0.50)], 0.007)
@@ -866,7 +873,9 @@ def cables(b):
 # ------------------------------------------------------------------ build
 body = B()
 for fn in (chassis, wheel_stations, seats, console, front_equipment, antennas, pallet, cables):
+    CURRENT[0] = fn.__name__
     fn(body)
+CURRENT[0] = 'fender'
 wheel = build_wheel()
 body_mesh, body_tris = mesh_from_acc('body_mesh', body.acc, True)
 wheel_mesh, wheel_tris = mesh_from_acc('wheel_mesh', wheel.acc, False)
@@ -946,6 +955,58 @@ def clearance_report():
     print('LRV worst clearance %.1f cm' % (worst * 100))
 
 clearance_report()
+
+# ------------------------------------------------------------------ floating-part check
+def floating_report():
+    """Every separate part (tube, box, bracket, fender shell ...) must touch (within 2 mm) another part, and every connected
+    group of parts must reach the chassis. Fenders are tested in world space at rest, against the body."""
+    from mathutils.bvhtree import BVHTree
+    TOL = 0.002
+    parts = [(t, m, v, f) for t, m, v, f in body.acc.parts]
+    for name, pivot, fo in pivots:
+        sx = 1 if pivot.location.x > 0 else -1
+        sz = -1 if name[5] == 'F' else 1
+        off = Vector((sx * HT, R, sz * HB))
+        for t, m, v, f in fender_parts(sx, sz).acc.parts:
+            parts.append((name + ':' + t, m, [tuple(Vector(p) + off) for p in v], f))
+    n = len(parts)
+    bvhs, boxes = [], []
+    for t, m, v, f in parts:
+        vs = [Vector(p) for p in v]
+        bvhs.append(BVHTree.FromPolygons(vs, f))
+        a = np.array(v); boxes.append((a.min(0) - TOL, a.max(0) + TOL))
+    lo = np.array([b[0] for b in boxes]); hi = np.array([b[1] for b in boxes])
+    parent = list(range(n))
+    def find(i):
+        while parent[i] != i:
+            parent[i] = parent[parent[i]]; i = parent[i]
+        return i
+    for i in range(n):
+        cand = np.where(np.all(lo <= hi[i], 1) & np.all(hi >= lo, 1))[0]
+        vi = [Vector(p) for p in parts[i][2]]
+        for j in cand:
+            if j <= i or find(i) == find(j): continue
+            if bvhs[i].overlap(bvhs[j]) or any(bvhs[j].find_nearest(p, TOL)[0] is not None for p in vi) \
+               or any(bvhs[i].find_nearest(Vector(p), TOL)[0] is not None for p in parts[j][2]):
+                parent[find(i)] = find(j)
+    roots = {}
+    for i in range(n): roots.setdefault(find(i), []).append(i)
+    anchor = find(next(i for i, p in enumerate(parts) if p[0] == 'chassis'))
+    bad = [grp for r, grp in roots.items() if r != anchor]
+    print('LRV floating parts: %d of %d parts (%d separate groups not connected to the chassis)' % (sum(len(g) for g in bad), n, len(bad)))
+    anchored = [i for i in range(n) if find(i) == anchor]
+    for grp in sorted(bad, key=lambda g: -len(g)):
+        ctr = np.mean([np.mean(parts[i][2], 0) for i in grp], 0)
+        best = (9.0, None)
+        for i in grp:
+            for j in anchored:
+                if np.any(lo[j] - 0.3 > hi[i]) or np.any(hi[j] + 0.3 < lo[i]): continue
+                for p in parts[i][2][::3]:
+                    d = bvhs[j].find_nearest(Vector(p))[3]
+                    if d is not None and d < best[0]: best = (d, parts[j][0] + '/' + parts[j][1])
+        print('   FLOATING group of %d: %s at game (%.2f, %.2f, %.2f), nearest %.1f cm to %s' % (len(grp), sorted({parts[i][0] + '/' + parts[i][1] for i in grp})[:4], *ctr, best[0] * 100, best[1]))
+
+floating_report()
 
 # ------------------------------------------------------------------ ambient occlusion bake (Cycles, second UV map on the body)
 def bake_ao():
