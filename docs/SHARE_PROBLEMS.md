@@ -94,6 +94,15 @@ Copy this block. Keep each line short and factual. Don't commit screenshots.
 - **Suggested fix:** tilt the default look so the ground shows, or hint that C switches to the outside camera
 - **Status:** open
 
+### `stats.reliability` never matters in flight
+- **For:** Role 2 · **From:** Role 1 (Myklede) · **Found:** 2026-11-07 on dev 3d4fa59 · **Severity:** decision
+- **Where:** `src/flight/` (nothing reads `spec.stats.reliability`; only the builder's Go/No-Go uses it for `LOW_RELIABILITY`)
+- **Steps:** `/?debug=1`, build Cold Morning (reliability under 80 %) and Reliable (about 91 %), launch both
+- **Expected:** TEAM_PROMPT §5.3: "cheap parts have a higher hidden failure chance (shown as a reliability %)". The builder now spends real design on it: cheap seals, materials, engine clusters (`r^n`, or engine-out), pad equipment and escape towers all move the number
+- **Actual:** both ships fly exactly the same; the reliability the player paid for never shows up
+- **Suggested fix:** one roll per flight phase, e.g. a chance of `(1 − reliability) / 3` at liftoff, max-Q and staging/entry, that triggers an existing failure (`rud`, or an engine-out that cuts thrust); `spec.engines.length > 1` could mean the ship survives losing one engine. Needs agreement on which ending a random failure uses
+- **Status:** open
+
 ## Role 3: Graphics, Audio & Core
 
 ### `rocketPart:` names with no match show as holograms in the flight views
@@ -103,6 +112,7 @@ Copy this block. Keep each line short and factual. Don't commit screenshots.
 - **Expected:** a plain cylinder or box of about the right size for a part type the matcher does not know (the builder's `ShipSpec.parts` now carries types such as `avionics_ring_m`, `interstage_m`, `truss_m`, `centerbody_m`, `paf_m`, `helium_copv`, `srb_s`, `kick_motor_s`)
 - **Actual:** `hologram('rocketPart:<id>')` for every unmatched id, so the outside view shows glowing placeholder boxes in the stack
 - **Suggested fix:** add matchers for `ring|interstage|truss|centerbody|paf|spin` (a short cylinder, height from a `PART_HEIGHT` default of 1 m), `sphere|copv` (a small sphere) and `srb|kick_motor` (a slim cylinder with a cone); or accept a `height` hint in the id lookup
+- **More ids (2026-11-07, Role 1, dev 3d4fa59):** the design page now builds whole sections from real rockets, so about 80 more types can reach `ShipSpec.parts` with no match. Prefixes that would cover them: `thrust_` (thrust structures, a short wide cylinder), `adapter_`, `interstage`, `avionics`, `truss`, `centerbody`, `intertank`, `paf`, `spin_table`, `cable_raceway`, `feedline` (short cylinder); `srb`, `booster_liquid`, `kick_motor`, `les_tower`, `las_`, `abort_pusher` (slim cylinder with a cone); `fairing`, `nosecap`, `bpc_` (nose); `copv`, `sphere` (small sphere); `aft_fairing`, `verniers`, `jet_vanes`, `gimbal` (small engine-side parts, can be skipped). An engine cluster (up to nine engines) is one entry in `ShipSpec.parts` on the axis but repeats in `ShipSpec.engines`, one per engine, if you want to draw several bells.
 - **Status:** open
 
 ## Role 4: Story, Cruise & Knowledge
