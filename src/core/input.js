@@ -5,6 +5,7 @@ const pressHandlers = new Map(); // code -> Set<fn>
 let escapeHandler = null;
 let mouseX = 0;
 let mouseY = 0;
+let wheelY = 0;
 let selfRelease = false; // we released the pointer ourselves, so it wasn't the player pressing Esc
 
 function typingInField() {
@@ -40,6 +41,12 @@ export const input = {
     mouseY = 0;
     return delta;
   },
+  /** Mouse wheel deltaY in pixels (lines x16, pages x window height) summed since the last call; resets like mouseDelta(). Positive = wheel down. */
+  wheelDelta() {
+    const delta = wheelY;
+    wheelY = 0;
+    return delta;
+  },
   lockPointer() {
     try {
       const result = document.body.requestPointerLock?.();
@@ -62,6 +69,7 @@ export const input = {
     down.clear();
     mouseX = 0;
     mouseY = 0;
+    wheelY = 0;
   },
 };
 
@@ -91,3 +99,23 @@ window.addEventListener('mousemove', (event) => {
   mouseX += event.movementX;
   mouseY += event.movementY;
 });
+
+// True when something between the event target and the game root can scroll itself (Guidebook, report, ...).
+function insideScrollable(target) {
+  for (let el = target; el && el !== document.body && el !== document.documentElement; el = el.parentElement) {
+    if (el.tagName === 'CANVAS') return false;
+    const style = getComputedStyle(el);
+    const scrolls = /(auto|scroll)/.test(style.overflowY) && el.scrollHeight > el.clientHeight + 1;
+    if (scrolls) return true;
+  }
+  return false;
+}
+
+// Non-passive so we can stop the page scrolling while the player zooms; scrollable HTML panels keep their own wheel.
+window.addEventListener('wheel', (event) => {
+  if (typingInField()) return;
+  if (insideScrollable(event.target)) return;
+  const scale = event.deltaMode === 1 ? 16 : event.deltaMode === 2 ? window.innerHeight : 1;
+  wheelY += event.deltaY * scale;
+  event.preventDefault();
+}, { passive: false });
