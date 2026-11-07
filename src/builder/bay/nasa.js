@@ -1,6 +1,7 @@
 // Real spacecraft hardware for the catalogue parts: public-domain models from github.com/nasa/NASA-3D-Resources
 // (public/assets/nasa/*.glb), cut out by node name where a file holds a whole vehicle, then normalised so every
 // part stands on y = 0, centred on the stack axis, scaled to its catalogue height. Credit: NASA.
+// Files load on demand (requestPartArt): nothing downloads until a part is on the stand or on the design page.
 import * as THREE from 'three';
 import { GLTFLoader } from 'three/addons/loaders/GLTFLoader.js';
 import { DRACOLoader } from 'three/addons/loaders/DRACOLoader.js';
@@ -19,8 +20,8 @@ loader.setDRACOLoader(draco);
  */
 export const NASA_PARTS = {
   engine_s: { model: 'shuttle_engines', up: 'x', tint: 0x8d9399, forceTint: true, metalness: 0.7, roughness: 0.42 }, // a Space Shuttle main engine
-  engine_m: { model: 'shuttle_engines', up: 'x', tint: 0x8d9399, forceTint: true, metalness: 0.7, roughness: 0.42 }, // a Space Shuttle main engine
-  engine_l: { model: 'shuttle_engines', up: 'x', tint: 0x8d9399, forceTint: true, metalness: 0.7, roughness: 0.42 }, // a Space Shuttle main engine
+  engine_m: { model: 'shuttle_engines', up: 'x', tint: 0x8d9399, forceTint: true, metalness: 0.7, roughness: 0.42 },
+  engine_l: { model: 'shuttle_engines', up: 'x', tint: 0x8d9399, forceTint: true, metalness: 0.7, roughness: 0.42 },
   capsule_s: { model: 'stardust_capsule', up: 'short', tint: 0xe6e3dc, roughness: 0.5 },
   capsule_m: { model: 'esas_crew_module', up: 'z', flip: true, tint: 0xd3d1cb, roughness: 0.6, metalness: 0.15 },
   capsule_l: { model: 'esas_crew_module', up: 'z', flip: true, tint: 0xd3d1cb, roughness: 0.6, metalness: 0.15 },
@@ -28,23 +29,30 @@ export const NASA_PARTS = {
   solar_panel: { model: 'satkit_wings1', up: 'long', thin: true },
   radiator: { model: 'satkit_wings1', up: 'long', thin: true, tint: 0xd8dde2 },
   antenna_low: { model: 'satkit_radio1', up: 'long' },
-  antenna_high: { model: 'satkit_radio3', up: 'long', thin: true },
+  antenna_medium: { model: 'satkit_radio2', up: 'long', thin: true, tint: 0xd9dde2 },
+  antenna_high: { model: 'voyager_antenna', nodes: ['dish001', 'dish.001'], up: 'y', tint: 0xe4e7ea, roughness: 0.4, metalness: 0.5 }, // Voyager's dish (GLTFLoader strips the dot from node names)
+  relay_sat: { model: 'ladee', up: 'long', tint: 0xcfd3d8 },
   battery: { model: 'oru', up: 'y', tint: 0xcfd3d8 },
   co2_scrubber: { model: 'oru', up: 'y', tint: 0xbfc7cf },
   water_recycler: { model: 'oru', up: 'y', tint: 0xc9d6df },
+  fuel_cell: { model: 'oru', up: 'y', tint: 0x9fb6c7 },
   radiation_shelter: { model: 'docking_system', up: 'x', tint: 0xd9dcdf },
   o2_bottle: { model: 'satkit_body1', up: 'long', tint: 0xe4e7ea },
-  parachute: { model: 'satkit_body2', up: 'long', tint: 0xe08a3a },
+  o2_tank_l: { model: 'satkit_body1', up: 'long', tint: 0xf1f0ec },
   reaction_wheel: { model: 'satkit_body3', up: 'long', tint: 0xb9bec4 },
-  spectrometer: { model: 'satkit_body3', up: 'long', tint: 0x9fb6c7 },
+  spectrometer: { model: 'cos_spectrograph', up: 'long', tint: 0x9fb6c7, forceTint: true, metalness: 0.5, roughness: 0.45 }, // Hubble's Cosmic Origins Spectrograph
   ground_radar: { model: 'satkit_radio2', up: 'long', thin: true },
   drill: { model: 'satkit_body1', up: 'long', tint: 0x8d9298 },
+  camera_mast: { model: 'wfpc', up: 'long', tint: 0xcfd3d8, forceTint: true, metalness: 0.5, roughness: 0.45 }, // Hubble's Wide Field Planetary Camera
   sample_container: { model: 'satkit_body2', up: 'long', tint: 0xd0d4d8 },
+  sample_container_l: { model: 'satkit_body2', up: 'long', tint: 0xe4e7ea },
+  srb_s: { model: 'srb', up: 'x', tint: 0xece9e2, forceTint: true, metalness: 0.15, roughness: 0.45 }, // a Space Shuttle solid rocket booster
+  srb_m: { model: 'srb', up: 'x', tint: 0xece9e2, forceTint: true, metalness: 0.15, roughness: 0.45 },
 };
 
 const files = new Map(); // model slug -> Promise<scene|null>
 const protos = new Map(); // part id -> normalised Object3D (prototype)
-let ready = false;
+const pending = new Map(); // part id -> Promise
 
 const failures = new Map(); // slug -> message
 function loadFile(slug) {
@@ -128,28 +136,40 @@ function normalise(source, cfg, height) {
   return out;
 }
 
-/** Loads every model the table needs and builds the prototypes. Resolves when done (missing files are skipped). */
-export async function preloadNasaParts(catalog) {
-  const slugs = [...new Set(Object.values(NASA_PARTS).map((c) => c.model))];
-  const scenes = Object.fromEntries(await Promise.all(slugs.map(async (s) => [s, await loadFile(s)])));
-  for (const [partId, cfg] of Object.entries(NASA_PARTS)) {
-    const def = catalog.get(partId);
-    const scene = scenes[cfg.model];
-    if (!def || !scene) continue;
-    try {
-      const proto = normalise(scene, cfg, def.height);
-      if (proto) protos.set(partId, proto);
-    } catch (error) {
-      console.warn(`[nasa] could not prepare ${partId} from ${cfg.model}:`, error);
-    }
+/**
+ * Loads the model one part needs and builds its prototype. Resolves to true when real art is ready for it
+ * (false for parts without a model or when the file is missing). Never throws.
+ */
+export function requestPartArt(partId, catalog) {
+  const cfg = NASA_PARTS[partId];
+  const def = catalog.get(partId);
+  if (!cfg || !def) return Promise.resolve(false);
+  if (protos.has(partId)) return Promise.resolve(true);
+  if (!pending.has(partId)) {
+    pending.set(partId, loadFile(cfg.model).then((scene) => {
+      if (!scene) return false;
+      try {
+        const proto = normalise(scene, cfg, def.height);
+        if (proto) protos.set(partId, proto);
+        return !!proto;
+      } catch (error) {
+        console.warn(`[nasa] could not prepare ${partId} from ${cfg.model}:`, error);
+        return false;
+      }
+    }));
   }
-  ready = true;
-  if (failures.size) console.warn('[nasa] models that did not load:', Object.fromEntries(failures));
-  return protos.size;
+  return pending.get(partId);
 }
 
-export const nasaReady = () => ready;
+/** Loads the models for a list of part ids. Resolves to the number that now have real art. */
+export async function preloadNasaParts(catalog, ids = Object.keys(NASA_PARTS)) {
+  const results = await Promise.all([...new Set(ids)].map((id) => requestPartArt(id, catalog)));
+  if (failures.size) console.warn('[nasa] models that did not load:', Object.fromEntries(failures));
+  return results.filter(Boolean).length;
+}
+
 export const hasNasaArt = (partId) => protos.has(partId);
+export const wantsNasaArt = (partId) => !!NASA_PARTS[partId] && !protos.has(partId);
 
 /** A fresh copy of the real model for this part, or null when there is none (yet). */
 export function nasaPartArt(partId) {

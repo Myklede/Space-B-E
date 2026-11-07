@@ -1,8 +1,16 @@
-// Pictures of parts for the catalogue cards: each part's own 3D art rendered once to a small image (cached).
+// Pictures of parts for the cards and the detail panel: each part's own 3D art rendered once to a small image
+// (cached), or a baked PNG from public/assets/icons when one exists (data/icons.json lists them), so the cards never
+// wait for a model to download. Also renders any Object3D (the internals pieces) the same way.
 import * as THREE from 'three';
 import { assets } from '/src/graphics/index.js';
 import { partArt } from './bay/partArt.js';
+import { hasNasaArt, wantsNasaArt } from './bay/nasa.js';
 import { SIZE_SCALE, BASE_RADIUS } from './assembly.js';
+import baked from './data/icons.json';
+
+const safe = (key) => key.replace(/[^a-z0-9_.-]/gi, '-'); // the same file names the bake tool writes
+const BAKED = new Set((baked.icons ?? []).map(safe));
+const BAKED_BASE = '/assets/icons/';
 
 export function createIconRenderer({ renderer, size = 512 }) {
   const cache = new Map();
@@ -22,31 +30,47 @@ export function createIconRenderer({ renderer, size = 512 }) {
   canvas.width = canvas.height = size;
   const ctx = canvas.getContext('2d');
 
-  function render(def) {
-    const entry = { type: def.id, attach: def.attach, height: def.height, def, radius: BASE_RADIUS * (SIZE_SCALE[def.size] ?? 1) };
-    const art = partArt(entry);
+  function withState(fn) {
+    const prevTarget = renderer.getRenderTarget();
+    const prevClear = renderer.getClearColor(new THREE.Color());
+    const prevAlpha = renderer.getClearAlpha();
+    const prevViewport = renderer.getViewport(new THREE.Vector4());
+    const prevScissor = renderer.getScissor(new THREE.Vector4());
+    const prevScissorTest = renderer.getScissorTest();
+    try {
+      return fn();
+    } finally {
+      renderer.setRenderTarget(prevTarget);
+      renderer.setViewport(prevViewport);
+      renderer.setScissor(prevScissor);
+      renderer.setScissorTest(prevScissorTest);
+      renderer.setClearColor(prevClear, prevAlpha);
+    }
+  }
+
+  function renderObject(object, { view = new THREE.Vector3(0.9, 0.55, 1.1), yaw = -0.4, pad = 1.15 } = {}) {
     const holder = new THREE.Group();
-    holder.add(art);
-    holder.rotation.y = -0.4;
+    holder.add(object);
+    holder.rotation.y = yaw;
     scene.add(holder);
     scene.environment = assets.environment?.() ?? null;
     scene.environmentIntensity = 0.3; // untextured white hardware must not blow out
     const box = new THREE.Box3().setFromObject(holder);
     const sphere = box.getBoundingSphere(new THREE.Sphere());
-    const dist = sphere.radius / Math.sin((camera.fov * Math.PI) / 360) * 1.15;
-    camera.position.copy(sphere.center).add(new THREE.Vector3(0.9, 0.55, 1.1).normalize().multiplyScalar(dist));
+    const dist = sphere.radius / Math.sin((camera.fov * Math.PI) / 360) * pad;
+    camera.position.copy(sphere.center).add(view.clone().normalize().multiplyScalar(dist));
     camera.lookAt(sphere.center);
     camera.updateProjectionMatrix();
-    const prevTarget = renderer.getRenderTarget();
-    const prevClear = renderer.getClearColor(new THREE.Color());
-    const prevAlpha = renderer.getClearAlpha();
-    renderer.setRenderTarget(rt);
-    renderer.setClearColor(0x000000, 0);
-    renderer.clear();
-    renderer.render(scene, camera);
-    renderer.readRenderTargetPixels(rt, 0, 0, size, size, pixels);
-    renderer.setRenderTarget(prevTarget);
-    renderer.setClearColor(prevClear, prevAlpha);
+    withState(() => {
+      renderer.setRenderTarget(rt);
+      renderer.setClearColor(0x000000, 0);
+      renderer.clear();
+      renderer.setViewport(0, 0, size, size);
+      renderer.setScissor(0, 0, size, size);
+      renderer.setScissorTest(true);
+      renderer.render(scene, camera);
+      renderer.readRenderTargetPixels(rt, 0, 0, size, size, pixels);
+    });
     scene.remove(holder);
     holder.traverse((o) => { if (o.geometry) o.geometry.dispose(); if (o.material) (Array.isArray(o.material) ? o.material : [o.material]).forEach((m) => m.dispose?.()); });
     const image = ctx.createImageData(size, size);
@@ -58,79 +82,32 @@ export function createIconRenderer({ renderer, size = 512 }) {
     return canvas.toDataURL('image/png');
   }
 
-  // Side elevation for the vehicle diagram: orthographic, straight from the front, transparent, at a fixed
-  // pixels-per-metre so the stacked pictures line up like an engineering drawing.
-  const ortho = new THREE.OrthographicCamera(-1, 1, 1, -1, 0.01, 100);
-  const sideCache = new Map();
-  function renderSide(def, ppm) {
-    const entry = { type: def.id, attach: def.attach, height: def.height, def, radius: BASE_RADIUS * (SIZE_SCALE[def.size] ?? 1) };
-    const art = partArt(entry);
-    const holder = new THREE.Group();
-    holder.add(art);
-    scene.add(holder);
-    scene.environment = assets.environment?.() ?? null;
-    scene.environmentIntensity = 0.3;
-    const box = new THREE.Box3().setFromObject(holder);
-    const size = box.getSize(new THREE.Vector3());
-    const centre = box.getCenter(new THREE.Vector3());
-    const widthM = Math.max(size.x, 0.3) * 1.08, heightM = Math.max(size.y, 0.2) * 1.06;
-    const w = Math.min(size_, Math.max(32, Math.round(widthM * ppm))), hpx = Math.min(size_, Math.max(32, Math.round(heightM * ppm)));
-    ortho.left = -widthM / 2; ortho.right = widthM / 2; ortho.top = heightM / 2; ortho.bottom = -heightM / 2;
-    ortho.position.set(centre.x, centre.y, centre.z + 20);
-    ortho.lookAt(centre.x, centre.y, centre.z);
-    ortho.updateProjectionMatrix();
-    const prevTarget = renderer.getRenderTarget();
-    const prevClear = renderer.getClearColor(new THREE.Color());
-    const prevAlpha = renderer.getClearAlpha();
-    const prevViewport = renderer.getViewport(new THREE.Vector4());
-    const prevScissor = renderer.getScissor(new THREE.Vector4());
-    const prevScissorTest = renderer.getScissorTest();
-    renderer.setRenderTarget(rt);
-    renderer.setClearColor(0x000000, 0);
-    renderer.clear();
-    renderer.setViewport(0, 0, w, hpx);
-    renderer.setScissor(0, 0, w, hpx);
-    renderer.setScissorTest(true);
-    renderer.render(scene, ortho);
-    renderer.readRenderTargetPixels(rt, 0, 0, w, hpx, pixels);
-    renderer.setRenderTarget(prevTarget);
-    renderer.setViewport(prevViewport);
-    renderer.setScissor(prevScissor);
-    renderer.setScissorTest(prevScissorTest);
-    renderer.setClearColor(prevClear, prevAlpha);
-    scene.remove(holder);
-    holder.traverse((o) => { if (o.geometry) o.geometry.dispose(); if (o.material) (Array.isArray(o.material) ? o.material : [o.material]).forEach((m) => m.dispose?.()); });
-    const c = document.createElement('canvas');
-    c.width = w; c.height = hpx;
-    const cx = c.getContext('2d');
-    const image = cx.createImageData(w, hpx);
-    for (let y = 0; y < hpx; y++) {
-      const src = (hpx - 1 - y) * w * 4;
-      image.data.set(pixels.subarray(src, src + w * 4), y * w * 4);
-    }
-    cx.putImageData(image, 0, 0);
-    return { url: c.toDataURL('image/png'), widthM, heightM, size: { x: size.x, y: size.y } };
-  }
-  const size_ = size;
+  const entryFor = (def) => ({ type: def.id, attach: def.attach, height: def.height, def, radius: BASE_RADIUS * (SIZE_SCALE[def.size] ?? 1) });
 
   return {
-    /** Data URL of the part's picture (rendered on first use). */
+    /** URL of the part's picture: a baked PNG when there is one, else rendered on first use and cached. */
     iconFor(def) {
-      if (!cache.has(def.id)) {
-        try { cache.set(def.id, render(def)); } catch { cache.set(def.id, ''); }
+      if (BAKED.has(safe(def.id))) return `${BAKED_BASE}${safe(def.id)}.png`;
+      // a part whose real model is still downloading is rendered once it arrives (reset() is called then)
+      const k = `${def.id}:${wantsNasaArt(def.id) && !hasNasaArt(def.id) ? 'tmp' : 'real'}`;
+      if (!cache.has(k)) {
+        try { cache.set(k, renderObject(partArt(entryFor(def)))); } catch { cache.set(k, ''); }
       }
-      return cache.get(def.id);
+      return cache.get(k);
     },
-    /** { url, widthM, heightM } side elevation at `ppm` pixels per metre (cached per part and ppm). */
-    sideViewFor(def, ppm = 60) {
-      const key = `${def.id}@${ppm}`;
-      if (!sideCache.has(key)) {
-        try { sideCache.set(key, renderSide(def, ppm)); } catch { sideCache.set(key, { url: '', widthM: 1, heightM: def.height }); }
+    /** URL of a picture of any object (internals pieces): `key` caches it, `build()` makes the Object3D. */
+    objectIcon(key, build, opts) {
+      if (BAKED.has(safe(key))) return `${BAKED_BASE}${safe(key)}.png`;
+      if (!cache.has(key)) {
+        try { cache.set(key, renderObject(build(), opts)); } catch { cache.set(key, ''); }
       }
-      return sideCache.get(key);
+      return cache.get(key);
     },
+    /** Render straight from a part def (used by the bake tool). */
+    renderPart: (def) => renderObject(partArt(entryFor(def))),
+    renderObject,
     /** Forget rendered pictures (after the real models arrive). */
-    reset() { cache.clear(); sideCache.clear(); },
-    dispose() { rt.dispose(); cache.clear(); sideCache.clear(); },
+    reset() { cache.clear(); },
+    dispose() { rt.dispose(); cache.clear(); },
   };
 }

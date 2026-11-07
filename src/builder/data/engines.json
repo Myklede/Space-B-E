@@ -1,16 +1,29 @@
 {
   "fuels": {
-    "kerolox": { "name": "Kerosene + LOX", "density": 1.0, "isp": { "sl": [282, 311], "vac": [200, 348] }, "chamberMass": 350, "chamberCost": 120000, "special": "Cheap and compact. The weakest of the three." },
-    "methalox": { "name": "Methane + LOX", "density": 0.8, "isp": { "sl": [330, 350], "vac": [240, 380] }, "chamberMass": 400, "chamberCost": 150000, "special": "Can be made on Mars from ice and CO₂ (Sabatier), so it can refuel the return." },
-    "hydrolox": { "name": "Hydrogen + LOX", "density": 0.35, "isp": { "sl": [366, 452], "vac": [280, 465] }, "chamberMass": 450, "chamberCost": 260000, "special": "The most efficient, but it boils off slowly during the cruise and needs huge tanks." }
+    "kerolox": { "name": "Kerosene + LOX", "density": 1.0, "isp": { "sl": [282, 311], "vac": [200, 348] }, "chamberMass": 350, "chamberCost": 120000, "special": "Cheap and compact. The weakest of the three.", "real": "Merlin 1D 282/311 s, RD-180 313/339 s" },
+    "methalox": { "name": "Methane + LOX", "density": 0.8, "isp": { "sl": [330, 350], "vac": [240, 380] }, "chamberMass": 400, "chamberCost": 150000, "special": "Can be made on Mars from ice and CO₂ (Sabatier), so it can refuel the return.", "real": "Raptor 327/350 s (380 s vacuum bell), BE-4 ~340 s" },
+    "hydrolox": { "name": "Hydrogen + LOX", "density": 0.35, "isp": { "sl": [366, 452], "vac": [280, 465] }, "chamberMass": 450, "chamberCost": 260000, "special": "The most efficient, but it boils off slowly during the cruise and needs huge tanks.", "real": "RS-25 366/452 s, RL10B-2 462 s, Vulcain 2 318/434 s" }
   },
   "nozzles": {
-    "sl": { "name": "Sea-level nozzle", "mass": 120, "cost": 30000, "note": "Short bell tuned for 1 atm. Strong off the pad, wasteful in vacuum." },
-    "vac": { "name": "Vacuum nozzle", "mass": 180, "cost": 40000, "note": "Long bell tuned for vacuum. Efficient in space, weak and unstable at sea level." }
+    "sl": { "name": "Sea-level nozzle", "mass": 120, "cost": 30000, "note": "Short bell tuned for 1 atm. Strong off the pad, wasteful in vacuum.", "real": "Merlin 1D: expansion ratio 16" },
+    "vac": { "name": "Vacuum nozzle", "mass": 180, "cost": 40000, "note": "Long bell tuned for vacuum. Efficient in space, weak and unstable at sea level.", "real": "RL10B-2: expansion ratio 250, Merlin Vacuum: 165" }
   },
   "pumps": {
-    "S": { "name": "Small turbopump", "thrust": 100000, "mass": 500, "cost": 200000, "heatRate": 0.0015 },
-    "M": { "name": "Medium turbopump", "thrust": 300000, "mass": 1200, "cost": 500000, "heatRate": 0.002 },
-    "L": { "name": "Large turbopump", "thrust": 1000000, "mass": 3000, "cost": 1000000, "heatRate": 0.004 }
-  }
+    "S": { "name": "Small turbopump", "thrust": 100000, "mass": 500, "cost": 200000, "heatRate": 0.0015, "real": "RL10 class (110 kN, 300 kg)" },
+    "M": { "name": "Medium turbopump", "thrust": 300000, "mass": 1200, "cost": 500000, "heatRate": 0.002, "real": "RD-0124 class (294 kN, 480 kg)" },
+    "L": { "name": "Large turbopump", "thrust": 1000000, "mass": 3000, "cost": 1000000, "heatRate": 0.004, "real": "Merlin 1D / Vulcain 2 class (845–1,350 kN)" }
+  },
+  "references": [
+    { "id": "merlin", "name": "Merlin 1D", "maker": "SpaceX, Falcon 9", "fuel": "kerolox", "nozzle": "sl", "pump": "L", "options": { "cycle": "gg", "injector": "pintle", "nozzleExt": "regen", "igniter": "tea_teb" }, "facts": "845 kN sea level / 914 kN vacuum · Isp 282 / 311 s · 470 kg · gas generator · pintle injector · TEA-TEB ignition · 97 bar · first flight 2013" },
+    { "id": "raptor", "name": "Raptor 2", "maker": "SpaceX, Starship", "fuel": "methalox", "nozzle": "sl", "pump": "L", "options": { "cycle": "sc", "injector": "coaxial", "nozzleExt": "regen", "igniter": "spark" }, "facts": "2,256 kN sea level / 2,530 kN vacuum · Isp 327 / 350 s · 1,630 kg · full-flow staged combustion · ~300 bar · throttles 40–100 %" },
+    { "id": "be4", "name": "BE-4", "maker": "Blue Origin, Vulcan and New Glenn", "fuel": "methalox", "nozzle": "sl", "pump": "L", "options": { "cycle": "sc", "injector": "coaxial", "nozzleExt": "regen", "igniter": "spark" }, "facts": "2,460 kN sea level · Isp ~340 s · 5,400 kg · oxygen-rich staged combustion · 134 bar · throttles 40–100 % · first flight 2024" },
+    { "id": "rs25", "name": "RS-25 (Space Shuttle Main Engine)", "maker": "Aerojet Rocketdyne, Shuttle and SLS", "fuel": "hydrolox", "nozzle": "sl", "pump": "L", "options": { "cycle": "sc", "injector": "coaxial", "nozzleExt": "regen", "igniter": "spark" }, "facts": "1,860 kN sea level / 2,279 kN vacuum · Isp 366 / 452 s · 3,177 kg · fuel-rich staged combustion · 206 bar · expansion 69 · throttles 67–109 % · first flight 1981" },
+    { "id": "vulcain", "name": "Vulcain 2", "maker": "ArianeGroup, Ariane 5", "fuel": "hydrolox", "nozzle": "sl", "pump": "L", "options": { "cycle": "gg", "injector": "coaxial", "nozzleExt": "regen", "igniter": "pyro" }, "facts": "940 kN sea level / 1,350 kN vacuum · Isp 318 / 434 s · 1,800 kg · gas generator · 116 bar · expansion 61 · first flight 2002" },
+    { "id": "rd180", "name": "RD-180", "maker": "NPO Energomash, Atlas V", "fuel": "kerolox", "nozzle": "sl", "pump": "L", "options": { "cycle": "sc", "injector": "coaxial", "nozzleExt": "regen", "igniter": "pyro" }, "facts": "3,830 kN sea level / 4,150 kN vacuum · Isp 313 / 339 s · 5,480 kg · oxygen-rich staged combustion, two chambers · 257 bar · throttles 50–100 % · first flight 2000" },
+    { "id": "rd0124", "name": "RD-0124", "maker": "KBKhA, Soyuz-2.1b third stage", "fuel": "kerolox", "nozzle": "vac", "pump": "M", "options": { "cycle": "sc", "injector": "coaxial", "nozzleExt": "regen", "igniter": "pyro" }, "facts": "294 kN vacuum · Isp 359 s · 480 kg · staged combustion, four chambers · 162 bar · burn 300 s" },
+    { "id": "rl10", "name": "RL10B-2", "maker": "Aerojet Rocketdyne, Delta IV and Centaur", "fuel": "hydrolox", "nozzle": "vac", "pump": "S", "options": { "cycle": "expander", "injector": "coaxial", "nozzleExt": "extendable", "igniter": "spark" }, "facts": "110 kN vacuum · Isp 462 s · ~300 kg · expander cycle · expansion ratio 250 with an extendable carbon-carbon skirt · restartable · family first flew 1961" },
+    { "id": "j2x", "name": "J-2X", "maker": "Aerojet Rocketdyne (Ares, cancelled)", "fuel": "hydrolox", "nozzle": "vac", "pump": "L", "options": { "cycle": "gg", "injector": "coaxial", "nozzleExt": "radiative", "igniter": "spark" }, "facts": "1,310 kN vacuum · Isp 448 s · 2,430 kg · gas generator · expansion 80 · three restarts · never flew" },
+    { "id": "rutherford", "name": "Rutherford", "maker": "Rocket Lab, Electron", "fuel": "kerolox", "nozzle": "sl", "pump": "S", "options": { "cycle": "electric", "injector": "coaxial", "nozzleExt": "regen", "igniter": "spark" }, "facts": "25 kN sea level / 26 kN vacuum · Isp 311 / 343 s · 35 kg · battery-driven electric pumps · 3D-printed chamber · first flight 2017" },
+    { "id": "aj10", "name": "AJ10-118K (Delta II second stage)", "maker": "Aerojet, Delta II", "fuel": "kerolox", "nozzle": "vac", "pump": "S", "options": { "cycle": "pressure", "injector": "impinging", "nozzleExt": "radiative", "igniter": "tea_teb" }, "facts": "43 kN vacuum · Isp 320 s · 98 kg · pressure-fed, hypergolic (N₂O₄ / Aerozine-50, nearest here: kerolox) · expansion 65 · unlimited restarts · flew 1982–2018" }
+  ]
 }

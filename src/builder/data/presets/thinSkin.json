@@ -13,7 +13,7 @@
     { "id": "p7", "type": "fin_m", "parent": "p15", "node": "radial", "angle": 90, "yFrac": 0.12, "variant": null, "group": "g1" },
     { "id": "p8", "type": "fin_m", "parent": "p15", "node": "radial", "angle": 180, "yFrac": 0.12, "variant": null, "group": "g1" },
     { "id": "p9", "type": "fin_m", "parent": "p15", "node": "radial", "angle": 270, "yFrac": 0.12, "variant": null, "group": "g1" },
-    { "id": "p10", "type": "antenna_low", "parent": "p1", "node": "radial", "angle": 90, "yFrac": 0.9, "variant": null, "group": null },
+    { "id": "p10", "type": "antenna_low", "parent": "p1", "node": "radial", "angle": 90, "yFrac": 0.55, "variant": null, "group": null },
     { "id": "p11", "type": "rcs_pack", "parent": "p1", "node": "radial", "angle": 0, "yFrac": 0.3, "variant": null, "group": null },
     { "id": "p12", "type": "o2_bottle", "parent": "p3", "node": "radial", "angle": 30, "yFrac": 0.75, "variant": null, "group": null },
     { "id": "p13", "type": "radiation_shelter", "parent": "p3", "node": "radial", "angle": 270, "yFrac": 0.8, "variant": null, "group": null },

@@ -5,7 +5,8 @@ import { createHandbook } from './handbook.js';
 import { fmtInt, fmtKN, fmtMass, fmtMoney, fmtMoneyShort, fmtPct } from './format.js';
 
 export const DESIGN_STATIONS = ['integration', 'propulsion', 'structures', 'crew', 'warehouse'];
-const STATION_FAMILY = { propulsion: 'engines', structures: 'structure', crew: 'command', warehouse: null, integration: null };
+// what each design desk opens first: a checklist item's cards, or the whole warehouse
+const STATION_START = { propulsion: { family: 'engine' }, structures: { family: 'shield' }, crew: { family: 'capsule' }, warehouse: { browse: true }, integration: {} };
 
 const h = (tag, className, text) => {
   const el = document.createElement(tag);
@@ -21,7 +22,7 @@ const btn = (className, label, onClick, attrs = {}) => {
   return b;
 };
 
-export function createHangarScreen({ assembly, catalog, materials, engines, launch, text, scene, getMoney, insolvencyFloor = 0, icons, stations, hooks }) {
+export function createHangarScreen({ assembly, catalog, materials, engines, launch, text, scene, scene3d, g0, getMoney, insolvencyFloor = 0, icons, stations, hooks }) {
   const el = h('div', 'bay-root hud');
   el.dataset.screen = 'hangar';
   el.dataset.stub = 'hangar'; // check:boot looks for [data-stub] in every state
@@ -63,7 +64,7 @@ export function createHangarScreen({ assembly, catalog, materials, engines, laun
 
   // ---------- the design page ----------
   const design = createDesignPage({
-    assembly, catalog, materials, engines, text, icons, getMoney,
+    assembly, catalog, materials, engines, text, icons, scene3d, g0, getMoney,
     hooks: {
       onChange: () => hooks.onChange?.(),
       onSound: (id) => hooks.onSound?.(id),
@@ -75,6 +76,9 @@ export function createHangarScreen({ assembly, catalog, materials, engines, laun
       onWorkbench: (id) => hooks.onWorkbench?.(id),
       onRename: () => openRename(),
       onMore: () => openMore(),
+      onOpen3d: (s, c) => hooks.onView?.(s, c),
+      onClose3d: () => hooks.onViewRestore?.(),
+      onNeedArt: (ids) => hooks.onNeedArt?.(ids),
       compute: () => last,
     },
   });
@@ -181,9 +185,10 @@ export function createHangarScreen({ assembly, catalog, materials, engines, laun
     if (!st) return;
     state.station = id;
     hud.classList.add('bay-hud--station');
+    hud.classList.toggle('bay-hud--design', DESIGN_STATIONS.includes(id));
     if (DESIGN_STATIONS.includes(id)) {
       panel.hidden = true;
-      design.show({ family: STATION_FAMILY[id] ?? null });
+      design.show(STATION_START[id] ?? {});
     } else {
       design.hide();
       title.textContent = st.name;
@@ -203,7 +208,7 @@ export function createHangarScreen({ assembly, catalog, materials, engines, laun
     state.station = null;
     panel.hidden = true;
     design.hide();
-    hud.classList.remove('bay-hud--station');
+    hud.classList.remove('bay-hud--station', 'bay-hud--design');
     handbook?.dispose();
     handbook = null;
     closeDialog();
@@ -287,7 +292,7 @@ export function createHangarScreen({ assembly, catalog, materials, engines, laun
   }
 
   function update(dt, { prompt: p = null } = {}) {
-    void dt;
+    if (design.open) design.update(dt);
     if (!state.station) {
       prompt.textContent = p ? `E · ${p}` : '';
       prompt.classList.toggle('bay-prompt--show', !!p);
@@ -315,6 +320,8 @@ export function createHangarScreen({ assembly, catalog, materials, engines, laun
     get station() { return state.station; },
     get dialogOpen() { return !backdrop.hidden; },
     get pickerOpen() { return design.pickerOpen; },
+    get designOpen() { return design.open; },
     closePicker: () => design.closePicker(),
+    rotateDesign: (deg) => design.rotateBy(deg),
   };
 }

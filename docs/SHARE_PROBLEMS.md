@@ -55,7 +55,7 @@ Copy this block. Keep each line short and factual. Don't commit screenshots.
 - **Expected:** each value inside its own box
 - **Actual:** "$2.97M +$150k" runs into FUNDS, "5,400" into TWR, and "943 kN" into "88 %" under RELIABILITY
 - **Suggested fix:** let the boxes grow to fit (`min-width: max-content`), or put the pad fee and thrust on a second line
-- **Status:** open
+- **Status:** fixed in the design-page rebuild (chips are `min-width: max-content`, pad fee and pad thrust moved to a second line, the Mass chip moved into the side panel), dtri please verify
 
 ### About 63 MB downloads before the hangar is ready
 - **For:** Role 1 · **From:** Role 3 (dtri) · **Found:** 2026-11-07 on dev 0722c4e · **Severity:** polish
@@ -64,9 +64,17 @@ Copy this block. Keep each line short and factual. Don't commit screenshots.
 - **Expected:** the bay usable within a few seconds on a demo Wi-Fi
 - **Actual:** 38 MB load during the menu and 25 MB more on entering HANGAR (largest: `rassor.glb` 6.3 MB, `stardust_capsule.glb` 2.3 MB, `ingenuity.glb` 2 MB). On a fast local server it runs at 60 fps, but over about 50 Mbit/s that is 10 s or more. Separately, about 27 MB of NASA models are not referenced anywhere in `src/builder` (the "reserve" set: `eva_suit`, `habitat1/2`, `lro`, `iss_b`, `parker` and others), and every clone and build carries them.
 - **Suggested fix:** load the decorative bay props after the hangar first draws, drop or shrink the largest ones, and remove the unused reserve models until a scene uses them
-- **Status:** open
+- **Status:** mostly fixed, dtri please verify: Poly Haven prop textures shrunk to 512 px (36 MB to 3 MB, `src/builder/tools/shrink-textures.mjs`); NASA models now download per part only when it is on the stand or inspected (`requestPartArt` in `bay/nasa.js`); card pictures are baked PNGs (1.9 MB for 148); RASSOR (6.3 MB) is no longer placed in the hall (a 57 kB stowed Mars Global Surveyor stands there); the `shuttle_door` model with missing textures is no longer used. Still open: the unused reserve GLBs are still in the repo (about 35 MB on disk, never downloaded by the game); Role 1 will delete them in a separate commit.
 
 ## Role 2: Flight & Astronaut
+
+### Two new ShipSpec details the builder now sends (information, no action needed)
+- **For:** Role 2 · **From:** Role 1 (Myklede) · **Found:** 2026-11-07 on dev 6fb54a4 · **Severity:** polish
+- **Where:** `src/builder/stats.js` `computeShipSpec`
+- **Steps:** presets, Workhorse, readiness poll, launch
+- **Expected:** `stats.chuteCdA` is now set (300 for the main chute, 110 for a drogue, summed) and `shipParams` already reads it; strap-on solid motors are folded into the single stage: their thrust is in `stats.thrust`, their propellant in `stats.fuelMass`, their casings in `stats.dryMass`, and `stats.ispSL/ispVac` are thrust-weighted across liquid engines and solids (lower than the liquid engine alone). `spec.engines` still lists only the liquid engines.
+- **Actual:** nothing wrong today; if you add staging later, `breakdown.boosterSpecs` in the builder has each solid's thrust, Isp, propellant and burn time ready for you
+- **Status:** open
 
 ### The trajectory line is a thin vertical line down the cockpit window
 - **For:** Role 2 · **From:** Role 3 (dtri) · **Found:** 2026-11-07 on dev 691ae19 · **Severity:** polish
@@ -87,6 +95,15 @@ Copy this block. Keep each line short and factual. Don't commit screenshots.
 - **Status:** open
 
 ## Role 3: Graphics, Audio & Core
+
+### `rocketPart:` names with no match show as holograms in the flight views
+- **For:** Role 3 · **From:** Role 1 (Myklede) · **Found:** 2026-11-07 on dev 6fb54a4 · **Severity:** polish
+- **Where:** `src/graphics/assets.js` `createRocketPart` (`PART_MATCHERS`)
+- **Steps:** build a ship with a guidance ring, interstage, truss, helium sphere or strap-on solid (presets, Workhorse), launch, press C for the outside camera
+- **Expected:** a plain cylinder or box of about the right size for a part type the matcher does not know (the builder's `ShipSpec.parts` now carries types such as `avionics_ring_m`, `interstage_m`, `truss_m`, `centerbody_m`, `paf_m`, `helium_copv`, `srb_s`, `kick_motor_s`)
+- **Actual:** `hologram('rocketPart:<id>')` for every unmatched id, so the outside view shows glowing placeholder boxes in the stack
+- **Suggested fix:** add matchers for `ring|interstage|truss|centerbody|paf|spin` (a short cylinder, height from a `PART_HEIGHT` default of 1 m), `sphere|copv` (a small sphere) and `srb|kick_motor` (a slim cylinder with a cone); or accept a `height` hint in the id lookup
+- **Status:** open
 
 ## Role 4: Story, Cruise & Knowledge
 

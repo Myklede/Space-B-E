@@ -11,8 +11,8 @@
     { "id": "p6", "type": "fin_m", "parent": "p3", "node": "radial", "angle": 0, "yFrac": 0.12, "variant": null, "group": "g1" },
     { "id": "p7", "type": "fin_m", "parent": "p3", "node": "radial", "angle": 120, "yFrac": 0.12, "variant": null, "group": "g1" },
     { "id": "p8", "type": "fin_m", "parent": "p3", "node": "radial", "angle": 240, "yFrac": 0.12, "variant": null, "group": "g1" },
-    { "id": "p9", "type": "parachute", "parent": "p1", "node": "radial", "angle": 180, "yFrac": 0.9, "variant": null, "group": null },
-    { "id": "p10", "type": "antenna_low", "parent": "p1", "node": "radial", "angle": 90, "yFrac": 0.9, "variant": null, "group": null },
+    { "id": "p9", "type": "parachute", "parent": "p1", "node": "radial", "angle": 180, "yFrac": 0.55, "variant": null, "group": null },
+    { "id": "p10", "type": "antenna_low", "parent": "p1", "node": "radial", "angle": 90, "yFrac": 0.55, "variant": null, "group": null },
     { "id": "p11", "type": "o2_bottle", "parent": "p3", "node": "radial", "angle": 30, "yFrac": 0.75, "variant": null, "group": null },
     { "id": "p12", "type": "seals_cheap", "parent": "p3", "node": "radial", "angle": 300, "yFrac": 0.5, "variant": null, "group": null }
   ]

@@ -1,0 +1,186 @@
+{
+  "_about": "Inside every part: the kits a part can open when you zoom in. Each slot has options; the first option is the default. Effects: massF/costF multiply the part's dry mass and cost, massD/costD add kg and $, rel adds to reliability, isp adds seconds (engines and solid motors), thrustF multiplies thrust, powerF multiplies power, chuteF multiplies parachute drag.",
+  "kits": {
+    "engine": {
+      "name": "Inside the engine",
+      "slots": [
+        { "key": "cycle", "name": "Turbopump cycle", "role": "How the pump that feeds the chamber is driven.", "art": "pump", "options": [
+          { "id": "gg", "name": "Gas generator", "note": "A small burner spins the turbine, then its exhaust is dumped overboard. Merlin, Vulcain, F-1.", "pros": ["Simple and proven", "Cheap"], "cons": ["Throws away 2–3 % of the propellant unburned"], "real": "Merlin 1D, Vulcain 2, F-1" },
+          { "id": "sc", "name": "Staged combustion", "note": "The turbine exhaust goes into the main chamber, so nothing is wasted. Higher pressure, higher Isp, far harder to build.", "pros": ["+12 s of Isp", "Nothing wasted"], "cons": ["Red-hot oxygen-rich plumbing", "+40 % cost"], "isp": 12, "massF": 1.12, "costF": 1.4, "rel": -0.005, "real": "RS-25, RD-180, Raptor" },
+          { "id": "expander", "name": "Expander", "note": "Hydrogen heated in the chamber walls spins the turbine. Gentle and endlessly restartable, but only enough power for a small engine.", "pros": ["+8 s of Isp", "Restarts forever", "Most reliable cycle"], "cons": ["Thrust −15 %: the cycle cannot drive a big pump"], "isp": 8, "thrustF": 0.85, "costF": 1.2, "rel": 0.01, "real": "RL10, Vinci" },
+          { "id": "electric", "name": "Electric pump", "note": "Battery-driven motors spin the pumps. The simplest plumbing there is; the batteries are heavy.", "pros": ["Simplest plumbing", "Cheapest"], "cons": ["Thrust −25 %", "Heavy batteries"], "thrustF": 0.75, "massF": 1.1, "costF": 0.75, "rel": 0.005, "real": "Rutherford (Electron)" },
+          { "id": "pressure", "name": "Pressure-fed (no pump)", "note": "No pump at all: tank pressure pushes propellant into the chamber. Unlimited restarts, but the thick tanks and low pressure cost thrust and Isp.", "pros": ["Unlimited restarts", "Almost nothing to fail"], "cons": ["Thrust −50 %", "Isp −10 s"], "thrustF": 0.5, "isp": -10, "costF": 0.6, "rel": 0.015, "real": "AJ10 (Delta II second stage), Apollo SPS" }
+        ] },
+        { "key": "injector", "name": "Injector", "role": "The plate that sprays fuel and oxidizer into the chamber.", "art": "injector", "options": [
+          { "id": "coaxial", "name": "Coaxial swirl", "note": "Hundreds of small elements, oxidizer inside, fuel swirling around it. Smooth combustion.", "pros": ["Smooth, efficient burn"], "cons": ["Hundreds of precision parts"], "real": "RS-25, RD-180" },
+          { "id": "pintle", "name": "Pintle", "note": "One central element: a pin with a sleeve. Deep throttling, cheap to make, hard to make unstable.", "pros": ["Throttles deeply", "Cheap", "Stable"], "cons": ["Slightly lower mixing efficiency"], "isp": -2, "costD": -15000, "rel": 0.004, "real": "Merlin, Apollo LM descent engine" },
+          { "id": "impinging", "name": "Impinging jets", "note": "Jets of fuel and oxidizer collide and mix. Simple; prone to rough combustion.", "pros": ["Cheapest"], "cons": ["Prone to combustion instability"], "costD": -25000, "rel": -0.004, "real": "F-1 (after years of baffle tests)" }
+        ] },
+        { "key": "nozzleExt", "name": "Nozzle extension", "role": "The lower skirt of the bell and how it is kept from melting.", "art": "skirt", "options": [
+          { "id": "regen", "name": "Regeneratively cooled", "note": "Fuel runs through channels in the bell wall before it burns, keeping the metal cool and preheating the fuel.", "pros": ["Runs as long as there is fuel"], "cons": ["Heavy: hundreds of brazed tubes"], "real": "RS-25, Merlin" },
+          { "id": "radiative", "name": "Radiatively cooled niobium", "note": "A thin skirt of C-103 niobium that simply glows orange and radiates the heat away. Light; only for vacuum.", "pros": ["−60 kg"], "cons": ["Vacuum only", "Glows at 1,300 °C"], "massD": -60, "costD": 30000, "rel": -0.003, "real": "Merlin Vacuum skirt, Apollo SPS" },
+          { "id": "carbon", "name": "Carbon-carbon skirt", "note": "Woven carbon fibre in a carbon matrix: half the mass of metal and happy at 2,000 °C.", "pros": ["−100 kg", "+4 s of Isp from a longer bell"], "cons": ["Brittle", "Expensive"], "massD": -100, "isp": 4, "costD": 90000, "rel": -0.006, "real": "RL10B-2, Vinci" },
+          { "id": "extendable", "name": "Extendable nozzle", "note": "A second skirt that slides down after staging, so a huge bell fits in a short interstage.", "pros": ["+10 s of Isp in vacuum"], "cons": ["One more mechanism that must work", "+40 kg"], "isp": 10, "massD": 40, "costD": 120000, "rel": -0.01, "real": "RL10B-2 (Delta IV)" }
+        ] },
+        { "key": "igniter", "name": "Igniter", "role": "How the engine is lit, and how many times.", "art": "igniter", "options": [
+          { "id": "spark", "name": "Spark torch", "note": "A small spark-lit torch in the chamber wall. Restartable as long as there is power.", "pros": ["Restartable"], "cons": ["Needs power and a pilot flow"], "real": "RS-25, Raptor" },
+          { "id": "pyro", "name": "Pyrotechnic", "note": "A one-shot cartridge. The simplest igniter; one start only.", "pros": ["Simplest", "−$10k"], "cons": ["One ignition only"], "costD": -10000, "rel": 0.002, "real": "F-1, Vulcain" },
+          { "id": "tea_teb", "name": "TEA-TEB slugs", "note": "Chemicals that burst into green flame on contact with oxygen. Reliable relights, limited by how many slugs you carry.", "pros": ["Reliable relight", "Reliability +0.4 %"], "cons": ["Limited number of slugs"], "costD": 15000, "rel": 0.004, "real": "Merlin (the green flash at ignition)" }
+        ] }
+      ]
+    },
+    "tank": {
+      "name": "Inside the tank",
+      "slots": [
+        { "key": "bulkhead", "name": "Bulkhead between fuel and oxidizer", "role": "How the two propellants are kept apart.", "art": "dome", "options": [
+          { "id": "separate", "name": "Separate domes", "note": "Two tanks, two domes, a short section between them. Simple and safe.", "pros": ["Simple", "Safe"], "cons": ["Heavier: two domes and a gap"], "real": "Delta II, Atlas V" },
+          { "id": "common", "name": "Common bulkhead", "note": "One insulated wall shared by both propellants. Saves a dome and a metre of skin; the hardest thing to build in the tank.", "pros": ["−8 % tank mass"], "cons": ["+25 % cost", "A leak mixes fuel and oxidizer"], "massF": 0.92, "costF": 1.25, "rel": -0.004, "real": "Saturn S-II, Falcon 9, Starship" }
+        ] },
+        { "key": "pressurisation", "name": "Pressurisation", "role": "What fills the space as propellant drains.", "art": "spheres", "options": [
+          { "id": "helium", "name": "Helium bottles inside", "note": "Cold helium bottles sit inside the oxygen tank, where they stay dense. Proven; the bottles are a hazard.", "pros": ["Proven"], "cons": ["Bottles inside the tank (AMOS-6)"], "real": "Falcon 9, Delta II" },
+          { "id": "autogenous", "name": "Autogenous (hot propellant gas)", "note": "A little propellant is heated by the engine and piped back as gas. No helium at all.", "pros": ["−3 % mass", "No helium to run out of"], "cons": ["+10 % cost", "Only works once the engine runs"], "massF": 0.97, "costF": 1.1, "rel": -0.003, "real": "Starship, Shuttle ET" }
+        ] },
+        { "key": "baffles", "name": "Slosh baffles", "role": "Rings inside the tank that stop the propellant sloshing.", "art": "baffles", "options": [
+          { "id": "baffled", "name": "Ring baffles", "note": "Rings welded inside the wall break up the waves when the ship turns.", "pros": ["Steady propellant"], "cons": ["+2 % mass"], "real": "Every crewed launcher" },
+          { "id": "none", "name": "No baffles", "note": "Save the mass and hope. Sloshing propellant knocked Falcon 1 flight 2 into a spin.", "pros": ["−2 % mass"], "cons": ["Reliability −0.6 %"], "massF": 0.98, "costF": 0.97, "rel": -0.006, "real": "Falcon 1 flight 2 (2007)" }
+        ] },
+        { "key": "insulation", "name": "Insulation", "role": "What keeps cold propellant from boiling off.", "art": "skin", "options": [
+          { "id": "bare", "name": "Bare metal", "note": "Fine for kerosene; cryogenic propellant boils off in the hours on the pad.", "pros": ["Lightest"], "cons": ["Cryogenic propellant boils off"], "real": "Falcon 9 (kerosene stage)" },
+          { "id": "foam", "name": "Spray-on foam", "note": "The orange foam of the Shuttle tank. Keeps hydrogen and oxygen liquid for hours; a piece of it struck Columbia.", "pros": ["Cryogenic propellant stays liquid"], "cons": ["+3 % mass", "Can shed pieces on ascent"], "massF": 1.03, "costF": 1.05, "rel": 0.002, "real": "Shuttle External Tank, SLS" },
+          { "id": "mli", "name": "Multilayer blankets", "note": "Gold foil layers for the long cruise: the only insulation that works in vacuum for weeks.", "pros": ["Weeks in space without boil-off"], "cons": ["+15 % cost", "Useless in air"], "massF": 1.01, "costF": 1.15, "rel": 0.001, "real": "Centaur, lunar landers" }
+        ] },
+        { "key": "feedline", "name": "Feed lines", "role": "The pipes that carry propellant from the tank to the engine.", "art": "pipe", "options": [
+          { "id": "single", "name": "Single feed line", "note": "One big pipe per propellant.", "pros": ["Light"], "cons": ["One valve failure stops the engine"], "real": "Most stages" },
+          { "id": "dual", "name": "Redundant feed lines", "note": "Two pipes and two valves per propellant, so one can fail.", "pros": ["Reliability +0.4 %"], "cons": ["+1.5 % mass", "+8 % cost"], "massF": 1.015, "costF": 1.08, "rel": 0.004, "real": "Saturn V S-IC (five feed lines)" }
+        ] }
+      ]
+    },
+    "capsule": {
+      "name": "Inside the cabin",
+      "slots": [
+        { "key": "computer", "name": "Flight computer", "role": "The computer that flies the ship and how many copies of it there are.", "art": "computer", "options": [
+          { "id": "single", "name": "Single computer", "note": "One flight computer. If it fails, the crew flies by hand.", "pros": ["Cheap", "Light"], "cons": ["No backup"], "real": "Mercury, Gemini" },
+          { "id": "triple", "name": "Triple redundant, voting", "note": "Three computers vote on every command; one can fail without anyone noticing.", "pros": ["Reliability +2 %"], "cons": ["+60 kg", "+$150k"], "massD": 60, "costD": 150000, "rel": 0.02, "real": "Dragon, Soyuz" },
+          { "id": "quad", "name": "Four plus a backup", "note": "Four identical computers and a fifth with different software, as the Shuttle flew.", "pros": ["Reliability +3 %"], "cons": ["+90 kg", "+$260k"], "massD": 90, "costD": 260000, "rel": 0.03, "real": "Space Shuttle GPCs" }
+        ] },
+        { "key": "lifeSupport", "name": "Life-support loop", "role": "Air and water: used once, or recycled.", "art": "ecls", "options": [
+          { "id": "open", "name": "Open loop", "note": "Oxygen from tanks, CO₂ into canisters, water from bags. Simple; it lasts as long as the stores do.", "pros": ["Simple"], "cons": ["Stores for weeks, not months"], "real": "Apollo, Dragon" },
+          { "id": "regenerative", "name": "Regenerative loop", "note": "Water split into oxygen, CO₂ scrubbed and recycled, like the station. Heavy, but it runs for months.", "pros": ["Runs for months"], "cons": ["+120 kg", "+$200k"], "massD": 120, "costD": 200000, "rel": 0.005, "real": "ISS ECLSS" }
+        ] },
+        { "key": "couches", "name": "Crew couches", "role": "What the crew sits in through launch and landing.", "art": "couch", "options": [
+          { "id": "fixed", "name": "Fixed couches", "note": "Padded seats bolted to the floor.", "pros": ["Light"], "cons": ["A hard landing is felt in full"], "real": "Gemini" },
+          { "id": "shock", "name": "Shock-attenuating couches", "note": "Seats hung on crushable struts that soak up a hard landing.", "pros": ["Survive a hard touchdown", "Reliability +0.4 %"], "cons": ["+40 kg"], "massD": 40, "costD": 40000, "rel": 0.004, "real": "Apollo, Orion" }
+        ] },
+        { "key": "windows", "name": "Windows", "role": "How much of the wall is glass.", "art": "window", "options": [
+          { "id": "small", "name": "Small ports", "note": "Two small panes of fused silica. Strong wall, little view.", "pros": ["Strongest wall"], "cons": ["Little view"], "real": "Soyuz" },
+          { "id": "panoramic", "name": "Panoramic windows", "note": "Big triple-pane windows. The view of a lifetime, and a weaker, heavier wall.", "pros": ["The view"], "cons": ["+50 kg", "Reliability −0.4 %"], "massD": 50, "costD": 60000, "rel": -0.004, "real": "Dragon cupola" }
+        ] },
+        { "key": "hatch", "name": "Hatch", "role": "Which way the door opens.", "art": "hatch", "options": [
+          { "id": "outward", "name": "Outward, quick release", "note": "Opens outward in seconds, even against cabin pressure. The rule since 1967.", "pros": ["Crew out in seconds"], "cons": ["Needs a strong latch"], "real": "Apollo (after Apollo 1), Dragon" },
+          { "id": "inward", "name": "Inward plug hatch", "note": "Cabin pressure seals it tighter. It cannot be opened against that pressure: the Apollo 1 crew died behind one.", "pros": ["−$20k", "Seals itself"], "cons": ["Cannot open in a cabin fire", "Reliability −1 %"], "costD": -20000, "rel": -0.01, "real": "Apollo 1 (1967)" }
+        ] }
+      ]
+    },
+    "avionics": {
+      "name": "Inside the guidance ring",
+      "slots": [
+        { "key": "computer", "name": "Flight computer", "role": "The launcher's guidance computer.", "art": "computer", "options": [
+          { "id": "dual", "name": "Dual string", "note": "Two computers, each able to fly alone.", "pros": ["One can fail"], "cons": ["Which one is right?"], "real": "Delta II RIFCA" },
+          { "id": "triple", "name": "Triple voting", "note": "Three computers vote.", "pros": ["Reliability +1 %"], "cons": ["+25 kg", "+$80k"], "massD": 25, "costD": 80000, "rel": 0.01, "real": "Ariane 5, Falcon 9" }
+        ] },
+        { "key": "imu", "name": "Inertial measurement unit", "role": "The gyroscopes and accelerometers that sense every turn and push.", "art": "imu", "options": [
+          { "id": "rlg", "name": "Ring-laser gyros", "note": "Light beams racing around a triangle of mirrors. The launcher standard.", "pros": ["Accurate", "Proven"], "cons": ["Heavy, dear"], "real": "Delta II, Atlas V" },
+          { "id": "fog", "name": "Fibre-optic gyros", "note": "The same trick in a coil of fibre: lighter, no moving parts.", "pros": ["−15 kg"], "cons": ["Drifts a little more"], "massD": -15, "costD": -10000, "rel": -0.002, "real": "Falcon 9, many satellites" },
+          { "id": "mems", "name": "MEMS chips", "note": "Phone-grade silicon gyros, a hundred of them averaged.", "pros": ["−30 kg", "−$60k"], "cons": ["Drifts: reliability −0.8 %"], "massD": -30, "costD": -60000, "rel": -0.008, "real": "Cubesats, Electron" }
+        ] },
+        { "key": "transponder", "name": "Telemetry & range safety", "role": "The radios that report home and listen for the destruct command.", "art": "radio", "options": [
+          { "id": "single", "name": "Single transmitter", "note": "One S-band transmitter and one command receiver.", "pros": ["Light"], "cons": ["One failure and the range loses the vehicle"], "real": "Small launchers" },
+          { "id": "dual", "name": "Dual, cross-strapped", "note": "Two of everything, either able to serve the whole ring.", "pros": ["Reliability +0.5 %"], "cons": ["+12 kg", "+$40k"], "massD": 12, "costD": 40000, "rel": 0.005, "real": "Delta II, Atlas V" }
+        ] }
+      ]
+    },
+    "booster": {
+      "name": "Inside the solid motor",
+      "slots": [
+        { "key": "grain", "name": "Propellant grain", "role": "The shape of the hole cast through the propellant, which sets the thrust curve.", "art": "grain", "options": [
+          { "id": "star", "name": "Star grain", "note": "A star-shaped bore gives steady thrust the whole burn.", "pros": ["Steady thrust"], "cons": [], "real": "Castor, GEM" },
+          { "id": "highthrust", "name": "High-thrust grain", "note": "More burning surface: +15 % thrust, a shorter burn, slightly less Isp.", "pros": ["+15 % thrust"], "cons": ["Isp −4 s", "Higher case pressure"], "thrustF": 1.15, "isp": -4, "rel": -0.004, "real": "GEM-40 ground-lit variants" },
+          { "id": "longburn", "name": "Long-burn grain", "note": "Less surface, a long gentle burn: −15 % thrust, +3 s Isp.", "pros": ["+3 s of Isp", "Gentler loads"], "cons": ["−15 % thrust"], "thrustF": 0.85, "isp": 3, "rel": 0.002, "real": "Star 48 long-burn" }
+        ] },
+        { "key": "nozzle", "name": "Nozzle", "role": "Fixed, or swivelling to steer.", "art": "tvc", "options": [
+          { "id": "fixed", "name": "Fixed nozzle", "note": "Bolted straight. The core engine steers.", "pros": ["Simple"], "cons": ["No steering"], "real": "GEM-40" },
+          { "id": "tvc", "name": "Vectoring nozzle", "note": "A flexible seal lets the nozzle swing a few degrees. Needed when the solids give most of the thrust.", "pros": ["Steers with the boosters", "Reliability +0.3 %"], "cons": ["+40 kg", "+$60k"], "massD": 40, "costD": 60000, "rel": 0.003, "real": "Shuttle SRB, Vega" }
+        ] }
+      ]
+    },
+    "fairing": {
+      "name": "Inside the fairing",
+      "slots": [
+        { "key": "split", "name": "Separation", "role": "How the fairing comes apart once the air is thin.", "art": "split", "options": [
+          { "id": "bisector", "name": "Two halves (bisector)", "note": "The fairing splits down the middle and the halves swing away on hinges.", "pros": ["Standard"], "cons": [], "real": "Falcon 9, Delta II" },
+          { "id": "trisector", "name": "Three petals", "note": "Three lighter pieces, each needing its own pushers.", "pros": ["−5 % mass"], "cons": ["More mechanisms"], "massF": 0.95, "costF": 1.1, "rel": -0.003, "real": "Atlas V 4 m fairing" }
+        ] },
+        { "key": "acoustic", "name": "Acoustic blankets", "note": "", "role": "Padding against the roar of liftoff, which can shake a payload apart.", "art": "blanket", "options": [
+          { "id": "none", "name": "None", "note": "Bare composite skin. Loud inside: 140 dB at liftoff.", "pros": ["Lightest"], "cons": ["Equipment shaken by sound"], "real": "" },
+          { "id": "blankets", "name": "Acoustic blankets", "note": "Foam and fibre panels that cut the sound by 10 dB.", "pros": ["Reliability +0.3 %"], "cons": ["+30 kg"], "massD": 30, "costD": 20000, "rel": 0.003, "real": "Every modern fairing" }
+        ] },
+        { "key": "pushers", "name": "Release", "role": "What throws the pieces clear.", "art": "pusher", "options": [
+          { "id": "pyro", "name": "Pyrotechnic", "note": "Explosive bolts and a shaped cord. Sudden and loud.", "pros": ["Proven"], "cons": ["Shock to the payload"], "real": "Delta II" },
+          { "id": "pneumatic", "name": "Pneumatic pushers", "note": "Gas pistons shove the halves away gently.", "pros": ["Gentle", "Reliability +0.2 %"], "cons": ["+$15k"], "costD": 15000, "rel": 0.002, "real": "Falcon 9" }
+        ] }
+      ]
+    },
+    "shield": {
+      "name": "Inside the heat shield",
+      "slots": [
+        { "key": "thickness", "name": "Ablator thickness", "role": "How much material there is to burn away.", "art": "layer", "options": [
+          { "id": "standard", "name": "Standard", "note": "Sized for one entry with margin.", "pros": [], "cons": [], "real": "" },
+          { "id": "thick", "name": "Thick", "note": "A quarter more ablator for a steep or hot entry.", "pros": ["Reliability +1 %"], "cons": ["+25 % mass"], "massF": 1.25, "costF": 1.15, "rel": 0.01, "real": "Stardust (12.9 km/s entry)" }
+        ] },
+        { "key": "gaps", "name": "Seams", "role": "How the blocks of shield are joined.", "art": "gap", "options": [
+          { "id": "filler", "name": "Gap filler", "note": "Blocks of ablator with a soft filler between them.", "pros": ["Standard"], "cons": ["Fillers can protrude and trip the flow"], "real": "Orion (Artemis I)" },
+          { "id": "monolithic", "name": "One piece", "note": "The whole shield cast as one block. No seams, hard to make.", "pros": ["No seams", "Reliability +0.5 %"], "cons": ["+20 % cost"], "costF": 1.2, "rel": 0.005, "real": "Apollo Avcoat honeycomb" }
+        ] }
+      ]
+    },
+    "legs": {
+      "name": "Inside the legs",
+      "slots": [
+        { "key": "shock", "name": "Shock absorber", "role": "What soaks up the touchdown.", "art": "shock", "options": [
+          { "id": "honeycomb", "name": "Crushable honeycomb", "note": "Aluminium honeycomb that crushes once. Light and certain.", "pros": ["Light", "Certain"], "cons": ["Single use"], "real": "Apollo LM" },
+          { "id": "hydraulic", "name": "Hydraulic struts", "note": "Oil and gas struts that reset. Heavier; reusable.", "pros": ["Reusable", "Reliability +0.3 %"], "cons": ["+60 kg"], "massD": 60, "costD": 30000, "rel": 0.003, "real": "Falcon 9" }
+        ] },
+        { "key": "pads", "name": "Foot pads", "role": "How big the feet are.", "art": "pad", "options": [
+          { "id": "small", "name": "Small pads", "note": "Fine on rock.", "pros": ["Light"], "cons": ["Sink in soft sand"], "real": "" },
+          { "id": "large", "name": "Large pads", "note": "Snowshoes for dust.", "pros": ["Lands on soft ground", "Reliability +0.3 %"], "cons": ["+30 kg"], "massD": 30, "costD": 8000, "rel": 0.003, "real": "Apollo LM 94 cm pads" }
+        ] }
+      ]
+    },
+    "solar": {
+      "name": "Inside the solar array",
+      "slots": [
+        { "key": "cells", "name": "Solar cells", "role": "Which kind of cell covers the panel.", "art": "cells", "options": [
+          { "id": "silicon", "name": "Silicon", "note": "20 % efficient. Cheap and tough.", "pros": ["Cheap"], "cons": ["20 % efficient"], "real": "ISS original arrays" },
+          { "id": "triple", "name": "Triple-junction GaAs", "note": "Three layers, each catching a different colour: 30 %+ efficient.", "pros": ["+30 % power"], "cons": ["+60 % cost"], "powerF": 1.3, "costF": 1.6, "real": "Every modern spacecraft" }
+        ] },
+        { "key": "drive", "name": "Array drive", "role": "Whether the panel turns to follow the Sun.", "art": "drive", "options": [
+          { "id": "fixed", "name": "Fixed", "note": "Bolted to the hull. Power depends on where the ship points.", "pros": ["Nothing to fail"], "cons": ["Power drops when pointing away"], "real": "" },
+          { "id": "tracking", "name": "Sun-tracking drive", "note": "A motor and slip rings keep the panel facing the Sun.", "pros": ["+20 % average power"], "cons": ["+15 kg", "A motor that must not jam"], "powerF": 1.2, "massD": 15, "costD": 25000, "rel": -0.003, "real": "ISS SARJ, Dawn" }
+        ] }
+      ]
+    },
+    "chute": {
+      "name": "Inside the parachute",
+      "slots": [
+        { "key": "canopy", "name": "Canopy", "role": "The shape of the chute.", "art": "canopy", "options": [
+          { "id": "dgb", "name": "Disk-gap-band", "note": "The Mars standard: a disk, a gap, a band. Opens supersonic without tearing.", "pros": ["Opens at Mach 1.7"], "cons": [], "real": "Viking to Perseverance" },
+          { "id": "ringsail", "name": "Ringsail", "note": "Rings of sail cloth: more drag per kilogram, subsonic only.", "pros": ["+15 % drag"], "cons": ["Must open slower, lower"], "chuteF": 1.15, "massD": 10, "costD": 12000, "rel": -0.004, "real": "Apollo, Orion mains" }
+        ] },
+        { "key": "reefing", "name": "Reefing", "role": "Whether the chute opens in stages.", "art": "reef", "options": [
+          { "id": "none", "name": "Full open", "note": "One hard jerk.", "pros": ["Simple"], "cons": ["Peak load tears a weak chute"], "real": "" },
+          { "id": "staged", "name": "Staged reefing", "note": "Cutters release the canopy in two steps, halving the peak load.", "pros": ["Reliability +0.4 %"], "cons": ["+$8k"], "costD": 8000, "rel": 0.004, "real": "Orion, Dragon" }
+        ] }
+      ]
+    }
+  }
+}

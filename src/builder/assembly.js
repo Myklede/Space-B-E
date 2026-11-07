@@ -8,8 +8,12 @@ export const BASE_RADIUS = 1.25; // m at scale 1, the same as Role 3's tanks and
 const SHARE_PREFIX = 'SBE1.';
 const HISTORY_LIMIT = 60;
 
-/** Normalises data/parts.json into { byId, parts, families } with every optional field filled in. */
-export function createCatalog(json) {
+/**
+ * Normalises data/parts.json into { byId, parts, families } with every optional field filled in.
+ * `internals` (data/internals.json) is optional: when given, `kit(def)` returns the part's kit (slots with options)
+ * and `defaults(def)` the default option per slot.
+ */
+export function createCatalog(json, internals = null) {
   const parts = (json.parts ?? []).map((raw) => ({
     attach: 'axial',
     nodes: [],
@@ -18,6 +22,7 @@ export function createCatalog(json) {
     attachFrac: 0.5,
     engine: false,
     fuel: null,
+    booster: null,
     reliability: 1,
     mass: 0,
     cost: 0,
@@ -25,19 +30,33 @@ export function createCatalog(json) {
     size: 'm',
     desc: '',
     guidebook: null,
+    internals: null,
+    real: null,
     ...raw,
     flags: { ...(raw.flags ?? {}) },
     aero: { sideArea: 0, ...(raw.aero ?? {}) },
   }));
   const byId = Object.fromEntries(parts.map((p) => [p.id, p]));
   const families = [...(json.families ?? [])].sort((a, b) => (a.order ?? 0) - (b.order ?? 0));
-  return { byId, parts, families, get: (id) => byId[id] ?? null };
+  const kits = internals?.kits ?? {};
+  const kit = (def) => (def?.internals && kits[def.internals]) || null;
+  const defaults = (def) => Object.fromEntries((kit(def)?.slots ?? []).map((s) => [s.key, s.options[0]?.id ?? null]));
+  /** The chosen option of each slot for a part instance: { key: optionObject }. Unknown ids fall back to the default. */
+  const optionsOf = (def, options = null) => {
+    const out = {};
+    for (const slot of kit(def)?.slots ?? []) {
+      const wanted = options?.[slot.key];
+      out[slot.key] = slot.options.find((o) => o.id === wanted) ?? slot.options[0];
+    }
+    return out;
+  };
+  return { byId, parts, families, kits, get: (id) => byId[id] ?? null, kit, defaults, optionsOf };
 }
 
 export const partRadius = (def) => BASE_RADIUS * (SIZE_SCALE[def.size] ?? 1);
 
 function clonePart(p) {
-  return { ...p, engine: p.engine ? { ...p.engine } : undefined };
+  return { ...p, engine: p.engine ? { ...p.engine } : undefined, options: p.options ? { ...p.options } : undefined };
 }
 
 function toBase64(text) {
@@ -66,6 +85,7 @@ export class Assembly {
       id: p.id, type: p.type, parent: p.parent ?? null, node: p.node ?? null,
       angle: Number(p.angle) || 0, yFrac: p.yFrac == null ? 0.5 : Number(p.yFrac), variant: p.variant ?? null, group: p.group ?? null,
       material: p.material ?? null,
+      ...(p.options && typeof p.options === 'object' ? { options: { ...p.options } } : {}),
       ...(p.engine ? { engine: { fuel: p.engine.fuel, nozzle: p.engine.nozzle, pump: p.engine.pump } } : {}),
     }));
     this.#dropInvalid();
@@ -282,6 +302,26 @@ export class Assembly {
     return true;
   }
 
+  /** Choose one internal option of a part (slot key and option id from its kit in data/internals.json). Twins change together. */
+  setOption(id, key, optionId) {
+    const p = this.part(id);
+    const def = p && this.catalog.get(p.type);
+    const slot = def && this.catalog.kit?.(def)?.slots.find((s) => s.key === key);
+    if (!slot || !slot.options.some((o) => o.id === optionId)) return false;
+    this.#begin();
+    const twins = p.group ? this.parts.filter((q) => q.group === p.group) : [p];
+    for (const q of twins) q.options = { ...(q.options ?? {}), [key]: optionId };
+    this.#commit();
+    return true;
+  }
+
+  /** The chosen option objects of a part, defaults filled in: { slotKey: option }. */
+  options(id) {
+    const p = this.part(id);
+    const def = p && this.catalog.get(p.type);
+    return def ? this.catalog.optionsOf?.(def, p.options) ?? {} : {};
+  }
+
   /** Swap a part for another type in the same place (same parent, node, angle). Children stay. Returns true if swapped. */
   replace(id, typeId) {
     const p = this.part(id);
@@ -298,6 +338,7 @@ export class Assembly {
     for (const q of twins) {
       q.type = typeId;
       q.material = null;
+      delete q.options;
       if (to.engine) q.engine = q.engine ?? defaultEngine(to);
       else delete q.engine;
       if (to.engine && q.engine) q.engine.pump = String(to.size ?? 'm').toUpperCase();
@@ -357,6 +398,7 @@ export class Assembly {
       const entry = {
         id: p.id, type: p.type, def, attach: def.attach, parentId: p.parent, node: p.node, angle: p.angle, yFrac: p.yFrac,
         y: base, height: def.height, radius: partRadius(def), x: 0, z: 0, centerY: base + def.height / 2, engine: p.engine ?? null, group: p.group, material: p.material ?? null,
+        options: p.options ?? null,
       };
       byId.set(p.id, entry);
       out.push(entry);
@@ -372,6 +414,7 @@ export class Assembly {
           const e = {
             id: c.id, type: c.type, def: cdef, attach: 'radial', parentId: p.id, node: 'radial', angle: c.angle, yFrac: c.yFrac,
             y, height: cdef.height, radius: r, x: r * Math.cos(a), z: -r * Math.sin(a), centerY: y, engine: null, group: c.group, material: c.material ?? null,
+            options: c.options ?? null,
           };
           byId.set(c.id, e);
           out.push(e);

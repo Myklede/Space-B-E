@@ -61,7 +61,11 @@ export function createHangarScene({ renderer }) {
         pivot.rotation.y = e.angle * DEG;
         const isFin = /fin/.test(e.type);
         const isLegs = /leg/.test(e.type);
-        if (!isFin && !isLegs) art.position.x = e.radius + (art.userData.width ?? 0.6) * 0.45;
+        const isSrb = !!art.userData.srb;
+        const host = layout.find((x) => x.id === e.parentId);
+        const taper = host?.def.flags?.capsule ? 1 - 0.3 * Math.max(0, e.yFrac - 0.4) : 1; // capsules narrow towards the top
+        if (isSrb) art.position.x = e.radius + (art.userData.width ?? 0.9) * 0.5 + 0.05;
+        else if (!isFin && !isLegs) art.position.x = e.radius * taper + (art.userData.width ?? 0.6) * 0.45;
         if (isFin) art.position.x = e.radius - 1.2;
         pivot.add(art);
         holder = pivot;

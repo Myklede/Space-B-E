@@ -9,15 +9,18 @@ import partsJson from './data/parts.json';
 import engines from './data/engines.json';
 import launch from './data/launch.json';
 import materials from './data/materials.json';
+import internals from './data/internals.json';
 import text from './data/text.json';
 import reliable from './data/presets/reliable.json';
 import coldMorning from './data/presets/coldMorning.json';
 import thinSkin from './data/presets/thinSkin.json';
+import workhorse from './data/presets/workhorse.json';
 import { Assembly, createCatalog } from './assembly.js';
 import { computeShipSpec, engineStats } from './stats.js';
 import { evaluate } from './gonogo.js';
 import { fmtInt, fmtMoney } from './format.js';
 import { createHangarScene } from './hangarScene.js';
+import { createDesignScene } from './designScene.js';
 import { createHangarScreen, DESIGN_STATIONS } from './hangarScreen.js';
 import { createFormulaLens } from './formulaLens.js';
 import { createGonogoView } from './gonogoView.js';
@@ -29,12 +32,13 @@ import { openPauseMenu, openSettings } from './settings.js';
 
 export { openPauseMenu, openSettings }; // other roles may open the Esc menu and settings from their states
 
-const catalog = createCatalog(partsJson);
-const PRESETS = { reliable, coldMorning, thinSkin };
+const catalog = createCatalog(partsJson, internals);
+const PRESETS = { reliable, workhorse, coldMorning, thinSkin };
 const deps = { catalog, engines, launch, balance: economy.balance, planets: PLANETS, g0: G0, materials };
 
 let assembly = null; // the vehicle being built, kept across states
 let bay = null; // the engineering bay scene, built once
+let scene3d = null; // the design studio (3D view of the design page), built once
 let icons = null; // part pictures, rendered once
 let screen = null; // { update, dispose } of the active state
 let closePause = null;
@@ -67,14 +71,28 @@ function loadAssembly(json) {
 }
 
 let modelsPromise = null;
+const artRequested = new Set(); // part types whose real model has been asked for
 function ensureBay() {
   if (!bay) bay = createHangarScene({ renderer: graphics.renderer });
+  if (!scene3d) scene3d = createDesignScene();
   if (!icons) icons = createIconRenderer({ renderer: graphics.renderer });
   if (!modelsPromise) {
-    // real NASA hardware arrives a moment after the bay opens; rebuild the vehicle and its pictures when it does
-    modelsPromise = preloadNasaParts(catalog).then((n) => { icons.reset(); bay.decorate(catalog); if (n && screen?.refresh) screen.refresh(); });
+    // only the models of the parts on the stand download now; the rest arrive when a part is placed or looked at
+    const onStand = [...new Set(ensureAssembly().parts.map((p) => p.type))];
+    modelsPromise = requestArt(onStand).then(() => bay.decorate(catalog));
   }
   return bay;
+}
+
+/** Downloads the real models for these part types (once each); rebuilds the vehicle and the pictures when they arrive. */
+function requestArt(ids) {
+  const fresh = ids.filter((id) => !artRequested.has(id));
+  if (!fresh.length) return Promise.resolve(0);
+  fresh.forEach((id) => artRequested.add(id));
+  return preloadNasaParts(catalog, fresh).then((n) => {
+    if (n) { icons?.reset(); scene3d?.invalidate(); screen?.refresh?.(); }
+    return n;
+  });
 }
 
 function highlight(ids) {
@@ -110,9 +128,12 @@ function enterHangar() {
   audio.play('ambience.ship', { loop: true, volume: 0.3 });
 
   const hangar = createHangarScreen({
-    assembly: a, catalog, materials, engines, launch, text, scene: b, icons, stations: b.stations, getMoney: () => economy.getMoney(), insolvencyFloor: economy.balance.insolvencyFloor ?? 0,
+    assembly: a, catalog, materials, engines, launch, text, scene: b, scene3d, g0: G0, icons, stations: b.stations, getMoney: () => economy.getMoney(), insolvencyFloor: economy.balance.insolvencyFloor ?? 0,
     hooks: {
       onChange: refresh,
+      onView: (s, c) => graphics.setView(s, c),
+      onViewRestore: () => graphics.setView(b.scene, b.camera),
+      onNeedArt: (ids) => requestArt(ids),
       onSound: (id) => audio.play(id),
       onGonogo: () => { audio.play('ui.click'); requestState('GONOGO'); },
       onWorkbench: openWorkbench,
@@ -284,7 +305,7 @@ function enterHangar() {
   const invertY = () => !!save.load().invertY;
   // ?debug=1: let the console (and screenshot scripts) walk to a machine and open it: window.__game.builder.placeAt('propulsion')
   if (new URLSearchParams(location.search).get('debug') === '1' && window.__game) {
-    window.__game.builder = { openStation: hangar.openStation, closeStation: hangar.closeStation, placeAt: (id) => b.placeAtStation(id), startTest, bay: b, refresh, nasa: { hasNasaArt, nasaFailures, NASA_PARTS } };
+    window.__game.builder = { openStation: hangar.openStation, closeStation: hangar.closeStation, placeAt: (id) => b.placeAtStation(id), startTest, bay: b, scene3d, assembly: a, catalog, icons, refresh, requestArt, nasa: { hasNasaArt, nasaFailures, NASA_PARTS } };
   }
   const lockOnClick = () => { if (!hangar.station && !b.test.active) input.lockPointer(); };
   window.addEventListener('click', lockOnClick);
@@ -298,6 +319,8 @@ function enterHangar() {
     input.onPress('KeyH', () => { if (hangar.station === 'handbook') hangar.closeStation(); else if (!b.test.active) { hangar.openStation('handbook'); } }),
     input.onPress('KeyZ', () => { if (DESIGN_STATIONS.includes(hangar.station) && a.undo()) { audio.play('ui.click'); refresh(); } }),
     input.onPress('KeyY', () => { if (DESIGN_STATIONS.includes(hangar.station) && a.redo()) { audio.play('ui.click'); refresh(); } }),
+    input.onPress('KeyQ', () => { if (hangar.designOpen) hangar.rotateDesign(-45); }),
+    input.onPress('KeyE', () => { if (hangar.designOpen) hangar.rotateDesign(45); }),
     events.on('economy:changed', () => hangar.renderMoney()),
   ];
   const esc = () => {

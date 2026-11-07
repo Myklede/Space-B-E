@@ -7,7 +7,7 @@ Everything Role 1 owns lives in `src/builder/`. The contract (`src/core/contract
 | State | Screen | File |
 |---|---|---|
 | `MENU` | main menu, content warning, settings | `menu.js`, `settings.js` |
-| `HANGAR` | the engineering bay (first person) and the vehicle design page | `hangarScreen.js`, `hangarScene.js`, `designPage.js`, `bay/*` |
+| `HANGAR` | the engineering bay (first person) and the vehicle design page | `hangarScreen.js`, `hangarScene.js`, `designPage.js`, `designScene.js`, `bay/*` |
 | `GONOGO` | animated Go/No-Go poll, confirm / override / back | `gonogoView.js` (+ wiring in `index.js`) |
 
 `index.js` is the module core exports (`default { init, enter, update, exit }`). It keeps the current **Assembly**, recomputes the **ShipSpec** after every change, saves a draft through `save`, and is the only file that calls `economy`, `setShip`, `requestState` and emits events.
@@ -16,12 +16,12 @@ Pure logic (Node-testable, no browser or core imports; everything is passed in):
 
 | File | What |
 |---|---|
-| `assembly.js` | the rocket as a tree of parts with attachment nodes; attach/remove/undo/redo/symmetry; layout (metres); serialize; share code |
-| `stats.js` | `computeShipSpec(assembly, deps)` → `{ spec, breakdown }` per `SHIP_SPEC_SHAPE`; `engineStats(def, engines, g0)` |
+| `assembly.js` | the rocket as a tree of parts with attachment nodes; attach/remove/replace/undo/redo/symmetry; material and internal options per part (`setMaterial`, `setOption`, `options`); layout (metres); serialize; share code. `createCatalog(parts, internals)` adds `kit(def)`, `defaults(def)`, `optionsOf(def, options)` |
+| `stats.js` | `computeShipSpec(assembly, deps)` → `{ spec, breakdown, blocks }` per `SHIP_SPEC_SHAPE`, with materials, internal options (`optionMods`) and solid motors folded in; `engineStats(def, engines, g0, mods)`; `partFigures(def, ctx)` for one part on a card |
 | `gonogo.js` | `evaluate(spec, ctx)` → hard blocks, warnings and the console lines (text from `data/text.json`) |
 | `tests/builder.test.mjs` | `node src/builder/tests/builder.test.mjs`: schema checks, text coverage, preset stats |
 
-Data (JSON only, so balancing never conflicts with code): `data/parts.json` (parts with `role`, `pros`, `cons`, `materialFamily`), `data/materials.json` (material options per family with mass/cost factors and a reliability delta), `data/engines.json`, `data/launch.json`, `data/text.json`, `data/presets/*.json`, `data/handbook.json`, `data/bayAssets.json`.
+Data (JSON only, so balancing never conflicts with code): `data/parts.json` (77 parts in 16 families, each with `role`, `detail`, `pros`, `cons`, `real` (the real-world reference), `materialFamily`, optional `internals` kit id, optional `booster` for solid motors, `flags` such as `reliabilityBonus`, `rigidity`, `chuteCdA`, `avionics`), `data/internals.json` (kits of slots with options and their effects: `massF`, `massD`, `costF`, `costD`, `rel`, `isp`, `thrustF`, `powerF`, `chuteF`), `data/materials.json` (five families: structure, engine chamber, equipment housing, pressure vessel, motor case), `data/engines.json` (fuels, nozzles, pumps and `references`: real engines as templates), `data/launch.json`, `data/text.json`, `data/presets/*.json` (Reliable, Workhorse, Cold Morning, Thin Skin), `data/handbook.json`, `data/bayAssets.json`, `data/icons.json` (which card pictures are baked).
 
 Views with fixed interfaces (so three people can work at once): `formulaLens.js`, `gonogoView.js`, `workbench.js`, `settings.js`, `menu.js`, `builder.css`.
 
@@ -48,6 +48,7 @@ Views with fixed interfaces (so three people can work at once): `formulaLens.js`
 - Exactly one part has `parent: null` (the root; normally the capsule). Every other part names its `parent` and the parent's `node` it hangs on: `top` (above the parent), `bottom` (below) or `radial` (clamped to the side).
 - `angle` is degrees around the rocket axis for radial parts. `yFrac` (0..1) is where along the parent's height a radial part sits (0 = parent base). `group` ties symmetry copies together (remove one, all go).
 - `engine` exists only on engine parts: `fuel` from `FUELS`, `nozzle` from `NOZZLES`, `pump` from `PUMPS` (contract.js). The part's size letter must equal the pump (`engine_m` ⇄ `M`).
+- `material` (an option id of the part's `materialFamily` in `data/materials.json`) and `options` (`{ slotKey: optionId }` from the part's kit in `data/internals.json`) are optional; missing values mean the first option. `replace` clears both.
 - Only axial parts (`attach: "axial"` in the catalog) take `top`/`bottom` children; a `top`/`bottom` node holds at most one child. Radial parts take no children.
 - `launch.slot` is an id from `data/launch.json` (`cold` = 2 °C, the Challenger setup).
 
@@ -91,15 +92,19 @@ The hangar is a round integration hall the engineer walks through in first perso
 | `bay/player.js` | first-person controller: WASD, Shift run, Space jump (gravity from `PLANETS.earth.g`), mouse look through core `input`, collisions with stations and `room.obstacles`, a human body (CesiumMan, walk animation, clipped at the neck by a clipping plane) with a tablet (`setTablet`) |
 | `bay/screen.js` | the big curved wall screen: a render-to-texture camera feed of the stand (refreshed only when the vehicle changes) and a telemetry board |
 | `bay/teststand.js` | static fire + hold-down liftoff test with Role 3's engine VFX and sounds |
-| `bay/partArt.js` | 3D art for a part: real NASA hardware (`bay/nasa.js`, 22 parts, Draco-compressed GLBs in `public/assets/nasa/`) → detailed procedural tanks, nose cones, heat shields, fins and modules (`bay/partMeshes.js`) → Role 3's `rocketPart:` meshes (legs) |
-| `designPage.js` | the vehicle design page: a top-to-bottom engineering drawing of the stack (side elevations from `partIcons.sideViewFor`, labels laid out per column without overlaps, leader lines, dashed `+ Add a part` slots, wheel zoom about the pointer); a picker row of cards (replacements, materials, HEAD/BODY/TAIL for an empty stand, checklist items via `autoplace.js`); header chips, build checklist, warnings, Formula Lens |
+| `bay/partArt.js` | 3D art for a part: real NASA hardware (`bay/nasa.js`, 18 parts, Draco-compressed GLBs in `public/assets/nasa/`, downloaded per part on demand with `requestPartArt`) → detailed procedural hardware (`bay/partMeshes.js`: tanks, nose cones, heat shields, fins, modules, interstage and centerbody sections, truss, guidance ring, payload adapter, spin table, kick motor, strap-on solid, spheres, wiring tunnel, solar wing, RTG, chutes, inflatable shield, airbags, instruments) → Role 3's `rocketPart:` meshes (legs) |
+| `partIcons.js` | card pictures: a baked PNG from `public/assets/icons/` when `data/icons.json` lists it (`node src/builder/tools/bake-icons.mjs` makes them), else rendered once in the browser (`iconFor(def)`, `objectIcon(key, build)`) |
+| `tools/` | `bake-icons.mjs` (card pictures), `shrink-textures.mjs` (Poly Haven prop textures to 512 px) |
+| `designPage.js` | the vehicle design page: the 3D studio in the middle (`designScene.js`, shown through `graphics.setView` while the page is open), DOM labels projected from it each frame (parts left, equipment right, `+ add` slots, internals tags), a strip of small cards along the top (replacements, slot candidates, HEAD/BODY/TAIL for an empty stand, checklist items via `autoplace.js`, the whole warehouse, or the options of one internals slot; folds away), and the side panel (summary: anatomy, checklist, warnings, Formula Lens; installed part: story, numbers, material chips, internals slots, engine templates, workbench, remove; candidate: story, numbers, comparison, INSTALL; option: story, before/after, USE THIS). The vehicle turns by HTML5 drag, the slider, Q/E or on its own; the wheel zooms; zooming into a selected part (or opening a slot) explodes its internals |
+| `designScene.js` | the studio: lights, floor disc and grid, the vehicle from `partArt`, orbit camera (`fit`, `focusOn`, `relax`, `zoomBy`, `rotateBy`, `setViewCentre` so the vehicle stays centred beside the side panel), selection dimming, exploded internals from `bay/internalsArt.js`, `pick(x, y)` by raycast, `screenAnchors(rect)` for the labels |
+| `bay/internalsArt.js` | `internalsArt(def, options, { radius, height })` → the pieces inside a part for each slot of its kit, with the direction each slides out in |
 | `bay/nasa.js` | `NASA_PARTS` (which model each part uses, cut by node name, normalised to stand on y = 0 at the catalogue height) and `nasaProp(slug, cfg, height)` for the hardware standing in the hall |
 | `bay/loader.js` | Poly Haven assets listed in `data/bayAssets.json` (HDRI, PBR sets, glTF props) with procedural fallbacks |
 | `hangarScene.js` | puts it together: `createHangarScene({ renderer })` → scene, camera, player, stations, wall, test, `setLayout`, `worldAnchors`, `nearestStation`, `placeAtStation` |
 | `hangarScreen.js` | the HUD (crosshair, prompt, chip, toasts) and the station panels: the design page for the five design desks (each preselects its family), test console, range terminal, handbook (`handbook.js`, notes saved as `builderNotes`), dialogs (rename, MORE: blueprints, share code, launch window, redo, clear) |
 | `autoplace.js` | "ADD TO VEHICLE" from a card: puts the part where a technician would (`insertAbove` for tanks above the engine) |
 
-Flow: walk up to a machine → `E` opens its panel (pointer unlocks, the player stands still) → `Esc` closes it. `H` opens the handbook anywhere. The readiness poll (GONOGO) is shown from the test conductor's console in the same hall. With `?debug=1`, `window.__game.builder.placeAt(id)` / `openStation(id)` / `startTest()` drive it from the console.
+Flow: walk up to a machine → `E` opens its panel (pointer unlocks, the player stands still) → `Esc` closes it (first the card strip, then the page). `H` opens the handbook anywhere. The readiness poll (GONOGO) is shown from the test conductor's console in the same hall. With `?debug=1`, `window.__game.builder.placeAt(id)` / `openStation(id)` / `startTest()` / `requestArt(ids)` drive it from the console; `window.__game.builder.scene3d` is the design studio.
 
 Assets: `public/assets/polyhaven/` (CC0, 53 MB), `public/assets/nasa/` (public domain, 45 MB), `public/assets/people/` (CC BY), see `CREDITS.md`; `data/bayAssets.json` is the manifest the loader trusts, and `nasaProp` resolves to null for a missing file, so neither produces a console error.
 
