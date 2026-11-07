@@ -4,12 +4,14 @@ A first-person space-mission game for the browser, built by 4 people in 48 hours
 
 **Stack:** Vite, Three.js, vanilla JavaScript ES modules, HTML/CSS overlays. Keyboard and mouse, desktop browser, UI in English.
 
+**Teammates:** open this repo in Claude Code or Codex and say your role, for example: "My role is 2. Read AGENTS.md and start." Work happens on the `dev` branch.
+
 ## For AI agents: start here
 
 Do these steps in order before writing any code.
 
 1. **Find your role.** Ask your human which role they have, or match `git config user.name` to the table below. Work only on that role.
-2. **Read the spec sections listed for your role** in [`docs/TEAM_PROMPT.md`](docs/TEAM_PROMPT.md). Everyone also reads §0, §14 and §15. If the spec and this README disagree, the spec wins.
+2. **Read the spec sections listed for your role** in [`docs/TEAM_PROMPT.md`](docs/TEAM_PROMPT.md). Everyone also reads §0, §14 and §15, and [`src/core/contract.js`](src/core/contract.js). For names and data shapes, `src/core/contract.js` wins. For everything else the spec wins, then this README.
 3. **Check [Status](#status)** to see what already exists. Use what's there, and use a local mock for anything that doesn't exist yet. Never wait for another role.
 4. **Set up your branch:**
    ```bash
@@ -19,7 +21,8 @@ Do these steps in order before writing any code.
    npm run dev
    ```
 5. **Do your role's next tasks**, in order, inside your own folders.
-6. **When a piece works,** follow [Getting work to `main`](#getting-work-to-main) and update your row in [Status](#status).
+6. **Replace the stubs in your own folders** with the real thing, keeping every export listed in `PUBLIC_EXPORTS` in `src/core/contract.js`.
+7. **When a piece works,** follow [Getting work to `main`](#getting-work-to-main) and update your row in [Status](#status).
 
 Before you start, tell your human in a few lines which role you took, what you will build first, and what you need from other roles.
 
@@ -28,6 +31,8 @@ Before you start, tell your human in a few lines which role you took, what you w
 - **Never push to `main`.** Finished work goes to `dev`.
 - **Edit only your own folders.** Talk to other roles only through events and public APIs (spec §14), and never import another role's internal files. If you need a change in someone else's area, tell your human.
 - **Keep `dev` running:** `npm run dev` starts the game with no console errors.
+- **`npm run check` must pass before you push to `dev`.** It checks the contract rules and walks the whole game loop in Chrome.
+- **Changes to `src/core/`, `index.html`, `scripts/` or npm packages go through dtri (Role 3).** Only `src/core/balance.json` is open to everyone, because balancing numbers is everyone's job.
 - **Make every feature testable alone** through `?debug=1` and your sandbox page, `/sandbox/<role>.html`.
 - **Keep text, numbers, parts and task placement in JSON,** so balancing doesn't cause merge conflicts.
 - **Science must be correct.** Use NASA/ESA values. If unsure, mark it `// TODO verify` and tell your human.
@@ -35,41 +40,73 @@ Before you start, tell your human in a few lines which role you took, what you w
 - **After the contract freeze (hour 3),** contracts change only if all four people agree.
 - **A demo that runs smoothly and looks beautiful beats complex mechanics that don't work.** When time runs short, cut from the bottom tier up (spec §16).
 
+## How the pieces connect
+
+- **One game loop** lives in `src/core/main.js`. Each frame it calls the current state owner's `update(dt, state)` and then renders. Never call `requestAnimationFrame` or `graphics.render`.
+- **Every module** (`src/<name>/index.js`) does `export default { init, enter, update, exit }`, and every member is optional. In `enter(state, data)`, call `graphics.setView(yourScene, yourCamera)`. `exit` runs when your state ends, and main clears keys and UI between states.
+- **Who owns which state** (from `STATE_OWNERS` in `contract.js`):
+
+| State | Owner module | Role |
+|---|---|---|
+| `MENU` | `builder` | 1 |
+| `HANGAR` | `builder` | 1 |
+| `GONOGO` | `builder` | 1 |
+| `PRELAUNCH` | `story` | 4 |
+| `LAUNCH` | `flight` | 2 |
+| `ORBIT` | `flight` | 2 |
+| `CRUISE` | `cruise` | 4 |
+| `ENTRY` | `flight` | 2 |
+| `LANDING` | `flight` | 2 |
+| `INTERIOR` | `surface` | 2 |
+| `SURFACE` | `surface` | 2 |
+| `RETURN` | `story` | 4 |
+| `ENDING` | `story` | 4 |
+| `REPORT` | `report` | 4 |
+
+  `missions` and `guidebook` own no state. They only listen to events.
+- **Talk through events.** Use `events.emit` and `events.on` from `/src/core/index.js`, and change state with `requestState`. Import from another role only through its `index.js`.
+- **One door for each shared thing.** Keys and mouse only through `input`, UI only through `ui.mount`, saves only through `save`, money only through `economy`, gravity only from `PLANETS`.
+- **Never invent a name.** Every event, state, ending, task and station is in `src/core/contract.js`. If you need a new one, stop and tell your human, because all four people must agree.
+- **Example of a flow across roles.** Role 2's flight code emits `flight:failed` with an `endingId` and a `cause`. Role 4's story module hears it, calls `economy.chargeFailure`, emits `ending:show` and requests `ENDING`. The black box in `src/report/` hears the same `flight:*` events and records them for the Flight Report.
+- **Stubs** in every module folder start with `STUB: Role N replaces this`. They make the whole loop playable with buttons, and `npm run check` walks that loop.
+
 ## Roles
 
 | Role | Owner | Branch | Your folders | Spec sections |
 |---|---|---|---|---|
-| 1. Rocket Builder + Core Keeper | Quoc Thai Nguyen ([@Myklede](https://github.com/Myklede)) | `role1-builder` | `src/core/`, `src/builder/` | §3, §5, §8 |
+| 1. Rocket Builder | Quoc Thai Nguyen ([@Myklede](https://github.com/Myklede)) | `role1-builder` | `src/builder/` | §3, §5, §8 |
 | 2. Flight & Astronaut | Minh Vuong ([@laibaminhvuong-ux](https://github.com/laibaminhvuong-ux)) | `role2-flight` | `src/flight/`, `src/surface/` | §4, §6, §7 |
-| 3. Graphics & Audio | dtri ([@dtri2206](https://github.com/dtri2206)) | `role3-graphics` | `src/graphics/`, `src/audio/`, `src/ui/` | §12 |
+| 3. Graphics, Audio & Core | dtri ([@dtri2206](https://github.com/dtri2206)) | `role3-graphics` | `src/core/`, `src/graphics/`, `src/audio/`, `src/ui/` | §12, §14, §15 |
 | 4. Story, Cruise & Knowledge | Le Quoc Viet Pham ([@quocviet1207](https://github.com/quocviet1207)) | `role4-story` | `src/cruise/`, `src/story/`, `src/missions/`, `src/guidebook/`, `src/report/` | §2, §6.3, §8, §9, §10, §11, §13 |
 
 Models, textures and audio go in `public/assets/`, and everything used is credited in `CREDITS.md`.
 
-### Role 1: Rocket Builder + Core Keeper
+### Role 1: Rocket Builder
 
-**You build:** hangar computer UI, LEGO-style builder, engine workbench, Formula Lens, Go/No-Go poll, economy, save, preset ships, debug panel. You also keep `src/core/` and check that `dev` boots at every checkpoint.
+**You build:** main menu, content warning and settings, hangar computer UI, LEGO-style builder, engine workbench, Formula Lens, Go/No-Go poll, preset ships. You also own the rules of the economy as data in `src/core/balance.json`. For any change to `economy.js` or anything else in `src/core/`, ask dtri.
 
 **Next tasks:**
-1. Add `index.html` and `src/core/`: `main.js` boot, `state.js`, `events.js`, `planets.js` (exact contents in §14), `save.js`, debug panel at `?debug=1`. `package.json` already exists, so extend it rather than replacing it.
-2. Add `ShipSpec` with 3 preset JSONs in `src/core/mocks/`, the economy API and `builder:highlightPart`. The other roles are waiting for these.
-3. Tier 0: basic parts and snapping, text Go/No-Go, economy and failure penalty, the "Reliable" preset.
+1. Replace the stubs in `src/builder/` with the real builder, keeping every export in `PUBLIC_EXPORTS`. That includes the main menu (`src/builder/menu.js`).
+2. Implement `builder:highlightPart`, and tune `src/core/balance.json` with the team.
+3. Tier 0: basic parts and snapping, text Go/No-Go, the failure penalty numbers, the "Reliable" preset.
 
-**You use:** theme CSS (Role 3), guidebook text (Role 4), `assets.get('rocketPart:<id>')` (Role 3).
+**You use:** theme CSS (Role 3), guidebook text (Role 4), `assets.get('rocketPart:<id>')` (Role 3), and `src/core/` (economy, save, ship mocks).
 
 ### Role 2: Flight & Astronaut
 
 **You build:** flight controller (physics and cockpit controls), Flight Assist, launch/orbit scene, entry/landing scene, Max-Q and G meters, first-person walking (ship interior and Mars EVA), interactable system, stations, airlock, suit, oxygen.
 
 **Next tasks:**
-1. Add stubs of `FlightController`, `registerInteractable({id, position, prompt, onUse})`, and the `flight:*` and `eva:*` events. Role 4 is waiting for these.
+1. Replace the stubs in `src/flight/` and `src/surface/` with the real thing, keeping every export in `PUBLIC_EXPORTS` (`FlightController`, `registerInteractable({id, position, prompt, onUse})`) and the `flight:*` and `eva:*` events.
 2. Tier 0: launch to orbit, entry to landing, interior with seat, suit, airlock and O₂ station, EVA with oxygen.
 
-**You use:** `ShipSpec` (mock it until Role 1 delivers), and from Role 3 `getTerrainHeight`, `createMarsScene`, `createSpaceScene`, `assets.get('cockpit')` and `assets.get('cabin')`.
+**You use:** `getShip()` from `src/core/` (it returns the Reliable mock until the builder works), and from Role 3 `getTerrainHeight`, `createMarsScene`, `createSpaceScene`, `assets.get('cockpit')` and `assets.get('cabin')`.
 
-### Role 3: Graphics & Audio
+### Role 3: Graphics, Audio & Core
 
 **You build:** renderer and post-processing, skybox, Earth and Mars with atmosphere shaders, cockpit, cabin and Mars visuals, VFX (flame, plasma, dust), HUD theme, cinematic API, all sound, Low/High quality settings.
+
+**You also keep `src/core/`** (the game loop, state machine, events, input, UI layer, save, economy, contract and the `?debug=1` panel) and `npm run check`. You review any change to it that another role asks for, and confirm `dev` is healthy before it moves to `main`.
 
 **Next tasks:**
 1. Art pass on the rocket parts and mission props, then real audio.
@@ -82,8 +119,9 @@ Models, textures and audio go in `public/assets/`, and everything used is credit
 **You build:** cruise scene (map, time-warp, day counter, launch window, solar storm, malfunction, family messages), story and Halcyon-1 logs, Mars tasks and progress, ending screens and sequences, black box and Flight Report, Guidebook, all narrative and educational text, demo script.
 
 **Next tasks:**
-1. Add text JSONs (tips, Go/No-Go lines, Formula Lens analogies), task placement data, `guidebook:open` and a mock black-box report. Role 1 is waiting for the text.
-2. Tier 0: cruise map with 1 encounter, 1 task of each type, 1 ending screen.
+1. Replace the stubs in `src/cruise/`, `src/story/`, `src/missions/`, `src/guidebook/` and `src/report/` with the real thing, keeping every export in `PUBLIC_EXPORTS`.
+2. Add text JSONs (tips, Go/No-Go lines, Formula Lens analogies) and task placement data.
+3. Tier 0: cruise map with 1 encounter, 1 task of each type, 1 ending screen.
 
 **You use:** `registerInteractable` and `FlightController` (mock them until Role 2 delivers), `cinematic.play`, `audio.play` and mission props from `assets.get` (Role 3).
 
@@ -91,7 +129,7 @@ Models, textures and audio go in `public/assets/`, and everything used is credit
 
 | Part | Owner |
 |---|---|
-| Main menu, content warning, Esc menu, settings | Role 1 |
+| Main menu, content warning, Esc menu, settings | Role 1, built in `src/builder/` |
 | Pre-launch screen (family photo, message home) | Role 4 |
 | Return and first-step cinematics | Role 4, using Role 3's cinematic API |
 
@@ -101,10 +139,10 @@ Update your row whenever you push to `dev`.
 
 | Role | On `dev` now |
 |---|---|
-| 1 | Nothing yet. `index.html` and `src/core/` don't exist, so `/` shows a 404 and `npm run build` fails. |
-| 2 | Nothing yet |
+| 1 | Stubs exist in `src/builder/` (menu, hangar, Go/No-Go) and the full loop runs with them. `/` now works. |
+| 2 | Stubs exist in `src/flight/` and `src/surface/` and the full loop runs with them. `/` now works. |
 | 3 | All hour-3 APIs below. See every view at `/sandbox/role3.html`. Earth and Mars use real maps; the rest of the art is generated in code. The cabin is a full art pass and the VFX exist; parts, props and sounds are still placeholders. |
-| 4 | Nothing yet |
+| 4 | Stubs exist in `src/cruise/`, `src/story/`, `src/missions/`, `src/guidebook/` and `src/report/` and the full loop runs with them. `/` now works. |
 
 ## Role 3 APIs you can use now
 
@@ -160,15 +198,13 @@ Units are metres and +Y is up.
 These are not decided yet. If your work touches one, raise it with your human instead of guessing.
 
 - **Economy (Role 1):** with the cheapest viable ship at $2.5–3M (§5.6), one failure leaves $1.15–1.75M. That can't pay for another ship, but it stays above $0, so the Bankrupt ending never fires. Surviving 2 failures needs a ship of about $1.3M or less.
-- **Δv (Roles 1, 2):** there is no table of the Δv each leg needs in the 1/10-scale world, though the Δv budget, Go/No-Go and the return all depend on it. A rough estimate for the round trip is 8.9 km/s, about 92% fuel by mass on one stage, while staging is Tier 3 and Mars refuelling is Tier 2.
-- **`ShipSpec` (Roles 1, 2, 3):** `parts` has only `x, y`, which can't describe radial symmetry in 3D, and `nozzle: 'mid'` has no stats in §5.2.
-- **Events (all roles):** nothing carries the weather that the Cold Morning ending needs, no event streams the continuous telemetry the black box needs (peak g, radiation, temperatures), and `builder:highlightPart` isn't in the §14 list.
+- **Δv (Roles 1, 2):** `src/core/balance.json` holds provisional Δv numbers per leg (ascent, transfer, landing, return) that still need the team's agreement. A rough estimate for the round trip is 8.9 km/s, about 92% fuel by mass on one stage, while staging is Tier 3 and Mars refuelling is Tier 2.
 
 ## Getting work to `main`
 
-1. Merge your finished work into `dev` and push it.
+1. On your role branch, run `git merge origin/dev`, then `npm run check`, and fix everything it reports. Then push with `git push origin HEAD:dev`. If someone pushed first, git refuses: merge again and repeat. If the check fails, do not push.
 2. Tell your human. They ask the team to check `dev`.
-3. When everyone agrees, dtri moves `dev` to `main`. Nobody else pushes to `main`.
+3. When everyone agrees and dtri confirms `dev` is healthy, dtri moves `dev` to `main`. Nobody else pushes to `main`.
 
 ## Timeline
 
@@ -182,4 +218,4 @@ These are not decided yet. If your work touches one, raise it with your human in
 | 42–45 | Feature freeze, bug fixes only, deploy |
 | 45–48 | Record a backup demo video, rehearse the pitch |
 
-Everyone merges finished work into `dev` at hours **12, 18, 24, 30, 36 and 42**, and Role 1 checks that it still boots.
+Everyone merges finished work into `dev` at hours **12, 18, 24, 30, 36 and 42**, and `npm run check` covers that it still boots. dtri confirms before `dev` moves to `main`.

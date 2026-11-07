@@ -420,6 +420,8 @@ Content lives in `src/guidebook/entries.json`. **Role 4 also writes:** Formula L
 
 ## 14. Tech stack & shared contracts (ALL roles)
 
+`src/core/contract.js` in the repo is the source of truth for all names and data shapes below; it resolves gaps in this section.
+
 **Stack:** Vite + Three.js (latest stable) + vanilla JavaScript ES modules. HTML/CSS overlays for all UI. `postprocessing` for effects, `lil-gui` for debug only. Deploy on Vercel/Netlify.
 
 **`src/core/planets.js`** (never hard-code gravity):
@@ -474,8 +476,8 @@ guidebook:open    { entryId }
 ### 15.1 Who owns what (balanced to ~30–35 h of work each)
 ```
 src/
-  core/        SHARED, kept by ROLE 1: main.js boot, state machine, events, planets, save, economy, debug panel, mocks/
-  builder/     ROLE 1: hangar computer UI, parts.json, LEGO snapping, engine workbench, Formula Lens, Go/No-Go, presets
+  core/        SHARED, kept by ROLE 3: main.js boot, state machine, events, input, ui, planets, save, economy, contract, debug panel, mocks/ (plumbing only, no game screens)
+  builder/     ROLE 1: main menu + settings, hangar computer UI, parts.json, LEGO snapping, engine workbench, Formula Lens, Go/No-Go, presets
   flight/      ROLE 2: flight controller (physics + cockpit controls), Flight Assist, launch/orbit scene, entry/landing scene, Max-Q/G
   surface/     ROLE 2: first-person walking controller (interior + EVA), interactable system, stations, airlock, suit, oxygen
   graphics/    ROLE 3: renderer, post-processing, asset loader, skybox, planets + atmosphere, cockpit/cabin/Mars visuals, VFX, cinematic API
@@ -492,19 +494,19 @@ docs/          DECISIONS.md, DEMO_SCRIPT.md
 
 | Role | Owns | Provides to others (by hour 3 as stubs!) | Uses from others |
 |---|---|---|---|
-| **1. Rocket Builder + core keeper** | Builder, engine workbench, Formula Lens, Go/No-Go, economy, save, presets, `core/` + debug panel, checks that `dev` boots | `ShipSpec` (+ 3 preset JSONs in `core/mocks/`), `economy` API, `builder:highlightPart` | Theme CSS (R3), guidebook text (R4) |
+| **1. Rocket Builder** | Main menu + settings, builder, engine workbench, Formula Lens, Go/No-Go, presets, the economy rules as data (`core/balance.json`) | `builder:highlightPart`, the real `src/builder/` replacing its stubs | Theme CSS (R3), `core/` (R3), guidebook text (R4) |
 | **2. Flight & Astronaut** | Flight controller, Flight Assist, launch/orbit + entry/landing scenes, Max-Q/G, walking controller, interactable system, stations, airlock, O₂ | `FlightController` class, `registerInteractable({id, position, prompt, onUse})`, `flight:*` / `eva:*` events | ShipSpec (mock), `getTerrainHeight` (R3), models by name (R3) |
-| **3. Graphics & Audio** | Every visual and sound, HUD theme, cinematic API, performance settings | `graphics.init()`, `assets.get('cockpit'\|'cabin'\|'rocketPart:<id>'\|...)`, `getTerrainHeight(x,z)`, `cinematic.play({cameraPath, fades, duration})`, `audio.play(id)` | Nothing blocking: builds scenes in a **visual sandbox** page |
+| **3. Graphics, Audio & Core** | Every visual and sound, HUD theme, cinematic API, performance settings, `core/` (game loop, state machine, events, contract, economy, save) + debug panel + `npm run check`, confirms `dev` boots | `core/` (`events`, `requestState`, `input`, `ui`, `economy`, `save`, mocks, debug panel), `graphics.init()`, `assets.get('cockpit'\|'cabin'\|'rocketPart:<id>'\|...)`, `getTerrainHeight(x,z)`, `cinematic.play({cameraPath, fades, duration})`, `audio.play(id)` | Nothing blocking: builds scenes in a **visual sandbox** page |
 | **4. Story, Cruise & Knowledge** | Cruise scene, story, tasks, ending screens + sequences, blackbox + Flight Report, Guidebook, all narrative/educational text, demo script | Text JSONs (tips, Go/No-Go lines, analogies), task placement data, `guidebook:open` | `registerInteractable` (R2), `cinematic.play` (R3), `FlightController` (R2) |
 
 ### 15.2 Rules that let 4 people code without waiting on each other
 1. **Hour 0–3, "contract freeze":** all four agree on and commit `core/` (events, state, planets, ShipSpec shape) + **empty stubs** of every public API above. After this, contracts change only if all four agree.
 2. **Mocks for everything** (`core/mocks/`): 3 preset ShipSpecs, a fake black-box report, a fake mission progress. Nobody waits for real data.
-3. **Debug panel** (`?debug=1`, Role 1): jump to any state, fire any event, spawn presets, trigger any ending. Every role tests alone.
+3. **Debug panel** (`?debug=1`, Role 3): jump to any state, fire any event, spawn presets, trigger any ending. Every role tests alone. `npm run check` must pass before pushing to `dev`.
 4. **Visuals behind names:** gameplay code asks `assets.get('cockpit')` and gets a placeholder at first. Role 3 swaps in beautiful models/materials later **without touching anyone else's code**.
 5. **Talk only through events + public APIs**: never import another role's internal files.
 6. **Each role has its own branch** (`role1-builder`, `role2-flight`, `role3-graphics`, `role4-story`) and one sandbox page (`/sandbox/<role>.html`) to work in isolation.
-7. **Merge checkpoints:** hours **12, 18, 24, 30, 36, 42**. Everyone merges finished work into `dev`, and Role 1 checks that the game still boots. The team then checks `dev`, and dtri moves it to `main` once everyone agrees. Small, frequent merges beat one huge merge.
+7. **Merge checkpoints:** hours **12, 18, 24, 30, 36, 42**. Everyone merges finished work into `dev`, and `npm run check` covers that the game still boots. The team then checks `dev`, and dtri confirms it is healthy and moves it to `main` once everyone agrees. Small, frequent merges beat one huge merge.
 8. **Data over code:** text, numbers, task placement, and parts live in JSON, so balancing doesn't create merge conflicts.
 
 ## 16. Priority tiers (cut from the bottom when time runs out)
@@ -571,9 +573,9 @@ Keep the code friendly to this (separate profiles in the save, ShipSpec as JSON,
 
 | # | Role | You build | Your folders | Hand off to others by hour 3 (as stubs) |
 |---|---|---|---|---|
-| **1** | **Rocket Builder + Core Keeper** | Hangar computer, LEGO builder, engine workbench, Formula Lens, Go/No-Go, economy, save, preset ships, debug panel. You check that `dev` boots at every checkpoint | `core/`, `builder/` | `ShipSpec` + 3 preset JSONs, economy API, debug panel, `builder:highlightPart` |
+| **1** | **Rocket Builder** | Main menu + settings, hangar computer, LEGO builder, engine workbench, Formula Lens, Go/No-Go, preset ships, economy rules as data in `core/balance.json` | `builder/` | `builder:highlightPart`, the real `builder/` replacing its stubs |
 | **2** | **Flight & Astronaut** | Flight controller (physics + cockpit controls), Flight Assist, launch/orbit scene, entry/landing scene, Max-Q & G meters, first-person walking (ship interior + Mars EVA), interactable system, stations, airlock, suit, oxygen | `flight/`, `surface/` | `FlightController`, `registerInteractable(...)`, `flight:*` / `eva:*` events |
-| **3** | **Graphics & Audio** | Renderer + post-processing, skybox, Earth/Mars + atmosphere shaders, cockpit/cabin/Mars visuals, VFX (flame, plasma, dust), HUD theme, cinematic API, all sound, Low/High settings | `graphics/`, `audio/`, `ui/` | `graphics.init()`, `assets.get(name)`, `getTerrainHeight(x,z)`, `cinematic.play(...)`, `audio.play(id)`, theme CSS |
+| **3** | **Graphics, Audio & Core** | Renderer + post-processing, skybox, Earth/Mars + atmosphere shaders, cockpit/cabin/Mars visuals, VFX (flame, plasma, dust), HUD theme, cinematic API, all sound, Low/High settings; `core/` (loop, state, events, contract, economy, save), debug panel, `npm run check`; you confirm `dev` boots at every checkpoint | `core/`, `graphics/`, `audio/`, `ui/` | `core/` API + mocks + debug panel, `graphics.init()`, `assets.get(name)`, `getTerrainHeight(x,z)`, `cinematic.play(...)`, `audio.play(id)`, theme CSS |
 | **4** | **Story, Cruise & Knowledge** | Cruise scene (map, time-warp, solar storm, malfunction, messages), story + Halcyon-1 logs, Mars tasks & progress, ending screens & sequences (incl. Adrift), black box + Flight Report, Guidebook, all educational/narrative text, demo script | `cruise/`, `story/`, `missions/`, `guidebook/`, `report/` | Text JSONs, task placement data, `guidebook:open`, black-box report |
 
 **Instructions for the AI once the role is set:**

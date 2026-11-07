@@ -1,0 +1,1 @@
+{ "provisional": true, "startMoney": 5000000, "penaltyRate": 0.2, "penaltyBase": 250000, "homecomingBonus": 2000000, "deltaVKmS": { "ascent": 3.3, "transfer": 2.1, "landing": 0.4, "return": 3.1 } }
