@@ -110,8 +110,9 @@ Models, textures and audio go in `public/assets/`, and everything used is credit
 **You also keep `src/core/`** (the game loop, state machine, events, input, UI layer, save, economy, contract and the `?debug=1` panel) and `npm run check`. You review any change to it that another role asks for, and confirm `dev` is healthy before it moves to `main`.
 
 **Next tasks:**
-1. Art pass on the rocket parts, then real audio.
-2. Measure frame rate on a mid-range laptop.
+1. Listen to the audio director on real speakers and tune its levels (nobody has heard it yet).
+2. Measure frame rate and the automatic resolution on a real mid-range laptop.
+3. Rocket parts and the launch-site ground have a first art pass (panel seams, windows, scrub plain); review them in `/sandbox/role3.html?view=parts` and `?view=pad`.
 
 **You use:** nothing blocking. Work in `/sandbox/role3.html`.
 
@@ -142,7 +143,7 @@ Update your row whenever you push to `dev`.
 |---|---|
 | 1 | Stubs in `src/builder/`: menu, and a hangar with 3 preset buttons and a text Go/No-Go. No real builder yet, and Confirm charges money on every press. |
 | 2 | Real modules, on `dev`. **Flight** (`LAUNCH`, `ORBIT`, `ENTRY`, `LANDING`): Newtonian `FlightController` (thrust, 1/r² gravity, drag, fuel burn, Max-Q, g-force, entry heating, chute, touchdown, debris + armor, Cold Morning / The Foam hooks). LAUNCH starts on Role 3's launch site with the player's rocket built from `ShipSpec.parts`; Flight Assist has a trajectory line, prograde/retrograde markers, a gravity-turn guide (◎ + prompts) and an entry/landing guide (BURN NOW). LAUNCH→ORBIT and ENTRY→LANDING happen on their own; in ORBIT an orbital-debris encounter comes after 20 s, and T is the transfer burn → CRUISE. Δv per leg is measured and explained in `docs/DECISIONS.md`; a test flies the Reliable mock through the whole mission. **Surface** (`INTERIOR`, `SURFACE`): walking with Mars gravity on the real cabin and terrain, all 7 contract stations, airlock, suit O₂ (30/15/5 %, `outOfBreath`), helmet HUD, head bob. `registerInteractable({ id, position, prompt, onUse, hold?, radius?, state? })`: give `state: 'SURFACE'` for Mars tasks. Each state still shows a small dev-shortcut panel (check:boot looks for it). Tests: `node src/flight/tests/flight.test.mjs` and the files in `src/surface/tests/`. |
-| 3 | All hour-3 APIs below. See every view at `/sandbox/role3.html`. Earth and Mars use real maps; the rest of the art is generated in code. The cabin is a full art pass and the VFX exist; the launch site (`createLaunchSite`) and the mission props are built; rocket parts and sounds are still placeholders. |
+| 3 | All hour-3 APIs below. See every view at `/sandbox/role3.html`. Earth and Mars use real maps; the rest of the art is generated in code. Cabin, VFX, launch site (now used in `LAUNCH`), mission props and the rocket parts (seams, windows, hatch, pumps) are built; real sound files with a synth fallback; the audio director (`src/audio/director.js`) plays ambience, radio and O₂ alarms from events; the cockpit window spans about -17 to +30 degrees so the sky dominates, and its 3 screens sit below the default view (look down to read them), which keeps the HTML HUD over plain dark dash; the cockpit screens show live `flight:telemetry`; automatic resolution holds frame rate (`graphics.setAutoResolution`, `graphics.pixelRatioNow`); `?debug=1` has a Low/High quality choice. |
 | 4 | Stubs in `src/cruise/`, `src/story/`, `src/missions/`, `src/guidebook/` and `src/report/`: a day counter and Next button for cruise, a plain ending screen, and a report showing event counts. No story text yet. |
 
 The full game loop plays with these stubs at `/`.

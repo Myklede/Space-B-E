@@ -46,6 +46,8 @@ class Graphics {
   #vignette = null;
   #fadeEl = null;
   #blackoutEl = null;
+  // automatic resolution: lowers the pixel ratio when frames are slow, and raises it again when there is room
+  #auto = { on: true, step: 0, settleUntil: 0, last: 0, sum: 0, count: 0, windowStart: 0, slow: 0, fast: 0, hold: 0, retryAt: 0, retryDelay: 30000, raisedAt: 0 };
 
   /** Safe to call more than once. Returns the graphics object. */
   init({ container = document.body, quality = 'high' } = {}) {
@@ -108,6 +110,7 @@ class Graphics {
     this.init();
     this.scene = scene;
     this.camera = camera;
+    this.#autoReset(2000); // shaders compile on the first frames, so those frames say nothing about speed
     this.composer.setMainScene(scene);
     this.composer.setMainCamera(camera);
     this.resize();
@@ -116,6 +119,7 @@ class Graphics {
   /** Draws one frame. Call once per frame with seconds since the last one. */
   render(dt = 1 / 60) {
     this.init();
+    this.#autoMeasure();
     sharedUniforms.uTime.value += dt;
     const { scene, camera } = this;
     scene.traverseVisible((o) => o.userData.onFrame?.(dt, camera));
@@ -182,8 +186,76 @@ class Graphics {
     state.quality = quality;
     const high = quality === 'high';
     this.#passes.lens.enabled = high;
-    this.renderer.setPixelRatio(Math.min(window.devicePixelRatio, QUALITY[quality].pixelRatio));
+    this.#auto.step = 0;
+    this.#applyPixelRatio();
+  }
+
+  get #basePixelRatio() {
+    return Math.min(window.devicePixelRatio, QUALITY[state.quality].pixelRatio);
+  }
+
+  #applyPixelRatio() {
+    const base = this.#basePixelRatio;
+    this.renderer.setPixelRatio(base * (1 - 0.1 * this.#auto.step)); // 4 steps down, to 0.6 x the quality's ratio
     this.resize();
+    this.#autoReset(500);
+  }
+
+  /** The pixel ratio in use now (the quality's ratio, or lower while auto resolution is helping). */
+  get pixelRatioNow() {
+    return this.renderer ? this.renderer.getPixelRatio() : 0;
+  }
+
+  /** Automatic resolution, on by default: slow frames lower the pixel ratio (floor 0.6 x), spare time raises it back. */
+  setAutoResolution(on) {
+    this.#auto.on = Boolean(on);
+    if (!on && this.#auto.step !== 0 && this.renderer) {
+      this.#auto.step = 0;
+      this.#applyPixelRatio();
+    }
+    this.#autoReset(500);
+  }
+
+  #autoReset(ms) {
+    const a = this.#auto;
+    const now = performance.now();
+    a.settleUntil = now + ms;
+    a.last = 0;
+    a.sum = a.count = a.slow = a.fast = a.hold = 0;
+    a.windowStart = now;
+  }
+
+  // Called once per render. Frame time is the gap between renders, in windows of 0.5 s.
+  //   average above 20 ms for 2 s (4 windows) -> one step down.
+  //   average under 13 ms for 6 s (12 windows) -> one step up.
+  //   Screens locked to 60 Hz never get under 13 ms, so a held 60 fps (under 18 ms) for a retry delay also tries one step up;
+  //   each retry that has to step down again within 15 s doubles the delay (30 s up to 8 min), so it settles instead of pumping.
+  #autoMeasure() {
+    const a = this.#auto;
+    if (!a.on) return;
+    const now = performance.now();
+    const gap = a.last ? now - a.last : 0;
+    a.last = now;
+    if (now < a.settleUntil || gap <= 0 || gap > 250) return; // settling, first frame, or the tab was hidden
+    a.sum += gap;
+    a.count++;
+    if (now - a.windowStart < 500) return;
+    const avg = a.sum / a.count;
+    a.sum = a.count = 0;
+    a.windowStart = now;
+    a.slow = avg > 20 ? a.slow + 1 : 0;
+    a.fast = avg < 13 ? a.fast + 1 : 0;
+    a.hold = avg < 18 ? a.hold + 1 : 0;
+    if (a.slow >= 4 && a.step < 4) {
+      if (a.raisedAt && now - a.raisedAt < 15000) a.retryDelay = Math.min(a.retryDelay * 2, 480000);
+      a.step++;
+      a.retryAt = now + a.retryDelay;
+      this.#applyPixelRatio();
+    } else if (a.step > 0 && (a.fast >= 12 || (a.hold >= 2 * (a.retryDelay / 1000) && now > a.retryAt))) {
+      a.step--;
+      a.raisedAt = now;
+      this.#applyPixelRatio();
+    }
   }
 
   resize() {
