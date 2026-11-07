@@ -155,7 +155,7 @@ Copy this block. Keep each line short and factual. Don't commit screenshots.
   - **Budget:** aim under about 40 k triangles. Share geometries and materials between the four wheels. The wire mesh can be an alpha-tested texture instead of real wires.
   - **Reference:** NASA's LRV Operations Handbook and Apollo 15 to 17 surface photos. Check NASA 3D Resources for a public-domain LRV model as a base (NASA media is generally not copyrighted). Credit it in `CREDITS.md`, like the NASA models Role 1 uses in `public/assets/nasa/`.
   - **How to check it in the game:** `npm run dev`, open `/?debug=1&state=SURFACE`. The rover is parked to the right of the lander; walk to it and press E to drive (W/S, A/D, Space brake, E to get out). Check that the wheels steer and spin the right way, that the rover sits on the ground (not floating or sunk), and that the driver's view ahead is clear.
-- **Status:** open
+- **Status:** fixed in c5e46a7, Role 2 (Minh Vuong) please verify
 
 ## Role 4: Story, Cruise & Knowledge
 
