@@ -7,7 +7,7 @@
 //   LANDING powered descent and touchdown; E after landing → INTERIOR (Role 2 surface).
 // Failures emit flight:failed; Role 4's story module charges the penalty and shows the ending.
 import * as THREE from 'three';
-import { assets, createMarsScene, createSpaceScene, getTerrainHeight, graphics } from '/src/graphics/index.js';
+import { assets, createLaunchSite, createMarsScene, createSpaceScene, getTerrainHeight, graphics } from '/src/graphics/index.js';
 import { audio } from '/src/audio/index.js';
 import { G0, PLANETS, economy, events, getShip, input, requestState, ui } from '/src/core/index.js';
 import { stubScreen } from '/src/core/stubScreen.js';
@@ -19,12 +19,14 @@ import { createDebrisField } from './debris.js';
 import { pressureRatio } from './atmosphere.js';
 import { STARTS } from './presets.js';
 import { createFlightHUD } from './hud/createFlightHUD.js';
+import { stackParts } from './rocketStack.js';
 
 const fmt = (n, d = 0) => (Number.isFinite(n) ? n.toFixed(d) : '∞');
 
 export { FlightController };
 
 const LOW_MARS_ALTITUDE = 6000;
+const LAUNCH_SITE_TOP = 40000; // m: Role 3's launch site shows its detail below this
 const DEBRIS_AFTER_ORBIT = 20; // s in orbit before the orbital-debris encounter (TEAM_PROMPT §6.3)
 const MAX_MOUSE_STEP = 300; // px per frame: ignore the jump some browsers report right after pointer lock // m: below this the view switches to Role 3's detailed Mars terrain
 const TELEMETRY_EVERY = 0.5; // s (contract: flight:telemetry about twice per second)
@@ -107,29 +109,23 @@ function buildSpaceView(planetId) {
 }
 
 // Builds the rocket from ShipSpec.parts (Role 1's builder; metres, y along the axis, rotation in degrees about the
-// axis). Falls back to a simple stack when the ship has no parts. eyeY = height of the capsule's window.
+// axis). Parts on the axis are re-stacked in their y order using each model's real height (userData.height), so
+// the stack never gaps or overlaps even if the spec's y values are rough; side parts (legs, fins) follow the axial
+// part they sit next to. Falls back to a simple stack when the ship has no parts. eyeY = height of the capsule window.
 function buildRocket(spec) {
   const rocket = new THREE.Group();
-  const parts = spec?.parts ?? [];
-  if (parts.length) {
-    let eyeY = 0;
-    for (const p of parts) {
-      const part = assets.get(`rocketPart:${p.type}`);
-      part.position.set(p.x ?? 0, p.y ?? 0, p.z ?? 0);
-      part.rotation.y = THREE.MathUtils.degToRad(p.rotation ?? 0);
-      rocket.add(part);
-      if (/capsule/.test(p.type)) eyeY = (p.y ?? 0) + (part.userData.height ?? 2) * 0.55;
-    }
-    return { rocket, eyeY: eyeY || Math.max(...parts.map((p) => p.y ?? 0)) };
-  }
-  let y = 0;
-  for (const id of ['engine_m', 'tank_l', 'tank_l', 'capsule_m']) {
-    const part = assets.get(`rocketPart:${id}`);
-    part.position.y = y;
-    y += part.userData.height ?? 3;
+  const parts = spec?.parts?.length ? spec.parts : ['engine_m', 'tank_l', 'tank_l', 'capsule_m'].map((type, i) => ({ id: `d${i}`, type, x: 0, y: i, z: 0 }));
+  const models = new Map(parts.map((p) => [p, assets.get(`rocketPart:${p.type}`)]));
+  const { placed, top } = stackParts(parts, (p) => models.get(p).userData.height ?? 2);
+  let eyeY = top - 1;
+  for (const p of parts) {
+    const part = models.get(p);
+    part.position.set(p.x ?? 0, placed.get(p), p.z ?? 0);
+    part.rotation.y = THREE.MathUtils.degToRad(p.rotation ?? 0);
     rocket.add(part);
+    if (/capsule/.test(p.type)) eyeY = placed.get(p) + (part.userData.height ?? 2) * 0.55;
   }
-  return { rocket, eyeY: y - 1 };
+  return { rocket, eyeY };
 }
 
 const debrisGeometry = new THREE.DodecahedronGeometry(1, 0);
@@ -154,6 +150,24 @@ function syncDebris(view, fc, dt) {
   for (const [id, m] of view.debris) {
     if (!alive.has(id)) { view.frame.remove(m); view.debris.delete(id); }
   }
+}
+
+// Role 3's launch complex: our rocket stands at rocketBase; the site and Earth slide down as we climb (setAltitude).
+function buildSiteView() {
+  const site = createLaunchSite();
+  const camera = new THREE.PerspectiveCamera(65, 1, 0.05, 1e10);
+  const rig = new THREE.Group();
+  const cockpit = assets.get('cockpit');
+  rig.add(cockpit, camera);
+  const { rocket, eyeY } = buildRocket(getShip());
+  const flame = assets.get('vfx:engineFlame');
+  const exhaust = assets.get('vfx:exhaust');
+  rocket.add(flame, exhaust);
+  const rocketRoot = new THREE.Group();
+  rocketRoot.position.copy(site.rocketBase);
+  rocketRoot.add(rocket);
+  site.scene.add(rocketRoot, rig);
+  return { ...site, camera, rig, cockpit, rocketRoot, flame, exhaust, eyeY };
 }
 
 function buildSurfaceView(fc) {
@@ -275,7 +289,33 @@ export default {
     const shipQ = new THREE.Quaternion(fc.orient.x, fc.orient.y, fc.orient.z, fc.orient.w);
     const lookQ = new THREE.Quaternion().setFromEuler(new THREE.Euler(s.look.pitch, s.look.yaw, 0, 'YXZ'));
     const lowMars = fc.planetId === 'mars' && t.altitude < LOW_MARS_ALTITUDE;
-    if (lowMars) {
+    const atSite = fc.planetId === 'earth' && t.altitude < LAUNCH_SITE_TOP && state === 'LAUNCH';
+    if (atSite) {
+      s.site ??= buildSiteView();
+      const sv = s.site;
+      sv.setAltitude(Math.max(0, t.altitude));
+      sv.rocketRoot.quaternion.copy(shipQ);
+      sv.rocketRoot.visible = s.chase;
+      sv.cockpit.visible = !s.chase;
+      const eye = new THREE.Vector3(0, sv.eyeY, 0).applyQuaternion(shipQ).add(sv.rocketBase);
+      if (s.chase) {
+        sv.rig.quaternion.identity();
+        sv.rig.position.set(0, 0, 0);
+        sv.camera.position.copy(eye).add(new THREE.Vector3(0, 0, 1).applyQuaternion(shipQ).multiplyScalar(-40)).add(new THREE.Vector3(18, 6, 0));
+        sv.camera.up.set(0, 1, 0);
+        sv.camera.lookAt(eye);
+      } else {
+        sv.rig.position.copy(eye);
+        sv.rig.quaternion.copy(shipQ).multiply(toCockpit);
+        sv.camera.position.set(0, 0, 0);
+        sv.camera.up.set(0, 1, 0);
+        sv.camera.quaternion.copy(lookQ);
+      }
+      const thr = t.thrust > 0 ? fc.throttle : 0;
+      sv.flame.userData.set({ throttle: thr, airDensity: air });
+      sv.exhaust.userData.set({ throttle: thr, airDensity: air });
+      if (s.mode !== 'site') { s.mode = 'site'; graphics.setSunDirection(new THREE.Vector3(0.5, 0.55, -0.67)); graphics.setView(sv.scene, sv.camera); }
+    } else if (lowMars) {
       s.surface ??= buildSurfaceView(fc);
       const sv = s.surface;
       const d = v3(fc.pos).sub(sv.origin);
@@ -314,7 +354,7 @@ export default {
         view.camera.up.set(0, 1, 0);
         view.camera.quaternion.copy(lookQ);
       }
-      if (s.mode !== 'space') { s.mode = 'space'; graphics.setView(view.scene, view.camera); }
+      if (s.mode !== 'space') { s.mode = 'space'; graphics.setSunDirection(new THREE.Vector3(0.7, 0.45, 0.55)); graphics.setView(view.scene, view.camera); }
     }
 
     // VFX, screen effects, sound
@@ -350,7 +390,7 @@ export default {
     if (s.debrisWarning > 0) a.warnings.unshift({ level: 'red', text: 'ORBITAL DEBRIS AHEAD: steer and burn sideways to dodge' });
     if (state === 'ORBIT' && t.phase === 'orbit') a.warnings.push({ level: 'amber', text: `IN ORBIT: press T for the transfer burn (${fmt((economy.balance.deltaVKmS?.transfer ?? 2.1) * 1000)} m/s)` });
     s.hud.update(t, a, s.assist);
-    const cam = s.mode === 'surface' ? s.surface.camera : view.camera;
+    const cam = s.mode === 'surface' ? s.surface.camera : s.mode === 'site' ? s.site.camera : view.camera;
     const project = (dir) => {
       if (!dir || !s.assist) return null;
       const world = new THREE.Vector3();
