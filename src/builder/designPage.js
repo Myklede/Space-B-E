@@ -25,7 +25,7 @@ const btn = (className, label, onClick, attrs = {}) => {
   return b;
 };
 const signed = (n, f) => `${n > 0 ? '+' : n < 0 ? '−' : '±'}${f(Math.abs(n))}`;
-const WARN = { LOW_DV: 'Not enough Δv to reach Mars: add propellant or a better engine', LOW_TWR: 'Too heavy for the engines (TWR under 1.2)', NO_HEAT_SHIELD: 'No heat shield under the capsule', NO_LEGS: 'No landing gear', UNSTABLE: 'Unstable in thick air: add fins low on the tail', LOW_O2: 'No spare oxygen', NO_ANTENNA: 'No antenna', NO_SHELTER: 'No radiation shelter', COLD_SEALS: 'Cheap seals in a cold launch window', LOW_RELIABILITY: 'Reliability below 80 %', NO_CAPSULE: 'No crew capsule', NO_ENGINE: 'No engine', NO_FUEL: 'No propellant the engines can burn', NOT_CONNECTED: 'Parts not connected', OVER_BUDGET: 'Over budget' };
+const WARN = { LOW_DV: 'Not enough Δv to reach Mars: add propellant or a better engine', LOW_TWR: 'Too heavy for the engines (TWR under 1.2)', NO_HEAT_SHIELD: 'No heat shield under the capsule', NO_LEGS: 'No landing gear', UNSTABLE: 'Unstable in thick air: add fins low on the tail, or steering (an engine gimbal)', LOW_O2: 'No spare oxygen', NO_ANTENNA: 'No antenna', NO_SHELTER: 'No radiation shelter', COLD_SEALS: 'Cheap seals in a cold launch window', LOW_RELIABILITY: 'Reliability below 80 %', NO_CAPSULE: 'No crew capsule', NO_ENGINE: 'No engine', NO_FUEL: 'No propellant the engines can burn', NOT_CONNECTED: 'Parts not connected', OVER_BUDGET: 'Over budget' };
 const SECTION_NUM = { nose: '1', body: '2', tail: '3', pad: '4' };
 
 export function createDesignPage({ assembly, catalog, sections, materials, engines, icons, scene3d, g0, getMoney, hooks }) {

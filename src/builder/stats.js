@@ -4,6 +4,8 @@ import { partRadius } from './assembly.js';
 export const TWR_MIN = 1.2;
 export const RELIABILITY_MIN = 0.8;
 export const COLD_TEMP_C = 5;
+/** With active steering the centre of pressure may sit up to this share of the stack height ahead of the centre of mass. */
+export const STEERING_MARGIN = 0.06;
 const BONUS_CAP = 0.06; // the most the "good engineering" flags (avionics, wiring tunnel, spheres…) may add to reliability
 
 /** Mass, cost, thrust and Isp of one engine definition { fuel, nozzle, pump } from data/engines.json. */
@@ -145,7 +147,17 @@ export function computeShipSpec(assembly, { catalog, engines, launch, balance, p
     return Math.pow(r, engineOut ? 1 + (k - 1) * 0.2 : k);
   };
   const baseReliability = layout.reduce((r, e) => r * partReliability(e), 1);
-  const bonus = Math.min(BONUS_CAP, sum(layout, (e) => Number(flags(e).reliabilityBonus) || 0) + Math.min(0.015, sum(layout, (e) => Number(flags(e).rigidity) || 0)));
+  // reliability bonuses: parts in the same group (flags.bonusGroup, e.g. 'steering', 'abort') count once, the best of them
+  const grouped = {};
+  let ungrouped = 0;
+  for (const e of layout) {
+    const b = Number(flags(e).reliabilityBonus) || 0;
+    if (!b) continue;
+    const g = flags(e).bonusGroup;
+    if (g) grouped[g] = Math.max(grouped[g] ?? 0, b); else ungrouped += b;
+  }
+  const bonusSum = ungrouped + Object.values(grouped).reduce((t, b) => t + b, 0);
+  const bonus = Math.min(BONUS_CAP, bonusSum + Math.min(0.015, sum(layout, (e) => Number(flags(e).rigidity) || 0)));
   const reliability = Math.min(1, baseReliability * (1 + bonus) * (1 + padReliability));
   const hasHeatShield = has('heatShield');
   const noseCdA = layout.find((e) => e.def.aero.cdA != null)?.def.aero.cdA;
@@ -173,7 +185,9 @@ export function computeShipSpec(assembly, { catalog, engines, launch, balance, p
   if (twrEarth < TWR_MIN) warnings.push('LOW_TWR');
   if (!hasHeatShield) warnings.push('NO_HEAT_SHIELD');
   if (!stats.hasLegs) warnings.push('NO_LEGS');
-  if (layout.length && copY >= comY) warnings.push('UNSTABLE');
+  const steering = layout.some((e) => flags(e).gimbal || flags(e).steering);
+  const margin = stackHeight > 0 ? (comY - copY) / stackHeight : 0; // > 0: the air pushes behind the balance point
+  if (layout.length && (steering ? margin < -STEERING_MARGIN : copY >= comY)) warnings.push('UNSTABLE');
   if (stats.spareO2Tanks < 1) warnings.push('LOW_O2');
   if (!stats.hasAntenna) warnings.push('NO_ANTENNA');
   if (!stats.hasShelter) warnings.push('NO_SHELTER');
@@ -204,7 +218,7 @@ export function computeShipSpec(assembly, { catalog, engines, launch, balance, p
     enginePartIds: [...engineEntries, ...boosterEntries].map((e) => e.id),
     finPartIds: layout.filter((e) => /fin/.test(e.type)).map((e) => e.id),
     capsulePartIds: layout.filter((e) => flags(e).capsule).map((e) => e.id),
-    comY, copY, stackHeight, dvNeeded, oneWay, roundTrip: oneWay + dvNeeded.return,
+    comY, copY, stackHeight, steering, stabilityMargin: margin, dvNeeded, oneWay, roundTrip: oneWay + dvNeeded.return,
     usableFuel, deadFuel, slot, site, padChoices, launchFee, padReliability, engineSpecs, engineCount, boosterSpecs, mainFuel, thrustSL, baseReliability, reliabilityBonus: bonus,
     radius: layout.length ? Math.max(...layout.filter((e) => e.attach === 'axial').map((e) => partRadius(e.def))) : 1,
   };

@@ -199,10 +199,17 @@ export function applyShape(assembly, section, shape) {
   const items = composeChain(catalog, by);
   const offset = items.findIndex((it) => !it.id && it.origin === section.id && shape.stack.includes(it.type));
   const radials = (shape.radial ?? []).map((r) => ({ ...r, on: offset + (r.on ?? 0), origin: section.id }));
+  const shapeRows = new Set((shape.radial ?? []).map((r) => rowOf(section, catalog.get(r.type))?.id).filter(Boolean));
   return assembly.restack(items, {
     radials,
     before: () => { for (const p of tailEngines) p.engine = { ...p.engine, fuel: bodyFuel }; },
-    dropRadial: (r) => r.origin === section.id && catalog.get(r.type)?.section === section.id,
+    dropRadial: (r) => {
+      const def = catalog.get(r.type);
+      if (def?.section !== section.id) return false;
+      if (r.origin === section.id) return true;
+      const row = rowOf(section, def);
+      return !!row && shapeRows.has(row.id);
+    },
     rehost: (r, chain) => { const def = catalog.get(r.type); return def ? pickHost(assembly, chain, def, hostRuleFor(def)) : null; },
   });
 }
