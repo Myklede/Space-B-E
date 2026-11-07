@@ -68,6 +68,13 @@ export function createOxygen({ bus, tankSeconds = 300, spareTanks = 2, runMultip
     // Energy tasks (MOXIE / ice electrolysis) can refill a spare tank.
     addSpareTank(n = 1) { state.spareTanks += n; publish(true); },
 
+    // Debug (presenter shortcut): set the current tank to `p` percent (0..100); never revives a depleted suit.
+    debugSetPercent(p) {
+      if (state.depleted) return;
+      state.remaining = (Math.min(100, Math.max(0, Number(p) || 0)) / 100) * tankSeconds;
+      publish(true);
+    },
+
     // Debug: infinite O₂
     refill() { state.remaining = tankSeconds; state.depleted = false; publish(true); },
   };

@@ -1,3 +1,5 @@
+import { MAX_DUST_OPACITY } from '../visorDust.js';
+
 const fmt = (value, digits = 0) => Number.isFinite(value) ? value.toFixed(digits) : '—';
 
 export function createSuitHUD({ parent = document.body, reducedMotion = false } = {}) {
@@ -10,6 +12,9 @@ export function createSuitHUD({ parent = document.body, reducedMotion = false } 
 .suit-presentation[data-level=warning], .suit-presentation[data-level=critical] { --signal:#ff7f87; }
 .suit-presentation .helmet { position:absolute; inset:0; border:18px solid #071318; border-radius:22%; box-shadow:inset 0 0 0 1px #90c7cb55,inset 0 0 65px #0008; }
 .suit-presentation .helmet::after { content:''; position:absolute; inset:10% 4%; border-left:1px solid #a6e7ed22; border-right:1px solid #a6e7ed22; border-radius:35%; }
+.suit-presentation .dust { position:absolute; inset:0; width:100%; height:100%; }
+.suit-presentation .prebreathe { position:absolute; left:15%; right:15%; top:22%; text-align:center; color:#9fe8f0; letter-spacing:.1em; }
+.suit-presentation .prebreathe .pbar { width:240px; height:4px; margin:8px auto 0; background:#9fe8f033; } .suit-presentation .prebreathe .pbar i { display:block; height:100%; width:0; background:#9fe8f0; }
 .suit-presentation .shade { position:absolute; inset:0; background:radial-gradient(ellipse,transparent 20%,#150308 100%); opacity:0; }
 .suit-presentation .header { position:absolute; top:38px; left:48px; right:48px; display:flex; justify-content:space-between; letter-spacing:.16em; }
 .suit-presentation small { color:#a1babe; font-size:10px; letter-spacing:.13em; }
@@ -27,8 +32,9 @@ export function createSuitHUD({ parent = document.body, reducedMotion = false } 
 .suit-presentation [hidden] { display:none!important; }
 @media(max-width:650px) { .suit-presentation .life { left:25px; width:190px; bottom:100px; } .suit-presentation .navigation { right:25px; bottom:100px; font-size:10px; } .suit-presentation .header { left:25px; right:25px; font-size:10px; } .suit-presentation .help { left:25px; right:25px; font-size:9px; } }
 </style>
-<div class="helmet"></div><div class="shade"></div>
+<canvas class="dust" width="480" height="270" hidden></canvas><div class="helmet"></div><div class="shade"></div>
 <div class="header"><span data-id="location"></span><span data-id="suit"></span></div>
+<div class="prebreathe" hidden><span data-id="prebreathe"></span><div class="pbar"><i></i></div></div>
 <div class="crosshair"></div><div class="warning" role="status"></div>
 <div class="prompt"><span data-id="prompt"></span><progress max="1" value="0" hidden></progress></div>
 <div class="life"><small>PERSONAL LIFE SUPPORT</small><strong class="oxygen" data-id="oxygen"></strong><meter min="0" max="100" value="100" aria-label="Suit oxygen"></meter>
@@ -47,12 +53,52 @@ export function createSuitHUD({ parent = document.body, reducedMotion = false } 
   const arrow = root.querySelector('.beacon');
   const progress = root.querySelector('progress');
   const meter = root.querySelector('meter');
+  const dustCanvas = root.querySelector('.dust');
+  const prebreatheBox = root.querySelector('.prebreathe');
+  const prebreatheBar = prebreatheBox.querySelector('.pbar i');
+  let drawnDust = 0;
   let elapsed = 0;
   let previousMessage = '';
 
+  // Visor dust: butterscotch smudge + specks, strongest at the edges and bottom, centre kept clear.
+  // `level` 0..1 (alpha never above MAX_DUST_OPACITY). Specks come from a seeded generator, so more dust only adds specks.
+  function drawDust(level) {
+    drawnDust = level;
+    const ctx = dustCanvas.getContext?.('2d');
+    if (!ctx) return;
+    const W = dustCanvas.width, H = dustCanvas.height;
+    ctx.clearRect(0, 0, W, H);
+    dustCanvas.hidden = level <= 0.002;
+    if (level <= 0.002) return;
+    const a = level * MAX_DUST_OPACITY;
+    const smudge = ctx.createRadialGradient(W / 2, H * 0.45, H * 0.3, W / 2, H * 0.5, H * 0.95);
+    smudge.addColorStop(0, 'rgba(206,150,80,0)');
+    smudge.addColorStop(0.6, `rgba(206,150,80,${(a * 0.45).toFixed(3)})`);
+    smudge.addColorStop(1, `rgba(190,128,62,${(a * 1.0).toFixed(3)})`);
+    ctx.fillStyle = smudge;
+    ctx.fillRect(0, 0, W, H);
+    const floor = ctx.createLinearGradient(0, H * 0.6, 0, H); // dust settles at the bottom of the glass
+    floor.addColorStop(0, 'rgba(200,140,70,0)');
+    floor.addColorStop(1, `rgba(200,140,70,${(a * 0.7).toFixed(3)})`);
+    ctx.fillStyle = floor;
+    ctx.fillRect(0, H * 0.6, W, H * 0.4);
+    let seed = 1337;
+    const rnd = () => ((seed = (seed * 16807) % 2147483647) / 2147483647);
+    const count = Math.round(900 * level);
+    for (let i = 0; i < count; i++) {
+      const ang = rnd() * Math.PI * 2, rr = 0.55 + 0.55 * Math.sqrt(rnd()); // 0.55 (clear centre) .. 1.1 (corners)
+      const x = W / 2 + Math.cos(ang) * rr * W * 0.5 * 1.05, y = H * 0.55 + Math.sin(ang) * rr * H * 0.5 * (Math.sin(ang) > 0 ? 1.1 : 0.95);
+      const size = 0.6 + rnd() * rnd() * 2.8;
+      ctx.fillStyle = `rgba(${215 + (rnd() * 20) | 0},${150 + (rnd() * 30) | 0},${70 + (rnd() * 25) | 0},${(a * (0.55 + rnd() * 0.45)).toFixed(3)})`;
+      ctx.beginPath();
+      ctx.arc(x, y, size, 0, Math.PI * 2);
+      ctx.fill();
+    }
+  }
+
   return {
     root,
-    update(dt, { telemetry: t, oxygen, suited, inside, focused, yaw, shipPosition, bodyStats, airlockProgress = 0 }) {
+    update(dt, { telemetry: t, oxygen, suited, inside, focused, yaw, shipPosition, bodyStats, airlockProgress = 0, prebreathe = null, dust = 0 }) {
       elapsed += dt;
       const level = inside ? 'ok' : oxygen.level;
       root.dataset.level = level;
@@ -81,8 +127,16 @@ export function createSuitHUD({ parent = document.body, reducedMotion = false } 
         fields.distance.textContent = distance < 1 ? 'AT HATCH' : `${fmt(distance)} m`;
         fields.motion.textContent = `${fmt(t.speed, 1)} m/s · ${t.running ? 'RUN / O₂ USE ↑' : t.onGround ? 'GROUNDED' : 'AIRBORNE'}`;
       }
+      const dustLevel = inside || !suited ? 0 : dust;
+      if (Math.abs(dustLevel - drawnDust) > 0.02 || (dustLevel === 0 && drawnDust !== 0)) drawDust(dustLevel);
+      prebreatheBox.hidden = !prebreathe;
+      if (prebreathe) {
+        fields.prebreathe.textContent = `PREBREATHE · pure O₂ · purging nitrogen to prevent decompression sickness · ${Math.ceil(prebreathe.remaining)} s`;
+        prebreatheBar.style.width = `${(prebreathe.progress * 100).toFixed(1)}%`;
+      }
       let message = '';
       if (oxygen.depleted) message = 'OXYGEN DEPLETED — MISSION ENDED';
+      else if (prebreathe) message = '';
       else if (inside && airlockProgress > 0) message = `AIRLOCK CYCLING ${fmt(airlockProgress * 100)}%`;
       else if (inside) message = 'CABIN SUPPLY ACTIVE · SUIT O₂ CONSERVED';
       else if (level === 'critical') message = 'OXYGEN CRITICAL · RETURN TO SHIP';

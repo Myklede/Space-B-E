@@ -14,16 +14,17 @@ import * as THREE from 'three';
 import { getTerrainHeight, graphics } from '/src/graphics/index.js';
 import { audio } from '/src/audio/index.js';
 import { PLANETS, events, getState, input, requestState, ui } from '/src/core/index.js';
-import { stubScreen } from '/src/core/stubScreen.js';
 import { getProgress } from '/src/missions/index.js';
 import { WalkController } from './WalkController.js';
 import { createInteractables } from './interactables.js';
-import { createShipInterior, CABIN } from './shipInterior.js';
+import { createShipInterior, CABIN, PREBREATHE_DEBUG_S } from './shipInterior.js';
 import { createSuitHUD } from './hud/createSuitHUD.js';
 import { astronaut } from './astronaut.js';
-import { getCabin, getMars, prepareScenes } from './scenes.js';
+import { getCabin, getMars, getMarsSunSetter, prepareScenes } from './scenes.js';
+import { createSolClock, createEarthCaption, easeFov, isLookingAtEarth, NORMAL_FOV } from './dusk.js';
 import { RoverController } from './RoverController.js';
 import { createRoverModel } from './roverModel.js';
+import { createGroundMarks } from './groundMarks.js';
 
 const TELEMETRY_EVERY = 0.5;
 const LANDER_RADIUS = 3.2; // m, the lander's legs: you can't walk through them
@@ -32,6 +33,10 @@ const MAX_MOUSE_STEP = 300; // px per frame: ignore the jump some browsers repor
 const ROVER_PARKING = { x: 6.5, z: 7, heading: -0.6 }; // unfolded next to the lander, like the Apollo LRVs
 // Crew-life props in the cabin open these Guidebook entries (Role 4 writes them; ids listed in the README).
 export const PROP_ENTRIES = { exerciseBike: 'crew-exercise', waterRecycler: 'crew-water', foodRack: 'crew-food', familyPhoto: 'family-photo' };
+
+// Mars dusk / "Pale Blue Dot" texts (Role 4 may edit them here).
+export const EARTH_HINT = 'Look for Earth: low in the sky, hold Z to zoom';
+export const EARTH_CAPTION = ['EARTH · about 225 million km away', 'Everyone you have ever loved is on that dot.'];
 
 const registry = createInteractables();
 
@@ -72,6 +77,18 @@ registerInteractable({
   onUse: () => boardRover(),
 });
 
+// Wheel tracks and boot prints persist across visits (module-level); added to the Mars scene only while outside.
+let marks = null;
+const getMarks = () => (marks ??= createGroundMarks({ getGroundHeight: getTerrainHeight }));
+const isDebug = () => new URLSearchParams(location.search).get('debug') === '1';
+
+// The sol clock keeps its time across visits outside (module-level, like the rover); it only runs outside.
+let solClock = null;
+const getSolClock = () => (solClock ??= createSolClock({ apply: getMarsSunSetter() }));
+let earthHintShown = false;
+const earthCaption = createEarthCaption({ seconds: 8 });
+const earthDir = new THREE.Vector3();
+
 let s = null;
 let previous = null; // the surface state we just left (to spawn inside the airlock when coming back in)
 
@@ -82,9 +99,11 @@ function roverNotice(type, d) {
     audio.play('alarm.master');
     s.notice = { text: 'ROVER OVERTURNED: press E to climb out. Keep side slopes under 40° and slow down for crests.', t: 8 };
   } else if (type === 'hard_landing') {
+    astronaut.dust.burst(0.12);
     audio.play('impact.small');
     s.notice = { text: `The suspension bottomed out (${d.impact.toFixed(1)} m/s). Low gravity means long hops: slow down over crests.`, t: 5 };
   } else if (type === 'bump') {
+    astronaut.dust.burst(Math.min(0.15, Math.abs(d?.speed ?? 2) * 0.02));
     audio.play('impact.small');
   } else if (type === 'battery_empty') {
     s.notice = { text: 'ROVER BATTERY EMPTY: walk back to the ship.', t: 8 };
@@ -112,12 +131,37 @@ function leaveRover() {
   s.walker.pitch = 0;
 }
 
+// Outside only: advance the sol clock, ease the helmet zoom, hint and caption for Earth.
+function updateDusk(dt, zoomHeld) {
+  const { camera } = s;
+  const clock = getSolClock();
+  clock.update(dt);
+  const fov = easeFov(camera.fov, zoomHeld, dt);
+  if (fov !== camera.fov) { camera.fov = fov; camera.updateProjectionMatrix(); }
+  if (clock.isDusk && !earthHintShown) {
+    earthHintShown = true;
+    s.notice = { text: EARTH_HINT, t: 8, calm: true };
+  }
+  camera.getWorldDirection(earthDir);
+  const show = earthCaption.update(dt, clock.isDusk && isLookingAtEarth(earthDir, camera.fov));
+  s.earthEl.style.opacity = show ? '1' : '0';
+}
+
 export default {
   init() {
     setTimeout(prepareScenes, 0); // build Mars + cabin in the background so entering them never freezes
     // debug handle for automated checks (only with ?debug=1)
-    if (new URLSearchParams(location.search).get('debug') === '1') {
-      window.__role2 = { boardRover, leaveRover, get rover() { return rover; }, get driving() { return !!s?.driving; } };
+    if (isDebug()) {
+      window.__role2 = {
+        boardRover, leaveRover,
+        setO2: (p) => astronaut.oxygen.debugSetPercent(p), dusk: () => getSolClock().jumpToDusk(),
+        lookAt(d) { const v = new THREE.Vector3(d.x, d.y, d.z).normalize(); if (s?.walker) { s.walker.yaw = Math.atan2(-v.x, -v.z); s.walker.pitch = Math.asin(v.y); } },
+        get fov() { return s?.camera.fov; }, get sol() { return solClock; },
+        get dust() { return astronaut.dust; }, get marks() { return marks; }, get walker() { return s?.walker; }, get camera() { return s?.camera; },
+        get cabin() { return s?.cabin; },
+        // debug only: drive the rover n metres in steps (marks, dust and odometer follow), then park it
+        driveMetres(n, steer = 0.4) { for (let m = 0; m < n; m += 0.1) { rover.update(0.05, { throttle: 1, steer }); astronaut.dust.accumulate(0.05, { speed: rover.speed, mode: 'drive' }); marks?.update({ mode: 'drive', rover }); } roverModel?.update(rover, 0); },
+        walkMetres(n, yaw = 0) { for (let m = 0; m < n; m += 0.1) { s.walker.pos.x -= Math.sin(yaw) * 0.1; s.walker.pos.z -= Math.cos(yaw) * 0.1; s.walker.pos.y = getTerrainHeight(s.walker.pos.x, s.walker.pos.z); marks?.update({ mode: 'walk', walker: s.walker }); } }, get rover() { return rover; }, get driving() { return !!s?.driving; } };
     }
   },
 
@@ -126,6 +170,7 @@ export default {
     const camera = new THREE.PerspectiveCamera(70, 1, 0.03, 2e5);
     const hudLayer = document.createElement('div');
     hudLayer.style.cssText = 'position:absolute;inset:0;pointer-events:none';
+    hudLayer.dataset.screen = state;
     ui.mount(hudLayer, { layer: 'hud' });
     hudLayer.style.pointerEvents = 'none'; // ui.mount enables clicks; the HUD must never block buttons under it
     s = { state, inside, camera, cabin: null, sinceTelemetry: 0, hud: createSuitHUD({ parent: hudLayer }), offs: [], notice: null };
@@ -134,6 +179,11 @@ export default {
     s.noticeEl.className = 'hud-label';
     s.noticeEl.style.cssText = 'position:absolute;left:50%;top:13%;transform:translateX(-50%);color:var(--hud-red,#ff7f87);letter-spacing:.12em;text-align:center';
     hudLayer.append(s.noticeEl);
+    s.earthEl = document.createElement('div'); // "Pale Blue Dot" caption
+    s.earthEl.style.cssText = 'position:absolute;left:50%;top:30%;transform:translateX(-50%);text-align:center;font:14px/1.7 ui-monospace,Menlo,Consolas,monospace;'
+      + 'letter-spacing:.12em;color:var(--hud-cyan,#67e8f9);text-shadow:0 0 8px rgba(0,0,0,.8);opacity:0;transition:opacity 1.6s ease;white-space:nowrap';
+    s.earthEl.innerHTML = EARTH_CAPTION.map((l) => `<div>${l.replace(/&/g, '&amp;').replace(/</g, '&lt;')}</div>`).join('');
+    hudLayer.append(s.earthEl);
     s.roverEl = document.createElement('div'); // rover readout while driving
     s.roverEl.className = 'hud-label';
     s.roverEl.style.cssText = 'position:absolute;left:50%;top:18%;transform:translateX(-50%);color:var(--hud-cyan,#67e8f9);letter-spacing:.1em;text-align:center';
@@ -151,16 +201,22 @@ export default {
       s.cabin = createShipInterior({
         bus: events, interactables: registry, oxygen: astronaut.oxygen,
         stations: art.userData.stations, props: art.userData.props,
+        prebreatheSeconds: isDebug() ? Number(new URLSearchParams(location.search).get('prebreathe')) || PREBREATHE_DEBUG_S : undefined, // ?debug=1 → 1 s (&prebreathe=N to override)
         onSeat: () => requestState(getProgress().percent >= 100 ? 'RETURN' : 'LANDING'),
         onExit: () => requestState('SURFACE'),
         onNotice: (type, d) => {
           if (type === 'suit') astronaut.suited = d.suited;
+          if (type === 'prebreathe' && d.stage === 'cancelled') s.notice = { text: 'Prebreathe cancelled: stay at the airlock for the full countdown.', t: 4 };
           if (type === 'airlock') art.userData.setAlarm?.(d.stage === 'cycling');
           if (type === 'o2Empty') audio.play('ui.error');
           if (type === 'prop' && PROP_ENTRIES[d.id]) events.emit('guidebook:open', { entryId: PROP_ENTRIES[d.id] });
         },
       });
       s.cabin.suited = astronaut.suited;
+      if (fromOutside && astronaut.dust.level > 0.01) {
+        astronaut.dust.clear();
+        s.notice = { text: 'Airlock: dust brushed off the suit (Mars dust contains toxic perchlorates)', t: 6, calm: true };
+      }
       audio.play('ambience.ship', { loop: true });
     } else {
       const mars = getMars();
@@ -170,6 +226,7 @@ export default {
       s.walker = new WalkController({
         onNotice: (type, d) => {
           if (type !== 'fall') return;
+          astronaut.dust.burst(d.severity === 'severe' ? 0.25 : 0.08);
           audio.play('impact.small');
           if (d.severity === 'severe') {
             astronaut.oxygen.setLeak(3);
@@ -183,6 +240,7 @@ export default {
         mode: 'suit', start: { x: HATCH.x, z: HATCH.z + 2 }, yaw: Math.PI, // step out facing away from the ship
       });
       getRover();
+      mars.scene.add(getMarks().object);
       mars.scene.add(roverModel.object); // only while we are outside (the shared Mars scene is also the landing view)
       roverModel.update(rover, 0);
       audio.play('ambience.mars', { loop: true });
@@ -193,15 +251,15 @@ export default {
     s.lockOnClick = () => input.lockPointer();
     window.addEventListener('click', s.lockOnClick);
 
-    // Dev shortcuts panel (also what check:boot looks for). Remove before the demo build.
-    stubScreen({
-      title: inside ? 'Ship cabin' : 'Mars surface',
-      owner: 'Role 2 (Surface)',
-      notes: inside ? 'Walk with WASD, E to use stations. Suit up, then cycle the airlock.' : 'Watch your O₂. The hatch is in front of the lander; the rover is parked beside it (E).',
-      actions: inside
-        ? [{ label: 'Go outside', key: 'KeyO', onClick: () => requestState('SURFACE') }, { label: 'Start return', key: 'KeyR', onClick: () => requestState('RETURN') }]
-        : [{ label: 'Back in', key: 'KeyO', onClick: () => requestState('INTERIOR') }],
-    });
+    // Dev shortcuts (only with ?debug=1): O goes outside / back in, R starts the return (INTERIOR only).
+    if (new URLSearchParams(location.search).get('debug') === '1') {
+      input.onPress('KeyO', () => requestState(inside ? 'SURFACE' : 'INTERIOR'));
+      if (inside) input.onPress('KeyR', () => requestState('RETURN'));
+      else {
+        input.onPress('KeyK', () => astronaut.oxygen.debugSetPercent(32)); // 30 % caution a few seconds later
+        input.onPress('KeyN', () => getSolClock().jumpToDusk()); // nightfall
+      }
+    }
   },
 
   update(dt, state) {
@@ -217,8 +275,9 @@ export default {
     if (s.driving) {
       // ---- driving the rover: look around from the driver's seat ----
       if (mouseOk) {
-        s.look.yaw = Math.max(-2.2, Math.min(2.2, s.look.yaw - mouse.x * 0.0022));
-        s.look.pitch = Math.max(-1.1, Math.min(0.9, s.look.pitch - mouse.y * 0.0022));
+        const zs = camera.fov / NORMAL_FOV; // slower look while zoomed
+        s.look.yaw = Math.max(-2.2, Math.min(2.2, s.look.yaw - mouse.x * 0.0022 * zs));
+        s.look.pitch = Math.max(-1.1, Math.min(0.9, s.look.pitch - mouse.y * 0.0022 * zs));
       }
       rover.update(dt, {
         throttle: (k('KeyW') ? 1 : 0) - (k('KeyS') ? 1 : 0),
@@ -226,6 +285,8 @@ export default {
         brake: k('Space'),
       });
       roverModel.update(rover, dt);
+      getMarks().update({ mode: 'drive', rover });
+      astronaut.dust.accumulate(dt, { speed: rover.onGround ? Math.abs(rover.speed) : 0, mode: 'drive' });
       roverModel.object.updateMatrixWorld(true);
       const eye = roverModel.eye.clone().applyMatrix4(roverModel.object.matrixWorld);
       camera.position.copy(eye);
@@ -242,14 +303,18 @@ export default {
         + (rt.overturned ? ' · OVERTURNED' : rt.slip > 0.15 ? ' · SLIDING' : !rt.onGround ? ' · AIRBORNE' : '');
     } else {
       // ---- on foot ----
-      if (mouseOk) walker.look(mouse.x, mouse.y);
+      if (mouseOk) walker.look(mouse.x * (camera.fov / NORMAL_FOV), mouse.y * (camera.fov / NORMAL_FOV));
       walker.update(dt, {
         forward: (k('KeyW') ? 1 : 0) - (k('KeyS') ? 1 : 0),
         right: (k('KeyD') ? 1 : 0) - (k('KeyA') ? 1 : 0),
         run: k('ShiftLeft') || k('ShiftRight'),
         jump: k('Space'),
       });
-      s.cabin?.update(dt);
+      s.cabin?.update(dt, walker.pos);
+      if (!inside) {
+        getMarks().update({ mode: 'walk', walker });
+        if (walker.onGround) astronaut.dust.accumulate(dt, { speed: walker.telemetry.speed, mode: 'walk' });
+      }
       oxygen.update(dt, { inside, running: walker.running, suited: inside ? astronaut.suited : true });
       astronaut.body.update(dt, { env: inside ? 'cabin_mars' : 'mars', heartRate: walker.heartRate });
       if (rover && !inside) {
@@ -272,6 +337,8 @@ export default {
       s.roverPanelText = '';
     }
 
+    if (!inside) updateDusk(dt, k('KeyZ'));
+
     const level = inside ? 'ok' : oxygen.level;
     if (level !== s.lastLevel) {
       // alarm each time O₂ crosses into a worse caution level (30 / 15 / 5 %)
@@ -284,11 +351,16 @@ export default {
       telemetry: hudTelemetry, oxygen, suited: inside ? astronaut.suited : true, inside,
       focused: ui_.focused, yaw: hudYaw, shipPosition: { x: HATCH.x, z: HATCH.z },
       bodyStats: astronaut.body.snapshot(), airlockProgress: s.cabin?.airlockProgress ?? 0,
+      prebreathe: s.cabin?.prebreathe ?? null, dust: astronaut.dust.level,
     });
 
     if (s.notice?.t > 0) s.notice.t -= dt;
     const noticeText = s.notice?.t > 0 ? s.notice.text : !inside && oxygen.leaking ? 'SUIT BREACH: O₂ leaking' : '';
-    if (s.noticeEl.textContent !== noticeText) s.noticeEl.textContent = noticeText;
+    if (s.noticeEl.textContent !== noticeText) {
+      s.noticeEl.textContent = noticeText;
+      // calm notices (hints, facts) in cyan; warnings stay red
+      s.noticeEl.style.color = s.notice?.t > 0 && s.notice.calm ? 'var(--hud-cyan,#67e8f9)' : 'var(--hud-red,#ff7f87)';
+    }
     if (s.roverEl.textContent !== s.roverPanelText) s.roverEl.textContent = s.roverPanelText;
 
     s.sinceTelemetry += dt;
@@ -305,7 +377,7 @@ export default {
   exit() {
     if (!s) return;
     previous = s.state;
-    if (!s.inside && roverModel) roverModel.object.removeFromParent();
+    if (!s.inside && roverModel) { roverModel.object.removeFromParent(); marks?.object.removeFromParent(); }
     graphics.setEffects({ shake: 0 });
     s.cabin?.dispose();
     s.hud.dispose();
