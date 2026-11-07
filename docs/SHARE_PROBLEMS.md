@@ -84,7 +84,7 @@ Copy this block. Keep each line short and factual. Don't commit screenshots.
 - **Expected:** the stick tilts with pitch/yaw input and the throttle lever slides with the throttle
 - **Actual:** they stay still, because nothing calls the new cockpit API
 - **Suggested fix:** every frame call `cockpit.userData.setControls({ pitch: state.pitch, yaw: state.yaw, throttle: fc.throttle })` (pitch and yaw -1…1, W = nose down = -1; throttle 0…1; motion is smoothed inside the cockpit). See the `cockpit` row in README "Role 3 APIs".
-- **Status:** open
+- **Status:** fixed in 057a5f2 (setControls every flight frame, LAUNCH/ORBIT/ENTRY/LANDING), Role 3 (dtri) please verify
 
 ### Check your Mars positions on the new terrain
 - **For:** Role 2 · **From:** Role 3 (dtri) · **Found:** 2026-11-07 on dev 8e9af5c · **Severity:** polish
@@ -93,18 +93,48 @@ Copy this block. Keep each line short and factual. Don't commit screenshots.
 - **Expected:** every position stays on walkable ground (Role 3 kept the landing zone flat within 60 m and crater-free within 150 m, and measured the lander, hatch, rover parking and the Halcyon wreck)
 - **Actual:** Role 3 only measured the positions it could find. The Halcyon wreck at (430, -320) now sits on a levelled 40 m bench (the delta scarp under it was 24°); anything else you placed far out may now be in a crater or on a bank.
 - **Suggested fix:** if a position is bad, move it (or tell Role 3 and we'll flatten a spot like the wreck bench)
-- **Status:** open
+- **Status:** fixed in 057a5f2: Role 2 measured every position it places (lander, hatch, walker start, LRV parking (6.5, 7), MR-01 parking (-7, 7): slopes ≤ 0.7°, nothing had to move) and drove 1.3 km over the new craters and dunes with no rollover; Role 4's tasks and wreck measured too (max 10° at the hematite sample). Role 3 (dtri) please verify
 
 ## Role 3: Graphics, Audio & Core
 
-### Reliable mock has no armor, so one debris hit ends the demo run
-- **For:** Role 3 · **From:** Role 2 (Minh Vuong) · **Found:** 2026-11-07 on dev c0b99d6 · **Severity:** polish
-- **Where:** `src/core/mocks/ship.reliable.json:20` (`armorHits: 0`). Role 2 reads it at `src/flight/FlightController.js:101` and `:130`, and spawns the once-per-mission debris at `src/flight/index.js:381` ("Orbital debris encounter").
-- **Steps:** `/?debug=1&state=ORBIT`, wait about 20 s for "ORBITAL DEBRIS AHEAD" (or press B), don't dodge. The HUD shows `ARMOR 0` and the hit ends the flight.
-- **Expected:** the "Reliable" preset is the guaranteed-success demo ship (spec §5.1: "guaranteed success if flown sensibly"). One absorbed hit would keep the live demo safe (the Thin Skin mock already has `armorHits: 1`).
-- **Actual:** Reliable has `armorHits: 0`, so a single debris hit during the pitch ends the run.
-- **Suggested fix:** set `armorHits` to 1 in `ship.reliable.json` (and its cost/mass if Role 1's builder recomputes them). Role 2 can't edit `src/core/`.
-- **Status:** fixed in ae246cd, Role 2 (Minh Vuong) please verify
+### Two light glints sit fixed in the middle of the flight view
+- **For:** Role 3 · **From:** Role 2 (Minh Vuong) · **Found:** 2026-11-07 on dev 1fb9625 · **Severity:** bug
+- **Where:** the cockpit's window glass (a transparent `MeshPhysicalMaterial`, roughness 0.06, opacity 0.05) and its two point lights, `cabinLight` (white, at (0, 0.45, 0.05)) and the unnamed cyan one at (0, -0.6, -0.6)
+- **Steps:** `/?debug=1&state=ORBIT` (or LAUNCH), look straight ahead
+- **Expected:** a clear view through the window
+- **Actual:** the glass reflects both lights as two bright star-like dots: a white one just above the horizon at screen centre and a cyan one at the bottom centre of the window. They move with the camera, so players read them as stars stuck to the view. Hiding the glass removes both (checked in the browser).
+- **Suggested fix:** on the window glass set `specularIntensity: 0` (and `clearcoat: 0`), or raise its roughness to about 0.35, in the new cockpit too
+- **Status:** open
+
+### New cockpit: please include the CUT-OFF, RETRO and ASSIST controls
+- **For:** Role 3 · **From:** Role 2 (Minh Vuong) · **Found:** 2026-11-07 on dev 1fb9625 · **Severity:** polish
+- **Where:** the new cockpit interior you are building (`src/graphics/cockpitParts.js`)
+- **Steps:** in flight, look down at the hands while pressing X, holding Space or pressing F
+- **Expected:** players who look down see what each input does: the stick and throttle already move through `setControls`; X (engine cut-off), Space (retro brake) and F (Flight Assist) should also have a visible control near the hands
+- **Actual:** nothing moves for X, Space or F. Role 2 paused its own add-on switches so they don't clash with the new cockpit.
+- **Suggested fix:** model a guarded red ENGINE CUT-OFF toggle, an amber RETRO button and a cyan ASSIST button near the hands, either animated by extending `setControls({ pitch, yaw, throttle, cutoff, brake, assist })` (Role 2 will pass the three booleans) or named (`cutoffSwitch`, `retroButton`, `assistButton`) so Role 2 can animate them. Your call.
+- **Status:** open
+
+### Core input has no mouse wheel (Role 2 needs it to zoom the outside camera)
+- **For:** Role 3 · **From:** Role 2 (Minh Vuong) · **Found:** 2026-11-07 on dev 1fb9625 · **Severity:** polish
+- **Where:** `src/core/input.js` (only `onPress`, `onEscape`, `mouseDelta`, `lockPointer`, `unlockPointer`, `clear`; no wheel)
+- **Steps:** in flight press C (outside camera) and scroll the mouse wheel
+- **Expected:** the wheel zooms the outside camera in and out (the player asked for the wheel, not keys)
+- **Actual:** core input doesn't read the wheel, and Role 2 may not add its own listener
+- **Suggested fix:** add `input.wheelDelta()` that returns the summed `deltaY` since the last frame and resets like `mouseDelta()` (call `preventDefault` on wheel over the game so the page doesn't scroll; normalise `deltaMode` lines/pages to pixels). Role 2's camera already calls `input.wheelDelta?.()`, so zoom starts working as soon as it exists.
+- **Status:** open
+
+### Steering moves to the cockpit trajectory screen: keep its API stable in every cockpit update
+- **For:** Role 3 · **From:** Role 2 (Minh Vuong) · **Found:** 2026-11-07 on dev a439097 · **Severity:** bug (flight control will depend on it)
+- **Where:** `src/graphics/interiors.js`, `drawTrajectory` (the centre display of the new cockpit), and the `cockpit` row in README "Role 3 APIs"
+- **Steps:** (design agreement, nothing to reproduce yet)
+- **Expected:** the player's design: the centre HUD markers go away and the player **flies by the cockpit screen**, keeping the ship icon on a dashed reference trajectory. The centre display shows (1) the planned trajectory as a dashed line, (2) a predicted line ("where you go if you hold these inputs"), (3) the ship icon, (4) one short key hint, e.g. "Low: hold S ▲" or "✓ On track". Role 2 computes all of it from the physics (ascent profile, orbit, entry and landing) and sends it a few times per second.
+- **Actual:** the centre display draws an altitude curve from `flight:telemetry`; it can't show a planned or predicted line or a hint yet, so Role 2 can't wire the steering to it
+- **Suggested fix:**
+  - Add `cockpit.userData.setTrajectory({ planned: [[x, y], …], predicted: [[x, y], …], ship: { x, y, heading }, view: 'side' | 'top', hint: { text, level: 'ok' | 'warn' } })` (points in screen units 0–1, or metres plus a scale; tell Role 2 which you prefer and Role 2 will match it). Calling it with `null` hands the display back to your own telemetry drawing.
+  - **Treat it like `setControls`: a stable API.** Every future cockpit redesign must keep `setTrajectory` and `setControls` working with the same arguments, keep the trajectory display large and readable from the default pilot view (dashed and predicted lines distinguishable, hint text legible at 1280×720), and document both in the README `cockpit` row. If an argument must change, write it here first so Role 2 updates the steering in the same push.
+  - Role 2 will keep a fallback: if `setTrajectory` is missing, the old HUD markers come back, so a cockpit without it never leaves the player unable to fly.
+- **Status:** open
 
 ## Role 4: Story, Cruise & Knowledge
 
@@ -126,24 +156,6 @@ Copy this block. Keep each line short and factual. Don't commit screenshots.
 - **Suggested fix:** on `bankrupt`, reset money to `balance.startMoney`
 - **Status:** fixed on `role4-story` (`endingId: 'bankrupt'` or money below $0 resets to `balance.startMoney` and returns to HANGAR), Role 1 please verify
 
-### Cabin props open Guidebook entries that don't exist yet
-- **For:** Role 4 · **From:** Role 2 (Minh Vuong) · **Found:** 2026-11-07 on dev 691ae19 · **Severity:** polish
-- **Where:** `src/guidebook/` (the entries); Role 2 emits them from `src/surface/index.js` (`PROP_ENTRIES`)
-- **Steps:** `/?debug=1&state=INTERIOR`, walk to the exercise bike, water recycler, food rack or family photo, press E
-- **Expected:** a short real fact about crew life (spec §7.1, §13)
-- **Actual:** `guidebook:open` arrives with `crew-exercise`, `crew-water`, `crew-food` or `family-photo`, and the stub shows only the id
-- **Suggested fix:** create entries with those ids (or tell Role 2 the ids you prefer). Mars tasks can use `registerInteractable({ id, state: 'SURFACE', position, prompt, hold, onUse })`, see README "Role 2 APIs".
-- **Status:** fixed on `role4-story` (all four ids are in `src/guidebook/entries.json` and show as a card; Q closes it), Role 2 please verify
-
-### Pale Blue Dot text lives in Role 2's code; Role 4 owns the wording
-- **For:** Role 4 · **From:** Role 2 (Minh Vuong) · **Found:** 2026-11-07 on dev c0b99d6 (feature in Role 2's push after f93ee5a) · **Severity:** polish
-- **Where:** `src/surface/index.js:38-39` (exported constants `EARTH_HINT` and `EARTH_CAPTION`)
-- **Steps:** `/?debug=1&state=SURFACE`, press `N` (debug: jump to dusk), look toward the low bluish dot in the sunset sky and hold `Z` (helmet zoom). The caption appears once per mission.
-- **Expected:** spec §11 "Pale Blue Dot moment" and §13 say Role 4 writes HQ/narrative lines.
-- **Actual:** Role 2 built the moment (sol clock: the Sun sinks to dusk over about 6 min of EVA, Earth appears as the evening star drawn by Role 3's sky, helmet zoom, caption) with placeholder wording. Hint: "Look for Earth: low in the sky, hold Z to zoom". Caption: "EARTH · about 225 million km away" / "Everyone you have ever loved is on that dot."
-- **Suggested fix:** Role 4 tells Role 2 the final wording (or a story data key to read it from), and Role 2 updates the constants. No contract change needed. Optionally Role 4 may also want an HQ radio line at that moment.
-- **Status:** open
-
 ## Needs the whole team
 
 ### How the game should use the two rovers
@@ -153,4 +165,5 @@ Copy this block. Keep each line short and factual. Don't commit screenshots.
 - **Expected:** a team decision on how the LRV appears in the game
 - **Actual:** only `rover` is used. Options: (1) the player chooses a rover before the EVA (Role 1 or Role 2 UI); (2) both are parked by the lander and the player drives whichever they walk to (Role 2); (3) the LRV is a relic of an earlier mission parked near the Halcyon-1 wreck, still drivable, with a story log (Role 2 places it, Role 4 writes the log).
 - **Suggested fix:** pick one; no contract change is needed for any of them
-- **Status:** open
+- **Decision (Role 2's human, Minh Vuong, 2026-11-07):** both rovers are parked by the lander. The **Apollo LRV** (`rover:lrv`) is drivable from the start; the **MR-01** (`rover`) is locked until Mars Exploration reaches 50 % (then a calm unlock notice), with concept specs (about 20 km/h, 30 kWh) so unlocking it matters. Implemented by Role 2 in f2ca02c; `?debug=1` + U unlocks it.
+- **Status:** decided, built in f2ca02c; the team please confirm or object
