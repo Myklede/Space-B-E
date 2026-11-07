@@ -11,21 +11,31 @@ const LESSONS = {
 
 let ending = { endingId: 'homecoming', cause: '', cost: 0, historyLessonId: null };
 let scene = null;
+let cockpit = null;
+// Our own camera: graphics.camera is whatever the last state left (parented, tilted, another field of view).
+// graphics.setView sets its aspect.
+const camera = new THREE.PerspectiveCamera(60, 1, 0.1, 1e10);
 
-function earthView() {
+function earthView(state) {
   if (!scene) {
     scene = createSpaceScene();
     const earth = assets.get('planet:earth');
     const elevation = THREE.MathUtils.degToRad(-40);
     earth.scale.setScalar(PLANETS.earth.radius);
     earth.position.set(0, Math.sin(elevation), -Math.cos(elevation)).multiplyScalar(PLANETS.earth.radius + 170e3);
-    scene.add(earth, assets.get('cockpit'));
+    cockpit = assets.get('cockpit');
+    scene.add(earth, cockpit);
   }
+  // The ending is a quiet view of Earth, not a cockpit the player may have just lost.
+  cockpit.visible = state !== 'ENDING';
   graphics.setSunDirection(new THREE.Vector3(0.86, 0.36, -0.36));
-  graphics.camera.position.set(0, 0, 0);
-  graphics.camera.lookAt(0, -0.2, -1);
-  graphics.setView(scene, graphics.camera);
+  camera.position.set(0, 0, 0);
+  camera.lookAt(0, -0.2, -1);
+  graphics.setView(scene, camera);
 }
+
+/** Bankrupt is declared by the builder below balance.insolvencyFloor, or happens when money goes below $0. */
+const isBankruptEnding = () => ending.endingId === contract.ENDINGS.bankrupt || economy.isBankrupt();
 
 export default {
   init() {
@@ -42,7 +52,7 @@ export default {
   },
 
   enter(state) {
-    earthView();
+    earthView(state);
     if (state === 'PRELAUNCH') {
       const input = document.createElement('input');
       input.type = 'text';
@@ -74,7 +84,7 @@ export default {
         ],
       });
     } else {
-      const bankrupt = economy.isBankrupt();
+      const bankrupt = isBankruptEnding();
       stubScreen({
         title: `Ending: ${ending.endingId}`,
         owner: 'Role 4 (Story)',
@@ -89,7 +99,8 @@ export default {
             label: 'Continue',
             key: 'Enter',
             onClick: () => {
-              if (economy.isBankrupt()) {
+              // Spec §3: Bankrupt means a full reset to the starting money, even when declared above $0.
+              if (bankrupt) {
                 economy.reset();
                 requestState('HANGAR');
               } else {

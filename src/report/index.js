@@ -8,6 +8,8 @@ let counts = {};
 let peaks = {};
 let log = [];
 let scene = null;
+// Our own camera: graphics.camera is whatever the last state left. graphics.setView sets its aspect.
+const camera = new THREE.PerspectiveCamera(60, 1, 0.1, 1e10);
 
 function reset() {
   counts = {};
@@ -46,9 +48,9 @@ export default {
       scene.add(earth);
     }
     graphics.setSunDirection(new THREE.Vector3(0.86, 0.36, -0.36));
-    graphics.camera.position.set(0, 0, 0);
-    graphics.camera.lookAt(0, -0.3, -1);
-    graphics.setView(scene, graphics.camera);
+    camera.position.set(0, 0, 0);
+    camera.lookAt(0, -0.3, -1);
+    graphics.setView(scene, camera);
 
     const lines = [
       ...Object.entries(counts).map(([name, n]) => `${name}: ${n}`),

@@ -5,6 +5,8 @@ import { PLANETS, requestState } from '/src/core/index.js';
 import { stubScreen } from '/src/core/stubScreen.js';
 
 let scene = null;
+// Our own camera: graphics.camera is whatever the last state left. graphics.setView sets its aspect.
+const camera = new THREE.PerspectiveCamera(60, 1, 0.1, 1e10);
 let days = 0;
 let counter = null;
 
@@ -18,9 +20,9 @@ export default {
       scene.add(mars);
     }
     graphics.setSunDirection(new THREE.Vector3(0.7, 0.3, 0.4));
-    graphics.camera.position.set(0, 0, 0);
-    graphics.camera.lookAt(-0.5, -0.2, -1);
-    graphics.setView(scene, graphics.camera);
+    camera.position.set(0, 0, 0);
+    camera.lookAt(-0.5, -0.2, -1);
+    graphics.setView(scene, camera);
 
     days = 0;
     counter = document.createElement('div');

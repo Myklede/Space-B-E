@@ -1,0 +1,43 @@
+{
+  "crew-exercise": {
+    "title": "Exercise in space",
+    "category": "Crew life",
+    "body": "In weightlessness, and even in Mars gravity, muscles and bones carry less load, so they weaken. Space station crews exercise about two hours every day on a treadmill, a bike and a weight machine just to stay strong enough to walk when they get home.",
+    "numbers": [
+      "About 2 hours of exercise per crew member per day on the ISS",
+      "Without exercise, weight-bearing bones can lose 1–1.5% of their mineral density per month",
+      "Mars gravity is 3.71 m/s², about 38% of Earth's"
+    ],
+    "source": "NASA Human Research Program; NASA, \"Exercising in Space\""
+  },
+  "crew-water": {
+    "title": "Every drop, again",
+    "category": "Crew life",
+    "body": "Water is heavy to launch, so a spacecraft recycles almost all of it: sweat and breath are pulled out of the cabin air, urine is distilled, and the result is filtered until it is cleaner than most tap water. Yesterday's coffee becomes tomorrow's coffee.",
+    "numbers": [
+      "The ISS recovers about 98% of the water it uses (reached in 2023)",
+      "Each crew member needs about 3.8 litres (1 gallon) a day for drinking, food and hygiene"
+    ],
+    "source": "NASA, ISS Environmental Control and Life Support System, 2023"
+  },
+  "crew-food": {
+    "title": "Food for a long trip",
+    "category": "Crew life",
+    "body": "Most space food is freeze-dried or heat-treated in pouches and eaten with water added. A Mars crew can't get fresh deliveries, so its food has to stay safe and keep its vitamins for years. Crews have already grown and eaten lettuce they farmed on the space station.",
+    "numbers": [
+      "Food for a Mars mission must last up to about 5 years",
+      "ISS crews first ate lettuce grown on board in 2015 (the Veggie experiment)"
+    ],
+    "source": "NASA Advanced Food Technology; NASA Veggie (Veg-01)"
+  },
+  "family-photo": {
+    "title": "Far from home",
+    "category": "Crew life",
+    "body": "Space station crews get a private video call with their families every week. From Mars there are no live calls: radio travels at the speed of light, and the trip takes minutes each way, so every conversation becomes a string of letters. Small personal things, like a photo, matter a lot.",
+    "numbers": [
+      "One-way radio delay Earth to Mars: about 3 minutes at the closest, about 22 minutes at the farthest",
+      "Earth and Mars are 55 to 400 million km apart"
+    ],
+    "source": "NASA Mars Exploration; NASA ISS crew support"
+  }
+}
