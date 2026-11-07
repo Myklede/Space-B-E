@@ -2,6 +2,7 @@ import * as THREE from 'three';
 import { createPlanet, loadPlanetMaps } from './planets.js';
 import { createSpaceSky } from './sky.js';
 import { createCabin, createCockpit, interiorEnvironment, pbr } from './interiors.js';
+import { PROPS } from './props.js';
 import { createEngineFlame, createEntryPlasma, createExhaust, createLandingDust } from './vfx.js';
 
 const factories = new Map();
@@ -155,13 +156,7 @@ register('planet:earth', () => createPlanet('earth'));
 register('planet:mars', () => createPlanet('mars'));
 register('sky:space', createSpaceSky);
 register('lander', () => createLander());
-register('halcyonLander', () => createLander({ wrecked: true }));
-register('scanPoint', () => hologram('scanPoint', [1.4, 2.2, 1.4]));
-register('sampleRock', () => hologram('sampleRock', [0.5, 0.4, 0.5]));
-register('discoveryRock', () => hologram('discoveryRock', [1.6, 1.1, 1.3]));
-register('solarPanel', () => hologram('solarPanel', [3, 0.15, 2]));
-register('iceDeposit', () => hologram('iceDeposit', [2, 0.4, 2]));
-register('dataLog', () => hologram('dataLog', [0.4, 0.3, 0.3]));
+for (const [name, factory] of Object.entries(PROPS)) register(name, factory); // mission props: src/graphics/props.js
 
 /**
  * Visuals behind names. Gameplay asks for a name and always gets an Object3D back, so art can be swapped later

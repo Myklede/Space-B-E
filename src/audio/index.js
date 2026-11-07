@@ -1,7 +1,9 @@
 /**
  * audio.play(id, { volume, loop, rate })  plays a sound, and audio.stop(id) stops a loop.
  * audio.setAir(0..1)  thins engine and world sound as the air thins (1 at sea level, 0 in vacuum). UI sounds ignore it.
- * audio.register(id, url)  swaps a synthesised placeholder for a real file, with nobody else's code changing.
+ * audio.register(id, url, { bus, loop, gain, loopTrim })  swaps a synthesised placeholder for a real file, with nobody else's code changing.
+ * audio.preload(ids) fetches (and decodes, once unlocked) files ahead of time; audio.isLoaded(id); audio.playing() lists active ids.
+ * Real recordings are in public/assets/audio (see CREDITS.md). If one fails to load, its synth plays instead, with one warning.
  *
  * Browsers only allow sound after a click or key press. Loops requested earlier start at that moment; one-shots are dropped.
  */
@@ -72,11 +74,23 @@ const SYNTHS = {
   'radio.static': { bus: 'ui', loop: (c, o) => noiseLoop(c, o, { type: 'highpass', frequency: 2600, volume: 0.016 }) },
 };
 
+const FILE_BASE = `${import.meta.env?.BASE_URL ?? '/'}assets/audio/`;
+
+// Real recordings (see CREDITS.md). Loops are built to repeat seamlessly; loopTrim skips the MP3 padding at both ends.
+const FILES = [
+  ['engine.rumble', 'engine_rumble.mp3', { bus: 'world', loop: true, gain: 0.9, loopTrim: 0.05 }],
+  ['ambience.ship', 'ambience_ship.mp3', { bus: 'ui', loop: true, gain: 0.25, loopTrim: 0.05 }],
+  ['ambience.mars', 'ambience_mars.mp3', { bus: 'ui', loop: true, gain: 0.5, loopTrim: 0.05 }],
+  ['suit.breath', 'suit_breath.mp3', { bus: 'ui', loop: true, gain: 0.3, loopTrim: 0.05 }],
+  ['radio.static', 'radio_static.mp3', { bus: 'ui', loop: true, gain: 0.06, loopTrim: 0.05 }],
+  ['radio.chatter', 'radio_chatter.mp3', { bus: 'ui', loop: false, gain: 0.4 }],
+];
+
 class AudioManager {
   #ctx = null;
   #buses = {};
   #air = null;
-  #loops = new Map();
+  #active = new Map(); // id -> Set of { out, nodes, pending, cancelled, loop }
   #queuedLoops = new Map();
   #files = new Map();
   #warned = new Set();
@@ -85,6 +99,7 @@ class AudioManager {
 
   constructor() {
     if (typeof window !== 'undefined') this.#bindUnlock();
+    FILES.forEach(([id, name, options]) => this.register(id, FILE_BASE + name, options));
   }
 
   #bindUnlock() {
@@ -114,6 +129,7 @@ class AudioManager {
     ui.connect(master);
     world.connect(this.#air).connect(master);
     this.#buses = { ui, world, master };
+    this.#files.forEach((file) => { if (file.bytes) this.#ensureBuffer(file); }); // decode what was fetched before the click
     this.#queuedLoops.forEach((options, id) => this.play(id, options));
     this.#queuedLoops.clear();
   }
@@ -122,8 +138,73 @@ class AudioManager {
     return this.#ctx !== null;
   }
 
-  register(id, url, { bus = 'ui', loop = false } = {}) {
-    this.#files.set(id, { url, bus, loop, buffer: null });
+  register(id, url, { bus = 'ui', loop = false, gain = 1, loopTrim = 0 } = {}) {
+    this.#files.set(id, { id, url, bus, loop, gain, loopTrim, bytes: null, buffer: null, failed: false, fetching: null, decoding: null });
+  }
+
+  #warnOnce(key, message) {
+    if (this.#warned.has(key)) return;
+    this.#warned.add(key);
+    console.warn(message);
+  }
+
+  #fail(file, reason) {
+    file.failed = true;
+    file.bytes = null;
+    this.#warnOnce(`fail:${file.id}`, `[audio] could not load "${file.id}" (${reason}); ${SYNTHS[file.id] ? 'using the synthesised sound' : 'it stays silent'}`);
+  }
+
+  /** Fetches the bytes once; every caller shares the same promise. */
+  #fetchBytes(file) {
+    if (file.failed || file.bytes || file.buffer) return Promise.resolve();
+    file.fetching ??= fetch(file.url)
+      .then((r) => {
+        if (!r.ok) throw new Error(`HTTP ${r.status}`);
+        return r.arrayBuffer();
+      })
+      .then((bytes) => { file.bytes = bytes; })
+      .catch((e) => this.#fail(file, e?.message || 'fetch failed'))
+      .finally(() => { file.fetching = null; });
+    return file.fetching;
+  }
+
+  /** Fetches, and decodes once the audio context exists. Resolves when done; never rejects. */
+  async #ensureBuffer(file) {
+    await this.#fetchBytes(file);
+    if (file.failed || file.buffer || !this.#ctx) return;
+    file.decoding ??= this.#ctx.decodeAudioData(file.bytes)
+      .then((buffer) => { file.buffer = buffer; file.bytes = null; })
+      .catch((e) => this.#fail(file, `decode failed: ${e?.message || e}`))
+      .finally(() => { file.decoding = null; });
+    await file.decoding;
+  }
+
+  /** Resolves when those files' bytes are fetched, and decoded if the audio context exists. Before the first click the bytes wait and are decoded at unlock. */
+  preload(ids = [...this.#files.keys()]) {
+    const list = (Array.isArray(ids) ? ids : [ids]).map((id) => this.#files.get(id)).filter(Boolean);
+    return Promise.all(list.map((file) => this.#ensureBuffer(file))).then(() => undefined);
+  }
+
+  isLoaded(id) {
+    return Boolean(this.#files.get(id)?.buffer);
+  }
+
+  /** Ids of loops and one-shot files that are playing or still loading. */
+  playing() {
+    return [...this.#active.keys()];
+  }
+
+  #track(id, entry) {
+    let set = this.#active.get(id);
+    if (!set) this.#active.set(id, (set = new Set()));
+    set.add(entry);
+  }
+
+  #untrack(id, entry) {
+    const set = this.#active.get(id);
+    if (!set) return;
+    set.delete(entry);
+    if (!set.size) this.#active.delete(id);
   }
 
   play(id, options = {}) {
@@ -131,55 +212,94 @@ class AudioManager {
     const synth = SYNTHS[id];
     const file = this.#files.get(id);
     if (!synth && !file) {
-      if (!this.#warned.has(id)) {
-        this.#warned.add(id);
-        console.warn(`[audio] no sound for "${id}" yet`);
+      this.#warnOnce(id, `[audio] no sound for "${id}" yet`);
+      return;
+    }
+    const useFile = file && !file.failed;
+    const looping = loop ?? (file ? file.loop : Boolean(synth.loop));
+    if (!this.#ctx) {
+      if (looping) {
+        this.#queuedLoops.set(id, options);
+        if (useFile) this.#fetchBytes(file);
       }
       return;
     }
-    const looping = loop ?? (file ? file.loop : Boolean(synth.loop));
-    if (!this.#ctx) {
-      if (looping) this.#queuedLoops.set(id, options);
-      return;
-    }
     if (this.#ctx.state === 'suspended') this.#ctx.resume();
+    if (!useFile && !synth) return; // a file that failed and has no synth stays silent
+    if (looping && this.#active.has(id)) return;
     const bus = this.#buses[file?.bus ?? synth.bus];
-    if (looping && this.#loops.has(id)) return;
     const out = this.#ctx.createGain();
-    out.gain.value = volume;
+    out.gain.value = useFile ? volume * file.gain : volume;
     out.connect(bus);
-    if (file) {
-      this.#playFile(id, file, out, looping, rate);
-    } else if (synth.loop) {
-      this.#loops.set(id, { ...synth.loop(this.#ctx, out), out });
+    const entry = { out, nodes: [], pending: useFile && !file.buffer, cancelled: false, loop: looping };
+    if (useFile) {
+      this.#track(id, entry);
+      this.#playFile(id, file, entry, { volume, looping, rate });
     } else {
-      synth.play(this.#ctx, out);
+      this.#playSynth(id, synth, entry, looping);
     }
   }
 
-  async #playFile(id, file, out, looping, rate) {
-    file.buffer ??= await fetch(file.url).then((r) => r.arrayBuffer()).then((b) => this.#ctx.decodeAudioData(b));
+  #playSynth(id, synth, entry, looping) {
+    if (looping && synth.loop) {
+      this.#track(id, entry);
+      Object.assign(entry, synth.loop(this.#ctx, entry.out));
+    } else if (synth.play) {
+      synth.play(this.#ctx, entry.out);
+    }
+  }
+
+  async #playFile(id, file, entry, { volume, looping, rate }) {
+    if (!file.buffer) await this.#ensureBuffer(file);
+    if (entry.cancelled) return; // stop() came in while loading
+    if (!file.buffer) { // failed: the warning is out already, so fall back
+      this.#untrack(id, entry);
+      const synth = SYNTHS[id];
+      if (!synth) { entry.out.disconnect(); return; }
+      entry.out.gain.value = volume;
+      entry.pending = false;
+      this.#playSynth(id, synth, entry, looping);
+      return;
+    }
+    entry.pending = false;
     const src = this.#ctx.createBufferSource();
     src.buffer = file.buffer;
     src.loop = looping;
+    const trim = file.loopTrim;
+    if (looping && trim > 0 && file.buffer.duration > trim * 4) {
+      src.loopStart = trim;
+      src.loopEnd = file.buffer.duration - trim;
+    }
     src.playbackRate.value = rate;
-    src.connect(out);
-    src.start();
-    if (looping) this.#loops.set(id, { nodes: [src], out });
+    src.connect(entry.out);
+    src.onended = () => {
+      src.disconnect();
+      entry.out.disconnect();
+      this.#untrack(id, entry);
+    };
+    entry.nodes = [src];
+    src.start(0, looping && trim > 0 && src.loopEnd ? trim : 0);
   }
 
   stop(id, { fade = 0.4 } = {}) {
     this.#queuedLoops.delete(id);
-    const loop = this.#loops.get(id);
-    if (!loop) return;
-    this.#loops.delete(id);
+    const set = this.#active.get(id);
+    if (!set || !this.#ctx) return;
+    this.#active.delete(id);
     const now = this.#ctx.currentTime;
-    loop.out.gain.setTargetAtTime(0, now, Math.max(fade / 3, 0.001));
-    loop.nodes.forEach((node) => node.stop(now + fade + 0.05));
+    set.forEach((entry) => {
+      if (entry.pending) { // still loading: make sure it never starts
+        entry.cancelled = true;
+        entry.out.disconnect();
+        return;
+      }
+      entry.out.gain.setTargetAtTime(0, now, Math.max(fade / 3, 0.001));
+      entry.nodes.forEach((node) => node.stop(now + fade + 0.05));
+    });
   }
 
   stopAll(options) {
-    [...this.#loops.keys(), ...this.#queuedLoops.keys()].forEach((id) => this.stop(id, options));
+    [...this.#active.keys(), ...this.#queuedLoops.keys()].forEach((id) => this.stop(id, options));
   }
 
   /** Air density from 0 (vacuum) to 1 (sea level). */
@@ -197,7 +317,7 @@ class AudioManager {
   }
 
   ids() {
-    return [...Object.keys(SYNTHS), ...this.#files.keys()];
+    return [...new Set([...Object.keys(SYNTHS), ...this.#files.keys()])];
   }
 }
 

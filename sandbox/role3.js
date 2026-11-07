@@ -3,7 +3,7 @@ import * as THREE from 'three';
 import { OrbitControls } from 'three/addons/controls/OrbitControls.js';
 import GUI from 'lil-gui';
 import '/src/ui/theme.css';
-import { assets, cinematic, createMarsScene, createSpaceScene, getTerrainHeight, graphics } from '/src/graphics/index.js';
+import { assets, cinematic, createLaunchSite, createMarsScene, createSpaceScene, getTerrainHeight, graphics } from '/src/graphics/index.js';
 import { audio } from '/src/audio/index.js';
 
 const params = new URLSearchParams(location.search);
@@ -55,6 +55,26 @@ const faceLon = (planet, lon) => { planet.userData.surface.rotation.y = THREE.Ma
 
 // VFX objects of the current view, driven by the lil-gui sliders.
 const vfx = [];
+// The launch site and mission props of the current view, driven by the altitude slider and the prop state dropdown.
+let site = null;
+const propItems = [];
+const scene3d = { altitude: 0, propState: 'idle' };
+
+const sunFrom = (elevation, azimuth) => {
+  const e = THREE.MathUtils.degToRad(elevation), a = THREE.MathUtils.degToRad(azimuth);
+  return new THREE.Vector3(Math.cos(e) * Math.cos(a), Math.sin(e), Math.cos(e) * Math.sin(a));
+};
+
+// The launch complex with a lander on the table and a low morning sun in the east.
+function launchSite(altitude) {
+  site = createLaunchSite();
+  graphics.setSunDirection(sunFrom(22, 38));
+  const lander = assets.get('lander');
+  lander.position.copy(site.rocketBase);
+  site.root.add(lander);
+  site.setAltitude(altitude);
+  return site.scene;
+}
 
 const VIEWS = {
   orbit: {
@@ -129,6 +149,53 @@ const VIEWS = {
       wreck.position.set(430, getTerrainHeight(430, -320), -320);
       scene.add(wreck);
       walkTo(scene, [395, -290], [720, 22, -570]);
+      return scene;
+    },
+  },
+  pad: {
+    label: 'Launch pad',
+    build() {
+      const scene = launchSite(0);
+      orbit();
+      look([-150, 10, 35], [0, 15, -6]);
+      return scene;
+    },
+  },
+  ascent: {
+    label: 'Ascent 25 km',
+    build() {
+      const scene = launchSite(25000);
+      pivot();
+      look([0, 0, 0], [0.6, -1.3, -0.7]);
+      return scene;
+    },
+  },
+  props: {
+    label: 'Mission props',
+    build() {
+      const { scene } = createMarsScene({ sunElevation: 28, sunAzimuth: 112 });
+      const names = ['scanPoint', 'sampleRock', 'discoveryRock', 'solarPanel', 'iceDeposit', 'dataLog', 'halcyonLander'];
+      names.forEach((name, i) => {
+        const prop = assets.get(name);
+        const x = i === 6 ? 15 : (i - 3) * 4;
+        prop.position.set(x, getTerrainHeight(x, 0), 0);
+        prop.userData.setState(scene3d.propState);
+        scene.add(prop);
+        propItems.push(prop);
+      });
+      walkTo(scene, [2, 21], [2, getTerrainHeight(2, 0) + 1.2, 0]);
+      return scene;
+    },
+  },
+  wreck: {
+    label: 'Halcyon wreck',
+    build() {
+      const { scene } = createMarsScene({ sunElevation: 20, sunAzimuth: 100 });
+      const wreck = assets.get('halcyonLander');
+      wreck.position.set(0, getTerrainHeight(0, 0), 0);
+      scene.add(wreck);
+      propItems.push(wreck);
+      walkTo(scene, [4, 25], [0, getTerrainHeight(0, 0) + 3.4, 0]);
       return scene;
     },
   },
@@ -285,7 +352,9 @@ const buttons = {};
 
 function show(name) {
   walking = null;
+  site = null;
   vfx.length = 0;
+  propItems.length = 0;
   const scene = VIEWS[name].build();
   graphics.setView(scene, camera);
   Object.entries(buttons).forEach(([key, b]) => b.setAttribute('aria-pressed', key === name));
@@ -332,6 +401,9 @@ gui.add({
     });
   },
 }, 'run').name('test cinematic');
+const sceneFolder = gui.addFolder('launch site and props');
+sceneFolder.add(scene3d, 'altitude', 0, 45000).name('setAltitude (m)').onChange((v) => site?.setAltitude(v));
+sceneFolder.add(scene3d, 'propState', ['idle', 'active', 'done']).name('prop state').onChange((v) => propItems.forEach((p) => p.userData.setState(v)));
 const fx = { throttle: 1, airDensity: 1, intensity: 1, fuel: 'methalox' };
 const vfxFolder = gui.addFolder('vfx');
 const drive = (key) => (v) => vfx.forEach((o) => o.userData.set({ [key]: v }));
@@ -344,7 +416,7 @@ gui.close();
 graphics.renderer.info.autoReset = false; // keeps the scene's triangle count, not just the last fullscreen pass
 show(VIEWS[params.get('view')] ? params.get('view') : 'orbit');
 
-window.__role3 = { graphics, assets, cinematic, getTerrainHeight, audio, camera, controls, vfx }; // for automated checks
+window.__role3 = { graphics, assets, cinematic, getTerrainHeight, audio, camera, controls, vfx, get site() { return site; }, propItems, stopWalk: () => { walking = null; } };  // for automated checks
 
 // Frame stats for the sandbox readout and the automated checks.
 const fpsEl = document.getElementById('fps');

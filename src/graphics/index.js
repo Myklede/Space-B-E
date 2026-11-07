@@ -26,8 +26,9 @@ import { bindCinematic, cinematic } from './cinematic.js';
 import { assets } from './assets.js';
 import { getTerrainHeight, DELTA } from './terrain.js';
 import { createMarsScene } from './marsSurface.js';
+import { createLaunchSite } from './launchSite.js';
 
-export { assets, cinematic, createMarsScene, DELTA, getTerrainHeight };
+export { assets, cinematic, createLaunchSite, createMarsScene, DELTA, getTerrainHeight };
 
 const REST_VIGNETTE = { offset: 0.36, darkness: 0.5 };
 const shakeRotation = new THREE.Quaternion();
