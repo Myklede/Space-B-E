@@ -358,6 +358,9 @@ function enterHangar() {
     },
   };
   refresh();
+  // ?debug=1&station=integration: open a machine straight away (handy while the page reloads on every change)
+  const startAt = new URLSearchParams(location.search).get('station');
+  if (window.__game?.builder && startAt && b.stations.some((st) => st.id === startAt)) { b.placeAtStation(startAt); hangar.openStation(startAt); }
 }
 
 // ---------- GONOGO ----------

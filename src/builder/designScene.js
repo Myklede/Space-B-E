@@ -319,7 +319,9 @@ export function createDesignScene() {
   }
 
   // ----- frame -----
-  function update(dt) {
+  function update(rawDt) {
+    const dt = Number.isFinite(rawDt) ? Math.min(0.1, Math.max(0, rawDt)) : 0; // the first frames after a load can report odd steps
+    if (![smooth.yaw, smooth.pitch, smooth.dist, smooth.targetY].every(Number.isFinite)) Object.assign(smooth, { yaw: orbit.yaw, pitch: orbit.pitch, dist: orbit.dist, targetY: orbit.targetY });
     orbit.idle += dt;
     if (orbit.auto && orbit.idle > 6 && explode < 0.05 && !selected) orbit.yaw += dt * 0.12;
     const k = 1 - Math.exp(-dt * 8);
