@@ -104,7 +104,7 @@ Copy this block. Keep each line short and factual. Don't commit screenshots.
 - **Expected:** players who look down see what each input does: the stick and throttle already move through `setControls`; X (engine cut-off), Space (retro brake) and F (Flight Assist) should also have a visible control near the hands
 - **Actual:** nothing moves for X, Space or F. Role 2 paused its own add-on switches so they don't clash with the new cockpit.
 - **Suggested fix:** model a guarded red ENGINE CUT-OFF toggle, an amber RETRO button and a cyan ASSIST button near the hands, either animated by extending `setControls({ pitch, yaw, throttle, cutoff, brake, assist })` (Role 2 will pass the three booleans) or named (`cutoffSwitch`, `retroButton`, `assistButton`) so Role 2 can animate them. Your call.
-- **Status:** open
+- **Status:** fixed in a5c2f8c, Role 2 (Minh Vuong) please verify. Pass `cutoff`, `brake`, `assist` booleans to `setControls` every frame (omitted keys keep their last value); the guard lifts, the toggle flips, the buttons press in and light up.
 
 ### Core input has no mouse wheel (Role 2 needs it to zoom the outside camera)
 - **For:** Role 3 · **From:** Role 2 (Minh Vuong) · **Found:** 2026-11-07 on dev 1fb9625 · **Severity:** polish
@@ -113,7 +113,7 @@ Copy this block. Keep each line short and factual. Don't commit screenshots.
 - **Expected:** the wheel zooms the outside camera in and out (the player asked for the wheel, not keys)
 - **Actual:** core input doesn't read the wheel, and Role 2 may not add its own listener
 - **Suggested fix:** add `input.wheelDelta()` that returns the summed `deltaY` since the last frame and resets like `mouseDelta()` (call `preventDefault` on wheel over the game so the page doesn't scroll; normalise `deltaMode` lines/pages to pixels). Role 2's camera already calls `input.wheelDelta?.()`, so zoom starts working as soon as it exists.
-- **Status:** open
+- **Status:** fixed in a5c2f8c, Role 2 (Minh Vuong) please verify. Call `input.wheelDelta()` once per frame (pixels, positive = wheel down); it now exists.
 
 ### Steering moves to the cockpit trajectory screen: keep its API stable in every cockpit update
 - **For:** Role 3 · **From:** Role 2 (Minh Vuong) · **Found:** 2026-11-07 on dev a439097 · **Severity:** bug (flight control will depend on it)
@@ -125,7 +125,7 @@ Copy this block. Keep each line short and factual. Don't commit screenshots.
   - Add `cockpit.userData.setTrajectory({ planned: [[x, y], …], predicted: [[x, y], …], ship: { x, y, heading }, view: 'side' | 'top', hint: { text, level: 'ok' | 'warn' } })` (points in screen units 0–1, or metres plus a scale; tell Role 2 which you prefer and Role 2 will match it). Calling it with `null` hands the display back to your own telemetry drawing.
   - **Treat it like `setControls`: a stable API.** Every future cockpit redesign must keep `setTrajectory` and `setControls` working with the same arguments, keep the trajectory display large and readable from the default pilot view (dashed and predicted lines distinguishable, hint text legible at 1280×720), and document both in the README `cockpit` row. If an argument must change, write it here first so Role 2 updates the steering in the same push.
   - Role 2 will keep a fallback: if `setTrajectory` is missing, the old HUD markers come back, so a cockpit without it never leaves the player unable to fly.
-- **Status:** open
+- **Status:** fixed in a5c2f8c, Role 2 (Minh Vuong) please verify. Coordinate convention: points are screen units 0...1 of the plot area, x to the right and y UP, and `ship.heading` is in radians with 0 = pointing right and counter-clockwise positive; `setTrajectory(null)` hands the display back to telemetry.
 
 ### Phase 0 (strap-in): pressable cockpit buttons HATCH, CABIN, O2 and a new ARM ENGINE
 - **For:** Role 3 · **From:** Role 2 + Role 4 (Minh Vuong; our team now also keeps Role 4) · **Found:** 2026-11-07 on dev 3d4fa59 · **Severity:** polish
@@ -134,7 +134,7 @@ Copy this block. Keep each line short and factual. Don't commit screenshots.
 - **Expected:** the agreed Phase 0 pre-launch checklist: before the countdown the player closes the HATCH, pressurises the CABIN, opens O2 and presses ARM ENGINE, each light turning from amber to green (red for ARMED), with a short press animation
 - **Actual:** the buttons are static models without names or an API, and ARM ENGINE doesn't exist
 - **Suggested fix:** name the buttons (`btn:hatch`, `btn:cabin`, `btn:o2`, `btn:arm`, …), add an ARM ENGINE button, and expose `cockpit.userData.setButton(id, state)` with `state` `'off' | 'amber' | 'green' | 'red'` plus a `press(id)` animation. Until then Role 2 shows the checklist on the HUD (keys 1–4) and calls `setButton?.()` so it lights up as soon as it exists.
-- **Status:** open
+- **Status:** fixed in a5c2f8c, Role 2 (Minh Vuong) please verify. Ids `hatch`, `cabin`, `o2`, `arm`, `fire`, `dump`, `rcs-a`, `rcs-b`, `main`, `apu`, `pwr`, `comms`, `dock`, `para`, `entry` (with or without `btn:`); `cockpit.userData.setButton(id, state)` and `press(id)` exist.
 
 ### Phase 0 sounds: harness click, hatch lock, cabin pressurise hiss, O2 flow, switch toggle
 - **For:** Role 3 · **From:** Role 2 + Role 4 (Minh Vuong) · **Found:** 2026-11-07 on dev 3d4fa59 · **Severity:** polish
@@ -143,7 +143,7 @@ Copy this block. Keep each line short and factual. Don't commit screenshots.
 - **Expected:** `crew.harness` (buckle click), `cockpit.hatch` (heavy latch), `cockpit.pressurise` (2–3 s hiss), `suit.o2flow` (soft flow, loopable), `cockpit.switch` (toggle click)
 - **Actual:** none of these exist; Role 2 falls back to `ui.click`
 - **Suggested fix:** add the five ids (CC0 sounds, credit in CREDITS.md). Role 2 plays them by these names and falls back to `ui.click` while they are missing.
-- **Status:** open
+- **Status:** fixed in a5c2f8c, Role 2 (Minh Vuong) please verify. The five ids are synthesised in `src/audio/index.js`; `audio.play('suit.o2flow')` loops until `audio.stop('suit.o2flow')`.
 
 ## Role 4: Story, Cruise & Knowledge
 
