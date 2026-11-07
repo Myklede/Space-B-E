@@ -168,6 +168,8 @@ export function createGroundMarks({ getGroundHeight, trackHalf = 0.915 } = {}) {
     object: group,
     get trackCount() { return sides[0].ring.count; },
     get printCount() { return printRing.count; },
+    /** Press one boot print into the sand now ({ x, z, dirX, dirZ, side }: side -1 left foot, +1 right), e.g. the first step. */
+    stamp(p) { addPrint(p); },
     /** call every outside frame. mode: 'drive' (rover) | 'walk' (walker, only while on the ground) */
     update({ mode, rover, walker }) {
       if (mode === 'drive') { stepper.reset(); if (!rover.onGround) breakTracks(); else addRoverTracks(rover); }

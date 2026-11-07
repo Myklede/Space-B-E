@@ -27,6 +27,10 @@ import { RoverController, ROVER, ROVER_MR01 } from './RoverController.js';
 import { mr01Unlock, MR01_LOCKED_PROMPT, MR01_UNLOCKED_NOTICE } from './rovers.js';
 import { createRoverModel } from './roverModel.js';
 import { createGroundMarks } from './groundMarks.js';
+import {
+  exploration, createFirstStepSequence, FIRST_STEP_LINE, MAX_FIRST_WORDS,
+  walkReachMetres, roverReachMetres, reachLine, parseTargetDistance, targetBeyondReach,
+} from './explore.js';
 
 const TELEMETRY_EVERY = 0.5;
 const LANDER_RADIUS = 3.2; // m, the lander's legs: you can't walk through them
@@ -41,6 +45,21 @@ export const PROP_ENTRIES = { exerciseBike: 'crew-exercise', waterRecycler: 'cre
 // Mars dusk / "Pale Blue Dot" texts (Role 4 may edit them here).
 export const EARTH_HINT = 'Look for Earth: low in the sky, hold Z to zoom';
 export const EARTH_CAPTION = ['EARTH · about 225 million km away', 'Everyone you have ever loved is on that dot.']; // wording approved by Role 4 (spec §11)
+
+// ---- Exports for Role 4 (optional calls: guard with try/catch or `typeof`) ----
+// getFirstWords() -> string | null
+//   What the astronaut said at the foot of the ladder ("your first words on Mars", max 80 chars; "Hello, Mars." when skipped).
+//   null until the first step has been taken this mission; reset with every new mission. Use it in the endings.
+// getReach() -> { walkMetres, roverMetres, roverName, origin: { x, z }, ship: { x, z } } | null
+//   How far the astronaut can still go AND come back (20 % margin), SURFACE only (null inside the ship or in other states).
+//   walkMetres: current suit tank only (no spares) at a walking pace. roverMetres/roverName: the rover being driven, else the
+//   nearest one, from its battery (null if none). origin: where the astronaut is now (centre for map reach rings);
+//   ship: the hatch (the way home). Metres in SURFACE scene coordinates (x, z).
+export function getFirstWords() { return exploration.firstWords; }
+export function getReach() {
+  if (!s || s.inside) return null;
+  return computeReach();
+}
 
 const registry = createInteractables();
 
@@ -167,6 +186,121 @@ function leaveRover() {
   active = null;
 }
 
+// Reach: how far can I still go and come back? (maths in explore.js). Outside only.
+function nearestRoverEntry() {
+  const w = s.walker.pos;
+  if (active) return active;
+  let best = null, bestD = Infinity;
+  for (const e of fleetList) {
+    if (!e.rover) continue;
+    const d = Math.hypot(e.rover.x - w.x, e.rover.z - w.z);
+    if (d < bestD) { bestD = d; best = e; }
+  }
+  return best;
+}
+function computeReach() {
+  const w = s.walker.pos;
+  const e = nearestRoverEntry();
+  return {
+    walkMetres: walkReachMetres(astronaut.oxygen.secondsLeft),
+    roverMetres: e ? roverReachMetres(e.spec, e.rover.batteryWh, PLANETS.mars.g) : null,
+    roverName: e ? e.spec.name : null,
+    origin: { x: w.x, z: w.z },
+    ship: { x: HATCH.x, z: HATCH.z },
+  };
+}
+// Role 4's mission HUD shows "<target> · 123 m"; read the distance back so we can warn when it is out of reach.
+function nextTargetMetres() {
+  const el = document.querySelector('.role4-mission-target');
+  if (!el || el.style.display === 'none') return null;
+  return parseTargetDistance(el.textContent);
+}
+function updateReach(dt) {
+  s.reachClock = (s.reachClock ?? 99) + dt;
+  if (s.reachClock < 0.25) return s.reachHud ?? null;
+  s.reachClock = 0;
+  const r = computeReach();
+  const target = nextTargetMetres();
+  const range = s.driving && r.roverMetres != null ? r.roverMetres : r.walkMetres; // driving: the rover is how you get there
+  s.reachHud = { text: reachLine(r), warn: targetBeyondReach(target, range) };
+  return s.reachHud;
+}
+
+// First step on Mars (once per mission): scripted moment + "your first words" prompt.
+const FS_CSS = 'font:14px/1.7 ui-monospace,Menlo,Consolas,monospace;letter-spacing:.12em;text-shadow:0 0 8px rgba(0,0,0,.8)';
+function createFirstStepUI(hudLayer) {
+  const line = document.createElement('div');
+  line.style.cssText = `position:absolute;left:50%;top:25%;transform:translateX(-50%);text-align:center;color:var(--hud-cyan,#67e8f9);${FS_CSS};font-size:17px;letter-spacing:.2em;white-space:nowrap;opacity:0;transition:opacity 1.6s ease`;
+  line.textContent = FIRST_STEP_LINE(1);
+  const box = document.createElement('form'); // Enter = submit (no key listeners outside core/input.js)
+  box.style.cssText = `position:absolute;left:50%;top:33%;transform:translateX(-50%);width:min(560px,calc(100vw - 120px));text-align:center;pointer-events:auto;display:none;color:#d6eeee;padding:14px 18px;background:#07171bcc;border-radius:4px;${FS_CSS}`;
+  const label = document.createElement('div');
+  label.textContent = 'YOUR FIRST WORDS ON MARS';
+  label.style.cssText = 'font-size:11px;color:#a1babe;margin-bottom:8px';
+  const field = document.createElement('input');
+  field.type = 'search'; // Chrome: Esc clears the field and fires 'search'; we treat that as skip
+  field.maxLength = MAX_FIRST_WORDS;
+  field.placeholder = 'Say something the world will remember…';
+  field.autocomplete = 'off';
+  field.spellcheck = false;
+  field.setAttribute('aria-label', 'Your first words on Mars');
+  field.style.cssText = 'width:100%;padding:11px 14px;background:#07171bd8;color:#eaffff;border:1px solid #81e7df88;border-radius:3px;outline:none;text-align:center;font:inherit;letter-spacing:.06em';
+  const hint = document.createElement('div');
+  hint.textContent = 'Enter to confirm · Esc or empty to skip';
+  hint.style.cssText = 'font-size:10px;color:#a1babe;margin-top:8px';
+  const css = document.createElement('style');
+  css.textContent = '.fs-words::-webkit-search-cancel-button{display:none}';
+  field.className = 'fs-words';
+  box.append(css, label, field, hint);
+  hudLayer.append(line, box);
+  return { line, box, field };
+}
+
+function startFirstStep() {
+  const ui_ = createFirstStepUI(s.hudLayer);
+  s.fs = { seq: createFirstStepSequence(), ...ui_ };
+  try { audio.fadeTo('suit.breath', 2.2, 1.2); } catch { /* the breath stays at normal volume */ }
+  const { field } = s.fs;
+  s.fs.box.addEventListener('submit', (ev) => { ev.preventDefault(); finishFirstStep(field.value); });
+  field.addEventListener('search', () => { if (!field.value) finishFirstStep(''); });
+}
+
+// Boot print in the regolith, a little ahead of the feet (right foot).
+function stampFirstBoot() {
+  const { walker } = s;
+  const fx = -Math.sin(walker.yaw), fz = -Math.cos(walker.yaw);
+  getMarks().stamp({ x: walker.pos.x + fx * 0.85, z: walker.pos.z + fz * 0.85, dirX: fx, dirZ: fz, side: 1 });
+}
+
+function enterWordsPhase() {
+  const { box, field } = s.fs;
+  box.style.display = '';
+  input.unlockPointer(); // typing needs the mouse back; keys typed in the field never reach the game (core input)
+  field.focus();
+}
+
+function finishFirstStep(text, silent = false) {
+  const fs = s?.fs;
+  if (!fs || fs.seq.phase === 'done') return;
+  const words = exploration.setFirstWords(text);
+  fs.seq.finish();
+  fs.field.blur();
+  fs.box.style.display = 'none';
+  fs.line.style.opacity = '0';
+  try { audio.fadeTo('suit.breath', 1, 1.5); } catch { /* ignore */ }
+  if (!silent) {
+    input.lockPointer(); // Enter is a key press, so the browser allows this; a click also works
+    s.notice = { text: `“${words}”`, t: 4.5, calm: true };
+  }
+}
+
+function skipFirstStep() {
+  const fs = s?.fs;
+  if (!fs || fs.seq.phase !== 'scene') return;
+  if (fs.seq.skip().stamp) stampFirstBoot();
+  enterWordsPhase();
+}
+
 // Outside only: advance the sol clock, ease the helmet zoom, hint and caption for Earth.
 function updateDusk(dt, zoomHeld) {
   const { camera } = s;
@@ -202,6 +336,7 @@ export default {
         get fov() { return s?.camera.fov; }, get sol() { return solClock; },
         get dust() { return astronaut.dust; }, get marks() { return marks; }, get walker() { return s?.walker; }, get camera() { return s?.camera; },
         get cabin() { return s?.cabin; },
+        get firstStep() { return s?.fs?.seq; }, firstWords: () => exploration.firstWords, reach: () => getReach(),
         // debug only: drive the rover n metres in steps (marks, dust and odometer follow), then park it
         driveMetres(n, steer = 0.4, name) { const e = name ? fleet[name === 'mr01' ? 'mr01' : 'lrv'] : (active ?? fleet.lrv); const rover = getRover(e), roverModel = e.model; for (let m = 0; m < n; m += 0.1) { rover.update(0.05, { throttle: 1, steer }); astronaut.dust.accumulate(0.05, { speed: rover.speed, mode: 'drive' }); marks?.update({ mode: 'drive', rover }); } roverModel?.update(rover, 0); syncSpot(e); },
         walkMetres(n, yaw = 0) { for (let m = 0; m < n; m += 0.1) { s.walker.pos.x -= Math.sin(yaw) * 0.1; s.walker.pos.z -= Math.cos(yaw) * 0.1; s.walker.pos.y = getTerrainHeight(s.walker.pos.x, s.walker.pos.z); marks?.update({ mode: 'walk', walker: s.walker }); } }, get rover() { return (active ?? fleet.lrv).rover; }, get driving() { return !!s?.driving; } };
@@ -217,7 +352,7 @@ export default {
     hudLayer.dataset.screen = state;
     ui.mount(hudLayer, { layer: 'hud' });
     hudLayer.style.pointerEvents = 'none'; // ui.mount enables clicks; the HUD must never block buttons under it
-    s = { state, inside, camera, cabin: null, sinceTelemetry: 0, hud: createSuitHUD({ parent: hudLayer }), offs: [], notice: null };
+    s = { state, inside, camera, hudLayer, fs: null, cabin: null, sinceTelemetry: 0, hud: createSuitHUD({ parent: hudLayer }), offs: [], notice: null };
     // short alert line under the helmet header (falls, suit breach)
     s.noticeEl = document.createElement('div');
     s.noticeEl.className = 'hud-label';
@@ -295,8 +430,10 @@ export default {
       audio.play('suit.breath', { loop: true });
     }
 
-    input.onPress('KeyE', () => (s?.driving ? leaveRover() : registry.press()));
-    s.lockOnClick = () => input.lockPointer();
+    if (!inside && exploration.claimFirstStep(previous === 'INTERIOR')) startFirstStep(); // only when you really step out of the airlock
+    input.onPress('KeyE', () => (s?.fs?.seq.phase === 'scene' ? skipFirstStep() : s?.driving ? leaveRover() : registry.press()));
+    input.onPress('Space', () => { if (s?.fs?.seq.phase === 'scene') skipFirstStep(); });
+    s.lockOnClick = () => { if (s?.fs?.seq.phase !== 'words') input.lockPointer(); }; // while typing, leave the mouse alone
     window.addEventListener('click', s.lockOnClick);
 
     // Dev shortcuts (only with ?debug=1): O goes outside / back in, R starts the return (INTERIOR only).
@@ -352,6 +489,21 @@ export default {
       hudYaw = rover.heading + s.look.yaw;
       s.roverPanelText = `${rt.name} · ${rt.speedKmh.toFixed(1)} km/h · battery ${(rt.batteryFrac * 100).toFixed(0)} % · slope ${rt.pitchDeg.toFixed(0)}° / roll ${rt.rollDeg.toFixed(0)}° · ${rt.odometerKm.toFixed(2)} km`
         + (rt.overturned ? ' · OVERTURNED' : rt.slip > 0.15 ? ' · SLIDING' : !rt.onGround ? ' · AIRBORNE' : '');
+    } else if (s.fs && s.fs.seq.phase !== 'done') {
+      // ---- first step on Mars: the player is a spectator for a few seconds ----
+      const seq = s.fs.seq;
+      if (seq.update(dt).stamp) stampFirstBoot();
+      if (seq.phase === 'words' && s.fs.box.style.display === 'none') enterWordsPhase();
+      s.fs.line.style.opacity = String(seq.lineAlpha);
+      walker.update(dt, {}); // settle on the ground, no input
+      const eye = walker.eye;
+      camera.position.set(eye.x, eye.y, eye.z);
+      const pitch = walker.pitch + (-1.0 - walker.pitch) * seq.tilt; // bow the head to the boot
+      camera.quaternion.setFromEuler(new THREE.Euler(pitch, walker.yaw, 0, 'YXZ'));
+      astronaut.body.update(dt, { env: 'mars', heartRate: walker.heartRate });
+      hudTelemetry = walker.telemetry;
+      hudYaw = walker.yaw;
+      s.roverPanelText = '';
     } else {
       // ---- on foot ----
       if (mouseOk) walker.look(mouse.x * (camera.fov / NORMAL_FOV), mouse.y * (camera.fov / NORMAL_FOV));
@@ -401,6 +553,7 @@ export default {
       focused: ui_.focused, yaw: hudYaw, shipPosition: { x: HATCH.x, z: HATCH.z },
       bodyStats: astronaut.body.snapshot(), airlockProgress: s.cabin?.airlockProgress ?? 0,
       prebreathe: s.cabin?.prebreathe ?? null, dust: astronaut.dust.level, driving: !!s.driving,
+      reach: inside ? null : updateReach(dt),
     });
 
     if (s.notice?.t > 0) s.notice.t -= dt;
@@ -426,6 +579,7 @@ export default {
   exit() {
     if (!s) return;
     previous = s.state;
+    if (s.fs) finishFirstStep(s.fs.field.value, true); // left mid-moment: keep what was typed (or the default)
     if (!s.inside) { for (const e of fleetList) e.model?.object.removeFromParent(); marks?.object.removeFromParent(); }
     if (s.driving) { syncSpot(active); active = null; }
     graphics.setEffects({ shake: 0 });
