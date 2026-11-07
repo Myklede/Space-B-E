@@ -77,33 +77,6 @@ Copy this block. Keep each line short and factual. Don't commit screenshots.
 
 ## Role 2: Flight & Astronaut
 
-### The trajectory line is a thin vertical line down the cockpit window
-- **For:** Role 2 · **From:** Role 3 (dtri) · **Found:** 2026-11-07 on dev 691ae19 · **Severity:** polish
-- **Where:** `src/flight/index.js:134` (the cyan predicted path), in ORBIT and ENTRY
-- **Steps:** `/?debug=1&state=ORBIT`, look ahead through the window
-- **Expected:** a clear view of Earth's limb from the cockpit
-- **Actual:** the ship now points along its motion, so the path lies in a plane through the camera and is seen edge-on: one thin cyan line from the top of the window to the bottom
-- **Suggested fix:** hide the path in the cockpit view and keep it for the outside camera (C)
-- **Status:** fixed in 7a06711, Role 3 (dtri) please verify
-
-### LANDING under the parachute shows only flat sky
-- **For:** Role 2 · **From:** Role 3 (dtri) · **Found:** 2026-11-07 on dev 691ae19 · **Severity:** polish
-- **Where:** `src/flight/index.js` (LANDING view)
-- **Steps:** `/?debug=1&state=LANDING`, wait 5 s
-- **Expected:** some ground or horizon while descending from about 3 km
-- **Actual:** the window shows a uniform butterscotch sky until touchdown
-- **Suggested fix:** tilt the default look so the ground shows, or hint that C switches to the outside camera
-- **Status:** fixed in 7a06711, Role 3 (dtri) please verify
-
-### Switching camera views changes the light count
-- **For:** Role 2 · **From:** Role 3 (dtri) · **Found:** 2026-11-07 on dev 6fb54a4 · **Severity:** polish
-- **Where:** `src/flight/index.js:377-378` and `:422-423` (hiding `rocketRoot` or the cockpit per view)
-- **Steps:** LAUNCH, press C
-- **Expected:** no hitch
-- **Actual:** hiding an object that holds lights changes the scene's light count, and three.js then recompiles every lit material (about 200 ms on an M5). Role 3's warm-up (`src/graphics/warmup.js`) now pre-compiles both views during PRELAUNCH, so it no longer hitches, but a new light or visibility rule in flight would bring it back.
-- **Suggested fix:** keep lights in the scene and set their intensity to 0 instead of hiding them (that is what `src/graphics/vfx.js` does)
-- **Status:** fixed in 7a06711, Role 3 (dtri) please verify
-
 ## Role 3: Graphics, Audio & Core
 
 ### `check:boot` refuses to run without Google Chrome at its default path

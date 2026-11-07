@@ -13,7 +13,7 @@
   "engines": [{ "fuel": "methalox", "nozzle": "vac", "pump": "M" }],
   "stats": {
     "cost": 1850000, "wetMass": 42000, "dryMass": 9000, "fuelMass": 33000, "thrust": 600000,
-    "ispSL": 330, "ispVac": 380, "deltaV": 8900, "twrEarth": 1.45, "twrMars": 3.8,
+    "ispSL": 330, "ispVac": 380, "deltaV": 5741, "twrEarth": 1.46, "twrMars": 3.85,
     "comOffset": 0.0, "copOffset": 0.0, "reliability": 0.93,
     "hasHeatShield": true, "heatShieldDamaged": false, "hasLegs": true, "hasRCS": true,
     "hasParachute": true, "hasAntenna": true, "hasShelter": true, "coldRatedSeals": true,

@@ -11,7 +11,7 @@
   "engines": [{ "fuel": "kerolox", "nozzle": "sl", "pump": "M" }],
   "stats": {
     "cost": 1250000, "wetMass": 36000, "dryMass": 8000, "fuelMass": 28000, "thrust": 480000,
-    "ispSL": 282, "ispVac": 311, "deltaV": 6200, "twrEarth": 1.3, "twrMars": 3.4,
+    "ispSL": 282, "ispVac": 311, "deltaV": 4587, "twrEarth": 1.36, "twrMars": 3.59,
     "comOffset": 0.1, "copOffset": 0.0, "reliability": 0.74,
     "hasHeatShield": true, "heatShieldDamaged": false, "hasLegs": true, "hasRCS": false,
     "hasParachute": true, "hasAntenna": true, "hasShelter": false, "coldRatedSeals": false,

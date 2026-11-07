@@ -306,6 +306,25 @@ const VIEWS = {
       return scene;
     },
   },
+  gear: {
+    label: 'Rocket parts: side equipment',
+    build() {
+      const scene = createSpaceScene();
+      graphics.setSunDirection(new THREE.Vector3(0.7, 0.45, 0.55));
+      const sun = new THREE.DirectionalLight(0xfff4e6, 3.2);
+      sun.position.set(7, 4.5, 5.5);
+      scene.add(sun, new THREE.AmbientLight(0x8ea4c8, 0.32));
+      const ids = ['rcs_pack', 'gimbal_ring', 'parachute', 'o2_bottle', 'co2_scrubber', 'radiation_shelter', 'solar_panel', 'battery', 'antenna_low', 'antenna_high', 'antenna_s', 'armor_plate', 'spectrometer', 'ground_radar', 'drill', 'reaction_wheel', 'radiator', 'water_recycler', 'splash_floats', 'sample_container', 'seals_cheap'];
+      ids.forEach((id, i) => {
+        const part = assets.get(`rocketPart:${id}`);
+        part.position.set((i % 7 - 3) * 2.2 - 0.4, 3.2 - Math.floor(i / 7) * 2.4, 0);
+        scene.add(part);
+      });
+      orbit();
+      look([0, 1.6, 12], [0, 1.6, 0]);
+      return scene;
+    },
+  },
 };
 
 function placeLander(scene) {
