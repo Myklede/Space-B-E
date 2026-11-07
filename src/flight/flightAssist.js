@@ -108,7 +108,7 @@ export function ascentGuide(fc, profile = ASCENT_PROFILE) {
   };
   const top = atmosphereTop(fc.planet);
   if (t.apoapsis < profile.targetApoapsis) {
-    if (t.altitude < profile.turnStart) return { step: 'climb', direction: up, text: 'Throttle up (Q) and climb straight up' };
+    if (t.altitude < profile.turnStart) return { step: 'climb', direction: up, text: 'Climb straight up at full throttle (Q = more throttle)' };
     const deg = Math.min(89, (t.altitude - profile.turnStart) / profile.metresPerDegree);
     return { step: 'turn', direction: tilt(deg), pitchDeg: deg, text: `Gravity turn: tip ${deg.toFixed(0)}° toward the horizon (follow ◎)` };
   }

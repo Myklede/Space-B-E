@@ -125,6 +125,7 @@ export class FlightController {
     this.fuel = fuel ?? this.ship.fuelMass; // carry leftover fuel between scenes
     this.throttle = 0;
     this.engineLit = false;
+    this.holdDown = false; // launch clamps: while true the rocket stays on the pad whatever the thrust (countdown)
     this.ignitionsLeft = this.ship.ignitions;
     this.armorLeft = this.ship.armorHits;
     this.obstacles = [];
@@ -345,8 +346,8 @@ export class FlightController {
 
     // ground contact
     if (this.onGround) {
-      if (dot(acc, up) <= 0) {
-        // held by the ground
+      if (dot(acc, up) <= 0 || this.holdDown) {
+        // held by the ground (or by the launch clamps during the countdown)
         this.vel = v3();
         this.pos = scale(up, this.planet.radius);
         this._lastNonGravAccel = this.mu / (r * r); // you feel 1 local g standing

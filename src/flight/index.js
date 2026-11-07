@@ -29,6 +29,15 @@ export { FlightController };
 const LOW_MARS_ALTITUDE = 6000;
 const LAUNCH_SITE_TOP = 40000; // m: Role 3's launch site shows its detail below this
 const DEBRIS_AFTER_ORBIT = 20; // s in orbit before the orbital-debris encounter (TEAM_PROMPT §6.3)
+const COUNTDOWN = 10; // s: T-10 … ignition at T-3 … clamps release at T-0
+const IGNITION_AT = 3;
+const CALLOUT_SECONDS = 3.5;
+// Mission Control callouts for local flight notices (TEAM_PROMPT §6.3)
+const CALLOUTS = {
+  liftoff: 'Liftoff! We have liftoff.', maxq_warning: 'Max-Q: throttle down through the thick air.',
+  fairing_sep: 'Fairing separation.', orbit_achieved: 'Orbit achieved.', fuel_empty: 'MECO: main engine cut-off, tanks dry.',
+  parachute: 'Parachute deployed.', debris_hit: 'Debris strike! Armor took the hit.', no_ignition: 'Engine will not relight: no ignitions left.',
+};
 const MAX_MOUSE_STEP = 300; // px per frame: ignore the jump some browsers report right after pointer lock // m: below this the view switches to Role 3's detailed Mars terrain
 const TELEMETRY_EVERY = 0.5; // s (contract: flight:telemetry about twice per second)
 const toCockpit = new THREE.Quaternion().setFromAxisAngle(new THREE.Vector3(1, 0, 0), Math.PI / 2); // nose +Y → cockpit −Z
@@ -266,7 +275,12 @@ export default {
     s.lockOnClick = () => input.lockPointer();
     window.addEventListener('click', s.lockOnClick);
 
+    if (state === 'LAUNCH' && fc.onGround && fc.liftoffT === null) {
+      s.countdown = COUNTDOWN;
+      fc.holdDown = true;
+    }
     fc.onNotice = (type) => {
+      if (CALLOUTS[type]) s.callout = { text: CALLOUTS[type], t: CALLOUT_SECONDS };
       if (type === 'debris_hit' || type === 'parachute' || type === 'fairing_sep') audio.play('impact.small');
       if (['maxq_warning', 'g_high', 'heat_warning', 'engine_hot'].includes(type)) audio.play('alarm.master');
       if (type === 'orbit_achieved') audio.play('radio.blip');
@@ -293,6 +307,11 @@ export default {
     }
 
     s.controls.poll();
+    if (s.countdown > 0) {
+      s.countdown -= dt;
+      if (s.countdown <= IGNITION_AT && fc.throttle === 0) fc.throttle = 1; // main engine start at T-3
+      if (s.countdown <= 0) fc.holdDown = false; // T-0: clamps release
+    }
     fc.update(dt, s.controls.input, { timeWarp: s.warp });
     s.controls.endFrame();
     const t = fc.telemetry;
@@ -311,7 +330,10 @@ export default {
       }
     }
     if (s.debrisWarning > 0) s.debrisWarning -= dt;
-    if (fc.landed && !s.wasLanded) audio.play('impact.small');
+    if (fc.landed && !s.wasLanded) {
+      audio.play('impact.small');
+      if (fc.planetId === 'mars') s.callout = { text: 'Touchdown confirmed. Welcome to Mars.', t: CALLOUT_SECONDS * 2 };
+    }
     s.wasLanded = fc.landed;
 
     // automatic state moves
@@ -424,8 +446,16 @@ export default {
     if (fc.landed) a.warnings.push({ level: 'amber', text: 'LANDED: press E to stand up' });
     if (s.debrisWarning > 0) a.warnings.unshift({ level: 'red', text: 'ORBITAL DEBRIS AHEAD: steer and burn sideways to dodge' });
     if (state === 'ORBIT' && t.phase === 'orbit') a.warnings.push({ level: 'amber', text: `IN ORBIT: press T for the transfer burn (${fmt((economy.balance.deltaVKmS?.transfer ?? 2.1) * 1000)} m/s)` });
-    const guide = s.assist ? ascentGuide(fc) ?? landingGuide(fc) : null;
+    const guide = s.assist && !(s.countdown > 0) ? ascentGuide(fc) ?? landingGuide(fc) : null;
     if (guide) a.warnings.unshift({ level: 'amber', text: guide.text });
+    if (s.callout?.t > 0) {
+      s.callout.t -= dt;
+      a.warnings.unshift({ level: 'amber', text: `MISSION CONTROL: ${s.callout.text}` });
+    }
+    if (s.countdown > 0) {
+      const n = Math.ceil(s.countdown);
+      a.warnings.unshift({ level: n <= IGNITION_AT ? 'red' : 'amber', text: `T-${n}${n <= IGNITION_AT ? ' · MAIN ENGINE START' : ' · clamps on'}` });
+    }
     s.hud.update(t, a, s.assist);
     const cam = s.mode === 'surface' ? s.surface.camera : s.mode === 'site' ? s.site.camera : view.camera;
     const project = (dir) => {

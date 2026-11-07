@@ -427,6 +427,19 @@ test('a half-built ShipSpec (zeros, strings, missing stats) never produces NaN',
   assert.ok(Number.isFinite(empty.telemetry.deltaVLeft));
 });
 
+test('launch clamps (holdDown) keep a full-thrust rocket on the pad until released', () => {
+  const fc = new FlightController({ planets: PLANETS, shipSpec: MOCK_SHIPS.reliable });
+  fc.holdDown = true;
+  fc.throttle = 1;
+  run(fc, 3);
+  assert.equal(fc.onGround, true);
+  assert.equal(fc.liftoffT, null);
+  assert.ok(fc.fuel < fc.ship.fuelMass, 'engines burn while clamped (real pad ignition)');
+  fc.holdDown = false;
+  run(fc, 2);
+  assert.ok(fc.liftoffT !== null && fc.altitude > 1);
+});
+
 let fails = 0;
 for (const [s, name, e] of results) {
   console.log(`${s === 'ok' ? '  ✓' : '  ✗'} ${name}`);
