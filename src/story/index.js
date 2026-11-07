@@ -20,7 +20,6 @@ const LESSONS = {
 let ending = { endingId: 'homecoming', cause: '', cost: 0, historyLessonId: null };
 let dispose = null;
 const once = new Set(); // radio lines already played this mission
-let surfaceSince = 0;
 
 const family = () => (data.photos.find((p) => p.id === save.load().familyPhoto) ?? data.photos[0]).from;
 
@@ -51,7 +50,6 @@ function listen() {
     if (to === 'PRELAUNCH') once.clear();
     if (to === 'SURFACE') {
       say('firstEva');
-      surfaceSince = performance.now();
     }
     if (to === 'CRUISE') setTimeout(() => getState() === 'CRUISE' && say('family1'), 4000);
   });
@@ -72,11 +70,7 @@ function listen() {
 
   events.on('progress:changed', ({ percent }) => {
     if (percent >= 40) say('family2');
-    // Pale Blue Dot (spec §11): after a while outside, HQ points at Earth in the sky.
-    if (percent >= 30 && getState() === 'SURFACE' && performance.now() - surfaceSince > 30000) {
-      say('paleBlueDot');
-      setTimeout(() => events.emit('guidebook:open', { entryId: 'overview-effect' }), 9000);
-    }
+    // The Pale Blue Dot moment itself is Role 2's (dusk, Earth as the evening star, helmet zoom, caption).
   });
   events.on('mission:complete', () => say('complete'));
 }
