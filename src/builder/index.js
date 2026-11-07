@@ -305,7 +305,7 @@ function enterHangar() {
   const invertY = () => !!save.load().invertY;
   // ?debug=1: let the console (and screenshot scripts) walk to a machine and open it: window.__game.builder.placeAt('propulsion')
   if (new URLSearchParams(location.search).get('debug') === '1' && window.__game) {
-    window.__game.builder = { openStation: hangar.openStation, closeStation: hangar.closeStation, placeAt: (id) => b.placeAtStation(id), startTest, bay: b, scene3d, assembly: a, catalog, icons, refresh, requestArt, nasa: { hasNasaArt, nasaFailures, NASA_PARTS } };
+    window.__game.builder = { openStation: hangar.openStation, closeStation: hangar.closeStation, placeAt: (id) => b.placeAtStation(id), startTest, bay: b, scene3d, assembly: a, catalog, sections, icons, refresh, requestArt, nasa: { hasNasaArt, nasaFailures, NASA_PARTS } };
   }
   const lockOnClick = () => { if (!hangar.station && !b.test.active) input.lockPointer(); };
   window.addEventListener('click', lockOnClick);
