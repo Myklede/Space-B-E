@@ -241,6 +241,83 @@ function drawTrajectory(c, w, h) {
   }
 }
 
+// ---- Steering display (cockpit.userData.setTrajectory) ---------------------------------------------------------------
+// STABLE API: flight steering depends on it. Every cockpit redesign must keep setControls and setTrajectory working with the same
+// arguments, keep this display large and readable from the default pilot view, and keep the planned line dashed and the predicted line solid.
+// Coordinates are screen units 0..1 of the plot area, x to the right and y UP; ship.heading is in radians, 0 = pointing right (+x),
+// counter-clockwise positive (pi/2 = pointing up).
+const OK_GREEN = '#4ade80';
+const finite = (v) => typeof v === 'number' && Number.isFinite(v);
+function cleanLine(points) {
+  const out = [];
+  if (Array.isArray(points)) for (const p of points) if (Array.isArray(p) && finite(p[0]) && finite(p[1])) out.push([p[0], p[1]]);
+  return out.length > 600 ? out.filter((_, i) => i % Math.ceil(out.length / 600) === 0) : out;
+}
+function normaliseTrajectory(d) {
+  const ship = d.ship && finite(d.ship.x) && finite(d.ship.y) ? { x: d.ship.x, y: d.ship.y, heading: finite(d.ship.heading) ? d.ship.heading : 0 } : null;
+  const hint = d.hint && typeof d.hint.text === 'string' ? { text: d.hint.text, level: d.hint.level === 'warn' ? 'warn' : 'ok' } : null;
+  const t = { planned: cleanLine(d.planned), predicted: cleanLine(d.predicted), ship, view: d.view === 'top' ? 'top' : 'side', hint };
+  let sig = `${t.view}|${hint ? hint.level + hint.text : ''}|${ship ? [ship.x, ship.y, ship.heading].map((v) => v.toFixed(4)).join() : ''}`;
+  for (const line of [t.planned, t.predicted]) {
+    let acc = line.length;
+    line.forEach((p, i) => { acc += (p[0] * 31 + p[1] * 17) * ((i % 7) + 1); });
+    sig += `|${acc.toFixed(5)}`;
+  }
+  t.sig = sig;
+  return t;
+}
+function drawSteering(c, w, h, t) {
+  uiBackdrop(c, w, h, 'TRAJECTORY', t.view === 'top' ? 'TOP VIEW' : 'SIDE VIEW');
+  const left = 34, right = w - 34, top = 78, bottom = h - 110;
+  const px = (x) => left + x * (right - left), py = (y) => bottom - y * (bottom - top);
+  c.save();
+  c.beginPath(); c.rect(left, top, right - left, bottom - top); c.clip();
+  c.fillStyle = 'rgba(8,36,54,.55)'; c.fillRect(left, top, right - left, bottom - top);
+  c.strokeStyle = UI.faint; c.lineWidth = 1.5;
+  for (let k = 1; k < 8; k++) { c.beginPath(); c.moveTo(px(k / 8), top); c.lineTo(px(k / 8), bottom); c.stroke(); }
+  for (let k = 1; k < 4; k++) { c.beginPath(); c.moveTo(left, py(k / 4)); c.lineTo(right, py(k / 4)); c.stroke(); }
+  const stroke = (line) => { c.beginPath(); line.forEach((p, i) => (i ? c.lineTo(px(p[0]), py(p[1])) : c.moveTo(px(p[0]), py(p[1])))); c.stroke(); };
+  c.lineJoin = 'round'; c.lineCap = 'round';
+  if (t.planned.length > 1) { // planned: pale white dashes
+    c.setLineDash([16, 11]); c.strokeStyle = 'rgba(238,248,252,.85)'; c.lineWidth = 3.5; c.lineCap = 'butt';
+    stroke(t.planned);
+    c.setLineDash([]); c.lineCap = 'round';
+  }
+  if (t.predicted.length > 1) { // predicted: solid, thicker, bright cyan with a soft glow
+    c.strokeStyle = 'rgba(126,231,247,.28)'; c.lineWidth = 12; stroke(t.predicted);
+    c.strokeStyle = '#7ee7f7'; c.lineWidth = 5.5; stroke(t.predicted);
+  }
+  if (t.ship) { // ship icon: amber triangle pointing along the heading (y is up on screen, so the angle is negated)
+    const x = Math.min(right - 8, Math.max(left + 8, px(t.ship.x))), y = Math.min(bottom - 8, Math.max(top + 8, py(t.ship.y)));
+    c.save();
+    c.translate(x, y); c.rotate(-t.ship.heading);
+    c.beginPath(); c.moveTo(27, 0); c.lineTo(-17, -17); c.lineTo(-9, 0); c.lineTo(-17, 17); c.closePath();
+    c.fillStyle = UI.amber; c.fill();
+    c.strokeStyle = '#04100f'; c.lineWidth = 3; c.stroke();
+    c.restore();
+  }
+  c.restore();
+  c.strokeStyle = UI.dim; c.lineWidth = 2;
+  c.strokeRect(left, top, right - left, bottom - top);
+  // hint band
+  const hint = t.hint, warn = hint?.level === 'warn';
+  const col = warn ? UI.amber : OK_GREEN;
+  const bandTop = bottom + 14, bandH = h - 20 - bandTop;
+  c.fillStyle = warn ? 'rgba(251,191,36,.12)' : 'rgba(74,222,128,.10)';
+  c.fillRect(left, bandTop, right - left, bandH);
+  c.strokeStyle = hint ? col : UI.dim; c.lineWidth = 2.5;
+  c.strokeRect(left, bandTop, right - left, bandH);
+  c.textAlign = 'center'; c.textBaseline = 'middle';
+  if (hint?.text) {
+    let size = 46;
+    c.font = `700 ${size}px ${UI_FONT}`;
+    while (size > 24 && c.measureText(hint.text).width > right - left - 30) { size -= 2; c.font = `700 ${size}px ${UI_FONT}`; }
+    c.fillStyle = col;
+    c.fillText(hint.text, w / 2, bandTop + bandH / 2 + 2);
+  }
+  c.textAlign = 'left'; c.textBaseline = 'alphabetic';
+}
+
 function drawBars(c, w, h) {
   const maxQ = live.maxQ ?? MAXQ_PA;
   const g = live.gForce;
@@ -299,7 +376,34 @@ export function createCockpit() {
   const t = warmCockpit();
   const group = t.group.clone(true); // shares geometry, materials and textures with the template
   const ctl = t.bind(group);
-  group.userData.setControls = ctl.setControls; // ({ pitch -1..1, yaw -1..1, throttle 0..1 }), smoothed
+  // STABLE API (flight depends on it; every cockpit redesign must keep these arguments working):
+  group.userData.setControls = ctl.setControls; // ({ pitch -1..1, yaw -1..1, throttle 0..1, cutoff, brake, assist: booleans }), smoothed; omitted keys keep their value
+  group.userData.setButton = ctl.setButton; // (id, 'off' | 'amber' | 'green' | 'red'), id with or without 'btn:'
+  group.userData.press = ctl.press; // (id), short press-in animation
+  // setTrajectory({ planned, predicted, ship, view, hint }) or null: see drawSteering above. The canvas and texture are per instance
+  // (the template's screens are shared), made on the first call, redrawn only when the data changed and at most 10 times a second.
+  let traj = null, trajSig = '', trajDirty = false, trajMesh = null, trajAt = 0;
+  const centre = group.getObjectByName('centreDisplay');
+  group.userData.setTrajectory = (data) => {
+    if (data == null) {
+      traj = null; trajSig = ''; trajDirty = false;
+      if (trajMesh) trajMesh.visible = false;
+      if (centre) centre.visible = true;
+      return;
+    }
+    const next = normaliseTrajectory(data);
+    if (!trajMesh && centre) {
+      traj = next;
+      trajMesh = screen(0.6, 0.38, (c, w, h) => drawSteering(c, w, h, traj), 1.2, 768);
+      trajMesh.position.copy(centre.position);
+      centre.parent.add(trajMesh);
+      trajSig = next.sig; trajAt = performance.now();
+    } else if (next.sig !== trajSig) {
+      traj = next; trajSig = next.sig; trajDirty = true;
+    }
+    if (trajMesh) trajMesh.visible = true;
+    if (centre) centre.visible = false;
+  };
   const blinkers = [];
   group.traverse((o) => { if (o.name === 'blinker') blinkers.push(o); });
   const cabinLight = group.getObjectByName('cabinLight'), alarmLight = group.getObjectByName('alarmLight');
@@ -315,7 +419,12 @@ export function createCockpit() {
     if (live.version !== drawnVersion && now - drawnAt >= 250) { // at most 4 redraws a second, only when the data changed
       drawnVersion = live.version;
       drawnAt = now;
-      liveScreens.forEach((m) => m.userData.redraw());
+      liveScreens.forEach((m) => { if (!(traj && m.name === 'centreDisplay')) m.userData.redraw(); }); // the hidden telemetry plot is skipped
+    }
+    if (traj && trajMesh && trajDirty && now - trajAt >= 100) { // steering display: at most 10 redraws a second
+      trajDirty = false;
+      trajAt = now;
+      trajMesh.userData.redraw();
     }
     blinkers.forEach((lamp, i) => { lamp.visible = Math.sin(tm * (1.3 + i * 0.37) + i) > -0.3; });
     alarmLight.intensity = alarm ? 3 * (0.5 + 0.5 * Math.sign(Math.sin(tm * 5))) : 0;
@@ -366,6 +475,7 @@ function buildCockpitTemplate() {
     [screen(0.52, 0.38, drawBars, 1.2, 768), 0.57],
   ];
   const liveScreens = screens.map(([mesh]) => mesh);
+  screens[1][0].name = 'centreDisplay'; // setTrajectory swaps this one for a per-instance steering display
   if (typeof window !== 'undefined' && new URLSearchParams(location.search).get('debug') === '1') window.__cockpitCanvases = liveScreens.map((m) => m.userData.canvas); // for tests
   for (const [mesh, x] of screens) {
     mesh.position.set(x, 0, 0.0115);
@@ -386,7 +496,7 @@ function buildCockpitTemplate() {
     interior = buildCockpitInterior({ pbr, glow, matte, trim, panel, shell, low });
   } catch (err) { // the seat and controls are decoration: never let them stop a state from starting
     console.error('[cockpit] interior failed', err);
-    interior = { group: new THREE.Group(), blinkers: [], bind: () => ({ setControls() {}, update() {} }) };
+    interior = { group: new THREE.Group(), blinkers: [], bind: () => ({ setControls() {}, setButton() { return false; }, press() { return false; }, update() {} }) };
   }
   group.add(interior.group);
   group.userData.triangles = interior.group.userData.triangles;
