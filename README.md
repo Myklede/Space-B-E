@@ -217,6 +217,58 @@ Units are metres and +Y is up.
 
 **Keep the camera near the origin in space scenes, and move the planets instead.** At 640,000 m from the origin, a 32-bit position is only good to about 6 cm, and the cockpit would visibly shake.
 
+## Role 2 APIs you can use now
+
+Import only from the public files: `/src/flight/index.js` and `/src/surface/index.js`.
+
+**Mars tasks (Role 4): `registerInteractable`**
+
+```js
+import { registerInteractable } from '/src/surface/index.js';
+import { getTerrainHeight } from '/src/graphics/index.js';
+
+const y = getTerrainHeight(40, -25);
+const off = registerInteractable({
+  id: 'sampleBasalt',            // any unique id
+  state: 'SURFACE',              // only usable in this state ('SURFACE' or 'INTERIOR'); omit = everywhere
+  position: { x: 40, y: y + 0.3, z: -25 },   // metres in that scene (Mars: landing site/lander at the origin)
+  prompt: 'Hold E: collect basalt',
+  hold: 2,                       // seconds of holding E (0 or omitted = one press)
+  radius: 2.2,                   // how close the player must be (default 1.6 m); they must also look at it
+  onUse: () => events.emit('task:completed', { taskId: 'sampleBasalt', category: 'sample', reward: 150000 }),
+});
+// off() removes it again
+```
+
+Register once (for example in your module's `init()`); the `state` filter decides when it is active. Place your
+mission prop model (`assets.get('sampleRock')`) in the scene yourself; the shared Mars scene is the one Role 2 shows
+in SURFACE, so add props to it from `enter('SURFACE')` or keep a reference across states.
+
+**What Role 2 reads from `ShipSpec`** (contract units: kg, N): `stats.dryMass`, `fuelMass`, `thrust`, `ispSL`,
+`ispVac`, `hasHeatShield`, `heatShieldDamaged`, `hasLegs`, `hasRCS`, `hasParachute`, `coldRatedSeals`, `armorHits`,
+`spareO2Tanks`, `launch.tempC` (below 5 °C with `coldRatedSeals: false` → Cold Morning), `engines[0].pump`
+(engine heat), `parts` (the rocket model in the chase camera: axial parts are stacked by real height, side parts
+follow). Optional realism: `stats.minThrottle` (e.g. 0.4) and `stats.ignitions` (e.g. 3). Bad or missing numbers fall
+back to safe defaults, never NaN.
+
+**What Role 2 sends** (all in `contract.js`):
+
+| Event | When |
+|---|---|
+| `flight:phase` | `prelaunch`, `ascent`, `orbit`, `coast`, `entry`, `landing`, `landed` |
+| `flight:event` | `maxq`, `debris_hit`, `blackout` (g-force), `skip_off` |
+| `flight:telemetry` | 2 Hz in every Role 2 state: `t, phase, altitude, speed, gForce, q, fuelKg, engineTemp, radiationMsv`; in INTERIOR/SURFACE `o2Percent, heartRate, radiationMsv` |
+| `flight:landed` | touchdown under 3 m/s and upright |
+| `flight:failed` | `endingId`: `rud`, `burnup`, `adrift`, `coldMorning`, `theFoam`, `outOfBreath`; `cause` is one sentence; extras `causeId`, `historyHint` (`challenger`, `columbia`) |
+| `interior:interact` | `pilotSeat`, `o2Station`, `suitLocker`, `commsConsole`, `sampleStorage`, `airlock`, `bunk` |
+| `eva:oxygen` | every whole percent |
+| `guidebook:open` | cabin props: `crew-exercise`, `crew-water`, `crew-food`, `family-photo` (Role 4, please create these entries) |
+
+**State moves Role 2 makes:** LAUNCH→ORBIT on reaching orbit; ORBIT→CRUISE after the transfer burn (T, Δv from
+`balance.json`; not enough Δv → `adrift`); ENTRY→LANDING below 6 km; LANDING→INTERIOR (E after touchdown);
+INTERIOR→SURFACE (airlock), SURFACE→INTERIOR (hatch), INTERIOR→LANDING (pilot seat), INTERIOR→RETURN (pilot seat when
+`getProgress().percent` is 100).
+
 ## Known gaps in the spec
 
 These are not decided yet. If your work touches one, raise it with your human instead of guessing.

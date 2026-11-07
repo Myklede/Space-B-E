@@ -25,7 +25,9 @@ import { getCabin, getMars, prepareScenes } from './scenes.js';
 const TELEMETRY_EVERY = 0.5;
 const LANDER_RADIUS = 3.2; // m, the lander's legs: you can't walk through them
 const HATCH = { x: 0, z: 3.6 };
-const MAX_MOUSE_STEP = 300; // px per frame: ignore the jump some browsers report right after pointer lock // where you climb back in (in front of the lander)
+const MAX_MOUSE_STEP = 300;
+// Crew-life props in the cabin open these Guidebook entries (Role 4 writes them; ids listed in the README).
+export const PROP_ENTRIES = { exerciseBike: 'crew-exercise', waterRecycler: 'crew-water', foodRack: 'crew-food', familyPhoto: 'family-photo' }; // px per frame: ignore the jump some browsers report right after pointer lock // where you climb back in (in front of the lander)
 
 const registry = createInteractables();
 
@@ -83,6 +85,7 @@ export default {
           if (type === 'suit') astronaut.suited = d.suited;
           if (type === 'airlock') art.userData.setAlarm?.(d.stage === 'cycling');
           if (type === 'o2Empty') audio.play('ui.error');
+          if (type === 'prop' && PROP_ENTRIES[d.id]) events.emit('guidebook:open', { entryId: PROP_ENTRIES[d.id] });
         },
       });
       s.cabin.suited = astronaut.suited;

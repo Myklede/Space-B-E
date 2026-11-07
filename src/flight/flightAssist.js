@@ -129,7 +129,8 @@ export function landingGuide(fc) {
   if (t.phase !== 'entry' && t.phase !== 'landing') return null;
   const a = assistReadout(fc);
   if (t.heatFlux > 0 && !fc.chuteOpen && t.altitude > 15000) {
-    return { step: 'entry', text: 'Entry: the heat shield takes the heat. Keep your hands off and ride it down' };
+    const blackout = t.heatFlux > t.heatLimit * 0.15; // hot plasma around the ship blocks the radio (real effect)
+    return { step: 'entry', blackout, text: blackout ? 'PLASMA BLACKOUT: no radio. The heat shield takes the heat, ride it down' : 'Entry: the heat shield takes the heat. Keep your hands off and ride it down' };
   }
   if (!fc.chuteOpen && t.speed > 500) return { step: 'slowing', text: 'Too fast for the parachute yet: the air is slowing you down' };
   if (t.altitude < 200 && t.verticalSpeed > -12) {
