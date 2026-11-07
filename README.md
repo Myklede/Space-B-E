@@ -141,7 +141,7 @@ Update your row whenever you push to `dev`.
 | Role | On `dev` now |
 |---|---|
 | 1 | Stubs in `src/builder/`: menu, and a hangar with 3 preset buttons and a text Go/No-Go. No real builder yet, and Confirm charges money on every press. |
-| 2 | Stubs in `src/flight/` and `src/surface/`: fixed cameras and Next buttons, with no physics or walking yet. `registerInteractable` stores stations, and E uses the nearest one with no range limit or prompt. |
+| 2 | Real modules. **Flight** (`LAUNCH`, `ORBIT`, `ENTRY`, `LANDING`): Newtonian `FlightController` (thrust, 1/r² gravity, drag, fuel burn, Max-Q, g-force, entry heating, chute, touchdown, debris + armor, Cold Morning / The Foam hooks), Flight Assist, Role 3 cockpit/planets/VFX, `flight:telemetry` at 2 Hz. LAUNCH→ORBIT and ENTRY→LANDING happen on their own; in ORBIT, T is the transfer burn (`balance.json` Δv) → CRUISE. **Surface** (`INTERIOR`, `SURFACE`): walking with Mars gravity on the real cabin and terrain, all 7 contract stations, airlock, suit O₂ (30/15/5 %, `outOfBreath`), helmet HUD. `registerInteractable({ id, position, prompt, onUse, hold?, radius?, state? })`: give `state: 'SURFACE'` for Mars tasks. Each state still shows a small dev-shortcut panel. Tests: `node src/flight/tests/flight.test.mjs` and the files in `src/surface/tests/`. |
 | 3 | All hour-3 APIs below. See every view at `/sandbox/role3.html`. Earth and Mars use real maps; the rest of the art is generated in code. The cabin is a full art pass and the VFX exist; the launch site (`createLaunchSite`) and the mission props are built; rocket parts and sounds are still placeholders. |
 | 4 | Stubs in `src/cruise/`, `src/story/`, `src/missions/`, `src/guidebook/` and `src/report/`: a day counter and Next button for cruise, a plain ending screen, and a report showing event counts. No story text yet. |
 
@@ -226,7 +226,7 @@ These are not decided yet. If your work touches one, raise it with your human in
 
 ## Getting work to `main`
 
-1. On your role branch, run `git merge origin/dev`, then `npm run check`, and fix everything it reports. Then push with `git push origin HEAD:dev`. If someone pushed first, git refuses: merge again and repeat. If the check fails, do not push.
+1. On your role branch, run `git merge origin/dev`, then `npm run check`, and fix everything it reports. Then push with `git push origin HEAD:dev`. If someone pushed first, git refuses: merge again and repeat. `npm install` also adds a pre-push hook that runs this check on every push to `dev` and refuses pushes to `main`. Never bypass it.
 2. Tell your human. They ask the team to check `dev`.
 3. When everyone agrees and dtri confirms `dev` is healthy, dtri moves `dev` to `main`. Nobody else pushes to `main`.
 

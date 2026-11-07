@@ -1,0 +1,37 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <title>Role 2 Sandbox</title>
+    <link rel="icon" href="data:," />
+    <link rel="stylesheet" href="/src/ui/theme.css" />
+    <style>
+      html, body { margin: 0; min-height: 100%; background: #02070a; }
+      main { max-width: 760px; margin: 40px auto; padding: 0 16px; display: grid; gap: 14px; }
+      .grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(220px, 1fr)); gap: 10px; }
+      a.hud-panel { display: block; text-decoration: none; color: inherit; }
+      a.hud-panel:hover { border-color: var(--hud-cyan); }
+      p { margin: 4px 0 0; color: var(--hud-muted); font-size: var(--hud-text-sm); }
+    </style>
+  </head>
+  <body class="hud">
+    <main>
+      <div class="hud-label">Role 2 · Flight & Astronaut</div>
+      <div class="hud-value">Jump straight into a Role 2 state of the real game</div>
+      <p>Each link opens the game with the debug panel (<code>?debug=1&amp;state=…</code>) and the Reliable mock ship.
+        For the Challenger / Columbia demos pick the <b>coldMorning</b> or <b>thinSkin</b> preset in the debug panel, press
+        "Use preset ship", then "Jump to state" LAUNCH or ENTRY.</p>
+      <div class="grid">
+        <a class="hud-panel" href="/?debug=1&state=LAUNCH"><span class="hud-value">LAUNCH</span><p>Pad → ascent. Q throttle, W/S/A/D steer, gravity turn to orbit.</p></a>
+        <a class="hud-panel" href="/?debug=1&state=ORBIT"><span class="hud-value">ORBIT</span><p>200 km circular orbit. B debris, , . time warp, T transfer burn.</p></a>
+        <a class="hud-panel" href="/?debug=1&state=ENTRY"><span class="hud-value">ENTRY</span><p>Mars entry at 1.4 km/s: heat shield, plasma, supersonic chute.</p></a>
+        <a class="hud-panel" href="/?debug=1&state=LANDING"><span class="hud-value">LANDING</span><p>3 km, under the chute. Hold SPACE / throttle to land under 3 m/s.</p></a>
+        <a class="hud-panel" href="/?debug=1&state=INTERIOR"><span class="hud-value">INTERIOR</span><p>Walk the cabin. Suit up, swap O₂, cycle the airlock.</p></a>
+        <a class="hud-panel" href="/?debug=1&state=SURFACE"><span class="hud-value">SURFACE</span><p>Jezero EVA with Mars gravity and a suit O₂ clock.</p></a>
+      </div>
+      <p>Physics tests: <code>node src/flight/tests/flight.test.mjs</code> · <code>node src/surface/tests/surface.test.mjs</code> ·
+        <code>node src/surface/tests/body.test.mjs</code> · <code>node src/surface/hud/presentation.test.mjs</code></p>
+    </main>
+  </body>
+</html>

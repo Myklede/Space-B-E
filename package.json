@@ -9,7 +9,8 @@
     "preview": "vite preview",
     "check:static": "node scripts/check-static.mjs",
     "check:boot": "node scripts/check-boot.mjs",
-    "check": "npm run check:static && npm run check:boot"
+    "check": "npm run check:static && npm run check:boot",
+    "prepare": "node scripts/install-hooks.mjs"
   },
   "dependencies": {
     "@fontsource/ibm-plex-mono": "^5.3.0",
