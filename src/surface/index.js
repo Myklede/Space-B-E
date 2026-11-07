@@ -22,7 +22,7 @@ import { createShipInterior, CABIN, PREBREATHE_DEBUG_S } from './shipInterior.js
 import { createSuitHUD } from './hud/createSuitHUD.js';
 import { astronaut } from './astronaut.js';
 import { getCabin, getMars, getMarsSunSetter, prepareScenes } from './scenes.js';
-import { createSolClock, createEarthCaption, easeFov, isLookingAtEarth, NORMAL_FOV } from './dusk.js';
+import { createSolClock, createEarthCaption, easeFov, isLookingAtEarth, shouldStartFastDusk, fastDuskMission, NORMAL_FOV } from './dusk.js';
 import { RoverController, ROVER, ROVER_MR01 } from './RoverController.js';
 import { mr01Unlock, MR01_LOCKED_PROMPT, MR01_UNLOCKED_NOTICE } from './rovers.js';
 import { createRoverModel } from './roverModel.js';
@@ -40,7 +40,7 @@ export const PROP_ENTRIES = { exerciseBike: 'crew-exercise', waterRecycler: 'cre
 
 // Mars dusk / "Pale Blue Dot" texts (Role 4 may edit them here).
 export const EARTH_HINT = 'Look for Earth: low in the sky, hold Z to zoom';
-export const EARTH_CAPTION = ['EARTH · about 225 million km away', 'Everyone you have ever loved is on that dot.'];
+export const EARTH_CAPTION = ['EARTH · about 225 million km away']; // the "everyone you have ever loved" line is Role 4's radio
 
 const registry = createInteractables();
 
@@ -113,6 +113,8 @@ const isDebug = () => new URLSearchParams(location.search).get('debug') === '1';
 let solClock = null;
 const getSolClock = () => (solClock ??= createSolClock({ apply: getMarsSunSetter() }));
 let earthHintShown = false;
+let surfaceSince = 0; // like Role 4: set on every SURFACE entry
+let cachedPercent = 0; // Mars Exploration percent (progress:changed / getProgress)
 const earthCaption = createEarthCaption({ seconds: 8 });
 const earthDir = new THREE.Vector3();
 
@@ -172,6 +174,11 @@ function updateDusk(dt, zoomHeld) {
   clock.update(dt);
   const fov = easeFov(camera.fov, zoomHeld, dt);
   if (fov !== camera.fov) { camera.fov = fov; camera.updateProjectionMatrix(); }
+  if (shouldStartFastDusk({ percent: cachedPercent, secondsOutside: (performance.now() - surfaceSince) / 1000, started: fastDuskMission.started, isDusk: clock.isDusk })) {
+    fastDuskMission.started = true; // Role 4's radio says "look up" a few seconds from now: bring the dusk with it
+    clock.startFastDusk();
+    if (!earthHintShown) { earthHintShown = true; s.notice = { text: EARTH_HINT, t: 8, calm: true }; }
+  }
   if (clock.isDusk && !earthHintShown) {
     earthHintShown = true;
     s.notice = { text: EARTH_HINT, t: 8, calm: true };
@@ -184,7 +191,7 @@ function updateDusk(dt, zoomHeld) {
 export default {
   init() {
     setTimeout(prepareScenes, 0); // build Mars + cabin in the background so entering them never freezes
-    events.on('progress:changed', ({ percent }) => mr01Unlock.setPercent(percent)); // cached; MR-01 unlocks at 50 %
+    events.on('progress:changed', ({ percent }) => { cachedPercent = percent; mr01Unlock.setPercent(percent); }); // cached; MR-01 unlocks at 50 %
     // debug handle for automated checks (only with ?debug=1)
     if (isDebug()) {
       window.__role2 = {
@@ -203,6 +210,7 @@ export default {
 
   enter(state) {
     const inside = state === 'INTERIOR';
+    if (!inside) surfaceSince = performance.now(); // Role 4 does the same on every SURFACE entry
     const camera = new THREE.PerspectiveCamera(70, 1, 0.03, 2e5);
     const hudLayer = document.createElement('div');
     hudLayer.style.cssText = 'position:absolute;inset:0;pointer-events:none';
@@ -275,7 +283,7 @@ export default {
         gravity: PLANETS.mars.g, getGroundHeight: getTerrainHeight, colliders: [{ x: 0, z: 0, r: LANDER_RADIUS }, fleet.lrv.collider, fleet.mr01.collider],
         mode: 'suit', start: { x: HATCH.x, z: HATCH.z + 2 }, yaw: Math.PI, // step out facing away from the ship
       });
-      try { mr01Unlock.setPercent(getProgress().percent); } catch { /* Role 4's module not ready: keep the cached value */ }
+      try { cachedPercent = getProgress().percent; mr01Unlock.setPercent(cachedPercent); } catch { /* Role 4's module not ready: keep the cached value */ }
       mars.scene.add(getMarks().object);
       for (const e of fleetList) { // only while we are outside (the shared Mars scene is also the landing view)
         getRover(e);

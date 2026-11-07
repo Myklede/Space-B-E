@@ -6,6 +6,7 @@ import { createBodyStats } from './bodyStats.js';
 import { createVisorDust } from './visorDust.js';
 import { resetPrebreathe } from './shipInterior.js';
 import { mr01Unlock } from './rovers.js';
+import { resetFastDusk } from './dusk.js';
 
 const TANK_SECONDS = 300; // one suit tank ≈ 5 real minutes (gameplay value, TODO tune)
 
@@ -21,6 +22,7 @@ function reset(shipSpec = getShip()) {
   suited = false;
   dust.clear();
   resetPrebreathe(); // a new mission needs a new prebreathe
+  resetFastDusk(); // the fast dusk (Pale Blue Dot) may run once per mission
   mr01Unlock.reset(); // and MR-01 is locked again until 50 % Mars Exploration
 }
 
