@@ -141,7 +141,7 @@ Update your row whenever you push to `dev`.
 | Role | On `dev` now |
 |---|---|
 | 1 | Real **hangar** (`HANGAR`): attachment-node builder on the 3D rocket (click a node, pick a part; top/bottom stacking, radial parts with ×1–×6 symmetry, rotate/slide, undo/redo, Z/Y/Delete), parts and text in `src/builder/data/*.json`, live ShipSpec per the contract, Formula Lens (5 formulas, seed), engine workbench (fuel + nozzle + pump), presets (Reliable, Cold Morning, Thin Skin), blueprints and share codes in the save, launch windows (cold and free vs mild with pad fees). **Go/No-Go** (`GONOGO`): consoles report in turn, hard blocks refuse, warnings can be overridden; Confirm spends ship + pad fee, calls `setShip`, emits `ship:built`. Menu is still the stub; `openPauseMenu()`/`openSettings()` are exported from `/src/builder/index.js`. `balance.json` Δv legs rescaled (see `docs/DECISIONS.md`). Tests: `node src/builder/tests/builder.test.mjs`. |
-| 2 | Real modules. **Flight** (`LAUNCH`, `ORBIT`, `ENTRY`, `LANDING`): Newtonian `FlightController` (thrust, 1/r² gravity, drag, fuel burn, Max-Q, g-force, entry heating, chute, touchdown, debris + armor, Cold Morning / The Foam hooks), Flight Assist, Role 3 cockpit/planets/VFX, `flight:telemetry` at 2 Hz. LAUNCH→ORBIT and ENTRY→LANDING happen on their own; in ORBIT, T is the transfer burn (`balance.json` Δv) → CRUISE. **Surface** (`INTERIOR`, `SURFACE`): walking with Mars gravity on the real cabin and terrain, all 7 contract stations, airlock, suit O₂ (30/15/5 %, `outOfBreath`), helmet HUD. `registerInteractable({ id, position, prompt, onUse, hold?, radius?, state? })`: give `state: 'SURFACE'` for Mars tasks. Each state still shows a small dev-shortcut panel. Tests: `node src/flight/tests/flight.test.mjs` and the files in `src/surface/tests/`. |
+| 2 | Real modules, on `dev`. **Flight** (`LAUNCH`, `ORBIT`, `ENTRY`, `LANDING`): Newtonian `FlightController` (thrust, 1/r² gravity, drag, fuel burn, Max-Q, g-force, entry heating, chute, touchdown, debris + armor, Cold Morning / The Foam hooks). LAUNCH starts on Role 3's launch site with the player's rocket built from `ShipSpec.parts`; Flight Assist has a trajectory line, prograde/retrograde markers, a gravity-turn guide (◎ + prompts) and an entry/landing guide (BURN NOW). LAUNCH→ORBIT and ENTRY→LANDING happen on their own; in ORBIT an orbital-debris encounter comes after 20 s, and T is the transfer burn → CRUISE. Δv per leg is measured and explained in `docs/DECISIONS.md`; a test flies the Reliable mock through the whole mission. **Surface** (`INTERIOR`, `SURFACE`): walking with Mars gravity on the real cabin and terrain, all 7 contract stations, airlock, suit O₂ (30/15/5 %, `outOfBreath`), helmet HUD, head bob. `registerInteractable({ id, position, prompt, onUse, hold?, radius?, state? })`: give `state: 'SURFACE'` for Mars tasks. Each state still shows a small dev-shortcut panel (check:boot looks for it). Tests: `node src/flight/tests/flight.test.mjs` and the files in `src/surface/tests/`. |
 | 3 | All hour-3 APIs below. See every view at `/sandbox/role3.html`. Earth and Mars use real maps; the rest of the art is generated in code. The cabin is a full art pass and the VFX exist; the launch site (`createLaunchSite`) and the mission props are built; rocket parts and sounds are still placeholders. |
 | 4 | Stubs in `src/cruise/`, `src/story/`, `src/missions/`, `src/guidebook/` and `src/report/`: a day counter and Next button for cruise, a plain ending screen, and a report showing event counts. No story text yet. |
 
@@ -216,6 +216,58 @@ Units are metres and +Y is up.
 **HUD classes:** `.hud`, `.hud-panel`, `.hud-label`, `.hud-value`, `.hud-bar` (set `--value` from 0 to 1), `.hud-button`, and the states `.hud-ok`, `.hud-good`, `.hud-caution`, `.hud-alert`.
 
 **Keep the camera near the origin in space scenes, and move the planets instead.** At 640,000 m from the origin, a 32-bit position is only good to about 6 cm, and the cockpit would visibly shake.
+
+## Role 2 APIs you can use now
+
+Import only from the public files: `/src/flight/index.js` and `/src/surface/index.js`.
+
+**Mars tasks (Role 4): `registerInteractable`**
+
+```js
+import { registerInteractable } from '/src/surface/index.js';
+import { getTerrainHeight } from '/src/graphics/index.js';
+
+const y = getTerrainHeight(40, -25);
+const off = registerInteractable({
+  id: 'sampleBasalt',            // any unique id
+  state: 'SURFACE',              // only usable in this state ('SURFACE' or 'INTERIOR'); omit = everywhere
+  position: { x: 40, y: y + 0.3, z: -25 },   // metres in that scene (Mars: landing site/lander at the origin)
+  prompt: 'Hold E: collect basalt',
+  hold: 2,                       // seconds of holding E (0 or omitted = one press)
+  radius: 2.2,                   // how close the player must be (default 1.6 m); they must also look at it
+  onUse: () => events.emit('task:completed', { taskId: 'sampleBasalt', category: 'sample', reward: 150000 }),
+});
+// off() removes it again
+```
+
+Register once (for example in your module's `init()`); the `state` filter decides when it is active. Place your
+mission prop model (`assets.get('sampleRock')`) in the scene yourself; the shared Mars scene is the one Role 2 shows
+in SURFACE, so add props to it from `enter('SURFACE')` or keep a reference across states.
+
+**What Role 2 reads from `ShipSpec`** (contract units: kg, N): `stats.dryMass`, `fuelMass`, `thrust`, `ispSL`,
+`ispVac`, `hasHeatShield`, `heatShieldDamaged`, `hasLegs`, `hasRCS`, `hasParachute`, `coldRatedSeals`, `armorHits`,
+`spareO2Tanks`, `launch.tempC` (below 5 °C with `coldRatedSeals: false` → Cold Morning), `engines[0].pump`
+(engine heat), `parts` (the rocket model in the chase camera: axial parts are stacked by real height, side parts
+follow). Optional realism: `stats.minThrottle` (e.g. 0.4) and `stats.ignitions` (e.g. 3). Bad or missing numbers fall
+back to safe defaults, never NaN.
+
+**What Role 2 sends** (all in `contract.js`):
+
+| Event | When |
+|---|---|
+| `flight:phase` | `prelaunch`, `ascent`, `orbit`, `coast`, `entry`, `landing`, `landed` |
+| `flight:event` | `maxq`, `debris_hit`, `blackout` (g-force), `skip_off` |
+| `flight:telemetry` | 2 Hz in every Role 2 state: `t, phase, altitude, speed, gForce, q, fuelKg, engineTemp, radiationMsv`; in INTERIOR/SURFACE `o2Percent, heartRate, radiationMsv` |
+| `flight:landed` | touchdown under 3 m/s and upright |
+| `flight:failed` | `endingId`: `rud`, `burnup`, `adrift`, `coldMorning`, `theFoam`, `outOfBreath`; `cause` is one sentence; extras `causeId`, `historyHint` (`challenger`, `columbia`) |
+| `interior:interact` | `pilotSeat`, `o2Station`, `suitLocker`, `commsConsole`, `sampleStorage`, `airlock`, `bunk` |
+| `eva:oxygen` | every whole percent |
+| `guidebook:open` | cabin props: `crew-exercise`, `crew-water`, `crew-food`, `family-photo` (Role 4, please create these entries) |
+
+**State moves Role 2 makes:** LAUNCH→ORBIT on reaching orbit; ORBIT→CRUISE after the transfer burn (T, Δv from
+`balance.json`; not enough Δv → `adrift`); ENTRY→LANDING below 6 km; LANDING→INTERIOR (E after touchdown);
+INTERIOR→SURFACE (airlock), SURFACE→INTERIOR (hatch), INTERIOR→LANDING (pilot seat), INTERIOR→RETURN (pilot seat when
+`getProgress().percent` is 100).
 
 ## Known gaps in the spec
 

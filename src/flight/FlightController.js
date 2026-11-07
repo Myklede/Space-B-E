@@ -81,11 +81,12 @@ export function shipParams(spec = {}) {
   const s = spec.stats ?? {};
   const pump = spec.engines?.[0]?.pump ?? 'M';
   return {
-    dryMass: s.dryMass ?? 6000,
-    fuelMass: s.fuelMass ?? 14000,
-    thrustVac: s.thrust ?? 300000,
-    ispSL: s.ispSL ?? 300,
-    ispVac: s.ispVac ?? 330,
+    // guards: a half-built ShipSpec must never divide by zero or go negative
+    dryMass: Math.max(100, Number(s.dryMass) || 6000),
+    fuelMass: Math.max(0, Number(s.fuelMass ?? 14000) || 0),
+    thrustVac: Math.max(0, Number(s.thrust ?? 300000) || 0),
+    ispSL: Math.max(1, Number(s.ispSL) || 300),
+    ispVac: Math.max(1, Number(s.ispVac) || 330),
     // m² (drag coefficient × reference area). A heat shield is a wide aeroshell: Mars air is so thin
     // that real landers need a big blunt shield + a supersonic parachute + engines.
     cdA: s.cdA ?? ((s.hasHeatShield ?? true) ? 80 : 3),
@@ -124,6 +125,7 @@ export class FlightController {
     this.fuel = fuel ?? this.ship.fuelMass; // carry leftover fuel between scenes
     this.throttle = 0;
     this.engineLit = false;
+    this.holdDown = false; // launch clamps: while true the rocket stays on the pad whatever the thrust (countdown)
     this.ignitionsLeft = this.ship.ignitions;
     this.armorLeft = this.ship.armorHits;
     this.obstacles = [];
@@ -148,7 +150,7 @@ export class FlightController {
   }
 
   // --- start conditions -----------------------------------------------------
-  // 'pad': standing on the surface. {altitude, speed, flightPathDeg}: free flight (e.g. Mars entry).
+  // 'pad': standing on the surface. {altitude, speed, flightPathDeg, facing?}: free flight (e.g. Mars entry).
   setStart(start) {
     const R = this.planet.radius;
     const up = v3(0, 1, 0);
@@ -167,9 +169,9 @@ export class FlightController {
     this.pos = scale(up, R + alt);
     // horizontal direction = +X
     this.vel = v3(Math.cos(fpa) * speed, Math.sin(fpa) * speed, 0);
-    // point the heat shield (tail) along velocity: nose retrograde
-    const retro = speed > 0 ? norm(scale(this.vel, -1)) : up;
-    this.orient = qFromTo(LOCAL_FORWARD, retro);
+    // default: heat shield (tail) along velocity, nose retrograde (entry). start.facing = 'prograde' for orbits.
+    const along = start.facing === 'prograde' ? norm(this.vel) : norm(scale(this.vel, -1));
+    this.orient = qFromTo(LOCAL_FORWARD, speed > 0 ? along : up);
     this.onGround = false;
     this.inFairing = false;
     this._setPhase(this._computePhase());
@@ -344,8 +346,8 @@ export class FlightController {
 
     // ground contact
     if (this.onGround) {
-      if (dot(acc, up) <= 0) {
-        // held by the ground
+      if (dot(acc, up) <= 0 || this.holdDown) {
+        // held by the ground (or by the launch clamps during the countdown)
         this.vel = v3();
         this.pos = scale(up, this.planet.radius);
         this._lastNonGravAccel = this.mu / (r * r); // you feel 1 local g standing

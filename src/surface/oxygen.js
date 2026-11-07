@@ -21,7 +21,7 @@ export function levelFor(percent) {
 
 export function createOxygen({ bus, tankSeconds = 300, spareTanks = 2, runMultiplier = 1.6 } = {}) {
   bus = bus ?? { emit() {} };
-  const state = { remaining: tankSeconds, spareTanks, depleted: false, lastPercent: 100, lastLevel: 'ok' };
+  const state = { remaining: tankSeconds, spareTanks, depleted: false, lastPercent: 100, lastLevel: 'ok', leak: 1 };
 
   const percent = () => (100 * state.remaining) / tankSeconds;
   const publish = (force = false) => {
@@ -40,10 +40,11 @@ export function createOxygen({ bus, tankSeconds = 300, spareTanks = 2, runMultip
     get spareTanks() { return state.spareTanks; },
     get secondsLeft() { return state.remaining; },
     get depleted() { return state.depleted; },
+    get leaking() { return state.leak > 1; },
 
     update(dt, { inside = false, running = false, suited = true } = {}) {
       if (state.depleted || inside || !suited || dt <= 0) return;
-      state.remaining = Math.max(0, state.remaining - dt * (running ? runMultiplier : 1));
+      state.remaining = Math.max(0, state.remaining - dt * (running ? runMultiplier : 1) * state.leak);
       publish();
       if (state.remaining === 0) {
         state.depleted = true;
@@ -51,8 +52,12 @@ export function createOxygen({ bus, tankSeconds = 300, spareTanks = 2, runMultip
       }
     },
 
-    // O₂ station: put on a full spare tank. Returns false if none left.
+    // Suit breach (e.g. a bad fall): O₂ drains `multiplier` times faster until the suit is serviced.
+    setLeak(multiplier = 1) { state.leak = Math.max(1, multiplier); },
+
+    // O₂ station: put on a full spare tank (and patch the suit). Returns false if none left.
     swapTank() {
+      state.leak = 1;
       if (state.depleted || state.spareTanks <= 0) return false;
       state.spareTanks -= 1;
       state.remaining = tankSeconds;

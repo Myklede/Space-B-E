@@ -3,12 +3,15 @@ import assert from 'node:assert/strict';
 import { FlightController as RawFC, FIXED_DT, TUNING } from '../FlightController.js';
 import { PLANETS, G0 } from '../../core/planets.js';
 import * as contract from '../../core/contract.js';
+import { readFileSync } from 'node:fs';
+const coreJson = (rel) => JSON.parse(readFileSync(new URL(`../../core/${rel}`, import.meta.url)));
 import { MOCK_SHIPS, STARTS } from '../presets.js';
 const MOCK_PLANETS = PLANETS;
 class FlightController extends RawFC { constructor(o) { super({ g0: G0, ...o }); } }
-import { predictPath, stoppingDistance, assistReadout } from '../flightAssist.js';
+import { predictPath, stoppingDistance, assistReadout, ascentGuide, landingGuide } from '../flightAssist.js';
 import { len, dot, v3, scale, qFromTo, LOCAL_FORWARD, norm, add } from '../vec.js';
 import { createDebrisField, closestApproach } from '../debris.js';
+import { stackParts } from '../rocketStack.js';
 
 const results = [];
 function test(name, fn) {
@@ -313,6 +316,128 @@ test('only contract flight:event types and ending ids reach the bus', () => {
     if (n === 'flight:event') assert.ok(contract.FLIGHT_EVENT_TYPES.includes(p.type), `type ${p.type}`);
     if (n === 'flight:failed') assert.ok(p.endingId in contract.ENDINGS, `ending ${p.endingId}`);
   }
+});
+
+test('whole mission is winnable with the core Reliable mock and balance.json (ascent → transfer → entry → landing)', () => {
+  const ship = coreJson('mocks/ship.reliable.json');
+  const balance = coreJson('balance.json');
+  // 1. ascent: a good gravity turn to a ~95 km orbit
+  const fc = new FlightController({ planets: PLANETS, shipSpec: ship });
+  fc.throttle = 1;
+  let circ = false;
+  for (let t = 0; t < 3000 && !fc.failed && fc.phase !== 'orbit'; t += FIXED_DT) {
+    const tel = fc.telemetry;
+    if (fc.liftoffT !== null) {
+      const up = fc.up, east = norm(v3(up.y, -up.x, 0));
+      const p = (Math.min(89, Math.max(0, (tel.altitude - 2000) / 400)) * Math.PI) / 180;
+      if (!circ) {
+        fc.orient = qFromTo(LOCAL_FORWARD, norm({ x: up.x * Math.cos(p) + east.x * Math.sin(p), y: up.y * Math.cos(p) + east.y * Math.sin(p), z: 0 }));
+        fc.throttle = tel.dynamicPressure > 30000 ? 0.5 : tel.gLoad > 4.5 ? 0.6 : 1;
+        if (tel.apoapsis > 95000) { fc.throttle = 0; circ = true; }
+      } else {
+        fc.orient = qFromTo(LOCAL_FORWARD, east);
+        fc.throttle = tel.verticalSpeed < 15 && tel.altitude > 85000 ? 1 : 0;
+      }
+    }
+    fc.update(FIXED_DT, {});
+  }
+  assert.equal(fc.phase, 'orbit', JSON.stringify(fc.failed));
+  const ascentUsed = fc.deltaVLeft.call({ ship: fc.ship, g0: G0, mass: fc.ship.dryMass + fc.ship.fuelMass }) - fc.deltaVLeft();
+  assert.ok(ascentUsed <= balance.deltaVKmS.ascent * 1000 * 1.05, `ascent used ${ascentUsed.toFixed(0)} m/s`);
+  // 2. transfer burn exactly as src/flight/index.js does it (rocket equation)
+  const dv = balance.deltaVKmS.transfer * 1000;
+  const fuelForMars = fc.mass / Math.exp(dv / (fc.ship.ispVac * G0)) - fc.ship.dryMass;
+  assert.ok(fuelForMars > 0, `no fuel left after the transfer (${fuelForMars.toFixed(0)} kg)`);
+  // 3. entry + landing: chute, then a last-moment retro burn (what BURN NOW tells the player)
+  const m = new FlightController({ planets: PLANETS, planetId: 'mars', shipSpec: ship, start: STARTS.marsEntry, fuel: fuelForMars });
+  for (let t = 0; t < 900 && !m.failed && !m.landed; t += FIXED_DT) {
+    const tel = m.telemetry;
+    if (tel.altitude > 3000) { m.update(FIXED_DT, {}); continue; }
+    const a = assistReadout(m);
+    if ((a.burnNow || tel.horizontalSpeed > 2) && tel.verticalSpeed < -4) { m.update(FIXED_DT, { brake: true }); continue; }
+    m.orient = qFromTo(LOCAL_FORWARD, m.up);
+    if (tel.altitude < 60 || tel.verticalSpeed > -4) {
+      const want = tel.altitude > 15 ? -4 : -1.5;
+      m.throttle = Math.max(0, Math.min(1, (tel.gravity + (want - tel.verticalSpeed) * 3) / (m.thrustNow() / m.mass)));
+    } else m.throttle = 0;
+    m.update(FIXED_DT, {});
+  }
+  assert.equal(m.failed, null, JSON.stringify(m.failed));
+  assert.equal(m.landed, true);
+  console.log(`    (mission: ascent ${ascentUsed.toFixed(0)} m/s, ${fuelForMars.toFixed(0)} kg fuel at Mars, ${m.deltaVLeft().toFixed(0)} m/s left after landing)`);
+});
+
+test('stackParts re-stacks axial parts by real height in spec order; side parts follow their axial part', () => {
+  const parts = [
+    { type: 'capsule_m', x: 0, y: 6, z: 0 }, { type: 'tank_l', x: 0, y: 2.8, z: 0 }, { type: 'engine_m', x: 0, y: 0, z: 0 },
+    { type: 'leg_s', x: 1.4, y: 0.4, z: 0 },
+  ];
+  const h = { capsule_m: 2, tank_l: 6, engine_m: 2.3, leg_s: 1 };
+  const { placed, top } = stackParts(parts, (p) => h[p.type]);
+  assert.equal(placed.get(parts[2]), 0);
+  assert.equal(placed.get(parts[1]), 2.3);
+  assert.equal(placed.get(parts[0]), 8.3);
+  assert.equal(top, 10.3);
+  assert.ok(Math.abs(placed.get(parts[3]) - 0.4) < 1e-9, 'leg stays 0.4 m above the engine base');
+});
+
+test('ascent guide: straight up on the pad, ~45° at 20 km, coast once the apoapsis is high, nothing in orbit', () => {
+  const pad = new FlightController({ planets: PLANETS, shipSpec: MOCK_SHIPS.reliable });
+  assert.equal(ascentGuide(pad).step, 'climb');
+  const mid = new FlightController({ planets: PLANETS, shipSpec: MOCK_SHIPS.reliable, start: { altitude: 20000, speed: 400, flightPathDeg: 60 } });
+  mid.liftoffT = 0;
+  const g = ascentGuide(mid);
+  assert.equal(g.step, 'turn');
+  assert.ok(Math.abs(g.pitchDeg - 45) < 0.01, `${g.pitchDeg}`);
+  const high = new FlightController({ planets: PLANETS, shipSpec: MOCK_SHIPS.reliable, start: { altitude: 60000, speed: 1900, flightPathDeg: 20 } });
+  high.liftoffT = 0;
+  assert.ok(high.telemetry.apoapsis > 95000);
+  assert.equal(ascentGuide(high).step, 'coast');
+  const R = PLANETS.earth.radius;
+  const orbit = new FlightController({ planets: PLANETS, shipSpec: MOCK_SHIPS.reliable, start: { altitude: 200000, speed: Math.sqrt((PLANETS.earth.g * R * R) / (R + 200000)) } });
+  assert.equal(ascentGuide(orbit), null);
+});
+
+test('landing guide walks through entry → chute → BURN NOW → touchdown on Mars', () => {
+  const m = new FlightController({ planets: PLANETS, planetId: 'mars', shipSpec: MOCK_SHIPS.marsArrival, start: STARTS.marsEntry });
+  const steps = new Set();
+  for (let t = 0; t < 900 && !m.failed && !m.landed; t += FIXED_DT) {
+    const g = landingGuide(m);
+    if (g) steps.add(g.step);
+    const tel = m.telemetry;
+    if (tel.altitude > 3000) { m.update(FIXED_DT, {}); continue; }
+    const a = assistReadout(m);
+    if ((a.burnNow || tel.horizontalSpeed > 2) && tel.verticalSpeed < -4) { m.update(FIXED_DT, { brake: true }); continue; }
+    m.orient = qFromTo(LOCAL_FORWARD, m.up);
+    m.throttle = tel.altitude < 60 || tel.verticalSpeed > -4 ? Math.max(0, Math.min(1, (tel.gravity + ((tel.altitude > 15 ? -4 : -1.5) - tel.verticalSpeed) * 3) / (m.thrustNow() / m.mass))) : 0;
+    m.update(FIXED_DT, {});
+  }
+  assert.equal(m.landed, true, JSON.stringify(m.failed));
+  for (const step of ['entry', 'chute', 'burn', 'touchdown']) assert.ok(steps.has(step), `missing step ${step}: ${[...steps]}`);
+  assert.equal(landingGuide(m), null, 'no guide once landed');
+});
+
+test('a half-built ShipSpec (zeros, strings, missing stats) never produces NaN', () => {
+  const fc = new FlightController({ planets: PLANETS, shipSpec: { stats: { dryMass: 0, fuelMass: -5, thrust: 'x', ispSL: 0 } } });
+  run(fc, 2, { throttleUp: true });
+  const t = fc.telemetry;
+  for (const k of ['altitude', 'speed', 'deltaVLeft', 'twr', 'mass', 'gLoad']) assert.ok(Number.isFinite(t[k]), `${k} = ${t[k]}`);
+  const empty = new FlightController({ planets: PLANETS, shipSpec: {} });
+  run(empty, 1);
+  assert.ok(Number.isFinite(empty.telemetry.deltaVLeft));
+});
+
+test('launch clamps (holdDown) keep a full-thrust rocket on the pad until released', () => {
+  const fc = new FlightController({ planets: PLANETS, shipSpec: MOCK_SHIPS.reliable });
+  fc.holdDown = true;
+  fc.throttle = 1;
+  run(fc, 3);
+  assert.equal(fc.onGround, true);
+  assert.equal(fc.liftoffT, null);
+  assert.ok(fc.fuel < fc.ship.fuelMass, 'engines burn while clamped (real pad ignition)');
+  fc.holdDown = false;
+  run(fc, 2);
+  assert.ok(fc.liftoffT !== null && fc.altitude > 1);
 });
 
 let fails = 0;

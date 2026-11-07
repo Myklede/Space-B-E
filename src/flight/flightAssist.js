@@ -3,7 +3,7 @@
 //   predictPath(fc)      → coasting trajectory points (planet-centred, metres) for the trajectory line
 //   assistReadout(fc)    → arrows, warnings, burn-now marker, formula cards (§6.4 MVP)
 
-import { v3, add, scale, len, norm, dot } from './vec.js';
+import { v3, add, sub, scale, len, norm, dot } from './vec.js';
 import { atmosphereTop } from './atmosphere.js';
 
 // Coast (gravity only) from the current state. Adaptive step: bigger steps when far/slow.
@@ -85,4 +85,58 @@ export function assistReadout(fc) {
       },
     },
   };
+}
+
+// Ascent guide (Flight Assist): the gravity turn that the whole-mission test flies (≈ 4.1 km/s to orbit).
+// Teaches the real steps: climb straight up, tip over gradually toward the horizon, cut the engine when the
+// apoapsis is high enough, coast up to it, then burn sideways (prograde) to make the orbit round.
+// Returns null when no guide applies (not on an ascent, or already in orbit).
+export const ASCENT_PROFILE = { turnStart: 2000, metresPerDegree: 400, targetApoapsis: 95000 };
+
+export function ascentGuide(fc, profile = ASCENT_PROFILE) {
+  const t = fc.telemetry;
+  if (fc.failed || t.phase === 'orbit' || !fc.planet.seaLevelDensity || t.altitude > 200000) return null;
+  if (t.phase !== 'prelaunch' && t.phase !== 'ascent' && t.phase !== 'coast') return null;
+  const up = fc.up;
+  // "east": the horizontal direction we are already moving, or the default launch direction
+  const vh = sub(fc.vel, scale(up, t.verticalSpeed));
+  let east = len(vh) > 5 ? norm(vh) : norm(v3(up.y, -up.x, 0));
+  if (len(east) < 0.5) east = v3(1, 0, 0);
+  const tilt = (deg) => {
+    const p = (deg * Math.PI) / 180;
+    return norm(add(scale(up, Math.cos(p)), scale(east, Math.sin(p))));
+  };
+  const top = atmosphereTop(fc.planet);
+  if (t.apoapsis < profile.targetApoapsis) {
+    if (t.altitude < profile.turnStart) return { step: 'climb', direction: up, text: 'Climb straight up at full throttle (Q = more throttle)' };
+    const deg = Math.min(89, (t.altitude - profile.turnStart) / profile.metresPerDegree);
+    return { step: 'turn', direction: tilt(deg), pitchDeg: deg, text: `Gravity turn: tip ${deg.toFixed(0)}° toward the horizon (follow ◎)` };
+  }
+  if (t.verticalSpeed > 15 && t.altitude < t.apoapsis - 3000) {
+    return { step: 'coast', direction: east, text: `Engine off (X). Coast up to the apoapsis (${(t.apoapsis / 1000).toFixed(0)} km)` };
+  }
+  if (t.periapsis < top) return { step: 'circularise', direction: east, text: 'At the apoapsis: burn sideways (prograde) to round the orbit' };
+  return null;
+}
+
+const TOUCHDOWN_HINT = 3; // m/s, matches FlightController TUNING.touchdownLimit.legs
+
+// Entry + landing guide (Flight Assist), the real Mars "7 minutes of terror" sequence:
+// heat shield → supersonic chute → retro burn at the last moment (BURN NOW) → gentle touchdown.
+export function landingGuide(fc) {
+  const t = fc.telemetry;
+  if (fc.failed || fc.landed || fc.onGround || !fc.planet.seaLevelDensity) return null;
+  if (t.phase !== 'entry' && t.phase !== 'landing') return null;
+  const a = assistReadout(fc);
+  if (t.heatFlux > 0 && !fc.chuteOpen && t.altitude > 15000) {
+    const blackout = t.heatFlux > t.heatLimit * 0.15; // hot plasma around the ship blocks the radio (real effect)
+    return { step: 'entry', blackout, text: blackout ? 'PLASMA BLACKOUT: no radio. The heat shield takes the heat, ride it down' : 'Entry: the heat shield takes the heat. Keep your hands off and ride it down' };
+  }
+  if (!fc.chuteOpen && t.speed > 500) return { step: 'slowing', text: 'Too fast for the parachute yet: the air is slowing you down' };
+  if (t.altitude < 200 && t.verticalSpeed > -12) {
+    return { step: 'touchdown', text: `Ease the throttle (Q/E): touch down under ${TOUCHDOWN_HINT} m/s, nose up` };
+  }
+  if (a.burnNow) return { step: 'burn', text: 'BURN NOW: hold SPACE for the retro burn' };
+  if (fc.chuteOpen) return { step: 'chute', text: `Parachute out. Wait for BURN NOW (${Number.isFinite(a.stoppingDistance) ? a.stoppingDistance.toFixed(0) : '—'} m to stop)` };
+  return { step: 'wait', text: 'Falling: wait for BURN NOW' };
 }

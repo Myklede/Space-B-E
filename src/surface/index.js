@@ -10,7 +10,7 @@
 // Role 4's tasks. `state` ('SURFACE' or 'INTERIOR') limits where it can be used; positions are in that scene's
 // metres (SURFACE: Role 3 terrain, landing site at the origin, y from getTerrainHeight). Returns an unregister function.
 import * as THREE from 'three';
-import { assets, createMarsScene, getTerrainHeight, graphics } from '/src/graphics/index.js';
+import { getTerrainHeight, graphics } from '/src/graphics/index.js';
 import { audio } from '/src/audio/index.js';
 import { PLANETS, events, getState, input, requestState, ui } from '/src/core/index.js';
 import { stubScreen } from '/src/core/stubScreen.js';
@@ -20,10 +20,14 @@ import { createInteractables } from './interactables.js';
 import { createShipInterior, CABIN } from './shipInterior.js';
 import { createSuitHUD } from './hud/createSuitHUD.js';
 import { astronaut } from './astronaut.js';
+import { getCabin, getMars, prepareScenes } from './scenes.js';
 
 const TELEMETRY_EVERY = 0.5;
 const LANDER_RADIUS = 3.2; // m, the lander's legs: you can't walk through them
-const HATCH = { x: 0, z: 3.6 }; // where you climb back in (in front of the lander)
+const HATCH = { x: 0, z: 3.6 };
+const MAX_MOUSE_STEP = 300;
+// Crew-life props in the cabin open these Guidebook entries (Role 4 writes them; ids listed in the README).
+export const PROP_ENTRIES = { exerciseBike: 'crew-exercise', waterRecycler: 'crew-water', foodRack: 'crew-food', familyPhoto: 'family-photo' }; // px per frame: ignore the jump some browsers report right after pointer lock // where you climb back in (in front of the lander)
 
 const registry = createInteractables();
 
@@ -42,41 +46,30 @@ registerInteractable({
   onUse: () => requestState('INTERIOR'),
 });
 
-const cache = { cabin: null, cabinArt: null, mars: null };
 let s = null;
 let previous = null; // the surface state we just left (to spawn inside the airlock when coming back in)
 
-function cabinScene() {
-  if (!cache.cabin) {
-    cache.cabin = new THREE.Scene();
-    cache.cabinArt = assets.get('cabin');
-    cache.cabin.add(cache.cabinArt);
-  }
-  return cache.cabin;
-}
-
-function marsScene() {
-  if (!cache.mars) {
-    cache.mars = createMarsScene({ sunElevation: 26 }).scene;
-    const lander = assets.get('lander');
-    lander.position.set(0, getTerrainHeight(0, 0), 0);
-    cache.mars.add(lander);
-  }
-  return cache.mars;
-}
-
 export default {
+  init() {
+    setTimeout(prepareScenes, 0); // build Mars + cabin in the background so entering them never freezes
+  },
+
   enter(state) {
     const inside = state === 'INTERIOR';
     const camera = new THREE.PerspectiveCamera(70, 1, 0.03, 2e5);
     const hudLayer = document.createElement('div');
     hudLayer.style.cssText = 'position:absolute;inset:0;pointer-events:none';
     ui.mount(hudLayer, { layer: 'hud' });
-    s = { state, inside, camera, cabin: null, sinceTelemetry: 0, hud: createSuitHUD({ parent: hudLayer }), offs: [] };
+    s = { state, inside, camera, cabin: null, sinceTelemetry: 0, hud: createSuitHUD({ parent: hudLayer }), offs: [], notice: null };
+    // short alert line under the helmet header (falls, suit breach)
+    s.noticeEl = document.createElement('div');
+    s.noticeEl.className = 'hud-label';
+    s.noticeEl.style.cssText = 'position:absolute;left:50%;top:13%;transform:translateX(-50%);color:var(--hud-red,#ff7f87);letter-spacing:.12em;text-align:center';
+    hudLayer.append(s.noticeEl);
 
     if (inside) {
-      graphics.setView(cabinScene(), camera);
-      const art = cache.cabinArt;
+      const { scene, art } = getCabin();
+      graphics.setView(scene, camera);
       // coming in from Mars: start just inside the airlock, facing the cabin
       const fromOutside = previous === 'SURFACE';
       s.walker = new WalkController({
@@ -92,14 +85,28 @@ export default {
           if (type === 'suit') astronaut.suited = d.suited;
           if (type === 'airlock') art.userData.setAlarm?.(d.stage === 'cycling');
           if (type === 'o2Empty') audio.play('ui.error');
+          if (type === 'prop' && PROP_ENTRIES[d.id]) events.emit('guidebook:open', { entryId: PROP_ENTRIES[d.id] });
         },
       });
       s.cabin.suited = astronaut.suited;
       audio.play('ambience.ship', { loop: true });
     } else {
-      graphics.setView(marsScene(), camera);
+      const mars = getMars();
+      mars.lander.visible = true;
+      graphics.setView(mars.scene, camera);
       astronaut.suited = true;
       s.walker = new WalkController({
+        onNotice: (type, d) => {
+          if (type !== 'fall') return;
+          audio.play('impact.small');
+          if (d.severity === 'severe') {
+            astronaut.oxygen.setLeak(3);
+            audio.play('alarm.o2');
+            s.notice = { text: 'SUIT BREACH: O₂ is leaking 3× faster. Get to the O₂ station in the ship.', t: 6 };
+          } else {
+            s.notice = { text: `Hard landing (${d.impactSpeed.toFixed(1)} m/s). Mars gravity is weak, but a fall still hurts.`, t: 4 };
+          }
+        },
         gravity: PLANETS.mars.g, getGroundHeight: getTerrainHeight, colliders: [{ x: 0, z: 0, r: LANDER_RADIUS }],
         mode: 'suit', start: { x: HATCH.x, z: HATCH.z + 2 }, yaw: Math.PI, // step out facing away from the ship
       });
@@ -126,7 +133,7 @@ export default {
     if (!s) return;
     const { walker, camera, inside } = s;
     const mouse = input.mouseDelta();
-    walker.look(mouse.x, mouse.y);
+    if (Math.abs(mouse.x) < MAX_MOUSE_STEP && Math.abs(mouse.y) < MAX_MOUSE_STEP) walker.look(mouse.x, mouse.y);
     const k = input.isDown;
     walker.update(dt, {
       forward: (k('KeyW') ? 1 : 0) - (k('KeyS') ? 1 : 0),
@@ -140,17 +147,30 @@ export default {
     astronaut.body.update(dt, { env: inside ? 'cabin_mars' : 'mars', heartRate: walker.heartRate });
     const ui_ = registry.update(dt, walker.eye, walker.lookDir, k('KeyE'));
 
+    // head bob: one bob per step; Mars steps are slower and floatier (step rate ∝ √g), suits bounce less
+    const speed = walker.telemetry.speed;
+    if (walker.onGround && speed > 0.2) s.stepPhase = (s.stepPhase ?? 0) + dt * speed * 2.2 * Math.sqrt(walker.gravity / PLANETS.earth.g);
+    const bob = walker.onGround ? Math.sin((s.stepPhase ?? 0) * Math.PI) ** 2 * Math.min(1, speed / 2) * (inside ? 0.035 : 0.05) : 0;
     const eye = walker.eye;
-    camera.position.set(eye.x, eye.y, eye.z);
+    camera.position.set(eye.x, eye.y - bob, eye.z);
     camera.quaternion.setFromEuler(new THREE.Euler(walker.pitch, walker.yaw, 0, 'YXZ'));
 
     const level = inside ? 'ok' : oxygen.level;
+    if (level !== s.lastLevel) {
+      // alarm each time O₂ crosses into a worse caution level (30 / 15 / 5 %)
+      if (['caution', 'warning', 'critical'].indexOf(level) > ['caution', 'warning', 'critical'].indexOf(s.lastLevel ?? 'ok')) audio.play('alarm.o2');
+      s.lastLevel = level;
+    }
     graphics.setEffects({ vignette: level === 'critical' ? 0.8 : level === 'warning' ? 0.4 : 0 });
     s.hud.update(dt, {
       telemetry: walker.telemetry, oxygen, suited: inside ? astronaut.suited : true, inside,
       focused: ui_.focused, yaw: walker.yaw, shipPosition: { x: HATCH.x, z: HATCH.z },
       bodyStats: astronaut.body.snapshot(), airlockProgress: s.cabin?.airlockProgress ?? 0,
     });
+
+    if (s.notice?.t > 0) s.notice.t -= dt;
+    const noticeText = s.notice?.t > 0 ? s.notice.text : !inside && oxygen.leaking ? 'SUIT BREACH: O₂ leaking' : '';
+    if (s.noticeEl.textContent !== noticeText) s.noticeEl.textContent = noticeText;
 
     s.sinceTelemetry += dt;
     if (s.sinceTelemetry >= TELEMETRY_EVERY) {

@@ -11,6 +11,6 @@
   "pumps": {
     "S": { "name": "Small turbopump", "thrust": 100000, "mass": 500, "cost": 200000, "heatRate": 0.0015 },
     "M": { "name": "Medium turbopump", "thrust": 300000, "mass": 1200, "cost": 500000, "heatRate": 0.002 },
-    "L": { "name": "Large turbopump", "thrust": 800000, "mass": 3000, "cost": 1000000, "heatRate": 0.004 }
+    "L": { "name": "Large turbopump", "thrust": 1000000, "mass": 3000, "cost": 1000000, "heatRate": 0.004 }
   }
 }
