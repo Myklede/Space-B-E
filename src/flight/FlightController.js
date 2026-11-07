@@ -81,11 +81,12 @@ export function shipParams(spec = {}) {
   const s = spec.stats ?? {};
   const pump = spec.engines?.[0]?.pump ?? 'M';
   return {
-    dryMass: s.dryMass ?? 6000,
-    fuelMass: s.fuelMass ?? 14000,
-    thrustVac: s.thrust ?? 300000,
-    ispSL: s.ispSL ?? 300,
-    ispVac: s.ispVac ?? 330,
+    // guards: a half-built ShipSpec must never divide by zero or go negative
+    dryMass: Math.max(100, Number(s.dryMass) || 6000),
+    fuelMass: Math.max(0, Number(s.fuelMass ?? 14000) || 0),
+    thrustVac: Math.max(0, Number(s.thrust ?? 300000) || 0),
+    ispSL: Math.max(1, Number(s.ispSL) || 300),
+    ispVac: Math.max(1, Number(s.ispVac) || 330),
     // m² (drag coefficient × reference area). A heat shield is a wide aeroshell: Mars air is so thin
     // that real landers need a big blunt shield + a supersonic parachute + engines.
     cdA: s.cdA ?? ((s.hasHeatShield ?? true) ? 80 : 3),

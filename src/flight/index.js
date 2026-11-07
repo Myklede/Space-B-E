@@ -7,11 +7,12 @@
 //   LANDING powered descent and touchdown; E after landing → INTERIOR (Role 2 surface).
 // Failures emit flight:failed; Role 4's story module charges the penalty and shows the ending.
 import * as THREE from 'three';
-import { assets, createLaunchSite, createMarsScene, createSpaceScene, getTerrainHeight, graphics } from '/src/graphics/index.js';
+import { assets, createLaunchSite, createSpaceScene, getTerrainHeight, graphics } from '/src/graphics/index.js';
 import { audio } from '/src/audio/index.js';
 import { G0, PLANETS, economy, events, getShip, input, requestState, ui } from '/src/core/index.js';
 import { stubScreen } from '/src/core/stubScreen.js';
 import { astronaut } from '/src/surface/astronaut.js';
+import { getMars } from '/src/surface/scenes.js';
 import { FlightController } from './FlightController.js';
 import { createCockpitControls } from './cockpitControls.js';
 import { ascentGuide, assistReadout, landingGuide, predictPath } from './flightAssist.js';
@@ -187,12 +188,17 @@ function buildSiteView() {
   return { ...site, camera, rig, cockpit, rocketRoot, flame, exhaust, eyeY };
 }
 
+// Low over Mars: Role 2's shared Mars scene (pre-built at boot by src/surface/scenes.js). Our ship IS the lander,
+// so the parked lander model is hidden while we fly; surface shows it again on SURFACE.
 function buildSurfaceView(fc) {
-  const { scene } = createMarsScene({ sunElevation: 26 });
+  const { scene, lander } = getMars();
+  for (const old of scene.children.filter((o) => o.userData.role2Flight)) scene.remove(old);
+  lander.visible = false;
   const camera = new THREE.PerspectiveCamera(65, 1, 0.05, 2e5);
   const rig = new THREE.Group();
   rig.add(assets.get('cockpit'), camera);
   const dust = assets.get('vfx:landingDust');
+  rig.userData.role2Flight = dust.userData.role2Flight = true;
   scene.add(rig, dust);
   // tangent frame at the point under the ship when this view starts: east = +X, north = −Z, up = +Y
   const up = v3(fc.up);
@@ -263,6 +269,7 @@ export default {
     fc.onNotice = (type) => {
       if (type === 'debris_hit' || type === 'parachute' || type === 'fairing_sep') audio.play('impact.small');
       if (['maxq_warning', 'g_high', 'heat_warning', 'engine_hot'].includes(type)) audio.play('alarm.master');
+      if (type === 'orbit_achieved') audio.play('radio.blip');
     };
     events.emit('flight:phase', { phase: fc.phase });
 
@@ -304,6 +311,8 @@ export default {
       }
     }
     if (s.debrisWarning > 0) s.debrisWarning -= dt;
+    if (fc.landed && !s.wasLanded) audio.play('impact.small');
+    s.wasLanded = fc.landed;
 
     // automatic state moves
     if (!s.done && !fc.failed) {
@@ -436,6 +445,7 @@ export default {
 
   exit() {
     if (!s) return;
+    if (s.surface) s.surface.scene.remove(s.surface.rig, s.surface.dust); // the shared Mars scene is walked on next
     s.controls.dispose();
     window.removeEventListener('click', s.lockOnClick);
     graphics.setEffects({ vignette: 0, shake: 0 });

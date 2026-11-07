@@ -417,6 +417,16 @@ test('landing guide walks through entry → chute → BURN NOW → touchdown on 
   assert.equal(landingGuide(m), null, 'no guide once landed');
 });
 
+test('a half-built ShipSpec (zeros, strings, missing stats) never produces NaN', () => {
+  const fc = new FlightController({ planets: PLANETS, shipSpec: { stats: { dryMass: 0, fuelMass: -5, thrust: 'x', ispSL: 0 } } });
+  run(fc, 2, { throttleUp: true });
+  const t = fc.telemetry;
+  for (const k of ['altitude', 'speed', 'deltaVLeft', 'twr', 'mass', 'gLoad']) assert.ok(Number.isFinite(t[k]), `${k} = ${t[k]}`);
+  const empty = new FlightController({ planets: PLANETS, shipSpec: {} });
+  run(empty, 1);
+  assert.ok(Number.isFinite(empty.telemetry.deltaVLeft));
+});
+
 let fails = 0;
 for (const [s, name, e] of results) {
   console.log(`${s === 'ok' ? '  ✓' : '  ✗'} ${name}`);

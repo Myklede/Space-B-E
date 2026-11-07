@@ -10,7 +10,7 @@
 // Role 4's tasks. `state` ('SURFACE' or 'INTERIOR') limits where it can be used; positions are in that scene's
 // metres (SURFACE: Role 3 terrain, landing site at the origin, y from getTerrainHeight). Returns an unregister function.
 import * as THREE from 'three';
-import { assets, createMarsScene, getTerrainHeight, graphics } from '/src/graphics/index.js';
+import { getTerrainHeight, graphics } from '/src/graphics/index.js';
 import { audio } from '/src/audio/index.js';
 import { PLANETS, events, getState, input, requestState, ui } from '/src/core/index.js';
 import { stubScreen } from '/src/core/stubScreen.js';
@@ -20,6 +20,7 @@ import { createInteractables } from './interactables.js';
 import { createShipInterior, CABIN } from './shipInterior.js';
 import { createSuitHUD } from './hud/createSuitHUD.js';
 import { astronaut } from './astronaut.js';
+import { getCabin, getMars, prepareScenes } from './scenes.js';
 
 const TELEMETRY_EVERY = 0.5;
 const LANDER_RADIUS = 3.2; // m, the lander's legs: you can't walk through them
@@ -43,30 +44,14 @@ registerInteractable({
   onUse: () => requestState('INTERIOR'),
 });
 
-const cache = { cabin: null, cabinArt: null, mars: null };
 let s = null;
 let previous = null; // the surface state we just left (to spawn inside the airlock when coming back in)
 
-function cabinScene() {
-  if (!cache.cabin) {
-    cache.cabin = new THREE.Scene();
-    cache.cabinArt = assets.get('cabin');
-    cache.cabin.add(cache.cabinArt);
-  }
-  return cache.cabin;
-}
-
-function marsScene() {
-  if (!cache.mars) {
-    cache.mars = createMarsScene({ sunElevation: 26 }).scene;
-    const lander = assets.get('lander');
-    lander.position.set(0, getTerrainHeight(0, 0), 0);
-    cache.mars.add(lander);
-  }
-  return cache.mars;
-}
-
 export default {
+  init() {
+    setTimeout(prepareScenes, 0); // build Mars + cabin in the background so entering them never freezes
+  },
+
   enter(state) {
     const inside = state === 'INTERIOR';
     const camera = new THREE.PerspectiveCamera(70, 1, 0.03, 2e5);
@@ -76,8 +61,8 @@ export default {
     s = { state, inside, camera, cabin: null, sinceTelemetry: 0, hud: createSuitHUD({ parent: hudLayer }), offs: [] };
 
     if (inside) {
-      graphics.setView(cabinScene(), camera);
-      const art = cache.cabinArt;
+      const { scene, art } = getCabin();
+      graphics.setView(scene, camera);
       // coming in from Mars: start just inside the airlock, facing the cabin
       const fromOutside = previous === 'SURFACE';
       s.walker = new WalkController({
@@ -98,7 +83,9 @@ export default {
       s.cabin.suited = astronaut.suited;
       audio.play('ambience.ship', { loop: true });
     } else {
-      graphics.setView(marsScene(), camera);
+      const mars = getMars();
+      mars.lander.visible = true;
+      graphics.setView(mars.scene, camera);
       astronaut.suited = true;
       s.walker = new WalkController({
         gravity: PLANETS.mars.g, getGroundHeight: getTerrainHeight, colliders: [{ x: 0, z: 0, r: LANDER_RADIUS }],
