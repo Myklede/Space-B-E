@@ -14,7 +14,6 @@ import * as THREE from 'three';
 import { getTerrainHeight, graphics } from '/src/graphics/index.js';
 import { audio } from '/src/audio/index.js';
 import { PLANETS, events, getState, input, requestState, ui } from '/src/core/index.js';
-import { stubScreen } from '/src/core/stubScreen.js';
 import { getProgress } from '/src/missions/index.js';
 import { WalkController } from './WalkController.js';
 import { createInteractables } from './interactables.js';
@@ -126,6 +125,7 @@ export default {
     const camera = new THREE.PerspectiveCamera(70, 1, 0.03, 2e5);
     const hudLayer = document.createElement('div');
     hudLayer.style.cssText = 'position:absolute;inset:0;pointer-events:none';
+    hudLayer.dataset.screen = state;
     ui.mount(hudLayer, { layer: 'hud' });
     hudLayer.style.pointerEvents = 'none'; // ui.mount enables clicks; the HUD must never block buttons under it
     s = { state, inside, camera, cabin: null, sinceTelemetry: 0, hud: createSuitHUD({ parent: hudLayer }), offs: [], notice: null };
@@ -193,15 +193,11 @@ export default {
     s.lockOnClick = () => input.lockPointer();
     window.addEventListener('click', s.lockOnClick);
 
-    // Dev shortcuts panel (also what check:boot looks for). Remove before the demo build.
-    stubScreen({
-      title: inside ? 'Ship cabin' : 'Mars surface',
-      owner: 'Role 2 (Surface)',
-      notes: inside ? 'Walk with WASD, E to use stations. Suit up, then cycle the airlock.' : 'Watch your O₂. The hatch is in front of the lander; the rover is parked beside it (E).',
-      actions: inside
-        ? [{ label: 'Go outside', key: 'KeyO', onClick: () => requestState('SURFACE') }, { label: 'Start return', key: 'KeyR', onClick: () => requestState('RETURN') }]
-        : [{ label: 'Back in', key: 'KeyO', onClick: () => requestState('INTERIOR') }],
-    });
+    // Dev shortcuts (only with ?debug=1): O goes outside / back in, R starts the return (INTERIOR only).
+    if (new URLSearchParams(location.search).get('debug') === '1') {
+      input.onPress('KeyO', () => requestState(inside ? 'SURFACE' : 'INTERIOR'));
+      if (inside) input.onPress('KeyR', () => requestState('RETURN'));
+    }
   },
 
   update(dt, state) {

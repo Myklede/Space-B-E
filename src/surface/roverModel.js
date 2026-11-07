@@ -1,5 +1,6 @@
-// Rover model (Role 2): Role 3's `assets.get('rover')` when it exists (optional userData.eye = driver's eye), otherwise a procedural model shaped like the
-// Apollo Lunar Roving Vehicle: aluminium chassis, wire-mesh wheels with chevron treads, fenders, two seats, the
+// Rover model (Role 2): Role 3's `assets.get('rover')` is the REAL rover (optional userData.eye = driver's eye).
+// The procedural LRV below (buildLrv) is a TEMPORARY placeholder, used only while `assets.has('rover')` is false.
+// It is shaped like the Apollo Lunar Roving Vehicle: aluminium chassis, wire-mesh wheels with chevron treads, fenders, two seats, the
 // T-handle hand controller and display console, the umbrella high-gain antenna, the TV camera and a rear tool pallet.
 // Origin on the ground at the middle of the wheelbase, forward = −Z (RoverController's heading convention).
 //
@@ -48,6 +49,7 @@ function wheel(material) {
   return spin;
 }
 
+// TEMPORARY placeholder: only used while `assets.has('rover')` is false. Role 3's model is the real one; delete this later.
 function buildLrv() {
   const root = new THREE.Group();
   root.name = 'rover';

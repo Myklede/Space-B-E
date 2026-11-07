@@ -10,7 +10,6 @@ import * as THREE from 'three';
 import { assets, createLaunchSite, createSpaceScene, getTerrainHeight, graphics } from '/src/graphics/index.js';
 import { audio } from '/src/audio/index.js';
 import { G0, PLANETS, economy, events, getShip, input, requestState, ui } from '/src/core/index.js';
-import { stubScreen } from '/src/core/stubScreen.js';
 import { astronaut } from '/src/surface/astronaut.js';
 import { getMars } from '/src/surface/scenes.js';
 import { FlightController } from './FlightController.js';
@@ -315,6 +314,7 @@ export default {
     };
     const hudLayer = document.createElement('div');
     hudLayer.style.cssText = 'position:absolute;inset:0;pointer-events:none';
+    hudLayer.dataset.screen = state;
     ui.mount(hudLayer, { layer: 'hud' });
     hudLayer.style.pointerEvents = 'none'; // ui.mount enables clicks; the HUD must never block buttons under it
     s.hud = createFlightHUD({ parent: hudLayer });
@@ -349,14 +349,11 @@ export default {
     };
     events.emit('flight:phase', { phase: fc.phase });
 
-    // Dev shortcuts panel (also what check:boot looks for). Remove before the demo build.
-    const next = { LAUNCH: ['Skip to orbit', 'ORBIT'], ORBIT: ['Transfer burn', null], ENTRY: ['Skip to landing', 'LANDING'], LANDING: ['Skip to cabin', 'INTERIOR'] }[state];
-    stubScreen({
-      title: `Flight · ${state}`,
-      owner: 'Role 2 (Flight)',
-      notes: state === 'ORBIT' ? 'In orbit. Press T for the transfer burn to Mars.' : 'Real physics. Dev shortcut below.',
-      actions: [{ label: next[0], key: 'Enter', onClick: () => (next[1] ? requestState(next[1]) : transferBurn()) }],
-    });
+    // Dev shortcut (only with ?debug=1): Enter skips to the next state, or starts the transfer burn in ORBIT.
+    if (new URLSearchParams(location.search).get('debug') === '1') {
+      const next = { LAUNCH: 'ORBIT', ENTRY: 'LANDING', LANDING: 'INTERIOR' }[state];
+      input.onPress('Enter', () => (next ? requestState(next) : transferBurn()));
+    }
   },
 
   update(dt, state) {
