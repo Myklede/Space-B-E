@@ -894,5 +894,13 @@ export function createLaunchSite() {
   };
 
   scene.add(sky, root);
-  return { scene, root, rocketBase, setAltitude };
+  const site = { scene, root, rocketBase, setAltitude };
+  latestSite = new WeakRef(site);
+  return site;
+}
+
+let latestSite = null;
+/** The most recently built launch site, or null. warmup.js compiles LAUNCH's shaders against its scene. */
+export function latestLaunchSite() {
+  return latestSite?.deref() ?? null;
 }

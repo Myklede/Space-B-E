@@ -27,6 +27,7 @@ import { assets } from './assets.js';
 import { getTerrainHeight, DELTA } from './terrain.js';
 import { createMarsScene } from './marsSurface.js';
 import { createLaunchSite } from './launchSite.js';
+import { startWarmup } from './warmup.js';
 
 export { assets, cinematic, createLaunchSite, createMarsScene, DELTA, getTerrainHeight };
 
@@ -273,6 +274,7 @@ class Graphics {
 
 export const graphics = new Graphics();
 state.ensure = () => graphics.init();
+startWarmup(graphics);
 
 /** Stars, Milky Way and Sun in a new scene. Add planets from assets.get('planet:earth') and position them yourself. */
 export function createSpaceScene() {

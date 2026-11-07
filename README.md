@@ -20,6 +20,7 @@ Do these steps in order before writing any code.
    git switch -c <your-role-branch>   # first time; later: git switch <your-role-branch> && git merge origin/dev
    npm run dev
    ```
+   Node 20.19+ or 22.12+ is required (Vite 8 does not start on Node 21 or older than 20.19).
 5. **Do your role's next tasks**, in order, inside your own folders.
 6. **Replace the stubs in your own folders** with the real thing, keeping every export listed in `PUBLIC_EXPORTS` in `src/core/contract.js`.
 7. **When a piece works,** follow [Getting work to `main`](#getting-work-to-main) and update your row in [Status](#status).
@@ -192,6 +193,7 @@ Units are metres and +Y is up.
 | `createMarsScene({ sunElevation, sunAzimuth })` | `{ scene, sun, setSunElevation(degrees, azimuth) }` |
 | `createSpaceScene()` | A scene with stars, Milky Way and Sun. Add planets yourself. |
 | `createLaunchSite()` | `{ scene, root, rocketBase, setAltitude(metres) }`. A coastal launch complex with the pad at the origin, Earth below with its sky. Stand your rocket at `rocketBase` (add it to `root`). Call `setAltitude(m)` as it climbs, and keep the camera near the origin: the site and planet slide down instead. The detail hides above 40 km. Set the Sun with `graphics.setSunDirection`. |
+| `assets.setRocketPartArt(fn)` | Lets Role 1's hangar models show on the pad. `fn(type)` is called synchronously by `assets.get('rocketPart:<type>')` and returns an Object3D, or `null` to use the built-in part (pass `null` to clear; a throw also falls back, with one warning per type). Flight places each object at the ShipSpec part's (x, y, z) with `rotation.y` = rotation degrees. Axial parts have their origin at the base of the part on the rocket axis and should set `userData.height` in metres (computed from the bounding box if missing). Radial parts have their origin at the attachment point on the parent's surface with local +x pointing outward, so bake any outward offset the hangar uses into the object. Return only models that are already loaded, otherwise `null`. |
 | `graphics.setSunDirection(vector)` | The direction towards the Sun, for planets and the space sky |
 | `graphics.setEffects({ vignette, blackout, shake })` | Screen effects from 0 to 1, for g-force and low O₂ |
 | `graphics.fade({ to, duration, color })` | Fades the screen and returns a Promise |

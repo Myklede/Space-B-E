@@ -66,6 +66,15 @@ Copy this block. Keep each line short and factual. Don't commit screenshots.
 - **Suggested fix:** load the decorative bay props after the hangar first draws, drop or shrink the largest ones, and remove the unused reserve models until a scene uses them
 - **Status:** open
 
+### The rocket on the pad does not look like the one built in the hangar
+- **For:** Role 1 · **From:** Role 3 (dtri) · **Found:** 2026-11-07 on dev 6fb54a4 · **Severity:** polish
+- **Where:** `src/builder/bay/partArt.js` (hangar art) vs `src/flight/index.js` `buildRocket` (uses `assets.get('rocketPart:<type>')`)
+- **Steps:** build a ship, launch, press C for the outside camera
+- **Expected:** the same NASA hardware and procedural parts the player chose in the bay
+- **Actual:** flight draws Role 3's simpler built-in parts
+- **Suggested fix:** Role 3 added `assets.setRocketPartArt(fn)` (README, "Role 3 APIs you can use now"). Call it once from your init with a function that returns your art for a part type, or `null` when the model is not loaded yet. Follow the origin rules in that README row: axial parts start at their base and set `userData.height`; radial parts start at the attachment point with +x outward, so bake in the offsets `hangarScene.js` adds around line 60. Also, built-in `rocketPart:` objects now share geometry and materials, so `disposeObject` on them only frees GPU buffers that are uploaded again; skip disposing objects that came from `assets.get`.
+- **Status:** open
+
 ## Role 2: Flight & Astronaut
 
 ### The trajectory line is a thin vertical line down the cockpit window
@@ -84,6 +93,15 @@ Copy this block. Keep each line short and factual. Don't commit screenshots.
 - **Expected:** some ground or horizon while descending from about 3 km
 - **Actual:** the window shows a uniform butterscotch sky until touchdown
 - **Suggested fix:** tilt the default look so the ground shows, or hint that C switches to the outside camera
+- **Status:** open
+
+### Switching camera views changes the light count
+- **For:** Role 2 · **From:** Role 3 (dtri) · **Found:** 2026-11-07 on dev 6fb54a4 · **Severity:** polish
+- **Where:** `src/flight/index.js:377-378` and `:422-423` (hiding `rocketRoot` or the cockpit per view)
+- **Steps:** LAUNCH, press C
+- **Expected:** no hitch
+- **Actual:** hiding an object that holds lights changes the scene's light count, and three.js then recompiles every lit material (about 200 ms on an M5). Role 3's warm-up (`src/graphics/warmup.js`) now pre-compiles both views during PRELAUNCH, so it no longer hitches, but a new light or visibility rule in flight would bring it back.
+- **Suggested fix:** keep lights in the scene and set their intensity to 0 instead of hiding them (that is what `src/graphics/vfx.js` does)
 - **Status:** open
 
 ## Role 3: Graphics, Audio & Core

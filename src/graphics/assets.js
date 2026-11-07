@@ -263,7 +263,15 @@ const PART_MATCHERS = [
   [/nose|cone/, 'nose'], [/fin/, 'fin'], [/leg/, 'legs'], [/tank|fuel/, 'tank'],
 ];
 
+// Built once per id; every call returns a clone that shares the geometry and materials, so the GPU upload and the
+// launch warm-up (warmup.js) done for one rocket also cover the next.
+const partTemplates = new Map();
 function createRocketPart(id) {
+  if (!partTemplates.has(id)) partTemplates.set(id, buildRocketPart(id));
+  return partTemplates.get(id).clone(true);
+}
+
+function buildRocketPart(id) {
   const key = id.toLowerCase();
   const match = PART_MATCHERS.find(([pattern]) => pattern.test(key));
   if (!match) return hologram(`rocketPart:${id}`, [1.2, 0.8, 1.2]);
@@ -332,9 +340,47 @@ for (const [name, factory] of Object.entries(PROPS)) register(name, factory); //
  * Visuals behind names. Gameplay asks for a name and always gets an Object3D back, so art can be swapped later
  * with nobody else's code changing. Each call returns a new object.
  */
+let rocketPartArt = null;
+const partArtWarned = new Set();
+
+/** Runs the external part-art hook (Role 1's models); null when there is none or it has nothing for this type. */
+function externalRocketPart(type) {
+  if (!rocketPartArt) return null;
+  let obj = null;
+  try {
+    obj = rocketPartArt(type);
+  } catch (err) {
+    if (!partArtWarned.has(type)) {
+      partArtWarned.add(type);
+      console.warn(`[assets] rocket part art hook threw for "${type}", using the built-in part`, err);
+    }
+    return null;
+  }
+  if (!obj || !obj.isObject3D) return null;
+  obj.name = `rocketPart:${type}`;
+  obj.traverse((o) => { if (o.isMesh) { o.castShadow = true; o.receiveShadow = true; } });
+  if (!(typeof obj.userData.height === 'number' && obj.userData.height >= 0)) {
+    obj.updateMatrixWorld(true);
+    const box = new THREE.Box3().setFromObject(obj);
+    // Origin sits at the base of an axial part, so the height is how far the model reaches above it.
+    obj.userData.height = box.isEmpty() ? 0 : Math.max(0, box.max.y - obj.position.y);
+  }
+  return obj;
+}
+
 export const assets = {
+  /**
+   * Lets another role supply the model for `rocketPart:<type>` (see README). fn(type) must return an Object3D,
+   * or null to use the built-in part. Pass null to clear.
+   */
+  setRocketPartArt(fn) {
+    rocketPartArt = typeof fn === 'function' ? fn : null;
+  },
   get(name) {
-    if (name.startsWith('rocketPart:')) return createRocketPart(name.slice('rocketPart:'.length));
+    if (name.startsWith('rocketPart:')) {
+      const type = name.slice('rocketPart:'.length);
+      return externalRocketPart(type) ?? createRocketPart(type);
+    }
     const factory = factories.get(name);
     if (factory) return factory();
     if (!warned.has(name)) {

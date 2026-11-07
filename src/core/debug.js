@@ -27,6 +27,11 @@ function examplePayload(name) {
 export function startDebug() {
   const gui = new GUI({ title: 'Debug (?debug=1)' });
   gui.domElement.style.zIndex = '40';
+  // Starts collapsed (click the title to open) and sits in the bottom-right corner: the top-right holds game
+  // buttons (e.g. the hangar's READINESS POLL) and the HUD text lines run along the bottom-left and centre.
+  gui.close();
+  gui.domElement.style.setProperty('width', '150px');
+  Object.assign(gui.domElement.style, { position: 'fixed', top: 'auto', right: '0', bottom: '0', left: 'auto' });
   const model = {
     state: 'MENU',
     preset: 'reliable',

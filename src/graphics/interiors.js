@@ -3,7 +3,7 @@ import { RoundedBoxGeometry } from 'three/addons/geometries/RoundedBoxGeometry.j
 import { RoomEnvironment } from 'three/addons/environments/RoomEnvironment.js';
 import { mergeGeometries } from 'three/addons/utils/BufferGeometryUtils.js';
 import { getRenderer, sharedUniforms } from './shared.js';
-import { events } from '/src/core/index.js';
+import { events, getShip } from '/src/core/index.js';
 
 let environment = null;
 
@@ -58,11 +58,11 @@ const CYAN = '#67e8f9', AMBER = '#fbbf24';
 // Latest values from flight:telemetry (sent about twice a second). Missing fields stay null and print as "--".
 const MAXQ_PA = 40000; // matches the flight model's structural limit; used when telemetry sends no maxQ
 const HISTORY = 240; // altitude samples kept for the plot (about 2 minutes)
-const live = { version: 0, t: null, altitude: null, speed: null, gForce: null, q: null, maxQ: null, fuelKg: null, fuelMax: 0, engineTemp: null, o2: null, history: [] };
+const live = { version: 0, t: null, altitude: null, speed: null, gForce: null, q: null, maxQ: null, fuelKg: null, fuelMax: 0, engineTemp: null, history: [] };
 const num = (v) => (typeof v === 'number' && Number.isFinite(v) ? v : null);
 
 function resetLive() {
-  Object.assign(live, { t: null, altitude: null, speed: null, gForce: null, q: null, maxQ: null, fuelKg: null, fuelMax: 0, engineTemp: null, o2: null, history: [] });
+  Object.assign(live, { t: null, altitude: null, speed: null, gForce: null, q: null, maxQ: null, fuelKg: null, fuelMax: 0, engineTemp: null, history: [] });
   live.version++;
 }
 
@@ -78,8 +78,7 @@ events.on('flight:telemetry', (p) => {
   live.maxQ = num(p.maxQ);
   live.fuelKg = num(p.fuelKg);
   live.engineTemp = num(p.engineTemp);
-  live.o2 = num(p.o2Percent);
-  if (live.fuelKg !== null) live.fuelMax = Math.max(live.fuelMax, live.fuelKg);
+  if (live.fuelKg !== null) live.fuelMax = Math.max(live.fuelMax, live.fuelKg); // fallback when the ship has no tank size
   if (live.altitude !== null) {
     live.history.push(live.altitude);
     if (live.history.length > HISTORY) live.history.shift();
@@ -94,7 +93,7 @@ const RED = '#f87171';
 // One labelled bar. `fraction` is null when there is no data; amber and red zones start at `amberAt` and `redAt`.
 function bar(c, w, y, label, text, fraction, amberAt = 2, redAt = 2, zones = false) {
   const x0 = 118, bw = w - x0 - 18, bh = 20;
-  c.font = '500 22px "IBM Plex Mono", monospace';
+  c.font = `500 ${label.length > 6 ? 17 : 22}px "IBM Plex Mono", monospace`; // long labels shrink to stay left of the bar
   c.textBaseline = 'alphabetic';
   c.fillStyle = CYAN;
   c.textAlign = 'left';
@@ -117,11 +116,14 @@ function bar(c, w, y, label, text, fraction, amberAt = 2, redAt = 2, zones = fal
 }
 
 function drawReadout(c, w, h) {
-  const fuel = live.fuelKg !== null && live.fuelMax > 0 ? clamp01(live.fuelKg / live.fuelMax) : null;
-  const rows = h / 3;
+  // The tank size from the ship's stats is the real 100 %; without it the highest fuel seen this flight stands in.
+  const tank = getShip()?.stats?.fuelMass;
+  const capacity = typeof tank === 'number' && tank > 0 ? tank : live.fuelMax;
+  const fuel = live.fuelKg !== null && capacity > 0 ? clamp01(live.fuelKg / capacity) : null;
+  const rows = h / 2;
   bar(c, w, 14, 'FUEL', fuel === null ? '--' : `${(fuel * 100).toFixed(0)}%  ${fmt(live.fuelKg !== null ? live.fuelKg / 1000 : null, 1)} t`, fuel === null ? null : 1 - fuel, 0.6, 0.85);
-  bar(c, w, 14 + rows, 'O2', fmt(live.o2, 0, '%'), live.o2 === null ? null : 1 - clamp01(live.o2 / 100), 0.7, 0.85);
-  bar(c, w, 14 + rows * 2, 'TEMP', live.engineTemp === null ? '--' : `ENG ${(live.engineTemp * 100).toFixed(0)}%`, clamp01(live.engineTemp), 0.7, 0.85);
+  // engineTemp is 0..1 where 1 is engine failure
+  bar(c, w, 14 + rows, 'ENG HEAT', live.engineTemp === null ? '--' : `${(clamp01(live.engineTemp) * 100).toFixed(0)}%`, clamp01(live.engineTemp), 0.7, 0.85, true);
 }
 
 function drawTrajectory(c, w, h) {
