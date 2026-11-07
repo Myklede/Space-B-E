@@ -2,6 +2,7 @@ import * as THREE from 'three';
 import { createPlanet } from './planets.js';
 import { createSpaceSky } from './sky.js';
 import { createCabin, createCockpit, interiorEnvironment, pbr } from './interiors.js';
+import { createEngineFlame, createEntryPlasma, createExhaust, createLandingDust } from './vfx.js';
 
 const factories = new Map();
 const warned = new Set();
@@ -146,6 +147,10 @@ function register(name, factory) {
 
 register('cockpit', createCockpit);
 register('cabin', createCabin);
+register('vfx:engineFlame', createEngineFlame);
+register('vfx:exhaust', createExhaust);
+register('vfx:entryPlasma', createEntryPlasma);
+register('vfx:landingDust', createLandingDust);
 register('planet:earth', () => createPlanet('earth'));
 register('planet:mars', () => createPlanet('mars'));
 register('sky:space', createSpaceSky);

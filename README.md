@@ -72,10 +72,9 @@ Models, textures and audio go in `public/assets/`, and everything used is credit
 **You build:** renderer and post-processing, skybox, Earth and Mars with atmosphere shaders, cockpit, cabin and Mars visuals, VFX (flame, plasma, dust), HUD theme, cinematic API, all sound, Low/High quality settings.
 
 **Next tasks:**
-1. VFX: engine flame and exhaust, entry plasma on the window, landing dust.
-2. Real Earth and Mars textures, with credits.
-3. Art pass on the cabin, rocket parts and mission props, then real audio.
-4. Measure frame rate on a mid-range laptop.
+1. Real Earth and Mars textures, with credits.
+2. Art pass on the rocket parts and mission props, then real audio.
+3. Measure frame rate on a mid-range laptop.
 
 **You use:** nothing blocking. Work in `/sandbox/role3.html`.
 
@@ -105,7 +104,7 @@ Update your row whenever you push to `dev`.
 |---|---|
 | 1 | Nothing yet. `index.html` and `src/core/` don't exist, so `/` shows a 404 and `npm run build` fails. |
 | 2 | Nothing yet |
-| 3 | All hour-3 APIs below. See every view at `/sandbox/role3.html`. Art is generated in code, and the cabin, parts, props and sounds are placeholders. |
+| 3 | All hour-3 APIs below. See every view at `/sandbox/role3.html`. Art is generated in code. The cabin is a full art pass and the VFX exist; parts, props and sounds are still placeholders. |
 | 4 | Nothing yet |
 
 ## Role 3 APIs you can use now
@@ -143,7 +142,11 @@ Units are metres and +Y is up.
 | Name | Notes |
 |---|---|
 | `cockpit` | The origin is the pilot's eye and forward is -Z. `userData.setAlarm(true)` turns on the red alarm. |
-| `cabin` | 4 × 8 m, with the origin at the middle of the floor. `userData.stations` holds positions for `pilotSeat`, `o2Station`, `suitLocker`, `commsConsole`, `sampleStorage`, `airlock` and `bunk`. |
+| `cabin` | 4 × 8 m, with the origin at the middle of the floor. `userData.stations` holds positions for `pilotSeat`, `o2Station`, `suitLocker`, `commsConsole`, `sampleStorage`, `airlock` and `bunk`. `userData.props` holds `foodRack`, `waterRecycler`, `exerciseBike` and `familyPhoto`. `userData.setAlarm(true)` dims the lights and pulses a red one. |
+| `vfx:engineFlame` | Origin at the nozzle exit, plume down -Y, built for a 0.95 m nozzle (scale it for others). `userData.set({ throttle: 0..1, airDensity: 0..1, fuel: 'kerolox' \| 'methalox' \| 'hydrolox' })`. Sea-level plume has shock diamonds, vacuum balloons wider and fainter. Carries a point light. |
+| `vfx:exhaust` | Origin at the nozzle exit, smoke falls down -Y. `userData.set({ throttle: 0..1, airDensity: 0..1 })`. Invisible in vacuum. |
+| `vfx:entryPlasma` | Add it to the cockpit group (its coordinates). `userData.set({ intensity: 0..1 })`. Streaks outside the window, and an orange light inside. |
+| `vfx:landingDust` | Origin on the ground under the engine, +Y up. `userData.set({ intensity: 0..1 })`. A sheet of dust up to about 40 m wide. |
 | `planet:earth`, `planet:mars` | Radius 1, so set `planet.scale.setScalar(radius)`. To spin it, rotate `userData.surface`, not the group. |
 | `rocketPart:<id>` | The look comes from words in the id: `capsule`, `tank`, `engine`, `nose`, `fin`, `leg`, `heat`. Size comes from `_s`, `_m` or `_l`. `userData.height` is the stacking height. |
 | `lander`, `halcyonLander` | Your ship and the lost crew's wreck |

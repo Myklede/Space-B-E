@@ -47,6 +47,9 @@ function planetBelow(name, radius, altitude, sun, elevation = -90) {
   return { scene, planet };
 }
 
+// VFX objects of the current view, driven by the lil-gui sliders.
+const vfx = [];
+
 const VIEWS = {
   orbit: {
     label: 'Earth orbit',
@@ -139,6 +142,73 @@ const VIEWS = {
       return scene;
     },
   },
+  flame: {
+    label: 'Engine flame',
+    build() {
+      const scene = createSpaceScene();
+      graphics.setSunDirection(new THREE.Vector3(0.7, 0.45, 0.55));
+      scene.add(new THREE.AmbientLight(0x8ea4c8, 0.25));
+      // Left at sea level, right in vacuum, so the two plumes can be compared side by side.
+      [[-6, 1], [6, 0]].forEach(([x, airDensity]) => {
+        const lander = assets.get('lander');
+        lander.position.set(x, 13, 0);
+        const sun = new THREE.DirectionalLight(0xfff4e6, 2.6);
+        sun.position.set(x + 7, 22, 9);
+        sun.target = lander;
+        const flame = assets.get('vfx:engineFlame');
+        const exhaust = assets.get('vfx:exhaust');
+        [flame, exhaust].forEach((v) => { v.position.y = 0.5; v.userData.set({ airDensity }); lander.add(v); vfx.push(v); });
+        scene.add(lander, sun);
+      });
+      orbit();
+      look([0, 7, 44], [0, 6, 0]);
+      return scene;
+    },
+  },
+  entry: {
+    label: 'Entry plasma',
+    build() {
+      const { scene } = planetBelow('mars', MARS_R, 120e3, [0.86, 0.36, -0.36], -40);
+      const cockpit = assets.get('cockpit');
+      const plasma = assets.get('vfx:entryPlasma');
+      plasma.userData.set({ intensity: 0.9 });
+      cockpit.add(plasma);
+      vfx.push(plasma);
+      scene.add(cockpit);
+      pivot();
+      look([0, 0, 0], [0, -0.2, -1]);
+      return scene;
+    },
+  },
+  landing: {
+    label: 'Landing dust',
+    build() {
+      const { scene } = createMarsScene({ sunElevation: 26 });
+      const ground = getTerrainHeight(0, 0);
+      placeLander(scene);
+      const flame = assets.get('vfx:engineFlame');
+      flame.position.set(0, ground + 1, 0);
+      flame.userData.set({ airDensity: 0.02, throttle: 0.6 });
+      const dust = assets.get('vfx:landingDust');
+      dust.position.set(0, ground, 0);
+      dust.userData.set({ intensity: 1 });
+      scene.add(flame, dust);
+      vfx.push(flame, dust);
+      orbit();
+      look([15, ground + 4, 0], [0, ground + 3, 0]);
+      return scene;
+    },
+  },
+  cabin2: {
+    label: 'Cabin, to airlock',
+    build() {
+      const scene = new THREE.Scene();
+      scene.add(assets.get('cabin'));
+      pivot();
+      look([0.2, 1.65, -2.4], [0, 1.3, 3]);
+      return scene;
+    },
+  },
   parts: {
     label: 'Rocket parts',
     build() {
@@ -204,10 +274,11 @@ const buttons = {};
 
 function show(name) {
   walking = null;
+  vfx.length = 0;
   const scene = VIEWS[name].build();
   graphics.setView(scene, camera);
   Object.entries(buttons).forEach(([key, b]) => b.setAttribute('aria-pressed', key === name));
-  hudSample.hidden = !['mars', 'dusk', 'delta'].includes(name);
+  hudSample.hidden = !['mars', 'dusk', 'delta', 'landing'].includes(name);
   history.replaceState(null, '', `?view=${name}&q=${graphics.quality}`);
 }
 
@@ -250,12 +321,19 @@ gui.add({
     });
   },
 }, 'run').name('test cinematic');
+const fx = { throttle: 1, airDensity: 1, intensity: 1, fuel: 'methalox' };
+const vfxFolder = gui.addFolder('vfx');
+const drive = (key) => (v) => vfx.forEach((o) => o.userData.set({ [key]: v }));
+vfxFolder.add(fx, 'throttle', 0, 1).onChange(drive('throttle'));
+vfxFolder.add(fx, 'airDensity', 0, 1).onChange(drive('airDensity'));
+vfxFolder.add(fx, 'intensity', 0, 1).onChange(drive('intensity'));
+vfxFolder.add(fx, 'fuel', ['kerolox', 'methalox', 'hydrolox']).onChange(drive('fuel'));
 gui.close();
 
 graphics.renderer.info.autoReset = false; // keeps the scene's triangle count, not just the last fullscreen pass
 show(VIEWS[params.get('view')] ? params.get('view') : 'orbit');
 
-window.__role3 = { graphics, assets, cinematic, getTerrainHeight, audio }; // for automated checks
+window.__role3 = { graphics, assets, cinematic, getTerrainHeight, audio, camera, controls, vfx }; // for automated checks
 
 // Frame stats for the sandbox readout and the automated checks.
 const fpsEl = document.getElementById('fps');
