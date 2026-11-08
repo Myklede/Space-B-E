@@ -12,6 +12,13 @@ import './designPad.css';
 
 const pct = (x) => `${Math.round(x * 100)} %`;
 const deg = (c) => `${Number(c).toFixed(Math.abs(c) < 10 && c % 1 ? 1 : 0)} °C`;
+/** A quiet heading over each region's complexes in the list (section.json keeps them region by region). */
+export const REGION_NAMES = Object.freeze({
+  usa: 'United States', russia: 'Russia and Kazakhstan', europe: 'Europe, at Kourou', china: 'China', japan: 'Japan',
+  india: 'India', korea: 'South Korea', brazil: 'Brazil', pacific: 'Pacific Ocean and New Zealand',
+});
+/** How a clamps option holds the ship: by clamps at full thrust, or (the Soyuz arms) by its own weight. */
+const byWeight = (o) => o?.holdBy === 'weight';
 
 /**
  * createPadViews(ui) → { body(view), crumb(view), summary(), artKey(dims), art(dims) }
@@ -44,6 +51,7 @@ export function createPadViews(ui) {
     if (key === 'mount') return `Takes ${fmtKN(heatLimitOf({ ...st, complex, choices: swap(st.choices, 'mount', o) }) * 1000)} here`;
     if (key === 'deluge' && o.heatF > 1) return `The pad takes ${fmtKN(heatLimitOf({ ...st, complex, choices: swap(st.choices, 'deluge', o) }) * 1000)} · ${pct(o.acousticF)} of the roar`;
     if (key === 'deluge') return `The pad takes ${fmtKN(heatLimitOf({ ...st, complex, choices: swap(st.choices, 'deluge', o) }) * 1000)} · the full roar`;
+    if (key === 'clamps' && byWeight(o)) return `Hangs by its weight ${o.holdS} s · finds about ${pct(o.catch)} of bad engines`;
     if (key === 'clamps') return o.catch ? `Holds ${o.holdS} s · finds about ${pct(o.catch)} of bad engines` : 'Lets go at once';
     if (key === 'tower') return o.id === 'none' ? 'Nothing reaches the upper ship' : `Reliability +${(o.reliability * 100).toFixed(1)} %`;
     if (key === 'lightning') return o.strikeF < 1 ? `Stops about ${pct(1 - o.strikeF)} of strikes on the ship` : 'The ship is the tallest thing around';
@@ -60,7 +68,7 @@ export function createPadViews(ui) {
       rows.push(fact('Heat limit at this complex', fmtKN(heatLimitOf({ ...st, complex, choices: swap(st.choices, key, o) }) * 1000)));
       if (key === 'deluge') rows.push(fact('Roar reaching the ship', pct(o.acousticF)));
     }
-    if (key === 'clamps') rows.push(fact('Held at full thrust', o.holdS ? `${o.holdS} s` : 'no'), fact('Bad engines found on the pad', o.catch ? `about ${pct(o.catch)}` : 'none'));
+    if (key === 'clamps') rows.push(byWeight(o) ? fact('Engines run before the lift', `${o.holdS} s, the ship held by its weight`) : fact('Held at full thrust', o.holdS ? `${o.holdS} s` : 'no'), fact('Bad engines found on the pad', o.catch ? `about ${pct(o.catch)}` : 'none'));
     if (key === 'lightning') rows.push(fact('Strikes that reach the ship', pct(o.strikeF)));
     if (key === 'access') rows.push(fact('Crew gets away from a pad emergency', o.escape ? `about ${pct(o.escape)}` : 'escape rocket only'));
     if (key === 'propellant') rows.push(fact('A day of waiting', fmtMoney(Math.round((complex?.holdFee ?? 0) * (o.holdF ?? 1)))));
@@ -123,13 +131,15 @@ export function createPadViews(ui) {
 
   function complexes() {
     const cur = setup().complex;
-    const out = [para('Real launch complexes. Each comes with its own ground equipment and its own weather; any piece can be changed afterwards.', 'vd-muted')];
+    const out = [para('Real launch complexes, past and present. Each comes with its own ground equipment and its own weather; any piece can be changed afterwards.', 'vd-muted')];
+    let region = null;
     for (const c of pad().sites) {
+      if (c.region && c.region !== region) { region = c.region; out.push(h('div', 'vp-region', REGION_NAMES[region] ?? region)); }
       const isOn = c.id === cur?.id;
       const limit = heatLimitOf(padSetup({ site: c.id }, pad()));
       const w = isOn ? now().weather : weatherFor({ site: c.id, seed: assembly.launch?.seed }, { pad: pad(), launchData });
       out.push(choice({
-        id: c.id, isOn, img: complexIcon(c), name: c.name, sub: `takes ${fmtKN(limit * 1000)} · ${deg(w.forecastC)} · ${c.place}`, price: fmtMoneyShort(kitFee(c, pad())),
+        id: c.id, isOn, img: complexIcon(c), name: c.name, sub: `takes ${fmtKN(limit * 1000)} · ${deg(w.forecastC)} · ${c.place}${c.years ? ` · ${c.years}` : ''}`, price: fmtMoneyShort(kitFee(c, pad())),
         card: { kind: 'pad', pad: { ...c, heatLimitKN: Math.round(limit) } },
         onPick: () => { assembly.setLaunch({ site: c.id, complex: undefined, slot: undefined, forecast: undefined, day: 0, pad: {} }); done(); },
       }));

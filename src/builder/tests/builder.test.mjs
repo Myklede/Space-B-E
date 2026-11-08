@@ -235,7 +235,7 @@ ok(`text.json: ${contract.HARD_BLOCKS.length} blocks and ${contract.WARNINGS.len
   // pad
   // the pad: real launch complexes, each with a kit of equipment and a climate (more in tests/pad.test.mjs)
   const pad = sections.pad;
-  check(pad.sites.length >= 7 && pad.sites.every((st) => st.kit && st.climate && Number.isFinite(st.climate.meanC)), 'pad: every complex has a kit and a climate');
+  check(pad.sites.length >= 25 && pad.sites.every((st) => st.kit && st.climate && Number.isFinite(st.climate.meanC)), 'pad: every complex has a kit and a climate');
   for (const st of pad.sites) for (const [k, v] of Object.entries(st.kit)) if (!pad.equipment.find((eq) => eq.key === k)?.options.some((o) => o.id === v)) fail(`pad complex ${st.id}: kit ${k}=${v} is not an option`);
   for (const eq of pad.equipment) if (!eq.options.length || (eq.options[0].fee ?? 0) !== 0 || (eq.options[0].reliability ?? 0) !== 0) fail(`pad equipment ${eq.key}: the first option must be the free, neutral default`);
   const d = new Assembly(presets.reliable, catalog);

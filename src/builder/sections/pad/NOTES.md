@@ -1,20 +1,38 @@
 # Launch pad section: notes
 
 Owner: the pad agent (Role 1). The pad is the ground hardware under the rocket at a real launch complex (decided
-2026-11-07, `src/builder/CLAUDE.md` section 6): no date picking. Files:
+2026-11-07, `src/builder/CLAUDE.md` section 6): no date picking. Wave 4 (2026-11-07) brought it to 31 real complexes
+across nine regions and eight new pieces of equipment, with sizes from the ratio rules of
+`src/builder/tools/blender/README.md` ("Ground models"). Files:
 
 | File | What |
 |---|---|
-| `section.json` | `sites` = the 10 launch complexes (each with `kit`, `climate`, `scale`, `fee`, `holdFee`, `aliases`, facts), `equipment` = the 8 kinds of ground hardware, each option with its physical numbers |
+| `section.json` | `sites` = the 31 launch complexes (each with `region`, `years`, `kit`, `climate`, `scale`, `fee`, `holdFee`, `designKN`, `aliases`, `look`, facts), `equipment` = the 8 kinds of ground hardware (36 options), each option with its physical numbers |
 | `effects.js` | `padSetup`, `complexOf`, `kitFee`, `heatLimitOf`, `liftoffOn`, `padEffects` (pure, Node-tested) |
 | `../../weather.js` | `weatherFor`: launch-day forecast, actual temperature, HOLD fees (pure) |
-| `../../designPad.js` (+ `designPad.css`) | the Launch pad card |
-| `art.js` | the pad under the ship, each complex's look, and the card pictures (`icon`, `only`) |
+| `../../designPad.js` (+ `designPad.css`) | the Launch pad card (region headings in the complex list, `REGION_NAMES`) |
+| `art.js` | the pad under the ship, each complex's look, the card pictures (`icon`, `only`), `PAD_MODELS` (planned Blender models) |
 | `explain.json` | `pad:<id>`, `equip:<key>`, `equip:<key>/<option>` in English and Vietnamese |
 | `../../tests/pad.test.mjs` | `node src/builder/tests/pad.test.mjs` |
 
 `createSections` (sections.js) keeps only `sites` and `equipment` of this folder's `section.json`, so every number lives
 on a complex or an option; the model constants are named exports of `effects.js`.
+
+## The 31 complexes
+
+In `section.json` order, region by region; within a region the strong pads first and the small historic ones last.
+SLC-40 stays first: the default complex and the tests' first site. Historic pads are offered as they were (`years`).
+
+- **United States:** SLC-40, LC-39A (Apollo kit), LC-39B (Artemis), Starbase Pad 1 (2023–2025), Starbase Pad 2 (2026),
+  SLC-41, SLC-4E, LC-34 (Saturn I/IB, Apollo 1 and 7), SLC-17 (Delta II, the Mars rovers), Wallops Pad 0A (Antares),
+  LC-19 (Gemini), LC-14 (Mercury-Atlas).
+- **Russia and Kazakhstan:** Baikonur Site 110 (N1, Energia-Buran), Baikonur Site 81 (`site81`, Proton), Gagarin's Start,
+  Vostochny Site 1S, Plesetsk Site 43.
+- **Europe, at Kourou:** ELA-4 (Ariane 6), ELA-3 (Ariane 5), ELS (Soyuz).
+- **China:** Wenchang LC-101, Xichang LC-2, Jiuquan LC-43/921 (Shenzhou).
+- **Japan:** Yoshinobu LA-Y1, Uchinoura M pad (Nozomi, Hayabusa). **India:** Sriharikota FLP (Mangalyaan).
+  **South Korea:** Naro LC-2 (Nuri). **Brazil:** Alcântara VLS pad.
+- **Pacific Ocean and New Zealand:** Sea Launch Odyssey, Rocket Lab LC-1, Omelek Island (Falcon 1).
 
 ## Where a choice comes from
 
@@ -22,11 +40,12 @@ on a complex or an option; the model constants are named exports of `effects.js`
   - `site` is the complex id (the old field name, so `sections.padState` and old saves keep working).
   - `pad` holds only the player's own choices; everything else comes from the complex's `kit` (`padSetup`).
   - Choosing a complex on the card resets `pad`, `day`, `forecast` and the old `slot`.
-- Old saves: an old `site` id lands on a complex through `aliases` (`cape` → SLC-40, also on Cape Canaveral and the old site's free cold window; `vandenberg` → SLC-4E, `kourou` →
-  ELA-3, `baikonur` and `plesetsk` → Gagarin's Start; `starbase`, `wenchang`, `tanegashima`, `mahia` keep their ids), an
-  unknown or missing one on the first complex (SLC-40, also at Cape Canaveral). The old `slot: 'cold'` (Cape's free cold
-  window, `data/launch.json` `legacyFront`) becomes a 2 °C cold front on day 0; `mild`/`warm` and the other old slot ids
-  mean nothing now. Old equipment choices keep their ids (`raised` and `catch` are new).
+- Old saves: an old `site` id lands on a complex through `aliases` (`cape` → SLC-40, `vandenberg` → SLC-4E, `kourou` →
+  ELA-3, `baikonur` → Gagarin's Start, `proton` → Baikonur Site 81). Since wave 4 the old id `plesetsk` is a complex of
+  its own (it used to land on Gagarin's Start). `starbase`, `wenchang`, `tanegashima`, `mahia` keep their ids; an
+  unknown or missing one lands on the first complex (SLC-40). The old `slot: 'cold'` (Cape's free cold window,
+  `data/launch.json` `legacyFront`) becomes a 2 °C cold front on day 0; the other old slot ids mean nothing now.
+  Every old equipment id still exists.
 - `spec.launch` = `{ tempC (the forecast), complex, site, day, pad }`. asBuilt.js flies `actualC` at confirm.
 
 ## Heat limit and the four consequences (effects.js)
@@ -46,155 +65,205 @@ lightningRisk = day lightning × (0.5 × lightning.strikeF + 0.5 × weather.trig
 fee = complex.fee + Σ option.fee + weather.fee (days of HOLD) + launch.repairDue
 ```
 
-Why these shapes:
+Why these shapes (unchanged since wave 3): the jet's power is ½·F·vₑ, so the heat and the sound a pad takes grow with
+thrust; a mount and trench are designed for a thrust. g always comes from the caller (no gravity literal). Held back
+for the first seconds, the ship climbs slower and fights gravity longer: g · t · (1 − throttle) of Δv. The overload
+keeps half its heat dose. Damage and repairs are deliberate game values (STS-124 tore 3,500 bricks from LC-39A's trench
+in 2008, about $2.5 M; Starship's first flight cratered Starbase in 2023). Water soaks up heat, sound and loose concrete
+(STS-1's overpressure in 1981). Hold-down: the Saturn V's arms let go once all five F-1s were at full thrust; the
+Shuttle shut down on the pad five times. The clamps count once: as the catch, not also as reliability. The board line
+for the clamps comes from the option (`clamps.holdLine`, `{holdS}` = its seconds): the Soyuz support arms are not
+clamps (`holdBy: 'weight'`).
 
-- **Heat limit in thrust.** The jet's power is ½·F·vₑ, so for similar engines the heat and the sound the pad takes grow
-  with thrust. A mount and trench are designed for a thrust: LC-39's trench for the Saturn V's 34.5 MN, Gagarin's Start
-  for the R-7 (about 4 MN), Rocket Lab LC-1 for the small Electron.
-- **No gravity literal.** g always comes from the caller (stats.js passes `planets.earth.g`); without it nothing is held
-  back and no Δv is lost.
-- **Held back for the first seconds (a).** While the plume plays on the pad (until the ship clears its tower, about 7 s
-  for the Shuttle; TODO verify the exact figure for other vehicles) the computer runs the engines at the limit. The
-  propellant is not lost, but the ship climbs slower and fights gravity longer: catching up costs g · t · (1 − throttle)
-  of Δv (mass cancels out). stats.js burns that Δv as propellant on the pad (`liftoffBurn`). The floor of 60 %: booster
-  engines are rarely run lower at liftoff (the RS-25 throttled to 67 %; Merlin and Raptor go lower) and the ship must
-  still lift: held back, it keeps a thrust-to-weight ratio of at least 1.15. Example: Workhorse (1,771 kN, 125 t) on
-  SLC-4E (1,591 kN) would like 90 % but its weight sets the floor at 92 %: it loses about 5 m/s, the pad is slightly
-  overloaded (1 % engine damage, $10k of repairs).
-- **Overload (b, c).** Throttling to the limit is not free: the slower climb keeps the fire on the pad longer, so half of
-  the overload's heat dose stays (game value). Real basis: Starship's first flight (20 April 2023), with no trench and
-  no water, cratered the concrete and threw chunks of it hundreds of metres, fine dust up to about 10 km; STS-124
-  (31 May 2008) tore more than 3,500 bricks from LC-39A's trench wall, about $2.5 M of repairs. Whether pad debris hurt
-  Starship's engines was never confirmed (SpaceX traced the engine failures to propellant leaks), so the game keeps it a
-  chance, not a certainty.
-- **Damage and repairs are deliberate game values.** `DEBRIS_K` 0.25 keeps the 50 % cap for gross overloads (a big ship on
-  a bare slab or on LC-1). Repairs stop at $280k: STS-124's $2.5M was about half a percent of a roughly $450M Shuttle
-  flight; here repairs are a few percent of a $3–5M ship, enough to sting without ending a campaign.
-- **Water (deluge).** Water turning to steam soaks up heat and sound and keeps loose concrete down. `heatF` 1.3 / 1.6,
-  `debrisF` 0.6 / 0.35, `acousticF` 0.6 / 0.35 are game values. Real basis: on STS-1 (1981) the solid boosters'
-  ignition overpressure buckled a strut in the nose and damaged 148 tiles; NASA added more pad water from STS-2 on.
-  ELA-3's 90 m tower pours about 1,500 m³ at liftoff; LC-39B's holds about 1.5 million litres.
-  `waterPlate` 0.85 on the raised mount: with no trench, Starbase's water-cooled steel plate is both the water and the
-  flame deflector, so water counts for more there (bare 3,510 kN, with the plate 7,547 kN, the strongest pad). The
-  ladder stays honest: at any complex and with the same water, a dearer mount always takes more fire.
-- **Hold-down (d).** Saturn V's start sequence began 8.9 s before liftoff and the arms let go only once all five F-1s
-  were at full thrust; Falcon 9 holds its nine Merlins a few seconds; the Shuttle shut down on the pad five times after
-  its main engines lit (STS-41-D, 51-F, 55, 51, 68). `catch` 0.55 (about 3 s) and 0.7 (about 6 s) are game values. The
-  clamps count once: as this catch, not also as reliability.
-- **Acoustic load.** Sound power is a small share of jet power (so it grows with thrust); the reliability loss is a game
-  value, at most 1.5 %.
-- **Lightning.** Half a strike on the waiting ship (STS-115's mast took about 100,000 A in 2006), half lightning set off
-  by the climbing ship (Apollo 12 in 1969, Atlas-Centaur 67 in 1987), which the field mills and launch rules prevent.
-- **Expensive pads take bigger rockets at full power.** Kit limits run from 22 kN (LC-1) to 3,808 kN (LC-39A) and
-  7,547 kN (Starbase with its water plate).
-
-### Calibration (game scale: about one tenth of the real pads)
+### Calibration (about one tenth of each pad's design thrust)
 
 The game's ships are about a tenth of the real rockets (Reliable: 70 t and 943 kN), so each kit's heat limit is about a
-tenth of what the real pad was built for: LC-39A 3,808 kN (Saturn V 34.5 MN), SLC-40 2,055 (Titan IV-B, about 15 MN;
-kept a little higher so Workhorse fits), SLC-41 1,794 (Vulcan, about 17 MN), SLC-4E 1,591, ELA-3 1,504 (Ariane 5, about
-13–15 MN), Wenchang 1,088 (Long March 5, about 10.6 MN), Yoshinobu 988 (H-IIA/H-IIB), Gagarin's Start 449 (R-7, about
-4 MN), Rocket Lab LC-1 22 (Electron, about 0.2 MN); Starbase 3,510 bare (it took Super Heavy's 75 MN once, with heavy
-damage) and 7,547 with the water plate. Mount base values: slab 320, raised 900, flame pit 1,550, trench 1,700, mobile
-platform 2,000 kN; `scale` (the size of a complex's hardware): LC-39A 1.19, SLC-40 0.93, SLC-41 0.69, Starbase 3.9,
-SLC-4E 0.72, Gagarin 0.29, ELA-3 0.47, Wenchang 0.34, Tanegashima 0.38, LC-1 0.0245. With their own kits:
+tenth of the liftoff thrust of the rocket the pad was built for (`designKN`; pad.test checks 0.08–0.14 for all 31).
+SLC-40 is kept a little higher than its Titan IV-B (about 15 MN) so Workhorse fits. Mount base values: slab 320,
+raised 900, flame pit or bucket 1,550, trench 1,700, mobile platform 2,000 kN. With their own kits, through
+`computeShipSpec` (the presets on each complex):
 
-| Complex | Kit fee | Heat limit | Reliable 943 kN | Workhorse 1,771 kN | Day of HOLD |
-|---|---|---|---|---|---|
-| SLC-40 (first, default) | $172k | 2,055 kN | full thrust | full thrust | $21k |
-| LC-39A | $298k | 3,808 kN | full thrust | full thrust | $45k |
-| SLC-41 | $190k | 1,794 kN | full thrust | full thrust (just) | $30k |
-| Starbase (2024: water plate) | $252k | 7,547 kN (3,510 without water) | full thrust | full thrust | $15k |
-| SLC-4E | $137k | 1,591 kN | full thrust | 92 %, −5 m/s, 1 % damage, $10k | $21k |
-| Gagarin's Start | $93k | 449 kN | 84 %, −11 m/s, 16 % damage, $200k | 92 %, 49 %, $280k | $22.5k |
-| ELA-3 | $220k | 1,504 kN | full thrust | 92 %, −5 m/s, under 1 %, $5k | $37.5k |
-| Wenchang LC-101 | $245k | 1,088 kN | full thrust | 92 %, 2 %, $35k | $30k |
-| Yoshinobu LA-Y1 | $180k | 988 kN | full thrust | 92 %, 4 %, $65k | $30k |
-| Rocket Lab LC-1 | $80k | 22 kN | 84 %, 50 %, $280k | 92 %, 50 %, $280k | $9k |
+| Complex | Region · years | Kit fee | Heat limit | Design thrust | Reliable | Workhorse | Day of HOLD |
+|---|---|---|---|---|---|---|---|
+| SLC-40 | usa · 1965– | $180k | 2,055 kN | 15,000 kN | full thrust | full thrust | $21k |
+| LC-39A | usa · 1967– | $283k | 3,806 kN | 34,500 kN | full thrust | full thrust | $45k |
+| LC-39B | usa · 1969– | $280k | 3,913 kN | 39,140 kN | full thrust | full thrust | $41.25k |
+| Starbase Pad 1 | usa · 2023–2025 | $255k | 7,547 kN | 75,000 kN | full thrust | full thrust | $15k |
+| Starbase Pad 2 | usa · 2026– | $265k | 9,068 kN | 90,600 kN | full thrust | full thrust | $15k |
+| SLC-41 | usa · 1965– | $205k | 1,794 kN | 17,000 kN | full thrust | full thrust | $30k |
+| SLC-4E | usa · 1964– | $137k | 1,591 kN | 15,900 kN | full thrust | 92 %, −5.4 m/s, 1 % damage, $10k | $21k |
+| LC-34 | usa · 1961–1968 | $143k | 712 kN | 7,120 kN | 84 %, −11.2 m/s, 4 % damage, $50k | 92 %, −5.4 m/s, 27 % damage, $280k | $26.25k |
+| SLC-17 | usa · 1957–2011 | $168k | 405 kN | 4,050 kN | 84 %, −11.2 m/s, 12 % damage, $150k | 92 %, −5.4 m/s, 34 % damage, $280k | $22.5k |
+| Wallops Pad 0A | usa · 2013– | $192k | 384 kN | 3,844 kN | 84 %, −11.2 m/s, 6 % damage, $85k | 92 %, −5.4 m/s, 15 % damage, $225k | $18.75k |
+| LC-19 | usa · 1959–1966 | $120k | 191 kN | 1,910 kN | 84 %, −11.2 m/s, 37 % damage, $280k | 92 %, −5.4 m/s, 50 % damage, $280k | $18.75k |
+| LC-14 | usa · 1957–1966 | $140k | 159 kN | 1,600 kN | 84 %, −11.2 m/s, 47 % damage, $280k | 92 %, −5.4 m/s, 50 % damage, $280k | $25k |
+| Baikonur Site 110 | russia · 1969–1988 | $213k | 3,501 kN | 35,000 kN | full thrust | full thrust | $30k |
+| Baikonur Site 81 | russia · 1965– | $123k | 1,000 kN | 10,000 kN | full thrust | 92 %, −5.4 m/s, 12 % damage, $155k | $22.5k |
+| Gagarin's Start | russia · 1957–2019 | $108k | 449 kN | 4,000 kN | 84 %, −11.2 m/s, 16 % damage, $200k | 92 %, −5.4 m/s, 49 % damage, $280k | $22.5k |
+| Vostochny Site 1S | russia · 2016– | $146k | 400 kN | 4,000 kN | 84 %, −11.2 m/s, 20 % damage, $255k | 92 %, −5.4 m/s, 50 % damage, $280k | $26.25k |
+| Plesetsk Site 43 | russia · 1965– | $105k | 400 kN | 4,000 kN | 84 %, −11.2 m/s, 20 % damage, $255k | 92 %, −5.4 m/s, 50 % damage, $280k | $18.75k |
+| ELA-4 | europe · 2024– | $245k | 1,958 kN | 19,600 kN | full thrust | full thrust | $37.5k |
+| ELA-3 | europe · 1996–2023 | $220k | 1,504 kN | 14,000 kN | full thrust | 92 %, −5.4 m/s, 1 % damage, $5k | $37.5k |
+| ELS | europe · 2011–2022 | $165k | 400 kN | 4,000 kN | 84 %, −11.2 m/s, 20 % damage, $255k | 92 %, −5.4 m/s, 50 % damage, $280k | $30k |
+| Wenchang LC-101 | china · 2016– | $245k | 1,088 kN | 10,620 kN | full thrust | 92 %, −5.4 m/s, 2 % damage, $35k | $30k |
+| Xichang LC-2 | china · 1990– | $130k | 592 kN | 5,923 kN | 84 %, −11.2 m/s, 5 % damage, $70k | 92 %, −5.4 m/s, 20 % damage, $280k | $18.75k |
+| Jiuquan LC-43/921 | china · 1999– | $188k | 590 kN | 5,900 kN | 84 %, −11.2 m/s, 3 % damage, $55k | 92 %, −5.4 m/s, 11 % damage, $210k | $22.5k |
+| Yoshinobu LA-Y1 | japan · 1994– | $180k | 988 kN | 9,900 kN | full thrust | 92 %, −5.4 m/s, 4 % damage, $65k | $30k |
+| Uchinoura M pad | japan · 1962– | $93k | 378 kN | 3,780 kN | 84 %, −11.2 m/s, 23 % damage, $280k | 92 %, −5.4 m/s, 50 % damage, $280k | $20k |
+| Sriharikota FLP | india · 1993– | $157k | 768 kN | 7,680 kN | 84 %, −11.2 m/s, 1 % damage, $15k | 92 %, −5.4 m/s, 13 % damage, $160k | $18.75k |
+| Naro LC-2 | korea · 2009– | $153k | 294 kN | 2,942 kN | 84 %, −11.2 m/s, 20 % damage, $280k | 92 %, −5.4 m/s, 50 % damage, $280k | $22.5k |
+| Alcântara VLS pad | brazil · 1990– | $98k | 121 kN | 1,212 kN | 84 %, −11.2 m/s, 50 % damage, $280k | 92 %, −5.4 m/s, 50 % damage, $280k | $20k |
+| Sea Launch Odyssey | pacific · 1999–2014 | $115k | 725 kN | 7,250 kN | 84 %, −11.2 m/s, 2 % damage, $25k | 92 %, −5.4 m/s, 14 % damage, $175k | $33.75k |
+| Rocket Lab LC-1 | pacific · 2016– | $80k | 22 kN | 224 kN | 84 %, −11.2 m/s, 50 % damage, $280k | 92 %, −5.4 m/s, 50 % damage, $280k | $9k |
+| Omelek Island | pacific · 2006–2009 | $85k | 41 kN | 410 kN | 84 %, −11.2 m/s, 50 % damage, $280k | 92 %, −5.4 m/s, 50 % damage, $280k | $30k |
 
-Every tail shape against every complex (the supervisor's grid, `spaceb-wave3/review2-pad/grid.mjs`): the solid-booster
-tails of 2.2–3.1 MN (single + solids, Atlas V, Ariane 5, Shuttle, Titan II and New Glenn on Workhorse) overload SLC-40
-and every smaller pad and launch at full thrust only from LC-39A or Starbase with water; the 1.4–2 MN tails fit SLC-40
-and overload SLC-4E, ELA-3, Wenchang, Yoshinobu; Gagarin's Start and LC-1 take only small ships.
+18 of 31 complexes hold Reliable back; 8 take Workhorse at full thrust. The default (SLC-40) and 12 strong pads take
+both; the small historic pads were built for small rockets. LC-39A stays the dearest kit ($283k), Rocket Lab LC-1 the
+cheapest ($80k), Starbase Pad 2 takes the most fire, LC-1 the least. Reliable and Workhorse launch from SLC-40 for $180k
+(the crew escape chute added $8k in wave 4). Fees are game values: complex $10k–$50k ($140k at Starbase, renting
+SpaceX's own site), options $3k–$65k, hold $15k–$60k a day × the propellant loading's `holdF`.
 
-Fees are a tax, not a trade-off: option fees $5k–$65k, complex fees $8k–$50k (Starbase $140k: renting SpaceX's private
-site and the biggest mount there is; a game value), kits $80k (LC-1) to $298k (LC-39A). Reliable and Workhorse launch
-from SLC-40 ($172k): about $3.25M and $4.6M with the ship. Hold fees: $15k–$60k a day × the propellant loading's `holdF`
-(1.0 by hand, 0.75 automatic top-off, 0.6 load-and-go: a hold costs what must be drained, boiled off and reloaded; game
-values). One simple rule on purpose: the days already waited are charged at today's propellant option (`holdFee × day`),
-so changing the loading after a HOLD re-prices those days too.
+## Equipment added in wave 4 (real basis; numbers are game values)
+
+- **clamps `tulip`** (support arms): the R-7/Soyuz rocket hangs by its sides in four arms over the pit and is not
+  bolted down; the engines burn about 17 s through preliminary and intermediate stages before the thrust passes the
+  weight, then counterweights swing the arms back (RussianSpaceWeb, ESA). catch 0.35, holdS 17, `holdBy: 'weight'`.
+  Gagarin's Start, Plesetsk, Vostochny and ELS use it.
+- **tower `tsm`** (tail service masts): Shuttle platforms 2 × 9.4 m, Saturn V launchers 3, SLS ML-1 2 × ~10 m.
+- **tower `gantry`** (swing-up service gantry): two halves raised round the Soyuz and lowered about 45 min before
+  launch (RussianSpaceWeb). Reliability 0.0045 (below the fixed tower: no option is a plain loss, pad.test).
+- **tower `mst`** (mobile service tower): Vostochny (about 50 m, 1,600 t, 12 m/min), ELS (52 m, 80 m rollback), ELA-4
+  (89 m, 8,200 t, 120 m rollback), SLC-17 (126 ft), Sriharikota FLP (3,200 t). The catch tower's reliability rose to
+  0.006 in wave 4 so it is no plain loss against the fixed tower.
+- **access `chute`**: SpaceX's SLC-40 crew tower chute, tested 26 February 2024. **access `blastroom`**: Apollo LC-39's
+  express lifts, slide tube, rubber ramp and blast room 12 m under the pad (Moonport, NASA SP-4204); reliability 0.005.
+- **deluge `iop`**: Pad 39B's ignition overpressure and sound suppression (about 400,000 gal, under 30 s); the water
+  troughs added after STS-1.
+- **lightning `rod`**: the lightning rod on Starbase's tower.
+- Changed texts: `mount/deflector` (now the one-way pit or bucket: Gagarin's pit, Pad 39B's 2018 ramp, Starbase Pad 2's
+  steel flame diverter), `mount/trench`, `mount/mlp` (no more 870 t Ariane table: unconfirmed), `access/slidewire`
+  (Artemis: four baskets, 1,335 ft cables, armoured vehicles).
+- `access.escape` (crewEscape) is shown on the card; nothing in the game rolls a pad emergency yet. The fuel-farm effect
+  (a farm that stores only some propellants) is not in the game (the lead's decision, wave 4).
 
 ## Weather (weather.js)
 
 - Climate of each complex: a January day (a northern-winter Mars window; summer at Mahia): `meanC`, `swingC` (day-to-day
-  spread), `windKts`, `windSwingKts`, `lightning` (chance of lightning near the pad), `sky`. Approximate January normals,
-  TODO verify each against the local climate tables: Cape 16 °C (highs about 22, lows about 10), Starbase 17, Vandenberg
-  12, Baikonur −9.6, Kourou 27 (rainy season, frequent storms), Wenchang 18.7, Tanegashima 11, Mahia 18.
+  spread), `windKts`, `windSwingKts`, `lightning` (chance of lightning near the pad), `sky`. January normals 1991–2020
+  where a station table exists (NOAA, Météo-France, CMA, JMA, KMA, IMD, INMET via the Wikipedia climate tables): Cape
+  16 °C (Titusville 15.3), Wallops 3.3, Starbase 17, Vandenberg 12, Baikonur −9.6, Vostochny −24.4 (Svobodny), Plesetsk
+  −12.5 (RETScreen), Kourou 26.6 (ELA-3 keeps 26.6 since wave 4), Jiuquan −10.4 (Ejin Banner), Xichang 10.2, Wenchang
+  18.7, Tanegashima 11, Uchinoura 7.5 (Kanoya), Sriharikota 25.5 (Nellore), Naro 1.6 (Goheung), Alcântara 27.6 (São
+  Luís), Kwajalein 27.4, Sea Launch 27 (Kiritimati), Mahia 18. Winds and lightning chances are game values.
 - Forecast: `meanC + anomaly`, the anomaly carrying over from day to day (`anomaly(d) = 0.6 · anomaly(d−1) + swing ·
-  0.8 · noise`, an AR(1) chain; day-to-day temperature anomalies are strongly correlated, TODO verify 0.6).
+  0.8 · noise`, an AR(1) chain).
 - `actualC = forecastC + clamp(errorC · noise, ±2 · errorC)`. `errorC` from the weather watch: 3 °C (look at the sky),
-  1.5 °C (balloons), 0.6 °C (radar and field mills). Real day-ahead temperature forecasts miss by about 1–2 °C.
+  1.5 °C (balloons), 0.6 °C (radar and field mills).
 - noise = a bell curve of four hashed uniforms (`fnv` + `mulberry32`) of complex id, day, `launch.seed` and a channel:
   the same save always gets the same weather; no random calls.
 - `launch.forecast` = `{ day, tempC, windKts?, lightning?, label?, seed? }` fixes one day (Cold Morning: a 2 °C cold front
   on day 0). It belongs to one campaign: once `launch.seed` moves on (index.js after a flight) the climate rules again.
 - HOLD: `launch.day + 1`. `holdFee` = complex.holdFee × propellant.holdF; `fee` = holdFee × day, paid at confirm.
 
-Presets: Reliable, Workhorse and Thin Skin launch from SLC-40 on day 0 (23 °C). Cold Morning launches from SLC-40 with
-every piece of equipment at its cheapest (a skimped pad, so its LOW_RELIABILITY stays) on a 2 °C cold front with no
-weather watch: the actual temperature comes out at −4 °C, "below freezing on the pad" as the Cold Morning ending says.
+Presets: Reliable, Workhorse and Thin Skin launch from SLC-40 on day 0. Cold Morning launches from SLC-40 with every
+piece of equipment at its cheapest (a skimped pad, so its LOW_RELIABILITY stays) on a 2 °C cold front with no weather
+watch: the actual temperature comes out below freezing, as the Cold Morning ending says.
 
-## Real facts used (sources)
+## Art (art.js): the ratio rules
 
-- LC-39A: 12 of 13 Saturn V launches, 82 of 135 Shuttle flights; trench about 137 × 18 × 13 m; STS-124 brick damage
-  (NASA safety message "Hit the Bricks", Spaceflight Now, NASASpaceflight 2008); Falcon Heavy 6 Feb 2018; Demo-2 30 May 2020.
-- SLC-40: 55 Titan launches 1965–2005, Falcon 9 since 4 June 2010, Amos-6 1 Sept 2016, 50 launches in 2023, Crew-9 Sept
-  2024 (Wikipedia, Cape Canaveral SLC-40). Four lightning towers: TODO verify.
-- SLC-41: clean pad, VIF 89 m (292 ft) about 550 m (1,800 ft) from the pad, rollout about a day before launch (ULA, CC
-  Space Museum); Atlas V since 21 Aug 2002, Vulcan since 8 Jan 2024; Curiosity 26 Nov 2011, Perseverance 30 July 2020.
-- Starbase: tower 146 m with chopsticks, 370 t table, twenty clamps, water-cooled steel plate after Flight 1, first booster
-  catch 13 Oct 2024 (Wikipedia, SpaceX Starbase); Flight 1 crater and debris (AFP, SpaceNews, 2023; arXiv 2403.10788).
-- SLC-4E: Atlas-Agena 1964, Titan to 2005 (68 launches), Titan 34D explosion 18 Apr 1986, Falcon 9 since 29 Sept 2013,
-  LZ-4 since Oct 2018 (Wikipedia, Vandenberg SLC-4).
-- Gagarin's Start: 15 May 1957 first launch, 520 launches to 25 Sept 2019, Soyuz T-10-1 fire 26 Sept 1983 (Wikipedia).
-  Pit 250 × 100 × 45 m (EurasianTimes; another source says 35 m: TODO verify against russianspaceweb.com). The card
-  says 45 m.
-- ELA-3: 117 Ariane 5 launches 1996–2023, JWST 25 Dec 2021 (Wikipedia); 870 t launch table, 90 m water tower with
-  1,500 m³, four 100 m lightning towers, three flame ducts (ESA, CNES, russianspaceweb.com). The Vulcain ran about 7 s
-  on the pad before the boosters lit (widely reported; TODO verify the exact figure).
-- Wenchang LC-101: finished 2014, Long March 5, Tianwen-1 23 July 2020, launch paths within 10 km of the coast (Wikipedia).
-- Yoshinobu LA-Y1: early 1990s, H-II and H-IIA (last 28 June 2025), mobile launcher out about 12 h before launch, 30-minute
-  move, block house 500 m away and 12 m underground, Hope 19 July 2020 (Wikipedia). 190 launch days a year until April
-  2011 (the fishing agreement; TODO verify the month against JAXA).
-- Rocket Lab LC-1: 2016 Pad A, Feb 2022 Pad B, 66 t platform and 7.6 t strongback (Rocket Lab). Licensed for a launch
-  every 72 hours (the 30-year term is left out: TODO verify). Hold-down clamps on Electron's mount: TODO verify.
-- Saturn V hold-down: start command at T−8.9 s, release after full thrust (several Apollo histories); Shuttle RSLS aborts
-  (Wikipedia, Space Shuttle abort modes; NASA history); STS-1 overpressure (NASA NTRS 20205007677).
+Sizes follow `src/builder/tools/blender/README.md` ("Ground models"), with H = the ship's height and D = its width:
 
-## Art
+| Piece | Size in art.js | Real basis |
+|---|---|---|
+| Service tower (`fixed`, `rss`) | top 1.10 × H above its deck (`look.towerH`: LC-34 0.95 × H above the pedestal) | Saturn V tower 116 m / 110.6 m; ML-1 ~105 m above its deck / SLS 98 m |
+| Catch tower | mount top + 1.05 × H | Starbase 146 m beside a 121–124 m Starship |
+| Strongback | 1.02 × H | Falcon 9 |
+| Soyuz gantry | two halves 0.95 × H, swung 18° back | photos (no published height) |
+| Mobile service tower | 3 × D square, 1.15 × H tall, rolled back on rails | Vostochny 48 m and 24.5 m square / Soyuz 46 m |
+| Tower width, distance | 1.3 × D wide (2.2–5 m), its face about 1 × D off the hull | Saturn 12.2 m / 10.1 m; ML-1 12.2 m / 8.4 m |
+| Opening under the ship | 1.2 × D | Saturn launcher 14 m / 10.1 m; LC-34 7.9 m / 6.6 m |
+| Launch ring or table | 1.9 × D outside | LC-34 pedestal 13 m / 6.6 m |
+| Mobile platform deck | 3 × D across (longer on the tower side when a launch umbilical tower rides on it), 0.75 × D high on 0.65 × D pedestals | 49 × 41 × 7.6 m on 6.7 m / 10.1 m |
+| Flame trench | 1.9 × D wide, pad 1.2 × D above its floor | LC-39: 18 m, 12 m / 10.1 m |
+| Tail service masts | 1.15 × D on a deck | Shuttle 9.4 m / 8.4 m; ML-1 ~10 m |
+| Raised mount | 1.2–2.2 × D tall by the complex's scale | LC-34 8 m / 6.6 m; Starbase ~20 m / 9 m |
 
-- `padArt(state, { radius, height, layout, icon, only })`: unchanged fitting rules (tower steps back from side parts,
-  arms on part flanks, crew arm at the capsule, clamps under the lowest tank).
-- Card pictures of the water and the clamps are close-ups with no pad under them: the water ring, its feed and blue spray
-  (rainbird arcs and the water tower for the biggest option), a scorched patch for "no water"; the clamps around the
-  base of a ship on its launch ring.
-- New pieces: Starbase's raised mount (six legs, a heavy table, the steel water plate when there is water; its height
-  follows the complex's `scale`), the integration tower with two catch arms passing either side of the ship near its
-  top and a quick-disconnect arm, Gagarin's flame pit (a dark pit opening on one side between sloping earth banks) with
-  the four support arms gripping the ship's base (opened out on an empty stand).
-- Ground per complex from `climate.ground`; snow when the forecast is below 0 °C.
-- Card pictures: `icon` draws a compact pad without ground or far-off gear, with a plain white rocket for a complex, and is
-  scaled to 0.4 so the picture camera (far plane 100 m) sees all of it; `only: key` draws one piece of equipment on a bare
-  slab (storage and weather gear close in; a windsock for "look at the sky").
+New pieces in wave 4: tail service masts with their hoods and hoses, the Soyuz support arms drawn from `clamps = tulip`
+(on any mount; their counterweights hang below the ring where there is room), four support posts at the rim when there
+are no clamps, the swing-up gantry, the rolled-back mobile service tower (the crew stair tower then stands at −70°),
+the escape chute (packed; deployed in its own card picture), the blast room's slide tube and entrance, water bags over
+the opening (`iop`), the lightning rod (on the tallest tower, else on a pole), ten new grounds (`wallops`, `gobi`,
+`xichang`, `sriharikota`, `naro`, `alcantara`, `atoll`, `kagoshima`, `amur`, `ocean`: Sea Launch stands on a steel deck
+on the sea) and the tower colour `grey` (`TOWER`). Far-field gear (water tower, lightning towers, spheres, radar) keeps
+its wave-3 placement.
+
+## Blender models (planned; `PAD_MODELS` in art.js)
+
+`padArt(state, { ..., models })` takes an optional map of model id → loaded THREE.Object3D. Where one is given it
+replaces the procedural piece (`useModel`); today none is passed, so every piece is drawn by code. Each model is built
+for the reference ship (20 m × 2.5 m) and scaled by art.js along one axis family: towers in height, mounts across.
+Anchors: a tower at the centre of its base, its face toward the rocket on −X; a mount centred on the rocket's axis at the
+hardstand. Hooks wired today: `pad/mount_raised`, `pad/mlp`, `pad/tower_lattice` (the fixed tower), `pad/catch_tower`,
+`pad/soyuz_gantry`, `pad/mst`, `pad/soyuz_launcher` (the tulip arms); the others are listed for the modeller.
+
+| Model id | Piece | Used by | Budget |
+|---|---|---|---|
+| `pad/tower_lattice` | modular umbilical tower: `bay`, `base`, `top_crane`, `top_mast`, `top_rod`, `arm_swing`, `arm_crew`, `lift` | LC-39A, LC-34, Xichang, Jiuquan, Naro, Wenchang, Site 110 | 20k tris, 350 KB |
+| `pad/mlp` | mobile launch platform (Saturn, Shuttle, Ariane 5 table, China); LC-39B may reuse NASA's `mobile_launcher.glb` | LC-39A/B, SLC-41, ELA-3, Wenchang, Jiuquan, Tanegashima | 15k, 300 KB |
+| `pad/mount_raised` | Starbase Pad 1 and Pad 2 mounts, LC-34 pedestal, small mounts | Starbase, LC-34, LC-1, Omelek | 15k, 300 KB |
+| `pad/soyuz_launcher` | ring, four support arms (`pose_open`/`pose_closed`), counterweights, cable and fuelling masts | Gagarin's Start, Plesetsk, Vostochny, ELS | 15k, 300 KB |
+| `pad/soyuz_gantry` | the two gantry halves (`pose_raised`/`pose_lowered`) | Gagarin's Start, Plesetsk | 12k, 250 KB |
+| `pad/mst` | mobile service tower (Vostochny, ELS, ELA-4, SLC-17, SHAR FLP, LC-14, LC-34, Alcântara, Uchinoura, Site 81) | 10 complexes | 15k, 300 KB |
+| `pad/rss` | Shuttle rotating service structure; Site 110's rotating tower | Site 110 | 15k, 300 KB |
+| `pad/strongback` | Falcon 9 strongback, Electron, Antares TEL, Gemini erector, Proton and Zenit erectors | SLC-40, SLC-4E, Wallops, LC-19, LC-1, Omelek, Sea Launch | 12k, 250 KB |
+| `pad/catch_tower` | Starbase tower, carriage, chopsticks, ship QD arm, rod (Pad 2: shorter arms) | Starbase Pads 1 and 2 | 20k, 380 KB |
+| `pad/deflectors` | LC-39 inverted V, LC-34 wedge, Pad 39B one-way ramp, Starbase plate and diverter, trench wall, pit lip | trench and pit mounts | 8k, 200 KB |
+| `pad/water_tower` | 39A/B and Wallops towers, rainbird, water bag | `tower`, `iop` | 6k, 150 KB |
+| `pad/lightning_tower` | 39B catenary mast, ELA/ELS/Wallops towers (wires by code) | `mast`, `catenary` | 4k, 100 KB |
+| `pad/sphere` | cryogenic sphere, horizontal tank, kerosene tank | `auto`, `loadgo` | 8k, 180 KB |
+| `pad/egress` | slidewire basket, M113, escape chute, blast-room door | `slidewire`, `blastroom`, `chute` | 10k, 250 KB |
+| `pad/weather_gear` | radar radome, field mill, wind tower | `radar` | 3k, 80 KB |
+| `pad/holddown` | Saturn V hold-down arm, SLS post, Falcon and Starbase clamps, tail service mast | `hold`, `release`, `tsm` | 6k, 150 KB |
+
+About 4.4 MB at the budgets (cap 12 MB). Reference photos (NASA, public domain): the wave-4 research folder
+`spaceb-wave4/pad/refs/` (two SpaceX photos there are reference only).
+
+## Sources
+
+The wave-4 research (`spaceb-wave4/pad/sources.md`, `notes/`) lists every URL per complex. Main ones: NASA fact sheets
+for Pad 39B and Mobile Launcher 1, NASA SP-4204 *Moonport* (LC-34, LC-39 deflectors, egress), the Cape Canaveral Space
+Force Museum pages (LC-14, LC-17, LC-19, LC-34), RussianSpaceWeb (Baikonur sites 1, 31, 81, 110, Vostochny, ELS), CNES
+(ELA-4), ISRO (FLP, PSLV-C25), JAXA, NASA mission pages (Mercury, Gemini, Apollo, Artemis), Spaceflight Now,
+NASASpaceflight, collectSPACE, Wikipedia (climate tables; single-source facts are marked below).
+
+### Not confirmed (kept off the cards; game choices stay)
+
+- SLC-40: four lightning towers (wave 3). LC-39A: lightning protection on the Apollo launch umbilical tower; the 13 m
+  trench depth was dropped (Moonport: pad 12 m above ground, trench floor at ground level).
+- LC-39B: the OIG repair figure for Artemis I (excerpt only); the LH2 sphere's 1.25 M gal (NASA) vs 1.4 M gal.
+- Starbase Pad 2: Super Heavy V3 thrust about 90 MN (33 Raptor 3); the trench's direction and the diverter's build.
+- LC-34: umbilical tower 73 m (museum) vs about 70 m (Moonport); lightning protection; the kit's water.
+- SLC-17, LC-14, LC-19: flame bucket types, hold-down, water and lightning (kits are best fits); Atlas LV-3B thrust;
+  Delta II 7925 liftoff thrust (a sum, not a published figure).
+- Wallops: the ~$13 M repair (Wikipedia citing SpaceNews); hold-down on the Antares mount.
+- Site 110: tower heights, water and lightning; Energia thrust about 35 MN (computed).
+- Site 81: which pad flew the first Proton; service tower size; the flame duct layout.
+- Gagarin's Start: the flame pit's depth (45 m or 35 m: no source settles it). Vostochny: tower 48.3 m or 52 m.
+- Plesetsk: a proper January normal (−12.5 °C from RETScreen).
+- ELA-4: when the gantry rolls back; Ariane 64 thrust (derived). ELA-3: the 870 t table (dropped).
+- Wenchang: the 1,800 t platform and 91.7 m tower (Chinese Wikipedia only, dropped). Xichang: the 76 m tower with
+  rotating floors (Baidu only, dropped). Jiuquan: the tower height and an escape slide (dropped; the kit uses an arm).
+- Tanegashima: rollout 12 h or 15 h before launch. Naro: the 45 m structure (dropped). Sriharikota: MST 3,200 t vs
+  3,450 t. Alcântara: tower size. Uchinoura: the M-V's elevation angle; the tower is fixed and the launcher swings out
+  (the kit uses `mst` for its enclosed, clear-of-the-fire effect).
+- Rocket Lab LC-1: platform mass (dropped), hold-down and deflector. Omelek: the erector and mount.
+- Sea Launch: water on the Odyssey; RD-171 sea-level thrust.
 
 ## Requests to the lead
 
 - Done by the lead: `stats.js` passes `g` and `wetMass`; designPage gives `ui.g` (the card's preview uses it).
-- `tests/builder.test.mjs` presets block: it still prints and passes `launch.json`'s `slot` fee ($150k from the default
-  `slot: 'mild'` of `cloneLaunch`); the real launch fee is `breakdown.launchFee` (SLC-40 kit: $172k).
-- `assembly.js` (hull agent): `cloneLaunch` still adds `slot: 'mild', site: null` to every launch block; harmless.
 - `bay/stations.js`: the `launchwindow` station's blurb still says "Pick the launch window: the soonest is cold and free".
-- Money: even at $172k of fees a Reliable failure leaves about $890k, under the $1M insolvency floor (the failure
-  penalty, 20 % of the ship + $250k, does most of it); fees alone cannot lift it over $1M.
-- Card agent: `pad:<id>` entries now carry `vi.pros`, `vi.cons`, `vi.facts` and `equip:<key>/<option>` entries `vi.pros`,
-  `vi.cons` (same order as section.json).
+- `designPage.js` draws its own pad icons (`padIcon`, `equipIcon`) with the same keys as designPad.js: fine as long as
+  both call `padArt` the same way.
+- Role 2/3's launch scene: `flightArt.js` registers `builder:launchPad` from `padArt`, so the ratio rules above reach the
+  LAUNCH scene too.

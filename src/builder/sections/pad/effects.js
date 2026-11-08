@@ -164,7 +164,9 @@ export function padEffects(launch, { pad = null, weather = null, thrustSL = 0, e
     if (damageChance > 0) say(`Fire and flying concrete under the engines: about ${pct(damageChance)} chance of hurting an engine.`, `Lửa và bê tông văng dưới động cơ: khoảng ${pct(damageChance)} khả năng làm hỏng một động cơ.`);
     if (repairFee > 0) say(`The pad needs about ${money(repairFee)} of repairs before the next launch.`, `Bệ cần sửa khoảng ${money(repairFee)} trước lần phóng sau.`);
   }
-  if (holdDownCatch > 0) say(`Hold-down clamps kept the ship on the pad for ${clamps.holdS ?? 3} s while the computer checked every engine.`, `Kẹp giữ ghì tàu trên bệ ${clamps.holdS ?? 3} giây trong lúc máy tính kiểm tra từng động cơ.`);
+  // each clamps option carries its own line (holdLine, {holdS} = its seconds): the Soyuz support arms are not clamps
+  const holdText = (lang, fallback) => String(clamps.holdLine?.[lang] ?? fallback).replace(/\{holdS\}/g, String(clamps.holdS ?? 3));
+  if (holdDownCatch > 0) say(holdText('en', 'Hold-down clamps kept the ship on the pad for {holdS} s while the computer checked every engine.'), holdText('vi', 'Kẹp giữ ghì tàu trên bệ {holdS} giây trong lúc máy tính kiểm tra từng động cơ.'));
   else say('No hold-down: the ship left as soon as it could lift, whatever the engines were doing.', 'Không có kẹp giữ: tàu rời bệ ngay khi đủ sức nâng, bất kể động cơ đang thế nào.');
   if (weather) say(`Forecast ${weather.forecastC} °C, actual ${weather.actualC} °C (weather watch good to about ±${weather.errorC ?? '?'} °C). Wind ${weather.windKts} kt, lightning risk ${pct(lightningRisk, 1)}.`, `Dự báo ${weather.forecastC} °C, thực tế ${weather.actualC} °C (trạm thời tiết sai khoảng ±${weather.errorC ?? '?'} °C). Gió ${weather.windKts} hải lý/giờ, nguy cơ sét ${pct(lightningRisk, 1)}.`);
   if (acoustic > 0.002) say(`The roar of the engines shook the ship: reliability −${pct(acoustic, 1)}.`, `Tiếng gầm của động cơ làm rung tàu: độ tin cậy −${pct(acoustic, 1)}.`);

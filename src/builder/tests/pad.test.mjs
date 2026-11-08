@@ -39,7 +39,11 @@ const increasingOrEqual = (xs) => xs.every((x, i) => i === 0 || x >= xs[i - 1]);
 
 // ---------- data ----------
 const ids = pad.sites.map((s) => s.id);
-check(ids.length >= 7 && ids.length <= 10 && new Set(ids).size === ids.length, `${ids.length} launch complexes, unique ids`);
+check(ids.length >= 25 && ids.length <= 35 && new Set(ids).size === ids.length, `${ids.length} launch complexes, unique ids`);
+const REGIONS = ['usa', 'russia', 'europe', 'china', 'japan', 'india', 'korea', 'brazil', 'pacific'];
+check(pad.sites.every((s) => REGIONS.includes(s.region) && typeof s.years === 'string' && s.years.length >= 5), 'every complex names its region and its years');
+check(pad.sites.every((s, i) => i === 0 || REGIONS.indexOf(s.region) >= REGIONS.indexOf(pad.sites[i - 1].region) || s.region === pad.sites[i - 1].region), 'the complexes are listed region by region');
+check(pad.sites.every((s) => !(s.designKN != null) || s.designKN > 0), 'designKN, where given, is a real liftoff thrust in kN');
 const aliases = pad.sites.flatMap((s) => s.aliases ?? []);
 check(new Set(aliases).size === aliases.length && !aliases.some((a) => ids.includes(a)), 'old site ids map to one complex each');
 for (const s of pad.sites) {
@@ -59,6 +63,18 @@ for (const eq of pad.equipment) {
 }
 ok('every option carries its physical numbers');
 check(pad.equipment.find((e) => e.key === 'clamps').options.every((o) => (o.reliability ?? 0) === 0), 'clamps count once: a catch chance, no reliability bonus');
+// no option is a plain loss: a dearer tower or crew access must give something back (more reliability, or less exposure / more escape)
+for (const [key, better] of [['tower', (a, b) => a.reliability > b.reliability || a.exposure < b.exposure], ['access', (a, b) => a.reliability > b.reliability || a.escape > b.escape]]) {
+  const os = pad.equipment.find((e) => e.key === key).options;
+  const lost = os.filter((a) => os.some((b) => b !== a && b.fee < a.fee && !better(a, b) && !(key === 'tower' && b.id === 'none'))).map((o) => o.id);
+  check(!lost.length, `${key}: every dearer option gives something back${lost.length ? ` (not: ${lost.join(', ')})` : ''}`);
+}
+{
+  const ft = (o) => [o.reliability ?? 0, -(o.exposure ?? 0)];
+  const tw = Object.fromEntries(pad.equipment.find((e) => e.key === 'tower').options.map((o) => [o.id, o]));
+  check(!(ft(tw.gantry)[0] >= ft(tw.fixed)[0] && ft(tw.gantry)[1] >= ft(tw.fixed)[1] && ft(tw.gantry)[0] >= ft(tw.catch)[0]), 'the cheap Soyuz gantry does not beat the fixed tower and the catch tower on every count');
+}
+check(pad.equipment.find((e) => e.key === 'clamps').options.every((o) => !o.catch || (o.holdLine?.en?.includes('{holdS}') || o.holdBy === 'weight') && o.holdLine?.vi), 'every clamp option with a catch has its own line for the investigation board');
 check(!/TODO/.test(readFileSync(path.join(ROOT, 'src/builder/sections/pad/section.json'), 'utf8') + readFileSync(path.join(ROOT, 'src/builder/sections/pad/explain.json'), 'utf8')), 'no TODO in text the player reads');
 
 // ---------- effects: monotonic ----------
@@ -81,6 +97,8 @@ check(increasing(deluges.map((o) => o.heatF)) && nonIncreasing(deluges.map((o) =
   check(increasing(wet.map((r) => r.heatLimitKN)) && nonIncreasing(wet.map((r) => r.damageChance)) && increasing(wet.map((r) => r.reliability)), 'water: higher limit, less damage, less acoustic loss');
   const clamps = pad.equipment.find((e) => e.key === 'clamps').options.map((o) => padEffects({ site: 'slc40', pad: { clamps: o.id } }, { pad, thrustSL: 1e6 }).holdDownCatch);
   check(clamps[0] === 0 && increasing(clamps), 'better hold-down clamps catch more bad engines');
+  const arms = padEffects({ site: 'gagarin' }, { pad, thrustSL: 3e5 }), held = padEffects({ site: 'slc40' }, { pad, thrustSL: 1e6 });
+  check(arms.notes.some((n) => /support arms/.test(n)) && !arms.notes.some((n) => /clamps kept/.test(n)) && held.notes.some((n) => /clamps kept the ship on the pad for 3 s/.test(n)) && arms.notesI18n.every((l) => l.vi && !/\{holdS\}/.test(l.vi + l.en)), 'the board names the support arms at a Soyuz pad and the clamps elsewhere');
   const lightning = pad.equipment.find((e) => e.key === 'lightning').options.map((o) => padEffects({ site: 'ela3', pad: { lightning: o.id } }, { pad, weather: { lightning: 0.4 }, thrustSL: 1e6 }).lightningRisk);
   check(lightning[0] > 0 && lightning.every((x, i) => i === 0 || x < lightning[i - 1]), 'lightning protection lowers the lightning risk');
   const l = liftoffOn(1000, 3000, { g: PLANETS.earth.g });
@@ -167,7 +185,8 @@ for (const key of ['reliable', 'workhorse']) {
     [{ slot: 'mild' }, first.id, () => true],
     [{ site: 'cape', slot: 'warm' }, 'slc40', () => true],
     [{ site: 'baikonur', slot: 'bk_winter' }, 'gagarin', (r) => r.spec.launch.tempC < 5],
-    [{ site: 'plesetsk' }, 'gagarin', () => true],
+    [{ site: 'plesetsk' }, 'plesetsk', () => true],
+    [{ site: 'proton' }, 'site81', () => true],
     [{ site: 'kourou', slot: 'kr_morning' }, 'ela3', () => true],
     [{ site: 'vandenberg' }, 'slc4e', () => true],
     [{ site: 'nowhere', slot: 'nope', pad: { tower: 'warp', mount: 'mlp' } }, first.id, (r) => r.breakdown.padFx.choices.find((c) => c.eq.key === 'mount').option.id === 'mlp' && r.breakdown.padFx.choices.find((c) => c.eq.key === 'tower').option.id === first.kit.tower],
@@ -191,11 +210,15 @@ for (const key of ['reliable', 'workhorse']) {
   const fees = Object.fromEntries(pad.sites.map((s) => [s.id, kitFee(s, pad)]));
   check(fees.lc39a === Math.max(...Object.values(fees)) && fees.mahia === Math.min(...Object.values(fees)), `LC-39A is the dearest complex, Rocket Lab LC-1 the cheapest ($${fees.lc39a / 1000}k … $${fees.mahia / 1000}k)`);
   const limits = Object.fromEntries(pad.sites.map((s) => [s.id, heatLimitOf(padSetup({ site: s.id }, pad))]));
-  check(limits.starbase === Math.max(...Object.values(limits)) && limits.mahia === Math.min(...Object.values(limits)), `Starbase with its water plate takes the most fire, LC-1 the least (${Math.round(limits.starbase)} … ${Math.round(limits.mahia)} kN)`);
+  const strongest = Math.max(...Object.values(limits));
+  check(Math.max(limits.starbase, limits.starbase2) === strongest && limits.mahia === Math.min(...Object.values(limits)), `a Starbase pad takes the most fire (Pad 1 ${Math.round(limits.starbase)}, Pad 2 ${Math.round(limits.starbase2)} kN), LC-1 the least (${Math.round(limits.mahia)} kN)`);
   const bareStarbase = heatLimitOf(padSetup({ site: 'starbase', pad: { deluge: 'none' } }, pad));
   check(bareStarbase < limits.starbase / 2 && bareStarbase < limits.lc39a, `Starbase's water is a real step: ${Math.round(bareStarbase)} kN bare, ${Math.round(limits.starbase)} kN with the plate`);
   check(fees.slc40 >= 150000 && fees.slc40 <= 200000 && fees.lc39a <= 320000, `fees are a tax: SLC-40 kit $${fees.slc40 / 1000}k, LC-39A kit $${fees.lc39a / 1000}k`);
-  const real = { lc39a: [3500, 4000], slc40: [1800, 2100], slc4e: [1500, 1700], ela3: [1400, 1600], wenchang: [1000, 1200], tanegashima: [900, 1100], gagarin: [400, 500], mahia: [15, 30], starbase: [7500, 9000] };
+  // every complex with a design thrust: its kit takes about one tenth of it (SLC-40 is kept a little higher so Workhorse fits)
+  const tenth = pad.sites.filter((s) => s.designKN > 0).filter((s) => !(limits[s.id] >= 0.08 * s.designKN && limits[s.id] <= 0.14 * s.designKN)).map((s) => `${s.id} ${Math.round(limits[s.id])}/${s.designKN}`);
+  check(!tenth.length && pad.sites.filter((s) => s.designKN > 0).length >= 25, `every kit takes about a tenth of its rocket's real liftoff thrust${tenth.length ? ` (off: ${tenth.join(', ')})` : ''}`);
+  const real = { lc39a: [3500, 4000], slc40: [1800, 2100], slc4e: [1500, 1700], ela3: [1400, 1600], wenchang: [1000, 1200], tanegashima: [900, 1100], gagarin: [400, 500], mahia: [15, 30], starbase: [7500, 9000], starbase2: [8500, 9500], lc39b: [3700, 4100] };
   const off = Object.entries(real).filter(([id, [a, b]]) => !(limits[id] >= a && limits[id] <= b)).map(([id]) => `${id} ${Math.round(limits[id])}`);
   check(!off.length, `kit heat limits about one tenth of the real pads${off.length ? ` (off: ${off.join(', ')})` : ''}`);
 }
