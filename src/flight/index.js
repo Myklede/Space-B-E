@@ -43,6 +43,7 @@ export { FlightController };
 // Phase ratings for Role 4's Flight Report: [{ phase: 'ascent'|'entry'|'landing', stars: 1..3, stats, text }] (see rating.js).
 export { getPhaseRatings };
 
+const EGRESS_CINEMATIC = false; // first-person egress after landing (egress.js); off until the new spaceship interior is designed
 const ENTRY_TO_LANDING = 6000; // m: ENTRY hands over to LANDING here
 // m: below this the view switches to Role 3's detailed Mars terrain. That patch is about ±900 m wide, so higher up
 // the window would look past its edge at empty sky; the textured globe shows the ground better until then.
@@ -589,7 +590,7 @@ export default {
       onManual: startManual,
       onLock: lockManual,
       isLanded: () => fc.landed,
-      onStandUp: startEgress,
+      onStandUp: () => { if (EGRESS_CINEMATIC) startEgress(); else requestState('INTERIOR'); },
     });
     input.onEscape(cancelManual); // Esc during manual control gives the stick back (core clears it on every state change)
     if (state === 'LAUNCH') s.cam.heading.set(0, 0, 1); // on the pad "behind" is the clear side, away from the tower and tanks
