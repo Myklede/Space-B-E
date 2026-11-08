@@ -62,6 +62,7 @@ function guidanceInput(fc, corridor, entryTrim) {
 
 export function steeringHint(fc, { corridor = null, countdown = false, manualOffer = false, manual = null } = {}) {
   const words = tuning.hint;
+  if (manual?.free) return { text: words.manualFree, level: 'ok' };
   if (manual) return manual.lockReady ? { text: words.manualLock, level: 'ok' } : { text: words.manualFly, level: 'warn' };
   if (countdown) return { text: words.countdown, level: 'ok' };
   if (fc.failed) return { text: words.failed, level: 'warn' };

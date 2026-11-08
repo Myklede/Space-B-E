@@ -32,6 +32,7 @@
     "failed": "Flight ended",
     "manualOffer": "MANUAL AVAILABLE · press F",
     "manualFly": "MANUAL · keep ○ on +",
+    "manualFree": "MANUAL · F gives it back",
     "manualLock": "LOCK READY · SPACE or CLICK"
   },
   "turnText": "Gravity turn: tip {degrees}° toward the horizon"

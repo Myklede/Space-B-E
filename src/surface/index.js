@@ -18,6 +18,8 @@ import { PLANETS, events, getState, input, requestState, ui } from '/src/core/in
 import { getProgress } from '/src/missions/index.js';
 import { WalkController } from './WalkController.js';
 import { createInteractables } from './interactables.js';
+import { takeEgressPending } from '/src/flight/egress.js';
+import { createArrival } from './egressArrival.js';
 import { createShipInterior, CABIN, PREBREATHE_DEBUG_S } from './shipInterior.js';
 import { createSuitHUD } from './hud/createSuitHUD.js';
 import { astronaut } from './astronaut.js';
@@ -392,6 +394,10 @@ export default {
         },
       });
       s.cabin.suited = astronaut.suited;
+      if (takeEgressPending()) { // coming down the ladder from the flight deck (flight/egress.js)
+        s.arrival = createArrival();
+        input.onPress('Space', () => s?.arrival?.skip());
+      }
       if (fromOutside && astronaut.dust.level > 0.01) {
         astronaut.dust.clear();
         s.notice = { text: 'Airlock: dust brushed off the suit (Mars dust contains toxic perchlorates)', t: 6, calm: true };
@@ -489,6 +495,18 @@ export default {
       hudYaw = rover.heading + s.look.yaw;
       s.roverPanelText = `${rt.name} · ${rt.speedKmh.toFixed(1)} km/h · battery ${(rt.batteryFrac * 100).toFixed(0)} % · slope ${rt.pitchDeg.toFixed(0)}° / roll ${rt.rollDeg.toFixed(0)}° · ${rt.odometerKm.toFixed(2)} km`
         + (rt.overturned ? ' · OVERTURNED' : rt.slip > 0.15 ? ' · SLIDING' : !rt.onGround ? ' · AIRBORNE' : '');
+    } else if (s.arrival) {
+      // ---- egress arrival: ladder descent, no player control until it ends ----
+      const p = s.arrival.update(dt);
+      walker.update(dt, {});
+      const eye = walker.eye;
+      camera.position.set(eye.x, eye.y + p.dy, eye.z);
+      camera.quaternion.setFromEuler(new THREE.Euler(walker.pitch + p.pitch, walker.yaw, 0, 'YXZ'));
+      astronaut.body.update(dt, { env: 'cabin_mars', heartRate: walker.heartRate });
+      hudTelemetry = walker.telemetry;
+      hudYaw = walker.yaw;
+      s.roverPanelText = '';
+      if (s.arrival.done) { const a = s.arrival; s.arrival = null; setTimeout(() => a.dispose(), 600); } // caption fades out first
     } else if (s.fs && s.fs.seq.phase !== 'done') {
       // ---- first step on Mars: the player is a spectator for a few seconds ----
       const seq = s.fs.seq;
@@ -584,6 +602,7 @@ export default {
     if (s.driving) { syncSpot(active); active = null; }
     graphics.setEffects({ shake: 0 });
     s.cabin?.dispose();
+    s.arrival?.dispose();
     s.hud.dispose();
     window.removeEventListener('click', s.lockOnClick);
     graphics.setEffects({ vignette: 0 });
