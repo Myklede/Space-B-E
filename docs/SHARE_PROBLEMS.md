@@ -79,33 +79,6 @@ Copy this block. Keep each line short and factual. Don't commit screenshots.
 
 ## Role 3: Graphics, Audio & Core
 
-### Flight switches still read F ASSIST and Space RETRO, but the new controls use F = MANUAL and Space = LOCK
-- **For:** Role 3 · **From:** Role 2 (Minh Vuong) · **Found:** 2026-11-07 on dev f3deb43 · **Severity:** polish
-- **Where:** `src/graphics/cockpitParts.js` (the flight switches near the hands: `retroButton`/`retroCap` and `assistButton`/`assistCap`, and their silk-screen labels)
-- **Steps:** `/?debug=1&state=LAUNCH`, look down at the switches by the hands
-- **Expected:** the new flight controls (design change by Role 2, no contract change): the flight computer flies by default; during three short manual windows (ascent gravity turn, Mars entry, final landing) the player presses **F** to take MANUAL control, steers with the mouse on the centre display, and presses **Space** to LOCK guidance back to the computer. W/S/A/D, Q/E and the Space retro brake go away. X (ENGINE CUT-OFF) stays.
-- **Actual:** the labels still say F ASSIST and Space RETRO
-- **Suggested fix:** relabel the cyan button `F  MANUAL` and the amber button `SPACE  LOCK`; keep the part names and `setControls({ pitch, yaw, throttle, cutoff, brake, assist })` exactly as they are. Role 2 will pass `assist: true` while the player has manual control (lamp lit = MANUAL) and `brake: true` for about 0.3 s when Space locks guidance (button presses in). The stick and throttle keep moving through `pitch`/`yaw`/`throttle` (the computer's inputs, or the player's during a manual window), so the gloves need no change.
-- **Status:** fixed in 4e63144, Role 2 (Minh Vuong) please verify. Labels read `F  MANUAL` (cyan), `SPACE  LOCK` (amber) and `X  CUT-OFF`; part names and `setControls` are unchanged. Any `brake: true` pulse, even a single frame, now shows a full press held about 0.3 s.
-
-### Optional: let the centre display draw the manual-control aim (○ circle on a + target)
-- **For:** Role 3 · **From:** Role 2 (Minh Vuong) · **Found:** 2026-11-07 on dev f3deb43 · **Severity:** polish
-- **Where:** `src/graphics/interiors.js` (the steering display, `cockpit.userData.setTrajectory`, mesh named `centreDisplay`)
-- **Steps:** (design request, nothing to reproduce yet) during a manual window the camera zooms into the centre display
-- **Expected:** the display shows a target `+`, the player's aim circle `○`, an accuracy bar, the seconds left and a `LOCK READY · SPACE` cue, drawn on the screen itself like the trajectory plot
-- **Actual:** the display can only draw the trajectory, so Role 2 will first draw the ○/+ as an HTML overlay placed over the `centreDisplay` mesh. Please keep the mesh name `centreDisplay` stable so the overlay and the camera zoom can find it.
-- **Suggested fix:** optional, only if you have time: add `cockpit.userData.setAim({ target: { x, y }, aim: { x, y }, radius, accuracy, timeLeft, lockReady, label })` or `setAim(null)`, with x, y in screen units 0–1 and y UP (the same convention as `setTrajectory`), `radius` in the same units, `accuracy` 0–1, `timeLeft` in seconds, `label` a short title such as `ASCENT · GRAVITY TURN`. While an aim is set it draws on top of the trajectory plot. Role 2 calls `setAim?.()` and drops its HTML overlay as soon as the function exists. The existing stable-API agreement for `setControls` and `setTrajectory` (the comment at the top of the steering display code) still holds.
-- **Status:** fixed in 4e63144, Role 2 (Minh Vuong) please verify. `cockpit.userData.setAim({ target, aim, radius, accuracy, timeLeft, lockReady, label })` and `setAim(null)` exist, exactly as proposed (0…1, y UP; `radius` is measured against the plot width so the circle stays round). It draws over the trajectory plot, or on an empty plot when no trajectory is set. The mesh name `centreDisplay` is unchanged, so you can drop the HTML overlay.
-
-### Optional: core input has no mouse buttons (manual control wants a click to LOCK)
-- **For:** Role 3 · **From:** Role 2 (Minh Vuong) · **Found:** 2026-11-07 on dev f3deb43 · **Severity:** polish
-- **Where:** `src/core/input.js` (has `isDown`, `onPress`, `onEscape`, `mouseDelta`, `wheelDelta`, `lockPointer`, `unlockPointer`, `isLocked`, `clear`; no mouse buttons)
-- **Steps:** during a manual window, click the left mouse button
-- **Expected:** the player asked to lock guidance with a mouse click as well as Space
-- **Actual:** core input doesn't read mouse buttons, and Role 2 may not add its own listener, so Role 2 uses Space only
-- **Suggested fix:** optional: treat mouse buttons as codes in the existing API, e.g. `input.isDown('Mouse0')` and `input.onPress('Mouse0', fn)` (`Mouse2` = right button), fired from `mousedown`/`mouseup` only while the pointer is locked, so the click that locks the pointer doesn't count. Role 2 will register `onPress('Mouse0', …)` next to Space, so it starts working as soon as core supports it.
-- **Status:** fixed in 4e63144, Role 2 (Minh Vuong) please verify. `input.isDown('Mouse0')` and `input.onPress('Mouse0', fn)` work (`Mouse1` = middle, `Mouse2` = right) only while the pointer is locked; held buttons are released on lock loss and window blur.
-
 ## Role 4: Story, Cruise & Knowledge
 
 ### Reset money on the bankrupt ending
