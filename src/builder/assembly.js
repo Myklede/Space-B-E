@@ -44,16 +44,22 @@ export function createCatalog(json, internals = null) {
   const kits = internals?.kits ?? {};
   const kit = (def) => (def?.internals && kits[def.internals]) || null;
   const defaults = (def) => Object.fromEntries((kit(def)?.slots ?? []).map((s) => [s.key, s.options[0]?.id ?? null]));
-  /** The chosen option of each slot for a part instance: { key: optionObject }. Unknown ids fall back to the default. */
-  const optionsOf = (def, options = null) => {
+  /** Can this option work with this propellant? An option with "fuels" works only with those (null fuel: any). */
+  const fitsFuel = (option, fuel) => !fuel || !option?.fuels || option.fuels.includes(fuel);
+  /**
+   * The chosen option of each slot for a part instance: { key: optionObject }. Unknown ids fall back to the default;
+   * with a fuel given, an option that cannot burn it (a fuel-rich cycle on kerosene) falls back to the slot's first
+   * option that can, as a technician would build it.
+   */
+  const optionsOf = (def, options = null, fuel = null) => {
     const out = {};
     for (const slot of kit(def)?.slots ?? []) {
-      const wanted = options?.[slot.key];
-      out[slot.key] = slot.options.find((o) => o.id === wanted) ?? slot.options[0];
+      const wanted = slot.options.find((o) => o.id === options?.[slot.key]);
+      out[slot.key] = (wanted && fitsFuel(wanted, fuel)) ? wanted : (slot.options.find((o) => fitsFuel(o, fuel)) ?? slot.options[0]);
     }
     return out;
   };
-  return { byId, parts, families, kits, get: (id) => byId[id] ?? null, kit, defaults, optionsOf };
+  return { byId, parts, families, kits, get: (id) => byId[id] ?? null, kit, defaults, optionsOf, fitsFuel };
 }
 
 export const partRadius = (def) => BASE_RADIUS * (SIZE_SCALE[def.size] ?? 1);
@@ -329,7 +335,13 @@ export class Assembly {
   options(id) {
     const p = this.part(id);
     const def = p && this.catalog.get(p.type);
-    return def ? this.catalog.optionsOf?.(def, p.options) ?? {} : {};
+    return def ? this.catalog.optionsOf?.(def, p.options, this.fuelFor(id)) ?? {} : {};
+  }
+
+  /** The propellant a part's options must suit: its own engine's, else the ship's first engine's (a gimbal, a frame). */
+  fuelFor(id) {
+    const p = this.part(id);
+    return p?.engine?.fuel ?? this.parts.find((q) => q.engine?.fuel)?.engine.fuel ?? null;
   }
 
   /** Swap a part for another type in the same place (same parent, node, angle). Children stay. Returns true if swapped. */

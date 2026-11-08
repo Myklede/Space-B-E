@@ -39,6 +39,7 @@ const btn = (className, label, onClick, attrs = {}) => {
 const signed = (n, f) => `${n > 0 ? '+' : n < 0 ? '−' : '±'}${f(Math.abs(n))}`;
 const WARN = { LOW_DV: 'Not enough Δv to reach Mars: add propellant or a better engine', LOW_TWR: 'Too heavy for the engines (TWR under 1.2)', NO_HEAT_SHIELD: 'No heat shield under the capsule', NO_LEGS: 'No landing gear', UNSTABLE: 'Unstable in thick air: add fins low on the tail, or steering (an engine gimbal)', LOW_O2: 'No spare oxygen', NO_ANTENNA: 'No antenna', NO_SHELTER: 'No radiation shelter', COLD_SEALS: 'Cheap seals in a cold launch window', LOW_RELIABILITY: 'Reliability below 80 %', NO_CAPSULE: 'No crew capsule', NO_ENGINE: 'No engine', NO_FUEL: 'No propellant the engines can burn', NOT_CONNECTED: 'Parts not connected', OVER_BUDGET: 'Over budget' };
 const SECTION_NUM = { nose: '1', body: '2', tail: '3', pad: '4' };
+const FUEL_WORDS = { kerolox: 'kerosene', methalox: 'methane', hydrolox: 'hydrogen' }; // an option that needs a propellant
 
 export function createDesignPage({ assembly, catalog, sections, materials, engines, icons, scene3d, g0, getMoney, hooks }) {
   const el = h('section', 'vd-root hud');
@@ -493,15 +494,20 @@ export function createDesignPage({ assembly, catalog, sections, materials, engin
     const current = assembly.options(id)[key] ?? slot.options[0];
     const out = [para(slot.role ?? '', 'vd-muted')];
     const now = figuresOf(def, part);
+    const fuel = assembly.fuelFor(id);
     for (const o of slot.options) {
       const isOn = current?.id === o.id;
+      // an option that cannot burn this ship's propellant is shown greyed, with what it needs (stats falls back too)
+      const fits = catalog.fitsFuel?.(o, fuel) ?? true;
       const then = figuresOf(def, { ...part, options: { ...(part.options ?? {}), [key]: o.id } });
-      const fx = isOn ? 'fitted now' : effectWords({ now, next: then, lang: 'en' }).join(' · ') || deltaLine(o);
-      out.push(item({
-        id: o.id, img: optionIcon(def, slot, o), name: o.name, sub: fx, twoLines: true, on: isOn, tag: isOn ? { text: 'FITTED', kind: 'on' } : null,
+      const fx = isOn ? 'fitted now' : !fits ? `Needs ${o.fuels.map((f) => FUEL_WORDS[f] ?? f).join(' or ')}` : effectWords({ now, next: then, lang: 'en' }).join(' · ') || deltaLine(o);
+      const row = item({
+        id: o.id, img: optionIcon(def, slot, o), name: o.name, sub: fx, twoLines: true, on: isOn, tag: isOn ? { text: 'FITTED', kind: 'on' } : !fits ? { text: 'WRONG FUEL', kind: 'off' } : null,
         onOpen: () => { sound('ui.click'); openCard({ kind: 'option', def, slot, option: o, part }); },
-        quick: isOn ? null : { label: 'USE THIS', tool: 'useoption', run: () => { assembly.setOption(id, key, o.id); sound('ui.snap'); state.focus = null; changed(); } },
-      }));
+        quick: isOn || !fits ? null : { label: 'USE THIS', tool: 'useoption', run: () => { assembly.setOption(id, key, o.id); sound('ui.snap'); state.focus = null; changed(); } },
+      });
+      if (!fits) row.classList.add('vd-item--off');
+      out.push(row);
     }
     return out;
   }

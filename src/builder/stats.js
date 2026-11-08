@@ -96,7 +96,8 @@ export function computeShipSpec(assembly, { catalog, engines, launch, balance, p
   const massFactor = (e) => materialOf(e)?.mass ?? 1;
   const costFactor = (e) => materialOf(e)?.cost ?? 1;
   const reliabilityDelta = (e) => materialOf(e)?.reliability ?? 0;
-  const modsOf = (e) => (e.def.internals && catalog.optionsOf ? optionMods(catalog.optionsOf(e.def, e.options)) : NO_MODS);
+  const shipFuel = layout.find((e) => e.engine?.fuel)?.engine.fuel ?? null; // options that need a propellant follow the engines'
+  const modsOf = (e) => (e.def.internals && catalog.optionsOf ? optionMods(catalog.optionsOf(e.def, e.options, e.engine?.fuel ?? shipFuel)) : NO_MODS);
   const mods = new Map(layout.map((e) => [e.id, modsOf(e)]));
   const mod = (e) => mods.get(e.id) ?? NO_MODS;
 
@@ -260,7 +261,7 @@ export function computeShipSpec(assembly, { catalog, engines, launch, balance, p
 export function partFigures(def, { engines, g0, materials = null, catalog = null, materialId = null, options = null, engineDef = null, count = 1 }) {
   const fam = materials?.families?.[def.materialFamily];
   const mat = fam ? (fam.options.find((o) => o.id === materialId) ?? fam.options.find((o) => o.id === def.defaultMaterial) ?? fam.options[0]) : null;
-  const m = def.internals && catalog?.optionsOf ? optionMods(catalog.optionsOf(def, options)) : NO_MODS;
+  const m = def.internals && catalog?.optionsOf ? optionMods(catalog.optionsOf(def, options, engineDef?.fuel ?? null)) : NO_MODS;
   const matMass = mat?.mass ?? 1, matCost = mat?.cost ?? 1;
   let mass = (def.mass * matMass + m.massD) * m.massF;
   let cost = (def.cost * matCost + m.costD) * m.costF;

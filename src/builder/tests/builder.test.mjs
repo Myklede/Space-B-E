@@ -287,5 +287,18 @@ for (const [key, json] of Object.entries(presets)) {
   check(g.lines.length >= (text.gonogo.consoles ?? []).length, `${key}: one Go/No-Go line per console at least`);
 }
 
+// ---------- options bound to a propellant ("fuels"): they fall back on another fuel ----------
+{
+  const eng = catalog.get('engine_m');
+  const cycle = catalog.kit(eng)?.slots.find((sl) => sl.key === 'cycle');
+  const bound = cycle?.options.find((o) => o.fuels && !o.fuels.includes('kerolox'));
+  check(!!bound, 'the engine kit has a cycle that cannot burn kerosene');
+  if (bound) {
+    const onKero = catalog.optionsOf(eng, { cycle: bound.id }, 'kerolox').cycle;
+    const onOwn = catalog.optionsOf(eng, { cycle: bound.id }, bound.fuels[0]).cycle;
+    check(onKero.id !== bound.id && catalog.fitsFuel(onKero, 'kerolox') && onOwn.id === bound.id, `${bound.id} falls back to ${onKero.id} on kerosene and stays on ${bound.fuels[0]}`);
+  }
+}
+
 console.log(failures ? `\n${failures} failure(s).` : '\nAll builder checks passed.');
 process.exit(failures ? 1 : 0);

@@ -428,6 +428,8 @@
 .vd-item-detail { display: flex; flex-direction: column; gap: 6px; padding: 4px 10px 10px; border-top: 1px solid color-mix(in srgb, var(--hud-line) 50%, transparent); }
 .vd-tag { font-size: 9px; letter-spacing: 0.12em; border-radius: 3px; padding: 1px 5px; }
 .vd-tag--on { color: #03161b; background: var(--hud-amber); }
+.vd-tag--off { color: var(--hud-muted); border: 1px solid color-mix(in srgb, currentColor 50%, transparent); }
+.vd-item--off .vd-item-name, .vd-item--off .vd-item-sub { opacity: 0.55; }
 .vd-add { align-self: flex-start; font: 500 var(--hud-text-xs) var(--hud-font); letter-spacing: 0.06em; color: var(--hud-cyan); background: transparent; border: 1px dashed color-mix(in srgb, var(--hud-cyan) 55%, transparent); border-radius: var(--hud-radius); padding: 4px 10px; cursor: pointer; }
 .vd-add:hover { background: color-mix(in srgb, var(--hud-cyan) 12%, transparent); }
 .vd-add--required { color: var(--hud-amber); border-color: color-mix(in srgb, var(--hud-amber) 60%, transparent); }
