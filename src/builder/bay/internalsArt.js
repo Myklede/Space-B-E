@@ -1,6 +1,7 @@
 // What a part looks like inside: small 3D pieces for every slot of a kit (sections/<id>/internals.json), so the design page
 // can pull a selected part apart like an exploded engineering drawing. Each piece stands where it lives in the part
 // (metres, part base at y = 0) and carries the direction it slides out in when the view explodes.
+import { isBuilderModel, modelSlotPiece } from './nasa.js';
 import * as THREE from 'three';
 import { std } from './util.js';
 import { sectionInternalsArt } from './partArt.js';
@@ -27,7 +28,18 @@ const group = (...objs) => { const g = new THREE.Group(); g.add(...objs); return
  * Pieces for one part: [{ key, name, object, dir: THREE.Vector3 }]. `key` is the kit slot key; the chosen option
  * changes small details (a second computer, a longer skirt). `radius` and `height` are the part's.
  */
-export function internalsArt(def, options, { radius = 1.25, height = 1 } = {}) {
+export function internalsArt(def, options, dims = {}) {
+  const pieces = internalsArtDrawn(def, options, dims) ?? [];
+  // Role 1's Blender model may carry its own inner pieces (nodes slot_<key>): they replace the drawn ones
+  if (!isBuilderModel(def.id)) return pieces;
+  for (const p of pieces) {
+    const own = modelSlotPiece(def.id, p.key, options?.[p.key]?.id ?? null);
+    if (own) p.object = own;
+  }
+  return pieces;
+}
+
+function internalsArtDrawn(def, options, { radius = 1.25, height = 1 } = {}) {
   const own = sectionInternalsArt(def, options, { radius, height });
   if (own) return own;
   const kit = def.internals;

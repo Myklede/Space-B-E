@@ -1,0 +1,43 @@
+# Blender models for builder parts: the contract
+
+Every Blender model of a builder part follows these rules, so it snaps onto the stack and the outer skin exactly like
+the code-drawn parts, in the design studio, on the hangar stand, in the explanation card and in the flight scenes.
+`node src/builder/tests/models.test.mjs` checks them.
+
+## Where things go
+- Scripts: `src/builder/tools/blender/<section>/<script>.py` (one script may build many parts: parametric generators).
+  Shared helpers: `common.py`; a worked example: `examples/tank_example.py`.
+- Output: `public/assets/models/builder/<section>/<slug>.glb` (Draco-compressed GLB, written by `common.export`).
+- A part uses its model through its data: `"model": { "builder": "<section>/<slug>" }` in `sections/<section>/parts.json`.
+  The code-drawn art shows while the file downloads; the model replaces it once loaded (`bay/nasa.js`, `bay/partArt.js`).
+- Run headless from the repo root:
+  `"C:/Program Files/Blender Foundation/Blender 5.2/blender.exe" -b --factory-startup -P src/builder/tools/blender/<section>/<script>.py -- --out <glb> [--shots <dir>]`
+  (Blender 5.2 LTS, the same as Role 3's `scripts/blender/`).
+
+## Geometry
+- Metres, +Y up (write game coordinates; `common.G()` converts to Blender), real proportions scaled to the game size.
+- **Axial parts** (in the stack): origin at the centre of the part's base on the rocket axis; the part spans y = 0 to
+  y = its catalogue `height` (±2 %). The joints are circles of the stack radius of its size: S 0.9375 m, M 1.25 m,
+  L 1.6875 m (an adapter: its `adapter.top` radius at the top, `adapter.bottom` at the bottom). A tank or structure wall
+  that is the vehicle's outer skin sits exactly at that radius; ring frames and fittings may stand proud by a few cm.
+  Capsules, nose cones, towers and engines keep their own shape (the skin goes round them) and declare it with
+  `hullProfile` in the part data (`data/hull.json` profiles show the format).
+- **Radial parts** (on the side): origin at the attachment point on the host's wall, +X pointing outward, height along
+  +Y from the mount; a part that rides inside the skin is placed by the game, model it standing on y = 0 centred.
+- **Engine clusters**: model one engine; the thrust structure's `mounts` places the copies.
+- Nothing below y = 0 for axial parts except an engine's own bell when the part data says so.
+
+## Inner pieces (the explanation card pulls them apart)
+- Each kit slot of the part (`internals` kit in `sections/<section>/internals.json`) that is modelled is one empty or
+  mesh named `slot_<key>` holding that piece, placed where it really sits inside the part.
+- A choice with its own look: `slot_<key>__<optionId>` (two underscores); the game uses it when that option is fitted,
+  else `slot_<key>`. Names: lowercase letters, digits and single underscores; no dots or spaces.
+- Slots that are not modelled keep the code-drawn piece (`bay/internalsArt.js`).
+
+## Looks and budget
+- glTF PBR materials (Principled BSDF): base colour, metallic, roughness; keep metalness moderate (0.3–0.6), the studio
+  has no environment map. Real colours: white paint, bare Al-Li, foam orange, black carbon, copper chambers, ablator brown.
+- Balanced budget (decided with the user): about 20,000 triangles and at most 400 KB per GLB; textures at most 1024 px;
+  at most about 12 MB of models per section.
+- Licences: your own geometry; NASA (public domain) and CC0 models may be cut and reused; CC BY only with a credit line in
+  the section's `ASSETS.md`. Reference photos with other licences are for measuring only.

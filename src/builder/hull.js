@@ -85,7 +85,7 @@ export const ridesOnAxis = (def) => !!def && (INSIDE.axisFlags ?? []).some((f) =
 // ---------------------------------------------------------------------------------------------------------------
 function profileOf(def) {
   if (def.id === BAY_ID) return { kind: 'bay' };
-  const p = HULL.profiles[def.id];
+  const p = def.hullProfile ?? HULL.profiles[def.id]; // a part may declare its own outside shape (parts.json hullProfile)
   if (p) return p;
   if (def.engine) return { kind: 'engine' };
   if (def.adapter) return { kind: 'adapter' };

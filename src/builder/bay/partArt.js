@@ -5,7 +5,7 @@
 import * as THREE from 'three';
 import { assets } from '/src/graphics/index.js';
 import { withoutFlightArt } from '../flightArtGate.js';
-import { nasaPartArt } from './nasa.js';
+import { nasaPartArt, isBuilderModel } from './nasa.js';
 import {
   adapterMesh, airbagMesh, avionicsRingMesh, chuteMesh, finMesh, heatShieldMesh, hiadMesh, instrumentMesh, kickMotorMesh, moduleMesh, noseMesh,
   pafMesh, ringMesh, rtgMesh, sectionMesh, solarWingMesh, sphereMesh, spinTableMesh, srbMesh, tankMesh, thrustMesh, trussMesh, wiringTunnelMesh,
@@ -83,6 +83,15 @@ function singleArt(entry) {
   const def = entry.def;
   const radius = entry.radius ?? 1.25;
   if (entry.covered && /hiad/.test(def?.id ?? '')) return packedHiadMesh(def, radius); // stowed under the skin for launch
+  // Role 1's Blender model, once loaded, wins over the code-drawn art (which shows while it downloads)
+  if (isBuilderModel(entry.type)) {
+    const model = nasaPartArt(entry.type);
+    if (model) {
+      model.userData.width = entry.attach === 'radial' ? Math.min(1.2, def?.height ?? 0.8) : undefined;
+      if (def?.booster && entry.attach === 'radial') model.userData.srb = true;
+      return model;
+    }
+  }
   const own = def?.section && SECTION_ART[def.section]?.partArt?.(entry);
   if (own) return own;
   if (def?.flags?.cheapSeals) return ringMesh(def, radius, 0x8a6d3b);

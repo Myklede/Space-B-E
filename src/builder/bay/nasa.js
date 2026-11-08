@@ -2,11 +2,15 @@
 // (public/assets/nasa/*.glb), cut out by node name where a file holds a whole vehicle, then normalised so every
 // part stands on y = 0, centred on the stack axis, scaled to its catalogue height. Credit: NASA.
 // Files load on demand (requestPartArt): nothing downloads until a part is on the stand or on the design page.
+// Also Role 1's own Blender models (a part's `model: { builder: '<section>/<slug>' }`, public/assets/models/builder/):
+// built to the game's contract (src/builder/tools/blender/README.md), so they are used exactly as exported, with no
+// normalising; their inner pieces are the nodes named slot_<key> (or slot_<key>__<optionId>).
 import * as THREE from 'three';
 import { GLTFLoader } from 'three/addons/loaders/GLTFLoader.js';
 import { DRACOLoader } from 'three/addons/loaders/DRACOLoader.js';
 
 const BASE = '/assets/nasa/';
+const BUILDER_BASE = '/assets/models/builder/';
 const draco = new DRACOLoader();
 draco.setDecoderPath('/assets/draco/'); // the decoder copied from three/examples/jsm/libs/draco/gltf (Apache-2.0)
 const loader = new GLTFLoader();
@@ -22,7 +26,10 @@ export const NASA_PARTS = {};
 
 /** Reads each part's `model` field (sections/<id>/parts.json) into NASA_PARTS. Call once with the catalogue. */
 export function registerNasaModels(catalog) {
-  for (const def of catalog.parts) if (def.model?.model) NASA_PARTS[def.id] = def.model;
+  for (const def of catalog.parts) {
+    if (def.model?.builder) NASA_PARTS[def.id] = { builder: def.model.builder };
+    else if (def.model?.model) NASA_PARTS[def.id] = def.model;
+  }
   return Object.keys(NASA_PARTS).length;
 }
 
@@ -31,9 +38,9 @@ const protos = new Map(); // part id -> normalised Object3D (prototype)
 const pending = new Map(); // part id -> Promise
 
 const failures = new Map(); // slug -> message
-function loadFile(slug) {
+function loadFile(slug, url = `${BASE}${slug}.glb`) {
   if (!files.has(slug)) {
-    files.set(slug, new Promise((resolve) => loader.load(`${BASE}${slug}.glb`, (g) => resolve(g.scene), undefined, (error) => {
+    files.set(slug, new Promise((resolve) => loader.load(url, (g) => resolve(g.scene), undefined, (error) => {
       failures.set(slug, String(error?.message ?? error));
       resolve(null);
     })));
@@ -122,10 +129,11 @@ export function requestPartArt(partId, catalog) {
   if (!cfg || !def) return Promise.resolve(false);
   if (protos.has(partId)) return Promise.resolve(true);
   if (!pending.has(partId)) {
-    pending.set(partId, loadFile(cfg.model).then((scene) => {
+    const file = cfg.builder ? loadFile(`builder:${cfg.builder}`, `${BUILDER_BASE}${cfg.builder}.glb`) : loadFile(cfg.model);
+    pending.set(partId, file.then((scene) => {
       if (!scene) return false;
       try {
-        const proto = normalise(scene, cfg, def.height);
+        const proto = cfg.builder ? builderProto(scene) : normalise(scene, cfg, def.height);
         if (proto) protos.set(partId, proto);
         return !!proto;
       } catch (error) {
@@ -142,6 +150,31 @@ export async function preloadNasaParts(catalog, ids = Object.keys(NASA_PARTS)) {
   const results = await Promise.all([...new Set(ids)].map((id) => requestPartArt(id, catalog)));
   if (failures.size) console.warn('[nasa] models that did not load:', Object.fromEntries(failures));
   return results.filter(Boolean).length;
+}
+
+/** A Blender model built to the contract: used as exported (origin, scale and orientation are already the game's). */
+function builderProto(scene) {
+  const proto = scene.clone(true);
+  proto.updateMatrixWorld(true);
+  proto.traverse((o) => { if (o.isMesh) { o.castShadow = true; o.receiveShadow = true; } });
+  return proto;
+}
+
+/** Is this part drawn by one of Role 1's Blender models (when loaded)? */
+export const isBuilderModel = (partId) => !!NASA_PARTS[partId]?.builder;
+
+/**
+ * The model's own inner piece for a kit slot, placed where it sits in the part, or null: the node named
+ * slot_<key>__<optionId> when the model has a version for that choice, else slot_<key>.
+ */
+export function modelSlotPiece(partId, key, optionId = null) {
+  const proto = protos.get(partId);
+  if (!proto || !NASA_PARTS[partId]?.builder) return null;
+  const node = (optionId && proto.getObjectByName(`slot_${key}__${optionId}`)) || proto.getObjectByName(`slot_${key}`);
+  if (!node) return null;
+  const copy = bakedClone(node);
+  copy.traverse((o) => { if (o.isMesh) o.material = Array.isArray(o.material) ? o.material.map((m) => m.clone()) : o.material.clone(); });
+  return copy;
 }
 
 export const hasNasaArt = (partId) => protos.has(partId);
