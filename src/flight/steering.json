@@ -30,7 +30,9 @@
     "landed": "Landed · E to stand up",
     "countdown": "Stand by · launch countdown",
     "failed": "Flight ended",
-    "manualOffer": "MANUAL AVAILABLE · press F"
+    "manualOffer": "MANUAL AVAILABLE · press F",
+    "manualFly": "MANUAL · keep ○ on +",
+    "manualLock": "LOCK READY · SPACE or CLICK"
   },
   "turnText": "Gravity turn: tip {degrees}° toward the horizon"
 }

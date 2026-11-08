@@ -75,7 +75,7 @@ export function createManualAimPanel({ parent = document.body } = {}) {
       q('bar').style.width = `${Math.round(readout.accuracy * 100)}%`;
       q('acc').textContent = `ACCURACY ${Math.round(readout.accuracy * 100)} %`;
       const msg = q('msg');
-      msg.textContent = readout.lockReady ? 'LOCK READY · SPACE' : 'Keep ○ on +';
+      msg.textContent = readout.lockReady ? 'LOCK READY · SPACE or CLICK' : 'Keep ○ on +';
       msg.style.color = readout.lockReady ? GREEN : AMBER;
       msg.classList.toggle('lock', !!readout.lockReady);
     },

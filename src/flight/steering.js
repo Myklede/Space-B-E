@@ -60,8 +60,9 @@ function guidanceInput(fc, corridor, entryTrim) {
   return control;
 }
 
-export function steeringHint(fc, { corridor = null, countdown = false, manualOffer = false } = {}) {
+export function steeringHint(fc, { corridor = null, countdown = false, manualOffer = false, manual = null } = {}) {
   const words = tuning.hint;
+  if (manual) return manual.lockReady ? { text: words.manualLock, level: 'ok' } : { text: words.manualFly, level: 'warn' };
   if (countdown) return { text: words.countdown, level: 'ok' };
   if (fc.failed) return { text: words.failed, level: 'warn' };
   if (fc.landed) return { text: words.landed, level: 'ok' };
@@ -128,7 +129,7 @@ export function steeringReadout(fc, controls = {}, options = {}) {
     return Math.min(nearest, Math.hypot(ship[0] - point[0] - fraction * dx, ship[1] - point[1] - fraction * dy));
   }, Infinity);
   let hint = steeringHint(fc, options);
-  if (hint.level === 'ok' && distance > tuning.offTrackTolerance) hint = { text: tuning.hint.offTrack, level: 'warn' };
+  if (!options.manual && hint.level === 'ok' && distance > tuning.offTrackTolerance) hint = { text: tuning.hint.offTrack, level: 'warn' };
   return {
     view: 'side', planned: plannedPlot, predicted: raw[1].map(project),
     ship: { x: ship[0], y: ship[1], heading: Math.atan2(dot(fc.forward, up) / spans[1], dot(fc.forward, east) * fc.planet.radius / len(fc.pos) / spans[0]) },

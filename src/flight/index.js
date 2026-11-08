@@ -863,7 +863,7 @@ export default {
     };
     const activeCockpit = s.mode === 'surface' ? s.surface.cockpit : s.mode === 'site' ? s.site.cockpit : view.cockpit;
     const steering = s.steering.update(activeCockpit, !fc.failed,
-      () => s.steeringPlan.readout(fc, pilot, { corridor: s.corridor, countdown: s.countdown > 0, manualOffer: win.offered }), performance.now() / 1000);
+      () => s.steeringPlan.readout(fc, pilot, { corridor: s.corridor, countdown: s.countdown > 0, manualOffer: win.offered, manual: win.active ? { lockReady: !!s.manualReadout?.lockReady } : null }), performance.now() / 1000);
     s.hud.setSteeringVisible(steering.fallback);
     const toLocal = (d) => (d && s.mode === 'surface' ? v3(d).applyQuaternion(s.surface.toLocal) : d);
     s.hud.marker('pro', steering.fallback ? project(toLocal(a.prograde)) : null);
