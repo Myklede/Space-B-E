@@ -1,5 +1,5 @@
 {
-  "_about": "Plain-language explanations for the body card, English and Vietnamese (content agent): its parts (part:<id>), the pieces inside their kits (slot:<kit>/<slot>, option:<kit>/<slot>/<option>), its shapes (shape:body/<id>) and rows (row:body/<id>). Keys and fields: see src/builder/explain.js. Vietnamese gives the English term in brackets on first use in an entry; part names stay English, as on the cards. _todo marks a fact still to check.",
+  "_about": "Plain-language explanations for the body card, English and Vietnamese (content agent): its parts (part:<id>), the pieces inside their kits (slot:<kit>/<slot>, option:<kit>/<slot>/<option>), its shapes (shape:body/<id>) and rows (row:body/<id>). Keys and fields: see src/builder/explain.js. Vietnamese gives the English term in brackets on first use in an entry; part names stay English, as on the cards. Wave 4 added the real stage shapes, their parts and the new inner choices.",
   "entries": {
     "part:tank_s_kerolox": {
       "en": {
@@ -3322,12 +3322,13 @@
     },
     "shape:body/hydrolox_core": {
       "en": {
-        "what": "A short oxygen tank on top, the intertank, and a long hydrogen tank below, all under orange foam, like the Space Shuttle's External Tank. The big oxygen pipe runs down the outside.",
-        "why": "With a hydrogen engine it gives the best Isp, so every kilogram of propellant goes further. It is huge, tall and expensive, and holds little propellant mass for its size."
+        "what": "A short oxygen tank on top, the intertank, and a long hydrogen tank below, all under orange foam, with the big oxygen feed line down the outside, like the Space Shuttle External Tank.",
+        "why": "The first tanks of 1981 were aluminium 2219; the 1998 super-lightweight tank switched to aluminium-lithium and saved 3.4 t. Choose the skin material to build either."
       },
       "vi": {
-        "what": "Bồn oxy ngắn ở trên, đoạn nối giữa hai bồn (intertank), và bồn hydro dài ở dưới, tất cả phủ bọt cam, giống bồn ngoài của tàu con thoi. Ống oxy lớn chạy dọc bên ngoài.",
-        "why": "Đi với động cơ hydro, nó cho Isp tốt nhất, nên mỗi ki-lô-gam nhiên liệu đi được xa hơn. Nó khổng lồ, cao và đắt, và chứa ít khối lượng nhiên liệu so với kích thước."
+        "name": "Bồn Ngoài của Tàu con thoi",
+        "what": "Một bồn oxy ngắn ở trên, đoạn nối giữa hai bồn, và một bồn hydro dài ở dưới, tất cả dưới lớp xốp màu cam, với ống dẫn oxy lớn chạy bên ngoài, giống Bồn Ngoài (External Tank) của Tàu con thoi.",
+        "why": "Những bồn đầu tiên năm 1981 làm bằng nhôm 2219; bồn siêu nhẹ năm 1998 chuyển sang nhôm-liti và nhẹ đi 3,4 tấn. Chọn vật liệu vỏ để dựng loại nào cũng được."
       }
     },
     "shape:body/falcon9_s1": {
@@ -3342,22 +3343,24 @@
     },
     "shape:body/saturn_sic": {
       "en": {
-        "what": "A long oxygen tank on top, an intertank and the kerosene tank below, with a systems tunnel down the side. This is the layout of the Saturn V's first stage, which was 10 m wide.",
-        "why": "108 t of kerosene and oxygen in robust separate tanks. Full, it is the heaviest body in the hangar."
+        "what": "The Saturn V first stage: a corrugated forward skirt, a long oxygen tank with helium bottles inside, a corrugated intertank, and the kerosene tank with the oxygen lines running down through it in tunnels.",
+        "why": "108 t of kerosene and oxygen in robust separate tanks. The real stage was 10 m wide and fed five F-1 engines."
       },
       "vi": {
-        "what": "Bồn oxy dài ở trên, đoạn nối giữa hai bồn, và bồn dầu hỏa ở dưới, có đường hầm cáp chạy dọc bên hông. Đây là cách bố trí tầng một của Saturn V, vốn rộng tới 10 m.",
-        "why": "108 tấn dầu hỏa và oxy trong những bồn rời chắc chắn. Khi đầy, đây là thân tàu nặng nhất trong xưởng."
+        "name": "Saturn V S-IC",
+        "what": "Tầng một Saturn V: váy trước dạng tôn sóng, bồn oxy dài có bình heli bên trong, đoạn nối giữa hai bồn dạng tôn sóng, và bồn dầu hỏa có các ống oxy chạy xuyên qua trong những đường hầm.",
+        "why": "108 tấn dầu hỏa và oxy trong hai bồn riêng chắc chắn. Tầng thật rộng 10 m và cấp nhiên liệu cho năm động cơ F-1."
       }
     },
     "shape:body/saturn_sivb": {
       "en": {
-        "what": "The Instrument Unit ring on top, then hydrogen over oxygen with one insulated common wall, like the Saturn V's third stage.",
-        "why": "The best Isp with a hydrogen engine, and the guidance ring adds 3.5 % reliability. It was built as an upper stage that takes over high up, so it holds only 26 t of propellant, and it is very expensive."
+        "what": "The Saturn V third stage: the Instrument Unit ring on top, hydrogen over oxygen in one tank insulated from the inside, and the aft skirt with two thruster pods and two ullage motors.",
+        "why": "It relit in orbit to send Apollo to the Moon; its thruster pods held it steady and settled the propellant before the restart."
       },
       "vi": {
-        "what": "Vòng Khoang Thiết bị (Instrument Unit) trên cùng, rồi hydro trên oxy với một vách chung cách nhiệt, giống tầng ba của Saturn V.",
-        "why": "Isp tốt nhất khi đi với động cơ hydro, và vòng dẫn đường tăng độ tin cậy 3,5 %. Nó vốn là tầng trên, làm việc khi tàu đã lên cao, nên chỉ chứa 26 tấn nhiên liệu, và nó rất đắt."
+        "name": "Saturn S-IVB với Khoang Thiết bị",
+        "what": "Tầng ba Saturn V: vòng Khoang Thiết bị (Instrument Unit) ở trên, hydro trên oxy trong một bồn cách nhiệt từ bên trong, và váy sau (aft skirt) với hai cụm động cơ điều hướng và hai động cơ dồn nhiên liệu.",
+        "why": "Nó khởi động lại trên quỹ đạo để đưa Apollo tới Mặt Trăng; các cụm động cơ nhỏ giữ nó ổn định và dồn nhiên liệu trước lần khởi động lại."
       }
     },
     "shape:body/atlas_balloon": {
@@ -3372,12 +3375,13 @@
     },
     "shape:body/soyuz_blok_a": {
       "en": {
-        "what": "A narrow kerosene core, like the Soyuz core stage. From the top: an open truss, the instrument ring, a long oxygen tank, the intertank where four boosters push, and the kerosene tank.",
-        "why": "The most-flown rocket layout in history, with 62.5 t of propellant at the medium width. Its structure is heavy for the propellant it holds."
+        "what": "The Soyuz core: an open lattice, the instrument ring, then the waisted core, an oxygen tank of two cones over a narrower kerosene tank.",
+        "why": "The most-flown rocket layout in history, flying since 1957. The four boosters push on the ring at its widest point."
       },
       "vi": {
-        "what": "Một tầng lõi dầu hỏa hẹp, giống tầng lõi của Soyuz. Từ trên xuống: khung giàn hở, vòng thiết bị, bồn oxy dài, đoạn nối giữa hai bồn nơi bốn tên lửa đẩy phụ tì vào, và bồn dầu hỏa.",
-        "why": "Kiểu bố trí tên lửa bay nhiều nhất trong lịch sử, với 62,5 tấn nhiên liệu ở đường kính cỡ vừa. Kết cấu của nó nặng so với lượng nhiên liệu chứa được."
+        "name": "Tầng lõi Soyuz (Blok A)",
+        "what": "Tầng lõi Soyuz: một khung giàn hở, vòng thiết bị, rồi phần lõi có eo, gồm bồn oxy hai hình nón nằm trên bồn dầu hỏa hẹp hơn.",
+        "why": "Kiểu bố trí tên lửa bay nhiều nhất trong lịch sử, bay từ năm 1957. Bốn tên lửa đẩy phụ tì vào vòng ở chỗ rộng nhất."
       }
     },
     "shape:body/starship_steel": {
@@ -3480,6 +3484,1918 @@
       },
       "vi": {
         "what": "Gioăng cao su (seal) ở các mối nối của bồn và động cơ."
+      }
+    },
+    "part:tank_l_kerolox_cluster": {
+      "en": {
+        "what": "A bundle of nine tanks instead of one big one: a wide oxygen tank in the middle and eight narrower tanks around it, holding 54 t of kerosene and oxygen.",
+        "why": "Small tanks are easy to build, test and carry. In 1958 the Army rocket team at ABMA chose to bundle tanks it already knew how to make, so the first Saturn could fly in 1961.",
+        "without": "One big tank of the same width holds more and weighs less. Here nine sets of walls and domes add mass, and the gaps between the tanks hold nothing.",
+        "inside": "The middle tank and four of the outer ones hold liquid oxygen; the other four hold kerosene. A spider beam (a star-shaped frame) ties the tops together and carries the stage above; a tail barrel ties the bottoms. Pipes at the bottom feed the engines.",
+        "analogy": "Like a bunch of pencils held together with a rubber band: each pencil is weak, the bundle is strong."
+      },
+      "vi": {
+        "name": "Cụm bồn L (Saturn IB)",
+        "what": "Một bó gồm chín bồn thay cho một bồn lớn: một bồn oxy to ở giữa và tám bồn nhỏ hơn xung quanh, chứa 54 tấn dầu hỏa và oxy lỏng.",
+        "why": "Bồn nhỏ thì dễ chế tạo, dễ thử và dễ chở. Năm 1958, đội tên lửa của Lục quân Mỹ ở ABMA quyết định bó lại những loại bồn đã biết cách làm, nhờ vậy tên lửa Saturn đầu tiên bay được vào năm 1961.",
+        "without": "Một bồn lớn cùng bề rộng chứa được nhiều hơn và nhẹ hơn. Ở đây chín bộ vách và nắp vòm làm tăng khối lượng, còn khe hở giữa các bồn thì không chứa gì.",
+        "inside": "Bồn giữa và bốn bồn bên ngoài chứa oxy lỏng; bốn bồn còn lại chứa dầu hỏa. Một dầm hình nhện (spider beam) buộc các đầu bồn lại với nhau và đỡ tầng phía trên; một vòng đuôi buộc các đáy bồn. Ống ở đáy đưa nhiên liệu xuống động cơ.",
+        "analogy": "Giống một bó bút chì được buộc bằng dây chun: từng cây thì yếu, cả bó thì chắc.",
+        "pros": [
+          "Bồn đã được kiểm chứng: rẻ để chế tạo và vận chuyển",
+          "Độ tin cậy 99,9 %"
+        ],
+        "cons": [
+          "Nặng: chín bộ vách và nắp vòm",
+          "Khe hở giữa các bồn không chứa nhiên liệu",
+          "Chỉ dùng cho động cơ kerolox"
+        ],
+        "real": "Tầng một Saturn IB S-IB (Chrysler, 1966–75): rộng 6,53 m, dài 24,5 m; một bồn LOX 2,67 m và tám bồn 1,78 m (4 LOX, 4 RP-1); khoảng 400 tấn nhiên liệu, rỗng khoảng 42 tấn kể cả 8 động cơ H-1"
+      }
+    },
+    "part:tank_l_storable_cluster": {
+      "en": {
+        "what": "Proton's first stage: a wide oxidizer tank in the middle, ringed by six fuel tanks that each carry an engine. 45 t of propellant.",
+        "why": "Every piece is narrow enough to travel by train, so the rocket could be built in a factory far from the launch site.",
+        "without": "One wide tank would hold more for its width, but it could never have crossed the country by rail.",
+        "inside": "The central tank holds nitrogen tetroxide, the oxidizer. The six outer tanks hold UDMH, the fuel, and each has an engine at its foot. The two liquids burst into flame the moment they meet, so the engines need no igniter. In this game they burn as kerolox.",
+        "analogy": "Like a flower: a fat middle with six petals around it."
+      },
+      "vi": {
+        "name": "Cụm bồn nhiên liệu lưu trữ được L (Proton)",
+        "what": "Tầng một của Proton: một bồn chất oxy hóa (oxidizer) to ở giữa, xung quanh là sáu bồn nhiên liệu, mỗi bồn mang một động cơ. Chứa 45 tấn nhiên liệu đẩy.",
+        "why": "Mỗi khối đều đủ hẹp để chở bằng tàu hỏa, nên tên lửa có thể làm ở nhà máy cách xa bãi phóng.",
+        "without": "Một bồn rộng duy nhất chứa được nhiều hơn so với bề rộng, nhưng không bao giờ chở xuyên đất nước bằng đường sắt được.",
+        "inside": "Bồn giữa chứa nitơ tetroxit, chất oxy hóa. Sáu bồn ngoài chứa UDMH, nhiên liệu, và mỗi bồn có một động cơ ở chân. Hai chất lỏng này bốc cháy ngay khi gặp nhau (hypergolic), nên động cơ không cần bộ đánh lửa. Trong game, chúng được tính như kerolox.",
+        "analogy": "Giống một bông hoa: nhụy to ở giữa, sáu cánh xung quanh.",
+        "pros": [
+          "Mọi khối đều chở được bằng tàu hỏa",
+          "Sản xuất hàng loạt: rẻ so với kích thước"
+        ],
+        "cons": [
+          "Khe hở giữa các bồn không chứa nhiên liệu",
+          "Nhiên liệu độc"
+        ],
+        "real": "Tầng một Proton (1965–): bồn N2O4 ở giữa rộng 4,1 m, sáu bồn UDMH 1,6 m, tổng bề ngang 7,4 m, dài 21 m; khoảng 420 tấn nhiên liệu, rỗng 30,6 tấn (Proton-M), sáu động cơ RD-275; bề rộng bị giới hạn bởi khổ đường sắt"
+      }
+    },
+    "part:tank_l_kerolox_spheres": {
+      "en": {
+        "what": "Two ball-shaped tanks, kerosene above oxygen, inside a shell that narrows towards the top, like the N1 moon rocket's first stage. 18 t of propellant.",
+        "why": "A sphere holds the most for the least wall, and the N1 spheres could be welded at the launch site from pieces that came by train.",
+        "without": "Cylinder tanks fill the shell much better. Round tanks leave the corners of the cone empty, so this big part holds little.",
+        "inside": "A smaller kerosene sphere sits above a bigger oxygen sphere, both hung inside the conical shell, which carries the loads. Pipes from each sphere run down to the engines, the kerosene pipes passing the oxygen sphere.",
+        "analogy": "Like two scoops of ice cream in a cone: lots of cone, not much ice cream."
+      },
+      "vi": {
+        "name": "Bồn cầu trong vỏ nón (N1)",
+        "what": "Hai bồn hình quả cầu, dầu hỏa ở trên oxy, nằm trong một lớp vỏ thu hẹp dần về phía đỉnh, giống tầng một của tên lửa Mặt Trăng N1. Chứa 18 tấn nhiên liệu đẩy.",
+        "why": "Hình cầu chứa được nhiều nhất với ít vách nhất, và các quả cầu của N1 có thể hàn ngay tại bãi phóng từ những mảnh chở đến bằng tàu hỏa.",
+        "without": "Bồn hình trụ lấp đầy lớp vỏ tốt hơn nhiều. Bồn tròn để trống các góc của hình nón, nên bộ phận to này chứa được ít.",
+        "inside": "Quả cầu dầu hỏa nhỏ hơn nằm trên quả cầu oxy lớn hơn, cả hai treo trong lớp vỏ hình nón, và chính lớp vỏ gánh lực. Ống từ mỗi quả cầu chạy xuống động cơ, ống dầu hỏa đi vòng qua quả cầu oxy.",
+        "analogy": "Giống hai viên kem tròn trong một chiếc ốc quế: nhiều vỏ, ít kem.",
+        "pros": [
+          "Hình cầu: vách nhẹ nhất so với lượng chứa",
+          "Làm từ những mảnh chở được bằng tàu hỏa"
+        ],
+        "cons": [
+          "Bỏ phí chỗ trong hình nón: chỉ 18 tấn",
+          "Thu hẹp dần về phía đỉnh"
+        ],
+        "real": "N1 Block A (1969–72): dài 30,1 m, hình nón từ 16,9 m ở đáy đến 10,3 m ở đỉnh; quả cầu dầu hỏa nhỏ hơn ở trên quả cầu LOX lớn hơn, treo trong lớp vỏ chịu lực; khoảng 1.880 tấn lúc cất cánh với 30 động cơ NK-15"
+      }
+    },
+    "part:tank_m_kerolox_bloka": {
+      "en": {
+        "what": "The Soyuz core stage's tanks: an oxygen tank made of two cones over a narrower kerosene tank, 56 t of propellant.",
+        "why": "The widest point is a stiff ring where the four strap-on boosters push the whole rocket. Below it the core narrows, so the boosters can sit close.",
+        "without": "A straight tube is simpler, but the boosters would sit farther out and push through a weaker joint.",
+        "inside": "From the top: the oxygen tank, two cones meeting at the load ring; a short intertank; the kerosene tank. Boiled liquid nitrogen fills the space as the propellant drains, keeping the thin walls stiff.",
+        "analogy": "Like a spinning top: widest in the middle, where it is strongest."
+      },
+      "vi": {
+        "name": "Bồn tầng lõi Soyuz (Blok A)",
+        "what": "Bồn của tầng lõi Soyuz: bồn oxy gồm hai hình nón ghép lại, nằm trên một bồn dầu hỏa hẹp hơn, chứa 56 tấn nhiên liệu đẩy.",
+        "why": "Chỗ rộng nhất là một vòng cứng, nơi bốn tên lửa đẩy phụ (booster) đẩy cả tên lửa đi lên. Phía dưới, lõi thu hẹp lại để các tên lửa đẩy phụ nằm sát vào.",
+        "without": "Một ống thẳng thì đơn giản hơn, nhưng các tên lửa đẩy phụ phải nằm xa hơn và đẩy qua một mối nối yếu hơn.",
+        "inside": "Từ trên xuống: bồn oxy, hai hình nón gặp nhau ở vòng chịu lực; một đoạn nối ngắn giữa hai bồn; bồn dầu hỏa. Nitơ lỏng được đun sôi để lấp chỗ trống khi nhiên liệu cạn dần, giữ cho vách mỏng luôn cứng.",
+        "analogy": "Giống con quay: phình to ở giữa, chỗ chắc nhất.",
+        "pros": [
+          "Kiểu bố trí bay nhiều nhất lịch sử",
+          "Độ tin cậy 99,9 %"
+        ],
+        "cons": [
+          "Kết cấu nặng so với lượng nhiên liệu",
+          "Eo hẹp: ít chỗ cho thiết bị gắn hông"
+        ],
+        "real": "Tầng lõi Soyuz Block A: rộng nhất 2,95 m, dài 27,1 m; 63,8 tấn LOX và 26,3 tấn dầu hỏa, rỗng khoảng 6,5 tấn; bồn được nén bằng nitơ lỏng hóa hơi (Sổ tay người dùng Soyuz của Arianespace, 2012)"
+      }
+    },
+    "part:tank_m_kerolox_bloki": {
+      "en": {
+        "what": "The Soyuz third stage's tanks: kerosene on top, a ring of instruments, then oxygen. 31.5 t of propellant.",
+        "why": "With the instrument ring between the tanks, the control boxes sit close to everything they run, in a dry place technicians can reach. It counts as guidance equipment: reliability +1 %.",
+        "without": "Without the ring the tanks could share one wall and be shorter, but the equipment would need another home.",
+        "inside": "The kerosene tank has round domes and a ribbed wall; below it, the instrument section with its hatches; then the oxygen tank, its domes wrapped in insulating blankets. The engine hangs below in the open lattice.",
+        "analogy": "Like a sandwich where the filling is the computer."
+      },
+      "vi": {
+        "name": "Bồn tầng ba Soyuz (Blok I)",
+        "what": "Bồn của tầng ba Soyuz: dầu hỏa ở trên, một vòng thiết bị, rồi đến oxy. Chứa 31,5 tấn nhiên liệu đẩy.",
+        "why": "Đặt vòng thiết bị giữa hai bồn giúp các hộp điều khiển ở gần mọi thứ chúng điều khiển, trong một chỗ khô ráo mà kỹ thuật viên với tới được. Nó được tính là thiết bị dẫn đường: độ tin cậy +1 %.",
+        "without": "Không có vòng này, hai bồn có thể dùng chung một vách và ngắn hơn, nhưng thiết bị phải tìm chỗ khác.",
+        "inside": "Bồn dầu hỏa có nắp vòm tròn và vách có gân; bên dưới là khoang thiết bị với các cửa sập; rồi đến bồn oxy, hai nắp vòm được bọc chăn cách nhiệt. Động cơ treo bên dưới, trong khung giàn hở.",
+        "analogy": "Giống một chiếc bánh mì kẹp mà nhân là máy tính.",
+        "pros": [
+          "Có sẵn vòng thiết bị: độ tin cậy +1 %",
+          "31,5 tấn ở đường kính cỡ vừa"
+        ],
+        "cons": [
+          "Tầng trên: ngắn",
+          "Chỉ dùng cho động cơ kerolox"
+        ],
+        "real": "Soyuz Block I (1960–): rộng 2,66 m, dài 6,7 m; 25,4 tấn LOX và dầu hỏa, rỗng 2,36 tấn (Soyuz-2.1b, RD-0124); từ trên xuống: bồn dầu hỏa, khoang thiết bị, bồn LOX"
+      }
+    },
+    "part:tank_m_storable_titan": {
+      "en": {
+        "what": "Titan II's tanks: oxidizer over fuel in two stiff aluminium tanks, 62 t of propellant. Titan II launched every Gemini flight.",
+        "why": "Its propellants stay liquid at room temperature, so a missile could wait fuelled for years. Its tanks are stiff enough to stand up empty.",
+        "without": "Very cold (cryogenic) propellants give more push per kilogram, but they boil away and must be loaded just before launch.",
+        "inside": "The nitrogen tetroxide tank is on top and the Aerozine 50 tank below, joined by a short ring. The oxidizer pipe runs straight down through the fuel tank inside a tube. For the Gemini astronauts, standpipes and a spring-loaded accumulator calmed the pogo shaking. In this game the propellants burn as kerolox.",
+        "analogy": "Like canned food on a shelf: it keeps for years, while fresh food must be eaten the same day."
+      },
+      "vi": {
+        "name": "Bồn nhiên liệu lưu trữ được M (Titan II)",
+        "what": "Bồn của Titan II: chất oxy hóa ở trên nhiên liệu, trong hai bồn nhôm cứng, chứa 62 tấn nhiên liệu đẩy. Titan II đã phóng mọi chuyến bay Gemini.",
+        "why": "Nhiên liệu của nó vẫn ở thể lỏng ở nhiệt độ phòng, nên một tên lửa có thể nằm chờ đã nạp sẵn nhiên liệu nhiều năm. Bồn cứng đến mức đứng vững được khi rỗng.",
+        "without": "Nhiên liệu siêu lạnh (cryogenic) cho lực đẩy trên mỗi kilôgam nhiều hơn, nhưng chúng bay hơi dần và phải nạp ngay trước giờ phóng.",
+        "inside": "Bồn nitơ tetroxit ở trên, bồn Aerozine 50 ở dưới, nối với nhau bằng một vòng ngắn. Ống dẫn chất oxy hóa chạy thẳng xuống xuyên qua bồn nhiên liệu, bên trong một ống bọc. Để chở các phi hành gia Gemini, người ta thêm ống đứng và một bộ tích áp lò xo để dập rung pogo. Trong game, các nhiên liệu này được tính như kerolox.",
+        "analogy": "Giống đồ hộp trên kệ: để được nhiều năm, trong khi đồ tươi phải ăn trong ngày.",
+        "pros": [
+          "Đứng vững được mà không cần áp suất",
+          "Phóng cả 12 chuyến Gemini"
+        ],
+        "cons": [
+          "Nhiên liệu độc",
+          "Dài và hẹp"
+        ],
+        "real": "Tầng một Titan II GLV (1964–66): rộng 3,05 m, dài khoảng 21 m; bồn N2O4 nằm trên bồn Aerozine 50; khoảng 117 tấn nhiên liệu, rỗng 4,3 đến 6,7 tấn (các nguồn khác nhau); ống oxy hóa 10 inch chạy xuyên bồn nhiên liệu"
+      }
+    },
+    "part:tank_m_storable_ps2": {
+      "en": {
+        "what": "India's PSLV second stage: two storable propellants sharing one bulkhead, with a ring of water at the bottom. 54.5 t of propellant.",
+        "why": "Sharing one bulkhead makes the stage shorter and lighter, and the water cools the hot gas that spins the engine's turbine.",
+        "without": "Without the water the turbine would need a cooler-burning gas generator or a tougher metal.",
+        "inside": "The two propellants, UH25 (mostly UDMH) and nitrogen tetroxide, sit one above the other with one dome between them. A doughnut-shaped (toroidal) water tank wraps around the bottom. Helium pushes all three liquids out. In this game the propellants burn as kerolox.",
+        "analogy": "Like a lunchbox with one divider for two foods, and a water bottle tucked underneath."
+      },
+      "vi": {
+        "name": "Bồn vách chung nhiên liệu lưu trữ được M (PSLV)",
+        "what": "Tầng hai của tên lửa PSLV của Ấn Độ: hai loại nhiên liệu lưu trữ được dùng chung một vách ngăn, với một vòng nước ở đáy. Chứa 54,5 tấn nhiên liệu đẩy.",
+        "why": "Dùng chung một vách ngăn giúp tầng ngắn hơn và nhẹ hơn, còn nước làm mát luồng khí nóng quay tua-bin của động cơ.",
+        "without": "Không có nước, tua-bin cần một bộ tạo khí cháy nguội hơn hoặc một loại kim loại chịu nhiệt tốt hơn.",
+        "inside": "Hai nhiên liệu, UH25 (chủ yếu là UDMH) và nitơ tetroxit, nằm chồng lên nhau, giữa chúng là một nắp vòm. Một bồn nước hình vòng xuyến (toroidal) ôm quanh đáy. Khí heli đẩy cả ba chất lỏng ra. Trong game, các nhiên liệu này được tính như kerolox.",
+        "analogy": "Giống hộp cơm có một vách ngăn cho hai món, với chai nước nhét bên dưới.",
+        "pros": [
+          "Một vách ngăn: ngắn so với lượng chứa",
+          "Rẻ"
+        ],
+        "cons": [
+          "Nhiên liệu độc",
+          "Bồn nước là khối lượng không cháy"
+        ],
+        "real": "Tầng hai PSLV PS2 (ISRO, 1993–): rộng 2,8 m, dài 12,8 m, 41,5 tấn UH25 và N2O4 trong hai bồn ngăn bởi một vách chung, bồn nước hình xuyến ở đáy, nén bằng heli; động cơ Vikas, 799 kN"
+      }
+    },
+    "part:tank_l_hydrolox_epc": {
+      "en": {
+        "what": "Ariane 5's core stage tank: liquid oxygen on top of liquid hydrogen, one shared bulkhead between them, 28 t of propellant.",
+        "why": "One tank with one bulkhead is shorter and lighter than two tanks with an intertank, and hydrogen gives the best Isp.",
+        "without": "Separate tanks are simpler to build and inspect, but heavier. With only one wall, a leak there would mix the oxygen and hydrogen: reliability 99.6 %.",
+        "inside": "The heavy oxygen sits on top, the bulky hydrogen below, divided by one curved bulkhead. When Ariane 5 was upgraded, the bulkhead was moved down to fit 16 t more oxygen. Helium pressurises the oxygen; hydrogen gas tapped from the engine pressurises the hydrogen. A thin foam layer covers the outside.",
+        "analogy": "Like a two-storey house: one floor between the two flats, instead of two roofs and a garden between two houses."
+      },
+      "vi": {
+        "name": "Bồn hydrolox vách chung L (Ariane 5)",
+        "what": "Bồn tầng lõi Ariane 5: oxy lỏng ở trên hydro lỏng, giữa chúng là một vách ngăn chung (common bulkhead), chứa 28 tấn nhiên liệu đẩy.",
+        "why": "Một bồn với một vách ngăn thì ngắn và nhẹ hơn hai bồn có đoạn nối ở giữa, còn hydro cho xung lượng riêng (Isp) tốt nhất.",
+        "without": "Hai bồn riêng dễ chế tạo và kiểm tra hơn, nhưng nặng hơn. Chỉ có một vách, nếu nó rò thì oxy và hydro sẽ trộn vào nhau: độ tin cậy 99,6 %.",
+        "inside": "Oxy nặng nằm trên, hydro cồng kềnh nằm dưới, ngăn bởi một vách cong. Khi Ariane 5 được nâng cấp, vách này được dời xuống để chứa thêm 16 tấn oxy. Heli nén bồn oxy; khí hydro trích từ động cơ nén bồn hydro. Một lớp xốp mỏng phủ bên ngoài.",
+        "analogy": "Giống nhà hai tầng: chỉ một sàn ngăn giữa hai căn hộ, thay vì hai mái nhà và một khoảng sân giữa hai ngôi nhà.",
+        "pros": [
+          "28 tấn hydro và oxy trong một bồn",
+          "Isp tốt nhất với động cơ hydrolox"
+        ],
+        "cons": [
+          "Rất đắt",
+          "Vách ngăn rò thì hai chất trộn vào nhau: độ tin cậy 99,6 %"
+        ],
+        "real": "Ariane 5 EPC (1996–2023): rộng 5,4 m, dài 23,8 m không kể động cơ; bản ECA chứa 150 tấn LOX và 25 tấn LH2, rỗng 14,7 tấn; vách ngăn chung; LOX nén bằng heli, LH2 nén bằng khí hydro từ động cơ Vulcain 2"
+      }
+    },
+    "part:tank_l_lh2_upper": {
+      "en": {
+        "what": "The hydrogen tank of a cryogenic upper stage: wide and short, built so a smaller oxygen tank can hang below it. 14 t of propellant.",
+        "why": "Hydrogen is so light that it fills most of the stage, so it gets the full width. This is the layout of the Delta IV upper stage that pushed Orion towards the Moon on Artemis I and II.",
+        "without": "Putting the hydrogen in a narrow tank would make the stage much taller.",
+        "inside": "A wide aluminium barrel with isogrid walls and spun-formed domes, insulated with sprayed and bonded foam and helium-purged blankets and finished white. Hydrogen gas from the engine pressurises it. Under its bottom dome hangs the truss that carries the oxygen tank.",
+        "analogy": "Like a parachute with its jumper hanging below: the big light part on top, the small heavy part underneath."
+      },
+      "vi": {
+        "name": "Bồn hydro tầng trên L (Delta IV, SLS ICPS)",
+        "what": "Bồn hydro của một tầng trên dùng nhiên liệu siêu lạnh: rộng và ngắn, làm sao để treo được một bồn oxy nhỏ hơn bên dưới. Chứa 14 tấn nhiên liệu đẩy.",
+        "why": "Hydro nhẹ đến mức chiếm gần hết thể tích của tầng, nên nó được dùng cả bề rộng. Đây là cách bố trí của tầng trên Delta IV, tầng đã đẩy tàu Orion về phía Mặt Trăng trong Artemis I và II.",
+        "without": "Đặt hydro vào một bồn hẹp thì tầng sẽ cao hơn nhiều.",
+        "inside": "Một ống nhôm rộng có vách lưới tam giác (isogrid) và nắp vòm tạo hình bằng cách xoay (spin-forming), bọc xốp phun, xốp dán và chăn cách nhiệt được thổi khí heli, mặt ngoài màu trắng. Khí hydro từ động cơ nén bồn. Dưới nắp vòm đáy là khung giàn treo bồn oxy.",
+        "analogy": "Giống chiếc dù với người nhảy dù treo bên dưới: phần to và nhẹ ở trên, phần nhỏ và nặng ở dưới.",
+        "pros": [
+          "Isp tốt nhất với động cơ hydrolox",
+          "Ngắn và rộng"
+        ],
+        "cons": [
+          "Đắt",
+          "Ít khối lượng nhiên liệu so với kích thước"
+        ],
+        "real": "Tầng hai siêu lạnh DCSS (Delta III và IV, 1998–2024; bản 5 m trên Delta IV) và SLS ICPS (Artemis I 2022, Artemis II 2026): rộng 5,1 m, dài 13,7 m kể cả động cơ; 27,2 tấn nhiên liệu, rỗng 3,49 tấn; nhôm lưới tam giác, nắp vòm tạo hình xoay, xốp phun, xốp dán và chăn cách nhiệt thổi heli"
+      }
+    },
+    "part:tank_l_lox_hung": {
+      "en": {
+        "what": "A small, squashed-ball oxygen tank hung under the hydrogen tank on a truss. 2.8 t here.",
+        "why": "Liquid oxygen is about sixteen times denser than liquid hydrogen, so it needs a much smaller tank. Hanging it below saves the height of a full barrel.",
+        "without": "A full-width oxygen tank would add height and wall for no extra propellant.",
+        "inside": "An oblate spheroid (a ball squashed from top to bottom), lengthened on the 5 m stage, hangs from a composite truss under the hydrogen dome. Helium bottles and the avionics shelf sit around and under it. During the climb the stage skirt covers it, so here the skin closes round it. On the real stage this small tank holds most of the propellant mass; here each tank holds the mix by volume.",
+        "analogy": "Like a lantern hanging under a table."
+      },
+      "vi": {
+        "name": "Bồn oxy treo (tầng trên Delta IV)",
+        "what": "Một bồn oxy nhỏ hình quả bóng bị ép dẹt, treo dưới bồn hydro bằng khung giàn. Ở đây chứa 2,8 tấn.",
+        "why": "Oxy lỏng đặc hơn hydro lỏng khoảng mười sáu lần, nên cần bồn nhỏ hơn nhiều. Treo nó bên dưới thì đỡ tốn chiều cao của cả một đoạn ống.",
+        "without": "Một bồn oxy rộng hết cỡ sẽ thêm chiều cao và vách mà không chứa thêm nhiên liệu.",
+        "inside": "Một khối cầu dẹt (oblate spheroid), như quả bóng bị ép từ trên xuống và được kéo dài thêm trên bản 5 m, treo trên khung giàn composite dưới nắp vòm hydro. Bình heli và kệ thiết bị điện tử nằm quanh và bên dưới nó. Khi bay lên, váy (skirt) của tầng che nó lại, nên ở đây lớp vỏ khép kín quanh nó. Trên tầng thật, bồn nhỏ này chứa phần lớn khối lượng nhiên liệu; ở đây mỗi bồn chứa hỗn hợp theo thể tích.",
+        "analogy": "Giống chiếc đèn lồng treo dưới mặt bàn.",
+        "pros": [
+          "Gọn: oxy đặc trong bồn nhỏ",
+          "Có kệ cho thiết bị điện tử trên nắp vòm"
+        ],
+        "cons": [
+          "Chỉ dùng cho động cơ hydrolox",
+          "Nằm trong một lớp váy: thêm khối lượng vỏ"
+        ],
+        "real": "DCSS của Delta IV: bồn LO2 rộng 3,2 m (hình cầu dẹt trên bản 4 m, được kéo dài trên bản 5 m) treo trên khung giàn composite; thiết bị điện tử đặt trên kệ ở nắp vòm phía sau (tài liệu Delta IV của ULA)"
+      }
+    },
+    "part:tank_l_methalox_orthogrid": {
+      "en": {
+        "what": "Vulcan's booster tank: liquid oxygen over liquefied natural gas, one shared bulkhead, walls machined into a square grid. 64 t of propellant.",
+        "why": "Methane burns cleaner than kerosene and can be made on Mars; aluminium is much lighter than steel.",
+        "without": "A steel tank is cheaper and tougher; separate tanks are simpler but heavier.",
+        "inside": "Barrels milled into an orthogrid (rows of square pockets) and spun-formed domes. Oxygen on top, natural gas below, one bulkhead between. A big pipe carries the oxygen down the outside of the fuel tank to the engines, and orange foam keeps both liquids cold.",
+        "analogy": "Like a waffle: thin where it can be, ribbed where it must be strong."
+      },
+      "vi": {
+        "name": "Bồn methalox lưới vuông L (Vulcan)",
+        "what": "Bồn tầng đẩy của Vulcan: oxy lỏng ở trên khí thiên nhiên hóa lỏng, một vách ngăn chung, vách bồn được phay thành lưới ô vuông. Chứa 64 tấn nhiên liệu đẩy.",
+        "why": "Methane cháy sạch hơn dầu hỏa và có thể sản xuất trên Sao Hỏa; nhôm nhẹ hơn thép nhiều.",
+        "without": "Bồn thép rẻ hơn và bền hơn; hai bồn riêng thì đơn giản hơn nhưng nặng hơn.",
+        "inside": "Các đoạn ống được phay thành lưới ô vuông (orthogrid) và nắp vòm tạo hình xoay. Oxy ở trên, khí thiên nhiên ở dưới, một vách ngăn ở giữa. Một ống lớn dẫn oxy xuống động cơ dọc bên ngoài bồn nhiên liệu, và lớp xốp màu cam giữ lạnh cả hai chất lỏng.",
+        "analogy": "Giống chiếc bánh quế: mỏng ở chỗ có thể mỏng, có gân ở chỗ cần chắc.",
+        "pros": [
+          "64 tấn methane và oxy",
+          "Nhẹ hơn thép"
+        ],
+        "cons": [
+          "Chỉ dùng cho động cơ methalox",
+          "Vách ngăn chung: độ tin cậy 99,7 %"
+        ],
+        "real": "Tầng một Vulcan (2024–): rộng 5,4 m, dài 33,3 m; khoảng 353 tấn LO2 và LNG, rỗng 28,6 tấn; ống nhôm lưới vuông, nắp vòm tạo hình xoay, vách ngăn chung, ống dẫn LO2 bên ngoài (ULA)"
+      }
+    },
+    "part:centerbody_l": {
+      "en": {
+        "what": "A short, stiff ring between a large oxygen tank above and a hydrogen tank below.",
+        "why": "It carries the loads from one tank to the other, and gives the pad's swing arms and the equipment a place to connect without piercing a tank.",
+        "without": "Without it the two tanks would need a common bulkhead or a longer intertank.",
+        "inside": "A hollow composite shell with ring frames, as on Delta IV. Umbilical plates, cables and valves bolt inside.",
+        "analogy": "Like a belt: it joins the top half to the bottom half and gives you somewhere to hang your keys."
+      },
+      "vi": {
+        "name": "Đoạn thân giữa L",
+        "what": "Một vòng ngắn và cứng nằm giữa bồn oxy lớn ở trên và bồn hydro ở dưới (centerbody).",
+        "why": "Nó truyền lực từ bồn này sang bồn kia, và là chỗ để tay đòn của bệ phóng và các thiết bị gắn vào mà không phải khoan thủng bồn.",
+        "without": "Không có nó, hai bồn phải dùng vách chung hoặc một đoạn nối dài hơn.",
+        "inside": "Một lớp vỏ composite rỗng có khung vòng, như trên Delta IV. Tấm nối dây rốn (umbilical), cáp và van được bắt vít bên trong.",
+        "analogy": "Giống chiếc thắt lưng: nối nửa trên với nửa dưới, lại có chỗ để móc chùm chìa khóa.",
+        "pros": [
+          "Có điểm gắn chắc mà không khoan thủng bồn",
+          "Gánh lực uốn"
+        ],
+        "cons": [
+          "Khối lượng và chiều cao không chứa nhiên liệu"
+        ],
+        "real": "Tầng đẩy lõi Delta IV: đoạn thân giữa bằng composite giữa bồn LO2 và LH2, nơi các tay đòn nối vào (Sổ tay người dùng Delta IV của ULA)"
+      }
+    },
+    "part:forward_skirt_l": {
+      "en": {
+        "what": "A short ring on top of a large stage: a dry bay for instruments and vents, and the joint to whatever sits above.",
+        "why": "Equipment inside it is out of the airflow, and nothing has to be bolted through a tank wall.",
+        "without": "The top tank would join the next section directly, with no room for instruments.",
+        "inside": "A ring of skin with stiffeners: corrugated on Saturn V's first stage, hat-shaped stringers on the S-II, isogrid on Atlas V. Vents, telemetry boxes and cable runs sit inside.",
+        "analogy": "Like the attic of a house: nobody lives there, but it is where the wiring runs."
+      },
+      "vi": {
+        "name": "Váy trước L",
+        "what": "Váy trước (forward skirt): một vòng ngắn trên đỉnh một tầng lớn, là khoang khô cho thiết bị đo và van xả, và là mối nối với phần phía trên.",
+        "why": "Thiết bị bên trong nó tránh được luồng gió, và không có gì phải bắt vít xuyên qua vách bồn.",
+        "without": "Bồn trên cùng sẽ nối thẳng với phần tiếp theo, không còn chỗ cho thiết bị đo.",
+        "inside": "Một vòng vỏ có gân tăng cứng: dạng tôn sóng trên tầng một Saturn V, thanh gân hình mũ trên tầng S-II, lưới tam giác trên Atlas V. Van xả, hộp truyền số liệu (telemetry) và đường cáp nằm bên trong.",
+        "analogy": "Giống gác xép của ngôi nhà: không ai ở, nhưng là nơi chạy dây điện.",
+        "pros": [
+          "Khoang khô cho thiết bị",
+          "Mối nối cứng với phần phía trên"
+        ],
+        "cons": [
+          "Khối lượng không chứa nhiên liệu"
+        ],
+        "real": "Váy trước của Saturn V S-IC (nhôm 7075 dạng sóng, thiết bị truyền số liệu và van xả LOX); váy trước S-II (vỏ 7075 dày 1 mm với thanh gân hình mũ bên ngoài); váy chuyển tiếp trước của Atlas V (nhôm 2014 lưới tam giác)"
+      }
+    },
+    "part:aft_skirt_l": {
+      "en": {
+        "what": "A short ring under the lowest tank that carries side hardware: thruster pods, ullage motors and helium bottles.",
+        "why": "Heavy, shaking hardware is better on a dry ring than on a thin tank wall.",
+        "without": "The thrusters and bottles would have to be clamped to the tank itself.",
+        "inside": "A ring of skin and stringers with strong fittings. On the S-IVB the two thruster pods sat 180° apart on it, with two small solid motors between them.",
+        "analogy": "Like the bumper of a car: a strong place to fix things to."
+      },
+      "vi": {
+        "name": "Váy sau L",
+        "what": "Váy sau (aft skirt): một vòng ngắn dưới bồn thấp nhất, mang các thiết bị gắn hông: cụm động cơ điều hướng nhỏ, động cơ dồn nhiên liệu và bình heli.",
+        "why": "Thiết bị nặng và rung thì gắn lên một vòng khô sẽ tốt hơn gắn lên vách bồn mỏng.",
+        "without": "Động cơ nhỏ và bình khí sẽ phải kẹp thẳng vào bồn.",
+        "inside": "Một vòng vỏ và thanh gân có các khớp chắc. Trên S-IVB, hai cụm động cơ điều hướng nằm cách nhau 180° trên vòng này, xen giữa là hai động cơ nhiên liệu rắn nhỏ.",
+        "analogy": "Giống cản xe ô tô: chỗ chắc chắn để gắn đồ.",
+        "pros": [
+          "Điểm gắn cho động cơ nhỏ và bình khí",
+          "Mối nối cứng với phần đuôi"
+        ],
+        "cons": [
+          "Khối lượng không chứa nhiên liệu"
+        ],
+        "real": "Váy sau Saturn S-IVB: hai mô-đun APS cách nhau 180° và hai động cơ dồn nhiên liệu TX-280; váy sau S-II (vỏ 7075 dày 1,8 mm với thanh gân bên ngoài)"
+      }
+    },
+    "part:avionics_skirt_l": {
+      "en": {
+        "what": "The SLS core stage's forward skirt: a large ring that houses three flight computers and the stage's guidance electronics.",
+        "why": "Three computers vote on every decision, so one can fail and the flight goes on. A dedicated guidance section catches faults the capsule computer would miss: reliability +3 %.",
+        "without": "The capsule's own computer would fly the whole stack alone.",
+        "inside": "Racks of avionics boxes around the inside wall: the flight computers, the inertial measurement units, power units and radios, with cables running down to the engines.",
+        "analogy": "Like a team of three referees: if one blinks, the other two still see the play."
+      },
+      "vi": {
+        "name": "Váy trước có máy tính bay (SLS)",
+        "what": "Váy trước (forward skirt) của tầng lõi SLS: một vòng lớn chứa ba máy tính bay và thiết bị điện tử dẫn đường của tầng.",
+        "why": "Ba máy tính bỏ phiếu cho mọi quyết định, nên một máy hỏng thì chuyến bay vẫn tiếp tục. Một khoang dẫn đường riêng bắt được những lỗi mà máy tính của khoang lái bỏ sót: độ tin cậy +3 %.",
+        "without": "Máy tính của khoang lái sẽ phải tự lái cả tên lửa.",
+        "inside": "Các giá thiết bị điện tử quanh vách trong: máy tính bay, bộ đo quán tính (IMU), bộ nguồn và máy vô tuyến, với cáp chạy xuống tới động cơ.",
+        "analogy": "Giống một đội ba trọng tài: một người chớp mắt thì hai người kia vẫn nhìn thấy.",
+        "pros": [
+          "Đủ chỗ cho cả bộ thiết bị điện tử",
+          "Độ tin cậy +3 %"
+        ],
+        "cons": [
+          "Nặng và đắt"
+        ],
+        "real": "Váy trước tầng lõi SLS, rộng 8,4 m: ba máy tính bay và thiết bị điện tử, thêm một số hộp ở đoạn nối giữa hai bồn và khoang động cơ (NASA, Boeing)"
+      }
+    },
+    "part:hotstage_truss_m": {
+      "en": {
+        "what": "An open lattice of struts between two sections, so an engine can fire through it.",
+        "why": "On Soyuz the third stage lights while the core below still burns, and the flame escapes through the gaps. Here the ship flies as one stage, so the lattice is simply light, open structure.",
+        "without": "A closed ring would trap the flame, and the stage above would need small motors to settle its propellant before lighting.",
+        "inside": "Two rings joined by angled struts. A heat-resistant cover protects the dome under it from the flame.",
+        "analogy": "Like a bicycle frame: tubes in triangles, strong and full of air."
+      },
+      "vi": {
+        "name": "Khung giàn tách tầng nóng M (Soyuz, N1)",
+        "what": "Một khung giàn hở bằng các thanh chống giữa hai phần, để động cơ có thể phun lửa xuyên qua.",
+        "why": "Trên Soyuz, tầng ba khởi động khi tầng lõi bên dưới vẫn đang cháy, và ngọn lửa thoát ra qua các khe hở (tách tầng nóng, hot staging). Ở đây tàu bay như một tầng duy nhất, nên khung giàn chỉ là kết cấu nhẹ và hở.",
+        "without": "Một vòng kín sẽ nhốt ngọn lửa lại, và tầng phía trên sẽ cần động cơ nhỏ để dồn nhiên liệu trước khi khởi động.",
+        "inside": "Hai vòng nối với nhau bằng các thanh chống xiên. Một tấm che chịu nhiệt bảo vệ nắp vòm bên dưới khỏi ngọn lửa.",
+        "analogy": "Giống khung xe đạp: các ống ghép thành tam giác, vừa chắc vừa rỗng.",
+        "pros": [
+          "Rất nhẹ",
+          "Hở: dễ với tới thiết bị bên trong"
+        ],
+        "cons": [
+          "Không có vỏ che thiết bị khỏi luồng gió",
+          "Tấm chắn nhiệt trên nắp vòm bên dưới làm tăng khối lượng"
+        ],
+        "real": "Soyuz: khung giàn giữa Block A và Block I cho phép tầng ba khởi động trước khi tách (Sổ tay người dùng Soyuz của Arianespace, 2012); 2,66 m. N1: các đoạn nối tầng dạng giàn Warren hở phía trên Block A"
+      }
+    },
+    "part:hotstage_truss_l": {
+      "en": {
+        "what": "A wide open lattice of struts between two big sections, open for the exhaust of an engine that lights inside it.",
+        "why": "Proton's second stage starts its engines a moment before it lets go of the first stage, and the exhaust blows out through the lattice. Here the ship flies as one stage, so the lattice is simply light, open structure.",
+        "without": "A closed ring would trap the flame, and the stage above would need small motors to settle its propellant before lighting.",
+        "inside": "Rings of aluminium alloy joined by a zigzag of struts (a Warren truss). A heat-resistant cover protects the dome under it.",
+        "analogy": "Like the girders of a railway bridge: a zigzag of beams, strong and see-through."
+      },
+      "vi": {
+        "name": "Khung giàn tách tầng nóng L (Proton)",
+        "what": "Một khung giàn hở rộng bằng các thanh chống giữa hai phần lớn, để luồng khí của động cơ khởi động bên trong thoát ra.",
+        "why": "Tầng hai của Proton khởi động động cơ ngay trước khi rời tầng một, và luồng khí phụt ra qua khung giàn. Ở đây tàu bay như một tầng duy nhất, nên khung giàn chỉ là kết cấu nhẹ và hở.",
+        "without": "Một vòng kín sẽ nhốt ngọn lửa lại, và tầng phía trên sẽ cần động cơ nhỏ để dồn nhiên liệu trước khi khởi động.",
+        "inside": "Các vòng hợp kim nhôm nối với nhau bằng những thanh chống xếp hình răng cưa (giàn Warren). Một tấm che chịu nhiệt bảo vệ nắp vòm bên dưới.",
+        "analogy": "Giống dầm cầu đường sắt: các thanh xếp hình răng cưa, vừa chắc vừa nhìn xuyên qua được.",
+        "pros": [
+          "Rất nhẹ so với kích thước",
+          "Hở: dễ với tới thiết bị bên trong"
+        ],
+        "cons": [
+          "Không có vỏ che thiết bị khỏi luồng gió",
+          "Tấm chắn nhiệt trên nắp vòm bên dưới làm tăng khối lượng"
+        ],
+        "real": "Proton: khung giàn bằng hợp kim nhôm V95 giữa tầng một và tầng hai cho luồng khí của tầng hai thoát ra vào khoảng giây thứ 120 (RussianSpaceWeb)"
+      }
+    },
+    "part:hotstage_ring_l": {
+      "en": {
+        "what": "A short steel ring full of vents on top of the booster: the ship lights its engines through it.",
+        "why": "Starship separates by firing its engines while still attached, so no settling push is needed and the separation is clean. The flame escapes through the vents.",
+        "without": "A closed interstage would trap the flame, and the ship would need another way to separate.",
+        "inside": "A welded stainless steel band with big vent openings, and a shield over the booster's top dome. On Block 3 boosters it is built into the top of the methane tank.",
+        "analogy": "Like a colander: strong enough to hold the food, full of holes to let the water out."
+      },
+      "vi": {
+        "name": "Vòng tách tầng nóng có lỗ thoát L (Super Heavy)",
+        "what": "Một vòng thép ngắn đầy lỗ thoát trên đỉnh tầng đẩy: tàu khởi động động cơ xuyên qua nó.",
+        "why": "Starship tách tầng bằng cách khởi động động cơ khi vẫn còn gắn vào tầng đẩy, nên không cần cú đẩy dồn nhiên liệu và tách gọn hơn. Ngọn lửa thoát ra qua các lỗ.",
+        "without": "Một vòng nối kín sẽ nhốt ngọn lửa, và tàu sẽ cần cách khác để tách ra.",
+        "inside": "Một dải thép không gỉ hàn liền với các lỗ thoát lớn, và một tấm chắn trên nắp vòm đỉnh của tầng đẩy. Trên tầng đẩy Block 3, vòng này được làm liền vào đỉnh bồn methane.",
+        "analogy": "Giống chiếc rổ: đủ chắc để giữ đồ, nhiều lỗ để nước thoát ra.",
+        "pros": [
+          "Thép bền",
+          "Mối nối cứng với phần phía trên"
+        ],
+        "cons": [
+          "Nặng so với chiều cao"
+        ],
+        "real": "Vòng nối có lỗ thoát của Super Heavy (từ chuyến bay thử thứ 2, 18/11/2023): cao khoảng 2 m trên tầng đẩy rộng 9 m, tầng đẩy dài 71 m khi có vòng và 69 m khi không có; trên Block 3 được làm liền với nắp vòm trước"
+      }
+    },
+    "part:aps_module": {
+      "en": {
+        "what": "A pod of small thrusters on the side of the stage: it holds the stage steady and settles the propellant before a restart.",
+        "why": "In orbit the big engine is off, but the stage still has to point the right way, and before relighting the propellant must be pushed back over the outlets.",
+        "without": "The stage would drift and tumble between burns, and the engine could restart on gas instead of liquid.",
+        "inside": "Three attitude thrusters and one ullage engine, with their own small tanks of fuel and oxidizer that ignite on contact, and a helium bottle to push them out.",
+        "analogy": "Like the small paddle strokes a kayaker makes to keep the boat pointing straight."
+      },
+      "vi": {
+        "name": "Mô-đun động cơ phụ (S-IVB)",
+        "what": "Một cụm động cơ đẩy nhỏ gắn bên hông tầng: giữ tầng ổn định và dồn nhiên liệu lại trước khi khởi động lại.",
+        "why": "Trên quỹ đạo, động cơ lớn đã tắt nhưng tầng vẫn phải hướng đúng chiều, và trước khi khởi động lại, nhiên liệu phải được đẩy về chỗ miệng ống ra.",
+        "without": "Tầng sẽ trôi và lộn vòng giữa các lần đốt, và động cơ có thể khởi động lại trên khí thay vì chất lỏng.",
+        "inside": "Ba động cơ điều hướng và một động cơ dồn nhiên liệu (ullage), có bồn nhiên liệu và chất oxy hóa nhỏ riêng, hai chất tự bốc cháy khi gặp nhau, cùng một bình heli để đẩy chúng ra.",
+        "analogy": "Giống những nhát chèo nhỏ người chèo thuyền kayak dùng để giữ thuyền đi thẳng.",
+        "pros": [
+          "Điều hướng trên quỹ đạo",
+          "Dồn nhiên liệu trước khi khởi động lại"
+        ],
+        "cons": [
+          "300 kg",
+          "Nhiên liệu riêng của nó sẽ cạn"
+        ],
+        "real": "APS của Saturn S-IVB: hai mô-đun, mỗi mô-đun có ba động cơ TR-204 150 lbf (667 N) và một động cơ ullage 70 lbf (311 N), khoảng 52 kg MMH và 68 kg N2O4"
+      }
+    },
+    "part:ullage_motors": {
+      "en": {
+        "what": "A small solid rocket that gives the stage a short push before the main engine lights.",
+        "why": "In weightlessness the propellant floats away from the outlets. A few seconds of push settles it, so the engine drinks liquid, not gas.",
+        "without": "The engine could gulp gas bubbles at start and fail to light properly.",
+        "inside": "A steel case of solid propellant with a small nozzle canted slightly outward, fired once by an electric igniter.",
+        "analogy": "Like tapping a ketchup bottle on the table before you pour."
+      },
+      "vi": {
+        "name": "Động cơ dồn nhiên liệu rắn",
+        "what": "Một tên lửa nhiên liệu rắn nhỏ cho tầng tên lửa một cú đẩy ngắn trước khi động cơ chính khởi động.",
+        "why": "Khi không trọng lượng, nhiên liệu trôi khỏi miệng ống ra. Vài giây đẩy sẽ dồn nó lại (ullage), để động cơ hút chất lỏng chứ không phải khí.",
+        "without": "Động cơ có thể hút phải bọt khí lúc khởi động và không cháy ổn định.",
+        "inside": "Một vỏ thép chứa nhiên liệu rắn với một miệng phun nhỏ hơi chếch ra ngoài, được kích một lần bằng bộ đánh lửa điện.",
+        "analogy": "Giống vỗ đáy chai tương cà xuống bàn trước khi rót.",
+        "pros": [
+          "Cú đẩy đơn giản, chắc chắn",
+          "Độ tin cậy +0,4 %"
+        ],
+        "cons": [
+          "Chỉ dùng được một lần",
+          "Mỗi cái 110 kg"
+        ],
+        "real": "Saturn S-IVB: hai động cơ Thiokol TX-280, mỗi cái 3.420 lbf (15,2 kN) trong 3,8 giây; S-II: bốn trong tám vị trí, 22.700 lbf (101 kN) trong 3,7 giây"
+      }
+    },
+    "shape:body/saturn_sii": {
+      "en": {
+        "what": "The Saturn V second stage: a forward skirt, then hydrogen over oxygen in one tank with a single honeycomb bulkhead, a systems tunnel down the side, and the aft skirt, which here carries the four ullage motors that really rode on the interstage below it.",
+        "why": "The common bulkhead saved metres of height and tonnes of mass. It was the hardest part of the stage to build: hydrogen at −253 °C on one side, oxygen at −183 °C on the other."
+      },
+      "vi": {
+        "name": "Saturn V S-II",
+        "what": "Tầng hai Saturn V: váy trước (forward skirt), rồi hydro trên oxy trong một bồn với một vách ngăn tổ ong duy nhất, một đường hầm hệ thống chạy dọc bên hông, và váy sau (aft skirt); ở đây váy sau mang bốn động cơ dồn nhiên liệu, vốn thật ra nằm trên đoạn nối tầng ngay bên dưới.",
+        "why": "Vách ngăn chung giúp bớt được mấy mét chiều cao và vài tấn khối lượng. Đó là phần khó làm nhất của tầng: một bên là hydro −253 °C, bên kia là oxy −183 °C."
+      }
+    },
+    "shape:body/saturn_ib_sib": {
+      "en": {
+        "what": "The Saturn IB first stage: nine tanks in a bundle, a wide oxygen tank in the middle and eight narrower tanks around it, tied by a spider beam on top.",
+        "why": "Bundling proven tanks, a choice made in 1958, gave the first Saturn a big first stage that flew in 1961. The Saturn IB launched the first crewed Apollo flight, three Skylab crews and the Apollo half of Apollo-Soyuz."
+      },
+      "vi": {
+        "name": "Saturn IB S-IB",
+        "what": "Tầng một Saturn IB: chín bồn trong một bó, một bồn oxy rộng ở giữa và tám bồn hẹp hơn xung quanh, buộc lại bằng một dầm hình nhện ở trên.",
+        "why": "Bó những bồn đã được kiểm chứng lại, một quyết định từ năm 1958, giúp tên lửa Saturn đầu tiên có một tầng một lớn bay được vào năm 1961. Saturn IB đã phóng chuyến Apollo có người lái đầu tiên, ba phi hành đoàn Skylab và tàu Apollo trong chuyến Apollo-Soyuz."
+      }
+    },
+    "shape:body/titan_ii": {
+      "en": {
+        "what": "Titan II's first stage: oxidizer over fuel in two stiff aluminium tanks, the oxidizer pipe running down through the fuel tank, and a wiring conduit outside.",
+        "why": "Storable propellants and stiff tanks made a missile that could wait fuelled for years; pogo fixes made it gentle enough to carry the Gemini astronauts."
+      },
+      "vi": {
+        "name": "Tầng một Titan II",
+        "what": "Tầng một Titan II: chất oxy hóa ở trên nhiên liệu trong hai bồn nhôm cứng, ống dẫn chất oxy hóa chạy xuyên qua bồn nhiên liệu, và một ống luồn dây điện bên ngoài.",
+        "why": "Nhiên liệu lưu trữ được và bồn cứng tạo nên một tên lửa có thể nằm chờ đã nạp nhiên liệu nhiều năm; các biện pháp chống rung pogo khiến nó đủ êm để chở phi hành gia Gemini."
+      }
+    },
+    "shape:body/sls_core": {
+      "en": {
+        "what": "The SLS core stage: the forward skirt with three voting flight computers, the oxygen tank, the intertank where the boosters push, and the long hydrogen tank, under orange foam, with two oxygen lines down opposite sides.",
+        "why": "A huge hydrogen stage built from orthogrid aluminium barrels joined by friction-stir welding. It flew Artemis I and the crew of Artemis II."
+      },
+      "vi": {
+        "name": "Tầng lõi SLS",
+        "what": "Tầng lõi SLS: váy trước với ba máy tính bay bỏ phiếu, bồn oxy, đoạn nối giữa hai bồn nơi các tên lửa đẩy phụ tì vào, và bồn hydro dài, dưới lớp xốp màu cam, với hai ống oxy chạy dọc hai bên đối diện.",
+        "why": "Một tầng hydro khổng lồ làm từ các ống nhôm lưới vuông nối bằng hàn ma sát khuấy (friction-stir welding). Nó đã bay Artemis I và chở phi hành đoàn Artemis II."
+      }
+    },
+    "shape:body/dcss_icps": {
+      "en": {
+        "what": "A cryogenic upper stage: a wide hydrogen tank and a small round oxygen tank hung below it on a truss, with helium bottles beside it.",
+        "why": "Short and efficient. As the SLS Interim Cryogenic Propulsion Stage it pushed Orion out of Earth orbit on Artemis I and II."
+      },
+      "vi": {
+        "name": "Tầng trên Delta IV (ICPS)",
+        "what": "Một tầng trên dùng nhiên liệu siêu lạnh: bồn hydro rộng và một bồn oxy tròn nhỏ treo bên dưới trên khung giàn, cạnh đó là các bình heli.",
+        "why": "Ngắn và hiệu quả. Với tên gọi tầng đẩy siêu lạnh tạm thời của SLS (ICPS), nó đã đẩy tàu Orion rời quỹ đạo Trái Đất trong Artemis I và II."
+      }
+    },
+    "shape:body/atlas_v_ccb": {
+      "en": {
+        "what": "The Atlas V booster: an isogrid aluminium oxygen tank, intertank and kerosene tank, bare metal with no foam, with the oxygen line and the avionics pod down the outside of the kerosene tank.",
+        "why": "Unlike the old Atlas balloon it stands up empty, which made it easier to handle. It launched Curiosity, Perseverance and New Horizons."
+      },
+      "vi": {
+        "name": "Tầng đẩy lõi chung Atlas V",
+        "what": "Tầng đẩy của Atlas V: bồn oxy, đoạn nối và bồn dầu hỏa đều bằng nhôm lưới tam giác, để trần không phủ xốp, với ống dẫn oxy và hộp thiết bị điện tử chạy dọc bên ngoài bồn dầu hỏa.",
+        "why": "Khác với bồn khí cầu của Atlas đời cũ, nó tự đứng vững khi rỗng, nên dễ vận chuyển hơn. Nó đã phóng Curiosity, Perseverance và New Horizons."
+      }
+    },
+    "shape:body/delta_iv_cbc": {
+      "en": {
+        "what": "The Delta IV booster: the oxygen tank, a composite centerbody and a long hydrogen tank, with the oxygen line and the wiring tunnel side by side down the back.",
+        "why": "A hydrogen first stage. Three of them side by side made the Delta IV Heavy, which launched Orion's first test flight and the Parker Solar Probe."
+      },
+      "vi": {
+        "name": "Tầng đẩy lõi chung Delta IV",
+        "what": "Tầng đẩy của Delta IV: bồn oxy, đoạn thân giữa bằng composite và một bồn hydro dài, với ống dẫn oxy và đường hầm dây điện nằm cạnh nhau dọc phía sau.",
+        "why": "Một tầng một dùng hydro. Ba tầng như thế đặt cạnh nhau tạo thành Delta IV Heavy, tên lửa đã phóng chuyến bay thử đầu tiên của Orion và tàu thăm dò Mặt Trời Parker."
+      }
+    },
+    "shape:body/h2a_s1": {
+      "en": {
+        "what": "Japan's H-IIA first stage: oxygen over hydrogen in two separate tanks, isogrid machined into the inside of the walls, the center body between them and orange-brown foam outside.",
+        "why": "Fifty flights from 2001 to 2025, including probes to the Moon, Venus, Mars and an asteroid."
+      },
+      "vi": {
+        "name": "Tầng một H-IIA",
+        "what": "Tầng một H-IIA của Nhật Bản: oxy trên hydro trong hai bồn riêng, lưới tam giác phay ở mặt trong vách, đoạn thân giữa nằm giữa hai bồn, và lớp xốp màu nâu cam bên ngoài.",
+        "why": "Năm mươi chuyến bay từ 2001 đến 2025, trong đó có các tàu thăm dò Mặt Trăng, Sao Kim, Sao Hỏa và một tiểu hành tinh."
+      }
+    },
+    "shape:body/long_march_5": {
+      "en": {
+        "what": "China's Long March 5 core: oxygen over hydrogen in two separate 5 m tanks with an intertank, white all over, with a long duct down the side.",
+        "why": "China's big hydrogen launcher. It sent Tianwen-1 to Mars and Chang'e 5 to bring back Moon rocks."
+      },
+      "vi": {
+        "name": "Tầng lõi Trường Chinh 5",
+        "what": "Tầng lõi Trường Chinh 5 (Long March 5) của Trung Quốc: oxy trên hydro trong hai bồn riêng rộng 5 m với đoạn nối ở giữa, toàn thân màu trắng, có một ống dẫn dài chạy dọc bên hông.",
+        "why": "Tên lửa lớn dùng hydro của Trung Quốc. Nó đưa Thiên Vấn 1 (Tianwen-1) tới Sao Hỏa và Hằng Nga 5 (Chang'e 5) đi lấy đá Mặt Trăng về."
+      }
+    },
+    "shape:body/energia_core": {
+      "en": {
+        "what": "The Energia core stage: oxygen over hydrogen with an intertank, the oxygen line running through a tunnel inside the waffle-walled hydrogen tank, under foam with a thermal-control enamel.",
+        "why": "It flew twice: in 1987 with the Polyus test payload, and in 1988 with the Buran shuttle, which flew two orbits and landed by itself."
+      },
+      "vi": {
+        "name": "Tầng lõi Energia (Blok Ts)",
+        "what": "Tầng lõi Energia: oxy trên hydro với đoạn nối ở giữa, ống dẫn oxy chạy trong một đường hầm bên trong bồn hydro có vách lưới tổ ô, dưới lớp xốp phủ men điều nhiệt.",
+        "why": "Nó bay hai lần: năm 1987 với khối thử nghiệm Polyus, và năm 1988 với tàu con thoi Buran, tàu đã bay hai vòng quỹ đạo và tự hạ cánh."
+      }
+    },
+    "shape:body/zenit_s1": {
+      "en": {
+        "what": "The Zenit first stage: oxygen over kerosene in two waffle-milled aluminium tanks, the kerosene dome tucked up under the oxygen dome, the oxygen line running down a tunnel through the fuel.",
+        "why": "Built to be launched quickly; the same stage served as Energia's four strap-on boosters and flew from a floating platform as Sea Launch."
+      },
+      "vi": {
+        "name": "Tầng một Zenit",
+        "what": "Tầng một Zenit: oxy trên dầu hỏa trong hai bồn nhôm phay lưới tổ ô, nắp vòm bồn dầu hỏa lõm lên nằm sát dưới nắp vòm bồn oxy, ống dẫn oxy chạy xuống trong một đường hầm xuyên qua bồn nhiên liệu.",
+        "why": "Được thiết kế để phóng nhanh; chính tầng này làm bốn tên lửa đẩy phụ của Energia và phóng từ một giàn nổi trên biển trong chương trình Sea Launch."
+      }
+    },
+    "shape:body/pslv_ps2": {
+      "en": {
+        "what": "India's PSLV second stage: two storable propellants, UH25 and nitrogen tetroxide, sharing one bulkhead, and a ring-shaped water tank at the bottom for the engine's turbine.",
+        "why": "PSLV launched India's first Moon probe, Chandrayaan-1, and its Mars Orbiter Mission."
+      },
+      "vi": {
+        "name": "Tầng hai PSLV",
+        "what": "Tầng hai PSLV của Ấn Độ: hai nhiên liệu lưu trữ được dùng chung một vách ngăn, và một bồn nước hình vòng ở đáy cho tua-bin của động cơ.",
+        "why": "PSLV đã phóng tàu thăm dò Mặt Trăng đầu tiên của Ấn Độ, Chandrayaan-1, và Sứ mệnh quỹ đạo Sao Hỏa (Mars Orbiter Mission)."
+      }
+    },
+    "shape:body/soyuz_blok_i": {
+      "en": {
+        "what": "The Soyuz third stage: kerosene on top, the instrument ring, then oxygen, standing on the open lattice that its engine fires through at staging.",
+        "why": "It has carried every crewed Soyuz spacecraft to orbit since 1967."
+      },
+      "vi": {
+        "name": "Tầng ba Soyuz (Blok I)",
+        "what": "Tầng ba Soyuz: dầu hỏa ở trên, vòng thiết bị, rồi đến oxy, đứng trên khung giàn hở mà động cơ phun lửa xuyên qua lúc tách tầng.",
+        "why": "Nó đã đưa mọi tàu Soyuz có người lái lên quỹ đạo từ năm 1967."
+      }
+    },
+    "shape:body/proton_s1": {
+      "en": {
+        "what": "Proton's first stage: a wide oxidizer tank ringed by six fuel tanks that each carry an engine, with an open lattice on top for hot staging.",
+        "why": "It launched the Salyut and Mir modules and the ISS's Zarya and Zvezda. Every piece was sized to travel by rail."
+      },
+      "vi": {
+        "name": "Tầng một Proton",
+        "what": "Tầng một Proton: một bồn chất oxy hóa rộng được bao quanh bởi sáu bồn nhiên liệu, mỗi bồn mang một động cơ, với một khung giàn hở ở trên để tách tầng nóng.",
+        "why": "Nó đã phóng các mô-đun của Salyut và Mir, cùng Zarya và Zvezda của Trạm Vũ trụ Quốc tế. Mỗi khối đều có kích thước vừa để chở bằng tàu hỏa."
+      }
+    },
+    "shape:body/n1_blok_a": {
+      "en": {
+        "what": "The N1 first stage: two spheres, kerosene above oxygen, inside a cone 17 m wide at the base, topped by the open lattice that joined it to the second block.",
+        "why": "It was built to send Soviet cosmonauts to the Moon. All four launches failed, from engine, control and feed-line troubles, and the programme was cancelled."
+      },
+      "vi": {
+        "name": "Tầng một N1 (Block A)",
+        "what": "Tầng một N1: hai quả cầu, dầu hỏa trên oxy, nằm trong một hình nón rộng 17 m ở đáy, trên cùng là khung giàn hở nối nó với khối thứ hai.",
+        "why": "Nó được chế tạo để đưa các nhà du hành Liên Xô lên Mặt Trăng. Cả bốn lần phóng đều thất bại vì trục trặc động cơ, điều khiển và đường ống, và chương trình bị hủy."
+      }
+    },
+    "shape:body/super_heavy": {
+      "en": {
+        "what": "Super Heavy: the vented hot-staging ring on top of welded steel rings, methane over oxygen with one common dome, a raceway down the side and a rack of helium bottles.",
+        "why": "The biggest booster ever flown. The launch tower's arms catch it so it can fly again."
+      },
+      "vi": {
+        "name": "Tầng đẩy Super Heavy",
+        "what": "Super Heavy: vòng tách tầng nóng có lỗ thoát nằm trên các vòng thép hàn, methane trên oxy với một nắp vòm chung, một máng cáp dọc bên hông và một giá bình heli.",
+        "why": "Tầng đẩy lớn nhất từng bay. Hai cánh tay của tháp phóng bắt lấy nó để nó bay lại."
+      }
+    },
+    "shape:body/vulcan_booster": {
+      "en": {
+        "what": "Vulcan's booster: oxygen over liquefied natural gas with one common bulkhead, orthogrid aluminium under orange foam, the oxygen line down the outside.",
+        "why": "ULA's replacement for both Atlas V and Delta IV, with two methane-burning BE-4 engines."
+      },
+      "vi": {
+        "name": "Tầng một Vulcan",
+        "what": "Tầng đẩy của Vulcan: oxy trên khí thiên nhiên hóa lỏng với một vách ngăn chung, nhôm lưới vuông dưới lớp xốp màu cam, ống dẫn oxy chạy bên ngoài.",
+        "why": "Tên lửa ULA làm để thay cả Atlas V lẫn Delta IV, với hai động cơ BE-4 đốt methane."
+      }
+    },
+    "shape:body/ariane5_epc": {
+      "en": {
+        "what": "Ariane 5's core: the forward skirt, then one tank of oxygen over hydrogen with a single bulkhead between them.",
+        "why": "It flew from 1996 to 2023 and launched the James Webb Space Telescope."
+      },
+      "vi": {
+        "name": "Tầng lõi Ariane 5 (EPC)",
+        "what": "Tầng lõi Ariane 5: váy trước (forward skirt), rồi một bồn oxy trên hydro với một vách ngăn duy nhất ở giữa.",
+        "why": "Nó bay từ năm 1996 đến 2023 và đã phóng Kính viễn vọng Không gian James Webb."
+      }
+    },
+    "row:body/attitude": {
+      "en": {
+        "what": "Thruster pods and small solid motors that hold the stage steady and settle the propellant before a burn."
+      },
+      "vi": {
+        "what": "Cụm động cơ đẩy nhỏ và động cơ rắn nhỏ giữ tầng ổn định và dồn nhiên liệu lại trước mỗi lần đốt (ullage)."
+      }
+    },
+    "slot:tank/wall": {
+      "en": {
+        "what": "How the tank wall is stiffened so it does not buckle under the weight above it."
+      },
+      "vi": {
+        "name": "Gân tăng cứng vách bồn",
+        "what": "Cách làm cứng vách bồn để nó không bị móp dưới sức nặng phía trên."
+      }
+    },
+    "option:tank/wall/integral": {
+      "en": {
+        "what": "Ribs and ring frames machined or milled into the wall, the standard way."
+      },
+      "vi": {
+        "name": "Gân liền vách, như thiết kế",
+        "what": "Gân và khung vòng được phay hoặc ăn mòn hóa học liền vào vách, cách làm thông thường.",
+        "pros": [
+          "Đã được kiểm chứng",
+          "Dễ kiểm tra"
+        ],
+        "cons": [
+          "Nặng hơn kiểu lưới"
+        ],
+        "real": "Bồn Saturn V S-IC (gân chữ T phay trong nhôm 2219); các đoạn bồn hydro của Bồn Ngoài Tàu con thoi (vỏ, thanh gân và khung)"
+      }
+    },
+    "option:tank/wall/isogrid": {
+      "en": {
+        "what": "A web of triangles machined into the wall: equally stiff in every direction."
+      },
+      "vi": {
+        "name": "Lưới tam giác (isogrid)",
+        "what": "Vách được phay thành mạng tam giác đều: cứng như nhau theo mọi hướng, nên thiết bị bắt vít ở đâu cũng được. Phần lớn tấm dày biến thành phoi.",
+        "pros": [
+          "Khối lượng −5 %",
+          "Độ tin cậy +0,1 %"
+        ],
+        "cons": [
+          "Giá +15 %"
+        ],
+        "real": "Tầng lõi Delta II, Atlas V và Delta IV; H-IIA (phay ở mặt trong); Sổ tay thiết kế isogrid của NASA, CR-124075 (1973)"
+      }
+    },
+    "option:tank/wall/orthogrid": {
+      "en": {
+        "what": "Ribs along and around the tank make square pockets: simpler to machine and weld than triangles."
+      },
+      "vi": {
+        "name": "Lưới ô vuông (orthogrid)",
+        "what": "Gân chạy dọc và quanh bồn tạo thành các ô vuông: dễ phay và hàn thành tấm lớn hơn lưới tam giác, kém cứng hơn một chút.",
+        "pros": [
+          "Khối lượng −4 %"
+        ],
+        "cons": [
+          "Giá +8 %"
+        ],
+        "real": "Tầng lõi SLS (nhôm 2219, hàn ma sát khuấy); bồn của Vulcan và New Glenn"
+      }
+    },
+    "option:tank/wall/waffle": {
+      "en": {
+        "what": "Square pockets milled out of thick plate: stiff against twisting as well as squashing."
+      },
+      "vi": {
+        "name": "Lưới tổ ô (waffle)",
+        "what": "Các ô vuông được phay sâu vào tấm dày: cứng cả khi bị xoắn lẫn khi bị ép.",
+        "pros": [
+          "Khối lượng −4 %",
+          "Độ tin cậy +0,1 %"
+        ],
+        "cons": [
+          "Giá +10 %"
+        ],
+        "real": "Saturn S-IVB (tấm nhôm 2014 dày 19 mm phay thành ô rộng khoảng 76 mm); bồn hydro của Energia (khoảng 3.000 ô mỗi đoạn, từ phôi 45 mm); Zenit"
+      }
+    },
+    "option:tank/baffles/pmd": {
+      "en": {
+        "what": "Mesh channels and vanes at the outlet hold liquid there by surface tension, even in weightlessness."
+      },
+      "vi": {
+        "name": "Vách chắn và kênh lưới",
+        "what": "Ngoài các vòng chắn, những kênh lưới mịn và cánh dẫn ở miệng ống ra giữ chất lỏng ở đó nhờ sức căng bề mặt, nên động cơ vẫn nhận được chất lỏng khi không trọng lượng.",
+        "pros": [
+          "Độ tin cậy +0,3 %",
+          "Có chất lỏng ở miệng ống khi không trọng lượng"
+        ],
+        "cons": [
+          "Khối lượng +1 %",
+          "Giá +6 %"
+        ],
+        "real": "Thiết bị quản lý nhiên liệu (PMD: cánh dẫn, bọt xốp và kênh lưới) trong bồn nhiên liệu tàu vũ trụ (NASA NTRS 20110000503)"
+      }
+    },
+    "option:tank/feedline/pogo": {
+      "en": {
+        "what": "A gas-filled pocket on the oxygen line soaks up pressure waves, so the engine and the pipe cannot set each other shaking (pogo)."
+      },
+      "vi": {
+        "name": "Ống dẫn có bộ tích áp chống pogo",
+        "what": "Một túi khí trên ống dẫn oxy hấp thụ các đợt sóng áp suất, để động cơ và đường ống không làm nhau rung lên rung xuống (pogo).",
+        "pros": [
+          "Độ tin cậy +0,3 %"
+        ],
+        "cons": [
+          "Khối lượng +0,8 %",
+          "Giá +6 %"
+        ],
+        "real": "Titan II cho chương trình Gemini (ống đứng chất oxy hóa và bộ tích áp nhiên liệu, 1963–64); bộ tích áp LOX cho động cơ giữa của Saturn V S-II từ Apollo 14, sau khi rung pogo làm tắt động cơ giữa trên Apollo 13"
+      }
+    },
+    "slot:tank_h2/wall": {
+      "en": {
+        "what": "How the tank wall is stiffened so it does not buckle under the weight above it."
+      },
+      "vi": {
+        "name": "Gân tăng cứng vách bồn",
+        "what": "Cách làm cứng vách bồn để nó không bị móp dưới sức nặng phía trên."
+      }
+    },
+    "option:tank_h2/wall/integral": {
+      "en": {
+        "what": "Ribs and ring frames machined or milled into the wall, the standard way."
+      },
+      "vi": {
+        "name": "Gân liền vách, như thiết kế",
+        "what": "Gân và khung vòng được phay hoặc ăn mòn hóa học liền vào vách, cách làm thông thường.",
+        "pros": [
+          "Đã được kiểm chứng",
+          "Dễ kiểm tra"
+        ],
+        "cons": [
+          "Nặng hơn kiểu lưới"
+        ],
+        "real": "Bồn Saturn V S-IC (gân chữ T phay trong nhôm 2219); các đoạn bồn hydro của Bồn Ngoài Tàu con thoi (vỏ, thanh gân và khung)"
+      }
+    },
+    "option:tank_h2/wall/isogrid": {
+      "en": {
+        "what": "A web of triangles machined into the wall: equally stiff in every direction."
+      },
+      "vi": {
+        "name": "Lưới tam giác (isogrid)",
+        "what": "Vách được phay thành mạng tam giác đều: cứng như nhau theo mọi hướng, nên thiết bị bắt vít ở đâu cũng được. Phần lớn tấm dày biến thành phoi.",
+        "pros": [
+          "Khối lượng −5 %",
+          "Độ tin cậy +0,1 %"
+        ],
+        "cons": [
+          "Giá +15 %"
+        ],
+        "real": "Tầng lõi Delta II, Atlas V và Delta IV; H-IIA (phay ở mặt trong); Sổ tay thiết kế isogrid của NASA, CR-124075 (1973)"
+      }
+    },
+    "option:tank_h2/wall/orthogrid": {
+      "en": {
+        "what": "Ribs along and around the tank make square pockets: simpler to machine and weld than triangles."
+      },
+      "vi": {
+        "name": "Lưới ô vuông (orthogrid)",
+        "what": "Gân chạy dọc và quanh bồn tạo thành các ô vuông: dễ phay và hàn thành tấm lớn hơn lưới tam giác, kém cứng hơn một chút.",
+        "pros": [
+          "Khối lượng −4 %"
+        ],
+        "cons": [
+          "Giá +8 %"
+        ],
+        "real": "Tầng lõi SLS (nhôm 2219, hàn ma sát khuấy); bồn của Vulcan và New Glenn"
+      }
+    },
+    "option:tank_h2/wall/waffle": {
+      "en": {
+        "what": "Square pockets milled out of thick plate: stiff against twisting as well as squashing."
+      },
+      "vi": {
+        "name": "Lưới tổ ô (waffle)",
+        "what": "Các ô vuông được phay sâu vào tấm dày: cứng cả khi bị xoắn lẫn khi bị ép.",
+        "pros": [
+          "Khối lượng −4 %",
+          "Độ tin cậy +0,1 %"
+        ],
+        "cons": [
+          "Giá +10 %"
+        ],
+        "real": "Saturn S-IVB (tấm nhôm 2014 dày 19 mm phay thành ô rộng khoảng 76 mm); bồn hydro của Energia (khoảng 3.000 ô mỗi đoạn, từ phôi 45 mm); Zenit"
+      }
+    },
+    "option:tank_h2/pressurisation/cold_helium": {
+      "en": {
+        "what": "Helium bottles stored in the liquid hydrogen, where the cold packs the gas tight."
+      },
+      "vi": {
+        "name": "Heli lạnh đặt trong hydro",
+        "what": "Các bình heli nằm ngâm trong hydro lỏng, nơi cái lạnh nén khí lại thật chặt; một bộ gia nhiệt làm ấm khí trên đường vào bồn.",
+        "pros": [
+          "Khối lượng −2 %"
+        ],
+        "cons": [
+          "Giá +6 %",
+          "Thêm một bộ gia nhiệt phải hoạt động"
+        ],
+        "real": "Saturn S-IVB: các bình cầu heli bên trong bồn LH2, được làm ấm bằng bộ trao đổi nhiệt và lò đốt O2/H2 để khởi động lại"
+      }
+    },
+    "option:tank_h2/baffles/pmd": {
+      "en": {
+        "what": "Mesh channels and vanes at the outlet hold liquid there by surface tension, even in weightlessness."
+      },
+      "vi": {
+        "name": "Vách chắn và kênh lưới",
+        "what": "Ngoài các vòng chắn, những kênh lưới mịn và cánh dẫn ở miệng ống ra giữ chất lỏng ở đó nhờ sức căng bề mặt, nên động cơ vẫn nhận được chất lỏng khi không trọng lượng.",
+        "pros": [
+          "Độ tin cậy +0,3 %",
+          "Có chất lỏng ở miệng ống khi không trọng lượng"
+        ],
+        "cons": [
+          "Khối lượng +1 %",
+          "Giá +6 %"
+        ],
+        "real": "Thiết bị quản lý nhiên liệu (PMD: cánh dẫn, bọt xốp và kênh lưới) trong bồn nhiên liệu tàu vũ trụ (NASA NTRS 20110000503)"
+      }
+    },
+    "option:tank_h2/insulation/internal": {
+      "en": {
+        "what": "Foam tiles glued to the inside of the wall: nothing can break off into the airflow."
+      },
+      "vi": {
+        "name": "Xốp cách nhiệt bên trong bồn",
+        "what": "Các tấm xốp gia cố bằng sợi thủy tinh được dán vào mặt trong vách và lót vải. Vách ngoài luôn ấm và khô, không có gì bong ra bay vào luồng gió.",
+        "pros": [
+          "Không có gì bong ra khi bay lên",
+          "Độ tin cậy +0,3 %"
+        ],
+        "cons": [
+          "Khối lượng +1 %",
+          "Giá +18 %"
+        ],
+        "real": "Saturn S-IVB: khoảng 4.300 tấm xốp polyurethane gia cố bằng sợi thủy tinh theo ba chiều, lót vải thủy tinh tẩm nhựa"
+      }
+    },
+    "option:tank_h2/insulation/foam_white": {
+      "en": {
+        "what": "Foam with white paint over it: it reflects sunlight, so less hydrogen boils off."
+      },
+      "vi": {
+        "name": "Xốp phun, sơn trắng",
+        "what": "Sơn trắng phủ lên lớp xốp phản chiếu ánh nắng, nên hydro bay hơi ít hơn trong chặng bay dài. Lớp sơn là khối lượng thêm.",
+        "pros": [
+          "Ít bay hơi dưới nắng",
+          "Độ tin cậy +0,1 %"
+        ],
+        "cons": [
+          "Khối lượng +0,5 %",
+          "Giá +2 %"
+        ],
+        "real": "Bồn Ngoài của STS-1 và STS-2 (sau đó bỏ sơn, nhẹ đi khoảng 272 kg); bồn LH2 tầng hai H-IIA sơn trắng cho các chặng bay dài"
+      }
+    },
+    "option:tank_h2/feedline/pogo": {
+      "en": {
+        "what": "A gas-filled pocket on the oxygen line soaks up pressure waves, so the engine and the pipe cannot set each other shaking (pogo)."
+      },
+      "vi": {
+        "name": "Ống dẫn có bộ tích áp chống pogo",
+        "what": "Một túi khí trên ống dẫn oxy hấp thụ các đợt sóng áp suất, để động cơ và đường ống không làm nhau rung lên rung xuống (pogo).",
+        "pros": [
+          "Độ tin cậy +0,3 %"
+        ],
+        "cons": [
+          "Khối lượng +0,8 %",
+          "Giá +6 %"
+        ],
+        "real": "Titan II cho chương trình Gemini (ống đứng chất oxy hóa và bộ tích áp nhiên liệu, 1963–64); bộ tích áp LOX cho động cơ giữa của Saturn V S-II từ Apollo 14, sau khi rung pogo làm tắt động cơ giữa trên Apollo 13"
+      }
+    },
+    "option:tank_common/baffles/pmd": {
+      "en": {
+        "what": "Mesh channels and vanes at the outlet hold liquid there by surface tension, even in weightlessness."
+      },
+      "vi": {
+        "name": "Vách chắn và kênh lưới",
+        "what": "Ngoài các vòng chắn, những kênh lưới mịn và cánh dẫn ở miệng ống ra giữ chất lỏng ở đó nhờ sức căng bề mặt, nên động cơ vẫn nhận được chất lỏng khi không trọng lượng.",
+        "pros": [
+          "Độ tin cậy +0,3 %",
+          "Có chất lỏng ở miệng ống khi không trọng lượng"
+        ],
+        "cons": [
+          "Khối lượng +1 %",
+          "Giá +6 %"
+        ],
+        "real": "Thiết bị quản lý nhiên liệu (PMD: cánh dẫn, bọt xốp và kênh lưới) trong bồn nhiên liệu tàu vũ trụ (NASA NTRS 20110000503)"
+      }
+    },
+    "option:tank_common/feedline/pogo": {
+      "en": {
+        "what": "A gas-filled pocket on the oxygen line soaks up pressure waves, so the engine and the pipe cannot set each other shaking (pogo)."
+      },
+      "vi": {
+        "name": "Ống dẫn có bộ tích áp chống pogo",
+        "what": "Một túi khí trên ống dẫn oxy hấp thụ các đợt sóng áp suất, để động cơ và đường ống không làm nhau rung lên rung xuống (pogo).",
+        "pros": [
+          "Độ tin cậy +0,3 %"
+        ],
+        "cons": [
+          "Khối lượng +0,8 %",
+          "Giá +6 %"
+        ],
+        "real": "Titan II cho chương trình Gemini (ống đứng chất oxy hóa và bộ tích áp nhiên liệu, 1963–64); bộ tích áp LOX cho động cơ giữa của Saturn V S-II từ Apollo 14, sau khi rung pogo làm tắt động cơ giữa trên Apollo 13"
+      }
+    },
+    "slot:tank_common_h2/wall": {
+      "en": {
+        "what": "How the tank wall is stiffened so it does not buckle under the weight above it."
+      },
+      "vi": {
+        "name": "Gân tăng cứng vách bồn",
+        "what": "Cách làm cứng vách bồn để nó không bị móp dưới sức nặng phía trên."
+      }
+    },
+    "option:tank_common_h2/wall/integral": {
+      "en": {
+        "what": "Ribs and ring frames machined or milled into the wall, the standard way."
+      },
+      "vi": {
+        "name": "Gân liền vách, như thiết kế",
+        "what": "Gân và khung vòng được phay hoặc ăn mòn hóa học liền vào vách, cách làm thông thường.",
+        "pros": [
+          "Đã được kiểm chứng",
+          "Dễ kiểm tra"
+        ],
+        "cons": [
+          "Nặng hơn kiểu lưới"
+        ],
+        "real": "Bồn Saturn V S-IC (gân chữ T phay trong nhôm 2219); các đoạn bồn hydro của Bồn Ngoài Tàu con thoi (vỏ, thanh gân và khung)"
+      }
+    },
+    "option:tank_common_h2/wall/isogrid": {
+      "en": {
+        "what": "A web of triangles machined into the wall: equally stiff in every direction."
+      },
+      "vi": {
+        "name": "Lưới tam giác (isogrid)",
+        "what": "Vách được phay thành mạng tam giác đều: cứng như nhau theo mọi hướng, nên thiết bị bắt vít ở đâu cũng được. Phần lớn tấm dày biến thành phoi.",
+        "pros": [
+          "Khối lượng −5 %",
+          "Độ tin cậy +0,1 %"
+        ],
+        "cons": [
+          "Giá +15 %"
+        ],
+        "real": "Tầng lõi Delta II, Atlas V và Delta IV; H-IIA (phay ở mặt trong); Sổ tay thiết kế isogrid của NASA, CR-124075 (1973)"
+      }
+    },
+    "option:tank_common_h2/wall/orthogrid": {
+      "en": {
+        "what": "Ribs along and around the tank make square pockets: simpler to machine and weld than triangles."
+      },
+      "vi": {
+        "name": "Lưới ô vuông (orthogrid)",
+        "what": "Gân chạy dọc và quanh bồn tạo thành các ô vuông: dễ phay và hàn thành tấm lớn hơn lưới tam giác, kém cứng hơn một chút.",
+        "pros": [
+          "Khối lượng −4 %"
+        ],
+        "cons": [
+          "Giá +8 %"
+        ],
+        "real": "Tầng lõi SLS (nhôm 2219, hàn ma sát khuấy); bồn của Vulcan và New Glenn"
+      }
+    },
+    "option:tank_common_h2/wall/waffle": {
+      "en": {
+        "what": "Square pockets milled out of thick plate: stiff against twisting as well as squashing."
+      },
+      "vi": {
+        "name": "Lưới tổ ô (waffle)",
+        "what": "Các ô vuông được phay sâu vào tấm dày: cứng cả khi bị xoắn lẫn khi bị ép.",
+        "pros": [
+          "Khối lượng −4 %",
+          "Độ tin cậy +0,1 %"
+        ],
+        "cons": [
+          "Giá +10 %"
+        ],
+        "real": "Saturn S-IVB (tấm nhôm 2014 dày 19 mm phay thành ô rộng khoảng 76 mm); bồn hydro của Energia (khoảng 3.000 ô mỗi đoạn, từ phôi 45 mm); Zenit"
+      }
+    },
+    "option:tank_common_h2/pressurisation/cold_helium": {
+      "en": {
+        "what": "Helium bottles stored in the liquid hydrogen, where the cold packs the gas tight."
+      },
+      "vi": {
+        "name": "Heli lạnh đặt trong hydro",
+        "what": "Các bình heli nằm ngâm trong hydro lỏng, nơi cái lạnh nén khí lại thật chặt; một bộ gia nhiệt làm ấm khí trên đường vào bồn.",
+        "pros": [
+          "Khối lượng −2 %"
+        ],
+        "cons": [
+          "Giá +6 %",
+          "Thêm một bộ gia nhiệt phải hoạt động"
+        ],
+        "real": "Saturn S-IVB: các bình cầu heli bên trong bồn LH2, được làm ấm bằng bộ trao đổi nhiệt và lò đốt O2/H2 để khởi động lại"
+      }
+    },
+    "option:tank_common_h2/baffles/pmd": {
+      "en": {
+        "what": "Mesh channels and vanes at the outlet hold liquid there by surface tension, even in weightlessness."
+      },
+      "vi": {
+        "name": "Vách chắn và kênh lưới",
+        "what": "Ngoài các vòng chắn, những kênh lưới mịn và cánh dẫn ở miệng ống ra giữ chất lỏng ở đó nhờ sức căng bề mặt, nên động cơ vẫn nhận được chất lỏng khi không trọng lượng.",
+        "pros": [
+          "Độ tin cậy +0,3 %",
+          "Có chất lỏng ở miệng ống khi không trọng lượng"
+        ],
+        "cons": [
+          "Khối lượng +1 %",
+          "Giá +6 %"
+        ],
+        "real": "Thiết bị quản lý nhiên liệu (PMD: cánh dẫn, bọt xốp và kênh lưới) trong bồn nhiên liệu tàu vũ trụ (NASA NTRS 20110000503)"
+      }
+    },
+    "option:tank_common_h2/insulation/internal": {
+      "en": {
+        "what": "Foam tiles glued to the inside of the wall: nothing can break off into the airflow."
+      },
+      "vi": {
+        "name": "Xốp cách nhiệt bên trong bồn",
+        "what": "Các tấm xốp gia cố bằng sợi thủy tinh được dán vào mặt trong vách và lót vải. Vách ngoài luôn ấm và khô, không có gì bong ra bay vào luồng gió.",
+        "pros": [
+          "Không có gì bong ra khi bay lên",
+          "Độ tin cậy +0,3 %"
+        ],
+        "cons": [
+          "Khối lượng +1 %",
+          "Giá +18 %"
+        ],
+        "real": "Saturn S-IVB: khoảng 4.300 tấm xốp polyurethane gia cố bằng sợi thủy tinh theo ba chiều, lót vải thủy tinh tẩm nhựa"
+      }
+    },
+    "option:tank_common_h2/insulation/foam_white": {
+      "en": {
+        "what": "Foam with white paint over it: it reflects sunlight, so less hydrogen boils off."
+      },
+      "vi": {
+        "name": "Xốp phun, sơn trắng",
+        "what": "Sơn trắng phủ lên lớp xốp phản chiếu ánh nắng, nên hydro bay hơi ít hơn trong chặng bay dài. Lớp sơn là khối lượng thêm.",
+        "pros": [
+          "Ít bay hơi dưới nắng",
+          "Độ tin cậy +0,1 %"
+        ],
+        "cons": [
+          "Khối lượng +0,5 %",
+          "Giá +2 %"
+        ],
+        "real": "Bồn Ngoài của STS-1 và STS-2 (sau đó bỏ sơn, nhẹ đi khoảng 272 kg); bồn LH2 tầng hai H-IIA sơn trắng cho các chặng bay dài"
+      }
+    },
+    "option:tank_common_h2/feedline/pogo": {
+      "en": {
+        "what": "A gas-filled pocket on the oxygen line soaks up pressure waves, so the engine and the pipe cannot set each other shaking (pogo)."
+      },
+      "vi": {
+        "name": "Ống dẫn có bộ tích áp chống pogo",
+        "what": "Một túi khí trên ống dẫn oxy hấp thụ các đợt sóng áp suất, để động cơ và đường ống không làm nhau rung lên rung xuống (pogo).",
+        "pros": [
+          "Độ tin cậy +0,3 %"
+        ],
+        "cons": [
+          "Khối lượng +0,8 %",
+          "Giá +6 %"
+        ],
+        "real": "Titan II cho chương trình Gemini (ống đứng chất oxy hóa và bộ tích áp nhiên liệu, 1963–64); bộ tích áp LOX cho động cơ giữa của Saturn V S-II từ Apollo 14, sau khi rung pogo làm tắt động cơ giữa trên Apollo 13"
+      }
+    },
+    "option:tank_balloon/feedline/pogo": {
+      "en": {
+        "what": "A gas-filled pocket on the oxygen line soaks up pressure waves, so the engine and the pipe cannot set each other shaking (pogo)."
+      },
+      "vi": {
+        "name": "Ống dẫn có bộ tích áp chống pogo",
+        "what": "Một túi khí trên ống dẫn oxy hấp thụ các đợt sóng áp suất, để động cơ và đường ống không làm nhau rung lên rung xuống (pogo).",
+        "pros": [
+          "Độ tin cậy +0,3 %"
+        ],
+        "cons": [
+          "Khối lượng +0,8 %",
+          "Giá +6 %"
+        ],
+        "real": "Titan II cho chương trình Gemini (ống đứng chất oxy hóa và bộ tích áp nhiên liệu, 1963–64); bộ tích áp LOX cho động cơ giữa của Saturn V S-II từ Apollo 14, sau khi rung pogo làm tắt động cơ giữa trên Apollo 13"
+      }
+    },
+    "slot:avionics/cooling": {
+      "en": {
+        "what": "How the electronics get rid of the heat they make."
+      },
+      "vi": {
+        "name": "Làm mát",
+        "what": "Cách thiết bị điện tử thải bớt nhiệt mà chúng tạo ra."
+      }
+    },
+    "option:avionics/cooling/passive": {
+      "en": {
+        "what": "Cool air through the umbilical until lift-off, then the boxes soak their heat into their mounts."
+      },
+      "vi": {
+        "name": "Khí mát mặt đất và tản nhiệt, như thiết kế",
+        "what": "Khí mát thổi vào qua dây rốn cho tới lúc cất cánh; khi bay, các hộp tự truyền nhiệt sang giá đỡ. Đủ cho một lần bay lên kéo dài vài phút.",
+        "pros": [
+          "Không có gì để rò hay đóng băng"
+        ],
+        "cons": [
+          "Các hộp nóng dần trong chuyến bay dài"
+        ],
+        "real": "Khoang Thiết bị Saturn V: ống điều hòa không khí trước khi phóng, cạnh dây rốn"
+      }
+    },
+    "option:avionics/cooling/coldplate": {
+      "en": {
+        "what": "Plates with coolant flowing through them, and a sublimator that boils water away into space."
+      },
+      "vi": {
+        "name": "Tấm làm mát và bộ thăng hoa",
+        "what": "Các hộp đặt trên những tấm có dung dịch methanol-nước chảy bên trong; bộ thăng hoa (sublimator) cho nước bay hơi vào không gian để thải nhiệt. Thiết bị giữ ở nhiệt độ phòng trong nhiều giờ.",
+        "pros": [
+          "Độ tin cậy +0,4 %",
+          "Nhiệt độ ổn định trong chuyến bay dài"
+        ],
+        "cons": [
+          "+35 kg",
+          "+$50k"
+        ],
+        "real": "Khoang Thiết bị Saturn V: tới 16 tấm làm mát, mỗi tấm ít nhất 420 W, dung dịch methanol-nước 60/40 ở 15 °C, và một bộ thăng hoa nước"
+      }
+    },
+    "option:avionics/imu/reused_sri": {
+      "en": {
+        "what": "A laser-gyro inertial reference running software carried over from an older rocket, never tested against this rocket's own flight."
+      },
+      "vi": {
+        "name": "Hệ quy chiếu quán tính, phần mềm dùng lại",
+        "what": "Bộ quy chiếu quán tính dùng con quay laser, chạy phần mềm lấy từ một tên lửa cũ, chưa từng được thử với đường bay của chính tên lửa này.",
+        "pros": [
+          "−$40k"
+        ],
+        "cons": [
+          "Độ tin cậy −1,2 %"
+        ],
+        "real": "Chuyến bay 501 của Ariane 5 (4/6/1996): hệ quy chiếu quán tính chạy phần mềm dùng lại từ Ariane 4; phép đổi một số 64 bit sang 16 bit bị tràn 36,7 giây sau khi động cơ chính khởi động, khoảng 30 giây sau khi cất cánh"
+      }
+    },
+    "slot:tank_cluster/pressurisation": {
+      "en": {
+        "what": "The gas that fills the top of each tank as the propellant drains, so the tank keeps its shape and the pump never sucks bubbles."
+      },
+      "vi": {
+        "what": "Khí tạo áp (pressurisation) lấp khoảng trống ở đỉnh mỗi bồn khi nhiên liệu cạn dần, để bồn giữ hình dạng và bơm không bao giờ hút phải bọt khí.",
+        "name": "Tạo áp"
+      }
+    },
+    "option:tank_cluster/pressurisation/helium": {
+      "en": {
+        "what": "Cold helium bottles sit inside the oxygen tank, where the gas stays dense: proven, but the bottles are a hazard."
+      },
+      "vi": {
+        "what": "Các bình heli lạnh đặt ngay trong bồn oxy, nơi khí giữ được độ đặc: đã được kiểm chứng, nhưng các bình là mối nguy.",
+        "name": "Bình heli bên trong",
+        "pros": [
+          "Đã được kiểm chứng"
+        ],
+        "cons": [
+          "Bình nằm trong bồn (AMOS-6)"
+        ],
+        "real": "Falcon 9, Delta II"
+      }
+    },
+    "option:tank_cluster/pressurisation/autogenous": {
+      "en": {
+        "what": "A little of the propellant is warmed by the engine and piped back as gas: no helium at all, as on Starship and the Shuttle tank."
+      },
+      "vi": {
+        "what": "Một ít nhiên liệu được động cơ làm ấm rồi dẫn ngược về bồn dưới dạng khí: không cần chút heli nào, như trên Starship và bồn ngoài của tàu con thoi.",
+        "name": "Tự tạo áp (khí nhiên liệu nóng)",
+        "pros": [
+          "Khối lượng −3 %",
+          "Không có heli để mà hết"
+        ],
+        "cons": [
+          "Giá +10 %",
+          "Chỉ hoạt động khi động cơ đã chạy"
+        ],
+        "real": "Starship, bồn ngoài của tàu con thoi"
+      }
+    },
+    "option:tank_cluster/pressurisation/heated": {
+      "en": {
+        "what": "Helium from cold bottles is warmed on the engine before it enters the tank; warm gas fills more space, so fewer bottles do the job."
+      },
+      "vi": {
+        "what": "Heli từ bình lạnh được làm ấm trên động cơ trước khi vào bồn; khí ấm chiếm nhiều chỗ hơn, nên ít bình hơn vẫn đủ việc.",
+        "name": "Heli được làm ấm",
+        "pros": [
+          "Khối lượng −1,5 %",
+          "Ít heli phải chở hơn"
+        ],
+        "cons": [
+          "Giá +4 %",
+          "Thêm một bộ trao đổi nhiệt trên động cơ"
+        ],
+        "real": "Falcon 9 (heli được làm ấm), bồn nhiên liệu của Saturn V S-IC"
+      }
+    },
+    "option:tank_cluster/pressurisation/nitrogen": {
+      "en": {
+        "what": "Plain nitrogen: cheap and easy to get, but seven times heavier than helium for the same space."
+      },
+      "vi": {
+        "what": "Khí nitơ thường: rẻ và dễ kiếm, nhưng nặng gấp bảy lần heli khi chiếm cùng thể tích.",
+        "name": "Khí nitơ",
+        "pros": [
+          "Giá −10 %",
+          "Thiết bị mặt đất đơn giản"
+        ],
+        "cons": [
+          "Khối lượng +2 %",
+          "Không dùng được cho bồn hydro"
+        ],
+        "real": "Tầng một Delta II; Soyuz đun sôi nitơ lỏng để tạo áp cho các bồn"
+      }
+    },
+    "slot:tank_cluster/baffles": {
+      "en": {
+        "what": "Rings inside the tank that stop the propellant sloshing when the ship turns."
+      },
+      "vi": {
+        "what": "Các vòng chắn sóng (baffle) bên trong bồn ngăn nhiên liệu sóng sánh khi tàu xoay.",
+        "name": "Vòng chống sóng sánh"
+      }
+    },
+    "option:tank_cluster/baffles/baffled": {
+      "en": {
+        "what": "Rings welded inside the wall break up the waves: every crewed rocket has them."
+      },
+      "vi": {
+        "what": "Các vòng hàn vào vách trong bẻ vụn những con sóng: tên lửa chở người nào cũng có.",
+        "name": "Vòng chắn sóng",
+        "pros": [
+          "Nhiên liệu nằm yên"
+        ],
+        "cons": [
+          "Khối lượng +2 %"
+        ],
+        "real": "Mọi tên lửa chở người"
+      }
+    },
+    "option:tank_cluster/baffles/none": {
+      "en": {
+        "what": "No rings: lighter, but in 2007 sloshing propellant sent the second Falcon 1 flight into a spin."
+      },
+      "vi": {
+        "what": "Không có vòng: nhẹ hơn, nhưng năm 2007 nhiên liệu sóng sánh đã làm chuyến bay thứ hai của Falcon 1 quay tròn mất kiểm soát.",
+        "name": "Không có vòng chắn",
+        "pros": [
+          "Khối lượng −2 %"
+        ],
+        "cons": [
+          "Độ tin cậy −0,6 %"
+        ],
+        "real": "Chuyến bay thứ hai của Falcon 1 (2007)"
+      }
+    },
+    "option:tank_cluster/baffles/antivortex": {
+      "en": {
+        "what": "Rings plus crossed vanes over each outlet, which stop the draining propellant swirling into a whirlpool that would suck gas into the pump."
+      },
+      "vi": {
+        "what": "Có vòng chắn, thêm các lá chắn chéo trên mỗi cửa xả, ngăn nhiên liệu đang chảy ra xoáy thành vòng xoáy hút khí vào bơm.",
+        "name": "Vòng chắn và lá chống xoáy",
+        "pros": [
+          "Độ tin cậy +0,2 %"
+        ],
+        "cons": [
+          "Khối lượng +0,5 %",
+          "Giá +2 %"
+        ],
+        "real": "Cửa xả LOX của Saturn V S-IC; mọi tầng tên lửa hiện đại"
+      }
+    },
+    "option:tank_cluster/baffles/pmd": {
+      "en": {
+        "what": "Mesh channels and vanes at the outlet hold liquid there by surface tension, even in weightlessness."
+      },
+      "vi": {
+        "name": "Vách chắn và kênh lưới",
+        "what": "Ngoài các vòng chắn, những kênh lưới mịn và cánh dẫn ở miệng ống ra giữ chất lỏng ở đó nhờ sức căng bề mặt, nên động cơ vẫn nhận được chất lỏng khi không trọng lượng.",
+        "pros": [
+          "Độ tin cậy +0,3 %",
+          "Có chất lỏng ở miệng ống khi không trọng lượng"
+        ],
+        "cons": [
+          "Khối lượng +1 %",
+          "Giá +6 %"
+        ],
+        "real": "Thiết bị quản lý nhiên liệu (PMD: cánh dẫn, bọt xốp và kênh lưới) trong bồn nhiên liệu tàu vũ trụ (NASA NTRS 20110000503)"
+      }
+    },
+    "slot:tank_cluster/insulation": {
+      "en": {
+        "what": "The layer that keeps very cold propellant from warming up and boiling away."
+      },
+      "vi": {
+        "what": "Lớp cách nhiệt (insulation) giữ cho nhiên liệu siêu lạnh không ấm lên và bay hơi mất.",
+        "name": "Cách nhiệt"
+      }
+    },
+    "option:tank_cluster/insulation/bare": {
+      "en": {
+        "what": "Bare metal: fine for kerosene, but very cold liquids boil off during the hours on the pad."
+      },
+      "vi": {
+        "what": "Kim loại trần: ổn với dầu hỏa, nhưng chất lỏng siêu lạnh sẽ bay hơi trong mấy giờ nằm trên bệ.",
+        "name": "Kim loại trần",
+        "pros": [
+          "Nhẹ nhất"
+        ],
+        "cons": [
+          "Nhiên liệu siêu lạnh bay hơi"
+        ],
+        "real": "Falcon 9 (tầng dầu hỏa)"
+      }
+    },
+    "option:tank_cluster/insulation/foam": {
+      "en": {
+        "what": "Sprayed-on foam, the orange of the Shuttle tank: keeps the liquids cold for hours, but a piece of it broke off and struck Columbia."
+      },
+      "vi": {
+        "what": "Bọt cách nhiệt phun lên vỏ, màu cam như bồn của tàu con thoi: giữ chất lỏng lạnh hàng giờ, nhưng một mảng bọt đã bong ra và va vào tàu Columbia.",
+        "name": "Bọt phun",
+        "pros": [
+          "Nhiên liệu siêu lạnh vẫn ở thể lỏng"
+        ],
+        "cons": [
+          "Khối lượng +3 %",
+          "Có thể bong mảng khi bay lên"
+        ],
+        "real": "Bồn ngoài của tàu con thoi, SLS"
+      }
+    },
+    "option:tank_cluster/insulation/mli": {
+      "en": {
+        "what": "Layers of gold-coloured foil for the long cruise: the only insulation that keeps working in vacuum for weeks."
+      },
+      "vi": {
+        "what": "Nhiều lớp giấy bạc màu vàng cho chuyến đi dài: loại cách nhiệt duy nhất còn hiệu quả trong chân không suốt nhiều tuần.",
+        "name": "Chăn nhiều lớp",
+        "pros": [
+          "Hàng tuần trong không gian mà không bay hơi"
+        ],
+        "cons": [
+          "Giá +15 %",
+          "Vô dụng trong không khí"
+        ],
+        "real": "Centaur, các tàu đổ bộ Mặt Trăng"
+      }
+    },
+    "slot:tank_cluster/feedline": {
+      "en": {
+        "what": "The pipes that carry propellant from the tank to the engines."
+      },
+      "vi": {
+        "what": "Ống dẫn nhiên liệu (feed line) đưa nhiên liệu từ bồn xuống động cơ.",
+        "name": "Ống dẫn nhiên liệu"
+      }
+    },
+    "option:tank_cluster/feedline/single": {
+      "en": {
+        "what": "One big pipe for each liquid, as on most rockets."
+      },
+      "vi": {
+        "what": "Mỗi chất lỏng một ống lớn, như phần lớn các tên lửa.",
+        "name": "Một ống dẫn",
+        "pros": [
+          "Nhẹ"
+        ],
+        "cons": [
+          "Một van hỏng là động cơ ngừng"
+        ],
+        "real": "Phần lớn các tầng tên lửa"
+      }
+    },
+    "option:tank_cluster/feedline/dual": {
+      "en": {
+        "what": "Two pipes and two valves for each liquid, so one can fail."
+      },
+      "vi": {
+        "what": "Mỗi chất lỏng hai ống, hai van, nên hỏng một vẫn còn một.",
+        "name": "Ống dẫn dự phòng",
+        "pros": [
+          "Độ tin cậy +0,4 %"
+        ],
+        "cons": [
+          "Khối lượng +1,5 %",
+          "Giá +8 %"
+        ],
+        "real": "Saturn V S-IC (năm ống dẫn)"
+      }
+    },
+    "option:tank_cluster/feedline/tunnel": {
+      "en": {
+        "what": "The upper tank's pipe drops straight through the middle of the lower tank in an insulated tunnel: the shortest path, but one more hole in every dome."
+      },
+      "vi": {
+        "what": "Ống của bồn trên chạy thẳng xuống xuyên giữa lòng bồn dưới trong một đường hầm cách nhiệt: đường ngắn nhất, nhưng mỗi nắp vòm phải khoét thêm một lỗ.",
+        "name": "Đường hầm xuyên bồn",
+        "pros": [
+          "Độ tin cậy +0,2 %",
+          "Đường ngắn nhất tới động cơ"
+        ],
+        "cons": [
+          "Khối lượng +1 %",
+          "Giá +5 %"
+        ],
+        "real": "Saturn V S-IC (năm đường hầm LOX xuyên qua bồn nhiên liệu), ống chuyển LOX của Falcon 9, ống dẫn metan xuống của Super Heavy"
+      }
+    },
+    "option:tank_cluster/feedline/pogo": {
+      "en": {
+        "what": "A gas-filled pocket on the oxygen line soaks up pressure waves, so the engine and the pipe cannot set each other shaking (pogo)."
+      },
+      "vi": {
+        "name": "Ống dẫn có bộ tích áp chống pogo",
+        "what": "Một túi khí trên ống dẫn oxy hấp thụ các đợt sóng áp suất, để động cơ và đường ống không làm nhau rung lên rung xuống (pogo).",
+        "pros": [
+          "Độ tin cậy +0,3 %"
+        ],
+        "cons": [
+          "Khối lượng +0,8 %",
+          "Giá +6 %"
+        ],
+        "real": "Titan II cho chương trình Gemini (ống đứng chất oxy hóa và bộ tích áp nhiên liệu, 1963–64); bộ tích áp LOX cho động cơ giữa của Saturn V S-II từ Apollo 14, sau khi rung pogo làm tắt động cơ giữa trên Apollo 13"
+      }
+    },
+    "slot:tank_spheres/pressurisation": {
+      "en": {
+        "what": "The gas that fills the top of each tank as the propellant drains, so the tank keeps its shape and the pump never sucks bubbles."
+      },
+      "vi": {
+        "what": "Khí tạo áp (pressurisation) lấp khoảng trống ở đỉnh mỗi bồn khi nhiên liệu cạn dần, để bồn giữ hình dạng và bơm không bao giờ hút phải bọt khí.",
+        "name": "Tạo áp"
+      }
+    },
+    "option:tank_spheres/pressurisation/helium": {
+      "en": {
+        "what": "Cold helium bottles sit inside the oxygen tank, where the gas stays dense: proven, but the bottles are a hazard."
+      },
+      "vi": {
+        "what": "Các bình heli lạnh đặt ngay trong bồn oxy, nơi khí giữ được độ đặc: đã được kiểm chứng, nhưng các bình là mối nguy.",
+        "name": "Bình heli bên trong",
+        "pros": [
+          "Đã được kiểm chứng"
+        ],
+        "cons": [
+          "Bình nằm trong bồn (AMOS-6)"
+        ],
+        "real": "Falcon 9, Delta II"
+      }
+    },
+    "option:tank_spheres/pressurisation/autogenous": {
+      "en": {
+        "what": "A little of the propellant is warmed by the engine and piped back as gas: no helium at all, as on Starship and the Shuttle tank."
+      },
+      "vi": {
+        "what": "Một ít nhiên liệu được động cơ làm ấm rồi dẫn ngược về bồn dưới dạng khí: không cần chút heli nào, như trên Starship và bồn ngoài của tàu con thoi.",
+        "name": "Tự tạo áp (khí nhiên liệu nóng)",
+        "pros": [
+          "Khối lượng −3 %",
+          "Không có heli để mà hết"
+        ],
+        "cons": [
+          "Giá +10 %",
+          "Chỉ hoạt động khi động cơ đã chạy"
+        ],
+        "real": "Starship, bồn ngoài của tàu con thoi"
+      }
+    },
+    "option:tank_spheres/pressurisation/heated": {
+      "en": {
+        "what": "Helium from cold bottles is warmed on the engine before it enters the tank; warm gas fills more space, so fewer bottles do the job."
+      },
+      "vi": {
+        "what": "Heli từ bình lạnh được làm ấm trên động cơ trước khi vào bồn; khí ấm chiếm nhiều chỗ hơn, nên ít bình hơn vẫn đủ việc.",
+        "name": "Heli được làm ấm",
+        "pros": [
+          "Khối lượng −1,5 %",
+          "Ít heli phải chở hơn"
+        ],
+        "cons": [
+          "Giá +4 %",
+          "Thêm một bộ trao đổi nhiệt trên động cơ"
+        ],
+        "real": "Falcon 9 (heli được làm ấm), bồn nhiên liệu của Saturn V S-IC"
+      }
+    },
+    "option:tank_spheres/pressurisation/nitrogen": {
+      "en": {
+        "what": "Plain nitrogen: cheap and easy to get, but seven times heavier than helium for the same space."
+      },
+      "vi": {
+        "what": "Khí nitơ thường: rẻ và dễ kiếm, nhưng nặng gấp bảy lần heli khi chiếm cùng thể tích.",
+        "name": "Khí nitơ",
+        "pros": [
+          "Giá −10 %",
+          "Thiết bị mặt đất đơn giản"
+        ],
+        "cons": [
+          "Khối lượng +2 %",
+          "Không dùng được cho bồn hydro"
+        ],
+        "real": "Tầng một Delta II; Soyuz đun sôi nitơ lỏng để tạo áp cho các bồn"
+      }
+    },
+    "slot:tank_spheres/baffles": {
+      "en": {
+        "what": "Rings inside the tank that stop the propellant sloshing when the ship turns."
+      },
+      "vi": {
+        "what": "Các vòng chắn sóng (baffle) bên trong bồn ngăn nhiên liệu sóng sánh khi tàu xoay.",
+        "name": "Vòng chống sóng sánh"
+      }
+    },
+    "option:tank_spheres/baffles/baffled": {
+      "en": {
+        "what": "Rings welded inside the wall break up the waves: every crewed rocket has them."
+      },
+      "vi": {
+        "what": "Các vòng hàn vào vách trong bẻ vụn những con sóng: tên lửa chở người nào cũng có.",
+        "name": "Vòng chắn sóng",
+        "pros": [
+          "Nhiên liệu nằm yên"
+        ],
+        "cons": [
+          "Khối lượng +2 %"
+        ],
+        "real": "Mọi tên lửa chở người"
+      }
+    },
+    "option:tank_spheres/baffles/none": {
+      "en": {
+        "what": "No rings: lighter, but in 2007 sloshing propellant sent the second Falcon 1 flight into a spin."
+      },
+      "vi": {
+        "what": "Không có vòng: nhẹ hơn, nhưng năm 2007 nhiên liệu sóng sánh đã làm chuyến bay thứ hai của Falcon 1 quay tròn mất kiểm soát.",
+        "name": "Không có vòng chắn",
+        "pros": [
+          "Khối lượng −2 %"
+        ],
+        "cons": [
+          "Độ tin cậy −0,6 %"
+        ],
+        "real": "Chuyến bay thứ hai của Falcon 1 (2007)"
+      }
+    },
+    "option:tank_spheres/baffles/antivortex": {
+      "en": {
+        "what": "Rings plus crossed vanes over each outlet, which stop the draining propellant swirling into a whirlpool that would suck gas into the pump."
+      },
+      "vi": {
+        "what": "Có vòng chắn, thêm các lá chắn chéo trên mỗi cửa xả, ngăn nhiên liệu đang chảy ra xoáy thành vòng xoáy hút khí vào bơm.",
+        "name": "Vòng chắn và lá chống xoáy",
+        "pros": [
+          "Độ tin cậy +0,2 %"
+        ],
+        "cons": [
+          "Khối lượng +0,5 %",
+          "Giá +2 %"
+        ],
+        "real": "Cửa xả LOX của Saturn V S-IC; mọi tầng tên lửa hiện đại"
+      }
+    },
+    "option:tank_spheres/baffles/pmd": {
+      "en": {
+        "what": "Mesh channels and vanes at the outlet hold liquid there by surface tension, even in weightlessness."
+      },
+      "vi": {
+        "name": "Vách chắn và kênh lưới",
+        "what": "Ngoài các vòng chắn, những kênh lưới mịn và cánh dẫn ở miệng ống ra giữ chất lỏng ở đó nhờ sức căng bề mặt, nên động cơ vẫn nhận được chất lỏng khi không trọng lượng.",
+        "pros": [
+          "Độ tin cậy +0,3 %",
+          "Có chất lỏng ở miệng ống khi không trọng lượng"
+        ],
+        "cons": [
+          "Khối lượng +1 %",
+          "Giá +6 %"
+        ],
+        "real": "Thiết bị quản lý nhiên liệu (PMD: cánh dẫn, bọt xốp và kênh lưới) trong bồn nhiên liệu tàu vũ trụ (NASA NTRS 20110000503)"
+      }
+    },
+    "slot:tank_spheres/insulation": {
+      "en": {
+        "what": "The layer that keeps very cold propellant from warming up and boiling away."
+      },
+      "vi": {
+        "what": "Lớp cách nhiệt (insulation) giữ cho nhiên liệu siêu lạnh không ấm lên và bay hơi mất.",
+        "name": "Cách nhiệt"
+      }
+    },
+    "option:tank_spheres/insulation/bare": {
+      "en": {
+        "what": "Bare metal: fine for kerosene, but very cold liquids boil off during the hours on the pad."
+      },
+      "vi": {
+        "what": "Kim loại trần: ổn với dầu hỏa, nhưng chất lỏng siêu lạnh sẽ bay hơi trong mấy giờ nằm trên bệ.",
+        "name": "Kim loại trần",
+        "pros": [
+          "Nhẹ nhất"
+        ],
+        "cons": [
+          "Nhiên liệu siêu lạnh bay hơi"
+        ],
+        "real": "Falcon 9 (tầng dầu hỏa)"
+      }
+    },
+    "option:tank_spheres/insulation/foam": {
+      "en": {
+        "what": "Sprayed-on foam, the orange of the Shuttle tank: keeps the liquids cold for hours, but a piece of it broke off and struck Columbia."
+      },
+      "vi": {
+        "what": "Bọt cách nhiệt phun lên vỏ, màu cam như bồn của tàu con thoi: giữ chất lỏng lạnh hàng giờ, nhưng một mảng bọt đã bong ra và va vào tàu Columbia.",
+        "name": "Bọt phun",
+        "pros": [
+          "Nhiên liệu siêu lạnh vẫn ở thể lỏng"
+        ],
+        "cons": [
+          "Khối lượng +3 %",
+          "Có thể bong mảng khi bay lên"
+        ],
+        "real": "Bồn ngoài của tàu con thoi, SLS"
+      }
+    },
+    "option:tank_spheres/insulation/mli": {
+      "en": {
+        "what": "Layers of gold-coloured foil for the long cruise: the only insulation that keeps working in vacuum for weeks."
+      },
+      "vi": {
+        "what": "Nhiều lớp giấy bạc màu vàng cho chuyến đi dài: loại cách nhiệt duy nhất còn hiệu quả trong chân không suốt nhiều tuần.",
+        "name": "Chăn nhiều lớp",
+        "pros": [
+          "Hàng tuần trong không gian mà không bay hơi"
+        ],
+        "cons": [
+          "Giá +15 %",
+          "Vô dụng trong không khí"
+        ],
+        "real": "Centaur, các tàu đổ bộ Mặt Trăng"
+      }
+    },
+    "slot:tank_spheres/feedline": {
+      "en": {
+        "what": "The pipes that carry propellant from the tank to the engines."
+      },
+      "vi": {
+        "what": "Ống dẫn nhiên liệu (feed line) đưa nhiên liệu từ bồn xuống động cơ.",
+        "name": "Ống dẫn nhiên liệu"
+      }
+    },
+    "option:tank_spheres/feedline/single": {
+      "en": {
+        "what": "One big pipe for each liquid, as on most rockets."
+      },
+      "vi": {
+        "what": "Mỗi chất lỏng một ống lớn, như phần lớn các tên lửa.",
+        "name": "Một ống dẫn",
+        "pros": [
+          "Nhẹ"
+        ],
+        "cons": [
+          "Một van hỏng là động cơ ngừng"
+        ],
+        "real": "Phần lớn các tầng tên lửa"
+      }
+    },
+    "option:tank_spheres/feedline/dual": {
+      "en": {
+        "what": "Two pipes and two valves for each liquid, so one can fail."
+      },
+      "vi": {
+        "what": "Mỗi chất lỏng hai ống, hai van, nên hỏng một vẫn còn một.",
+        "name": "Ống dẫn dự phòng",
+        "pros": [
+          "Độ tin cậy +0,4 %"
+        ],
+        "cons": [
+          "Khối lượng +1,5 %",
+          "Giá +8 %"
+        ],
+        "real": "Saturn V S-IC (năm ống dẫn)"
+      }
+    },
+    "option:tank_spheres/feedline/tunnel": {
+      "en": {
+        "what": "The upper tank's pipe drops straight through the middle of the lower tank in an insulated tunnel: the shortest path, but one more hole in every dome."
+      },
+      "vi": {
+        "what": "Ống của bồn trên chạy thẳng xuống xuyên giữa lòng bồn dưới trong một đường hầm cách nhiệt: đường ngắn nhất, nhưng mỗi nắp vòm phải khoét thêm một lỗ.",
+        "name": "Đường hầm xuyên bồn",
+        "pros": [
+          "Độ tin cậy +0,2 %",
+          "Đường ngắn nhất tới động cơ"
+        ],
+        "cons": [
+          "Khối lượng +1 %",
+          "Giá +5 %"
+        ],
+        "real": "Saturn V S-IC (năm đường hầm LOX xuyên qua bồn nhiên liệu), ống chuyển LOX của Falcon 9, ống dẫn metan xuống của Super Heavy"
+      }
+    },
+    "option:tank_spheres/feedline/pogo": {
+      "en": {
+        "what": "A gas-filled pocket on the oxygen line soaks up pressure waves, so the engine and the pipe cannot set each other shaking (pogo)."
+      },
+      "vi": {
+        "name": "Ống dẫn có bộ tích áp chống pogo",
+        "what": "Một túi khí trên ống dẫn oxy hấp thụ các đợt sóng áp suất, để động cơ và đường ống không làm nhau rung lên rung xuống (pogo).",
+        "pros": [
+          "Độ tin cậy +0,3 %"
+        ],
+        "cons": [
+          "Khối lượng +0,8 %",
+          "Giá +6 %"
+        ],
+        "real": "Titan II cho chương trình Gemini (ống đứng chất oxy hóa và bộ tích áp nhiên liệu, 1963–64); bộ tích áp LOX cho động cơ giữa của Saturn V S-II từ Apollo 14, sau khi rung pogo làm tắt động cơ giữa trên Apollo 13"
+      }
+    },
+    "option:tank_spheres/feedline/surge": {
+      "en": {
+        "what": "Gas-filled dampers on the long lines soak up the hammer blow when engines shut down suddenly."
+      },
+      "vi": {
+        "name": "Bộ giảm sốc áp suất",
+        "what": "Các bộ giảm chấn chứa khí trên những đường ống dài hấp thụ cú đập như búa khi động cơ tắt và dòng nhiên liệu đột ngột dừng lại.",
+        "pros": [
+          "Độ tin cậy +0,3 %"
+        ],
+        "cons": [
+          "Khối lượng +1,2 %",
+          "Giá +4 %"
+        ],
+        "real": "Chuyến N1 7L (23/11/1972): một giả thuyết cho rằng cú sốc thủy lực khi sáu động cơ giữa tắt đã làm vỡ ống dẫn; ủy ban chính thức lại kết luận lỗi ở bơm chất oxy hóa của một động cơ"
+      }
+    },
+    "slot:truss_hotstage/shield": {
+      "en": {
+        "what": "What protects the dome under the joint from the flame of the engine that lights inside it."
+      },
+      "vi": {
+        "name": "Tấm chắn nhiệt trên nắp vòm bên dưới",
+        "what": "Thứ bảo vệ nắp vòm bên dưới mối nối khỏi ngọn lửa của động cơ khởi động bên trong nó."
+      }
+    },
+    "option:truss_hotstage/shield/shield": {
+      "en": {
+        "what": "A heat-resistant cover over the dome below takes the flame."
+      },
+      "vi": {
+        "name": "Tấm che chịu nhiệt, như thiết kế",
+        "what": "Một tấm che chịu nhiệt phủ trên nắp vòm bên dưới, hứng ngọn lửa.",
+        "pros": [
+          "Nắp vòm được bảo vệ"
+        ],
+        "cons": [
+          "Khối lượng không làm việc gì khác"
+        ],
+        "real": "Soyuz: tấm hướng lửa hình nón bọc titan phủ trên khoang thiết bị của Block A (RussianSpaceWeb)"
+      }
+    },
+    "option:truss_hotstage/shield/none": {
+      "en": {
+        "what": "Leave the cover off and trust the dome."
+      },
+      "vi": {
+        "name": "Không có tấm chắn",
+        "what": "Bỏ tấm che đi và tin vào nắp vòm.",
+        "pros": [
+          "Khối lượng −10 %"
+        ],
+        "cons": [
+          "Độ tin cậy −0,4 %"
+        ],
+        "real": "Gemini 10 (1966): bồn chất oxy hóa đã cạn của tầng một bị vỡ ngay sau khi tách tầng, có thể do luồng khí của tầng hai"
       }
     }
   }

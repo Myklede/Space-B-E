@@ -1,49 +1,216 @@
 # Body section: notes
 
-Owner: the body section agent (Role 1). Files: `parts.json`, `section.json`, `internals.json`, `art.js`, this file, `ASSETS.md`.
+Owner: the body section agent (Role 1). Files: `parts.json`, `section.json`, `internals.json`, `explain.json`, `art.js`, this file, `ASSETS.md`. Wave 4 (2026-11-07) added real stage bodies from many rockets and countries; the full research (sources, reference images, the generator scripts and the balance check) is kept outside the repo in the wave 4 working folder `spaceb-wave4/body/` (`spec.json`, `models.md`, `sources.md`, `refs/`, `tools/build.mjs`).
 
 ## What is here
 
-- **55 parts** (39 kept with the same ids and numbers, 16 new), **11 shapes**, **9 rows**, **8 kits** (tank and avionics extended; solar unchanged; new: `tank_h2`, `tank_common`, `tank_common_h2`, `tank_balloon`, `stage_structure`).
-- New parts:
-  - Tanks: `tank_l_kerolox_stretch`, `tank_m_kerolox_stretch`, `tank_l_hydrolox_stretch` (stretched barrels); `tank_l_kerolox_common` (Falcon 9), `tank_l_hydrolox_common` (S-II / S-IVB), `tank_l_methalox_steel` (Starship), `tank_s_kerolox_carbon` (Electron): common-bulkhead pairs; `tank_m_kerolox_balloon` (Atlas), `tank_m_hydrolox_balloon` (Centaur): pressure-stabilised steel balloons.
-  - Structure: `intertank_l` (Shuttle ET style), `intertank_m` (Soyuz core), `interstage_l_composite` (Falcon 9), `avionics_iu_l` (Saturn V Instrument Unit).
-  - Side parts: `feedline_external` (Shuttle ET LOX line), `cable_raceway` (full-length raceway), `copv_rack` (three COPVs).
-- Shapes: `methalox_core`, `delta_core`, `hydrolox_core` (ids kept; `hydrolox_core` is now the real Shuttle External Tank layout: LOX tank, intertank, LH2 tank, external feed line), plus `falcon9_s1`, `saturn_sic`, `saturn_sivb`, `atlas_balloon`, `soyuz_blok_a`, `starship_steel`, `electron_carbon`, `centaur_balloon`.
+- **75 parts**: the 55 earlier parts with the same ids and numbers (two gain only a bonus group), and 20 new ones.
+- **29 shapes**: the 11 earlier ids (three rebuilt, six with text fixes) and 18 new ones.
+- **10 rows**, one new: *Attitude & settling*.
+- **11 kits**: 3 new kits; 6 earlier kits extended with new slots and options. Every first option stays neutral, so the presets keep their numbers.
+- **319 explain entries**, English and Vietnamese: 204 kept, 115 added, 4 shape entries rewritten.
+
+### New parts
+
+- **Tanks:**
+  - `tank_l_kerolox_cluster`: Saturn IB, nine tanks in a bundle.
+  - `tank_l_storable_cluster`: Proton, a centre tank and six outer tanks.
+  - `tank_l_kerolox_spheres`: N1 Block A, two spheres inside a cone.
+  - `tank_m_kerolox_bloka`: the Soyuz waisted core.
+  - `tank_m_kerolox_bloki`: Soyuz third stage.
+  - `tank_m_storable_titan`: Titan II.
+  - `tank_m_storable_ps2`: PSLV second stage.
+  - `tank_l_hydrolox_epc`: Ariane 5 core.
+  - `tank_l_lh2_upper` and `tank_l_lox_hung`: the Delta IV upper stage and SLS ICPS.
+  - `tank_l_methalox_orthogrid`: Vulcan.
+- **Structure:**
+  - `centerbody_l`: Delta IV.
+  - `forward_skirt_l`, `aft_skirt_l`.
+  - `avionics_skirt_l`: SLS forward skirt with the flight computers.
+  - `hotstage_truss_m`: Soyuz and N1 open lattice.
+  - `hotstage_truss_l`: Proton.
+  - `hotstage_ring_l`: Super Heavy vented ring.
+- **Side parts:** `aps_module` (S-IVB thruster pod) and `ullage_motors`. They form the new *Attitude & settling* row.
+
+### Shapes (top to bottom stacks in `section.json`)
+
+- **Kept:** `methalox_core`, `starship_steel`.
+- **Rebuilt:**
+  - `saturn_sic`: corrugated forward skirt, LOX tunnels, aluminium 2219.
+  - `saturn_sivb`: aft skirt with two APS pods, ullage motors and helium spheres; waffle wall, internal insulation, cold helium; Instrument Unit with cold plates.
+  - `soyuz_blok_a`: open lattice, the instrument ring, the waisted core.
+- **Text fixes only** (no more fix-it hints or Mars verdicts): `delta_core`, `hydrolox_core`, `falcon9_s1`, `atlas_balloon`, `electron_carbon`, `centaur_balloon`.
+- **New:** `saturn_sii`, `saturn_ib_sib`, `titan_ii`, `sls_core`, `dcss_icps`, `atlas_v_ccb`, `delta_iv_cbc`, `h2a_s1`, `long_march_5`, `energia_core`, `zenit_s1`, `pslv_ps2`, `soyuz_blok_i`, `proton_s1`, `n1_blok_a`, `super_heavy`, `vulcan_booster`, `ariane5_epc`.
+- Each shape carries `sources` (URLs).
+- **Left out:**
+  - Falcon 9 second stage and Falcon Heavy core: same build as `falcon9_s1`.
+  - New Glenn and H3: tank order not found.
+  - Neutron: not flown.
+  - Ariane 6: close to the generic hydrogen pair.
+  - Vega: three solid stages.
+  - Long March 2F, Kosmos-3M, LVM3: tank order not found.
+
+### Kits
+
+- **New kits:**
+  - `tank_cluster` and `tank_spheres`: the tank slots without a bulkhead choice. `tank_spheres` adds `surge` suppressors (N1 flight 7L).
+  - `truss_hotstage`: the heat shield on the dome below the joint, or none (Gemini 10).
+- **Slots and options added to existing kits:**
+  - `wall` slot in `tank`, `tank_h2`, `tank_common_h2`: integral (neutral), isogrid, orthogrid, waffle.
+  - `pogo` option (feed line with a pogo accumulator) in every tank kit.
+  - `pmd` option (screen channels) in every baffles slot.
+  - `cold_helium`, `internal` (S-IVB internal foam) and `foam_white` options in the hydrogen kits.
+  - `cooling` slot in `avionics`: passive (neutral) or cold plates with a sublimator (Saturn IU).
+  - `reused_sri` option in the avionics `imu` slot (Ariane 5 flight 501).
+- **Trade-offs:** every option has a real cost: no option is better in mass, cost and reliability at once.
 
 ## Data conventions
 
-- A separate-dome tank next to another separate-dome tank of the same propellant, or next to `intertank_l` / `intertank_m` / `centerbody_m` (layout `entry.above` / `entry.below`), is drawn as one propellant of a pair: one label, no band. Oxygen is the upper tank, except across `centerbody_m`, whose `look.fuelAbove` says the Delta II put its kerosene on top.
-- Hydrogen tanks use their own kits (`tank_h2`, `tank_common_h2`): no nitrogen pressurisation, and spray-on foam is the neutral "as designed" insulation (the art draws them in foam); bare metal is an option (mass ×0.97, cost ×0.95, reliability −0.2 %).
-- Shapes preset options where the real vehicle calls for it (stack items may be `{ type, options, material }`): the Delta II centerbody is isogrid.
-- The structure kit's "Honeycomb sandwich" (×0.88) is built in whatever material the part has, so it does not double up with the carbon-fibre material; the art draws the skin in the part's material (carbon, steel, titanium or painted metal).
+- **Sizes** follow `src/builder/tools/blender/README.md`: under 2.5 m S, 2.5 to 4.5 m M, over 4.5 m L. So Titan II, PSLV, Soyuz, Atlas V, Zenit and H-IIA are M, and the rest are L. (The earlier `falcon9_s1` and `delta_core` stay L; their ids and numbers are kept.)
+- **Heights** keep the real height/diameter where a ship stays under about 25 m. Long stages are shortened along the barrel only; the tallest body is SLS at 18.6 m.
+- **Propellant mass** follows the existing tanks per metre of the same size and propellant. It is then corrected for how the real layout fills its outline:
+  - the S-IB cluster: 0.76 (tank cross-sections over the envelope);
+  - Proton: 0.59;
+  - the N1 spheres: from the sphere volumes that fit the cone;
+  - storable propellants: ×1.15 for their higher density (Titan II, Proton, PSLV).
+- **Dry mass**: the game's propellant/dry ratio is about 0.83 × the real stage's propellant/(dry − engines). That is the factor the existing Falcon 9 tank uses.
+- **Storable propellants burn as kerolox** (lead decision D1; contract FUELS has only kerolox, methalox and hydrolox; `data/engines.json` does the same for the Delta II AJ10).
+  - Titan II, Proton and PSLV keep the con "Toxic propellants".
+  - The kerolox note sits in `detail`.
+  - `look.tanks` labels show the real propellants. The PSLV labels stay neutral ("UH25 + N2O4", `look.bulkheadAt` 0.5) because which propellant is on top is not sourced.
+- **The Delta IV upper stage** splits its propellant between the two parts by volume, like the Shuttle-tank pair (lead decision D2). `tank_l_lox_hung` says so in its detail.
+- **Guidance bonus counts once** (lead decision D3): `avionics_ring_m`, `avionics_iu_l` and `avionics_skirt_l` share `bonusGroup: "guidance"`. So does the Blok I instrument ring (+1 %). The presets carry at most one guidance ring, so their numbers are unchanged.
+- **The settling bonus counts once:** `aps_module` and `ullage_motors` share `bonusGroup: "settling"`.
+- **Outer skin** (`hullProfile` and `hullSide` in `parts.json`, read by `hull.js`):
+  - Tanks, skirts, rings and the open hot-staging lattices are `shell`. A full-diameter lattice stays visible (lead rule).
+  - `tank_l_lox_hung` is `inner` (rMax 0.63); the skin closes round it, as the interstage does on the real stage.
+  - `tank_l_kerolox_spheres` is an `own` cone from 1.0 R to 0.74 R. Its top meets the M lattice above it at the same radius, so no cone is needed there. The real Block A narrows to 0.61; the N1 Block B taper continues above, which the shape shows with the open lattice as its own part.
+  - `tank_m_kerolox_bloka` is an `own` waisted profile (0.73 / 0.8 / 1.0 at the load ring / 0.9 at the top); the skin cones its narrow bottom.
+  - `ullage_motors` and `aps_module` ride outside (`hullSide`).
+- **Shapes preset options and materials** where the real stage calls for them (stack items `{ type, options, material }`):
+  - aluminium 2219 on the S-IC and SLS tanks;
+  - isogrid on Atlas V, Delta IV and H-IIA; orthogrid on SLS; waffle on Zenit, Energia and the S-IVB;
+  - white foam on Long March 5 and Ariane 5;
+  - LOX tunnels on the S-IC, Energia and Zenit; pogo on Titan II; triple computers on SLS.
+- **Earlier conventions that still hold:**
+  - A separate-dome tank next to another of the same propellant, or next to `intertank_l`, `intertank_m`, `centerbody_m` or `centerbody_l`, is one propellant of a pair.
+  - Hydrogen kits start from spray-on foam.
+  - Parts whose material is their identity have no `materialFamily`.
+  - There is no separation choice: the game flies one stage.
 
-- Tank parts carry an extra `look` field read only by `art.js`: `{ skin: 'paint'|'steel'|'carbon'|'foam', build: 'separate'|'common'|'balloon', tanks: [[label, fraction], ...] }` (top to bottom). The art draws an intertank band (separate domes) or one weld line (common bulkhead) at the split, and labels each propellant.
-- The player's choices change the skin: material stainless/carbon/titanium/Al-Cu, insulation foam (orange) or MLI (gold); choosing *Common bulkhead* inside a standard tank replaces the band with a weld line. Stage structure shows the chosen construction (stringers, isogrid, orthogrid, corrugated, carbon) and FSW weld seams.
-- Parts whose material is their identity (steel balloons, Starship steel, Electron carbon, the composite interstage) have **no `materialFamily`**, so the card does not offer (or mislabel) a material; the detail text names the material.
-- Kits for parts built a fixed way start from a neutral "as designed" option (`tank_common`/`tank_balloon` bulkhead), so the first option is always the baseline the part's numbers already include.
-- No separation-system slot: this game flies one stage and never separates, so a separation choice would mislead players. The structure kit offers construction and joints instead.
-- Long side parts (feed line, raceway, wiring tunnel) are drawn centred on their attach point, matching how stats.js counts a radial part's centre (centerY = attach point). Short ones stand on it. Every side part's inner face sits at `-0.45 × userData.width`, which the scene places exactly on the host wall.
+## Balance (each shape on the Reliable nose and tail, one large engine; from the wave 4 build check)
 
-## Balance (each shape on the Reliable nose and tail, single large engine)
+| Shape | Status | Size | Body m | Propellant | Δv m/s | TWR | Ship $k |
+|---|---|---|---|---|---|---|---|
+| methalox_core | kept | l | 10.2 | 56.0 t | 5520 | 1.37 | 3128 |
+| delta_core | text | l | 12.4 | 90.0 t | 5770 | 0.87 | 3447 |
+| hydrolox_core | text | l | 17.2 | 43.1 t | 5460 | 1.35 | 4520 |
+| falcon9_s1 | text | l | 10.4 | 67.0 t | 5467 | 1.15 | 3155 |
+| saturn_sic | rebuilt | l | 16.6 | 108.0 t | 6017 | 0.74 | 3263 |
+| saturn_sivb | rebuilt | l | 11.7 | 26.2 t | 4556 | 2.02 | 4998 |
+| atlas_balloon | text | m | 9.2 | 57.5 t | 5471 | 1.34 | 3011 |
+| soyuz_blok_a | rebuilt | m | 12.5 | 56.0 t | 4966 | 1.33 | 3134 |
+| starship_steel | kept | l | 9.2 | 56.0 t | 5473 | 1.37 | 3082 |
+| electron_carbon | text | s | 5.6 | 20.0 t | 3252 | 3.03 | 2846 |
+| centaur_balloon | text | m | 9.6 | 19.7 t | 4345 | 2.62 | 3681 |
+| saturn_sii | new | l | 12.0 | 26.2 t | 4648 | 2.05 | 4132 |
+| saturn_ib_sib | new | l | 9.4 | 54.0 t | 4623 | 1.34 | 2867 |
+| titan_ii | new | m | 8.6 | 62.0 t | 5400 | 1.24 | 2881 |
+| sls_core | new | l | 18.6 | 43.1 t | 5277 | 1.33 | 4657 |
+| dcss_icps | new | l | 8.2 | 16.8 t | 3796 | 2.83 | 3767 |
+| atlas_v_ccb | new | m | 11.2 | 62.5 t | 5227 | 1.21 | 3144 |
+| delta_iv_cbc | new | l | 17.0 | 43.1 t | 5566 | 1.37 | 4758 |
+| h2a_s1 | new | m | 9.2 | 17.5 t | 3681 | 2.66 | 3717 |
+| long_march_5 | new | l | 17.2 | 43.1 t | 5501 | 1.36 | 4489 |
+| energia_core | new | l | 17.2 | 43.1 t | 5524 | 1.36 | 4642 |
+| zenit_s1 | new | m | 11.2 | 62.5 t | 5241 | 1.21 | 3113 |
+| pslv_ps2 | new | m | 8.0 | 54.5 t | 5021 | 1.37 | 2821 |
+| soyuz_blok_i | new | m | 6.5 | 31.5 t | 3854 | 2.11 | 2851 |
+| proton_s1 | new | l | 10.0 | 45.0 t | 4568 | 1.59 | 2872 |
+| n1_blok_a | new | l | 6.9 | 18.0 t | 2938 | 3.18 | 2741 |
+| super_heavy | new | l | 10.0 | 56.0 t | 5343 | 1.35 | 3142 |
+| vulcan_booster | new | l | 10.4 | 64.0 t | 5785 | 1.22 | 3161 |
+| ariane5_epc | new | l | 11.6 | 28.0 t | 4920 | 1.98 | 3847 |
 
-| Shape | Propellant | Δv | TWR | Notes |
+- Reliable, Workhorse, Cold Morning and Thin Skin keep exactly the same cost, masses, Δv, TWR and reliability.
+- The N1 cone holds only 18 t: the real lesson of spheres in a cone.
+- Upper stages (S-II, S-IVB, ICPS, Blok I) hold what upper stages hold.
+
+## For the body modeller (stage 2)
+
+**Planned models.** No GLB exists yet, so no part has `model` in its data. Add `"model": { "builder": "body/<slug>" }` to a part only when its file is in `public/assets/models/builder/body/`.
+
+| Slug | Part | Size, height | Real | Generator |
 |---|---|---|---|---|
-| methalox_core | 56 t methalox | 5,543 | 1.37 | unchanged (Reliable's own body) |
-| hydrolox_core (Shuttle ET) | 43 t hydrolox | 5,441 | 1.35 | now reaches Mars (was 4,787) |
-| atlas_balloon | 57.5 t kerolox | 5,471 | 1.34 | light, reliability 98.8 % |
-| starship_steel | 56 t methalox | 5,481 | 1.37 | cheap, reliability 99.9 % |
-| falcon9_s1 | 67 t kerolox | 5,447 | 1.15 | needs more thrust (cluster or boosters); with the tail's `soyuz` tail 5,575 / 1.44 |
-| delta_core | 90 t kerolox | 5,801 | 0.87 | unchanged; flies with solids |
-| saturn_sic | 108 t kerolox | 6,128 | 0.74 | needs solids or a cluster (works with `single_solids`, `atlas_v`, `titan_ii`, `vulcan`) |
-| soyuz_blok_a | 62.5 t kerolox | 5,148 | 1.21 | heavy structure; works with the `soyuz` tail |
-| saturn_sivb, centaur_balloon, electron_carbon | 26 / 20 / 20 t | 4,797 / 4,345 / 3,206 | | upper stages and a small rocket: their cons say to add a tank |
+| `body/sib_cluster` | `tank_l_kerolox_cluster` | L r 1.6875, 8.6 m | S-IB: centre 2.67 m, eight 1.78 m tanks on a 6.53 m envelope; spider beam on top | cluster |
+| `body/proton_cluster` | `tank_l_storable_cluster` | L, 8.0 m | centre 4.1 m, six 1.6 m tanks, 7.4 m across | cluster |
+| `body/n1_block_a` | `tank_l_kerolox_spheres` | L base, top r 1.25, 6.0 m | cone 16.9 m to 10.3 m, kerosene sphere above a larger LOX sphere | profiled shell |
+| `body/soyuz_block_a` | `tank_m_kerolox_bloka` | M, 11.0 m, own waisted profile | 2.95 m at the load ring | profiled shell |
+| `body/soyuz_block_i` | `tank_m_kerolox_bloki` | M, 5.6 m | 2.66 m; kerosene, instrument band with six hatches, LOX | tank barrel |
+| `body/titan2_tanks` | `tank_m_storable_titan` | M, 8.6 m | 3.05 m; white with black roll bands, UNITED STATES | tank barrel |
+| `body/pslv_ps2` | `tank_m_storable_ps2` | M, 8.0 m | 2.8 m; common bulkhead, toroidal water tank | tank barrel |
+| `body/ariane5_epc` | `tank_l_hydrolox_epc` | L, 9.6 m | 5.4 m; LOX over LH2, common bulkhead, white | tank barrel |
+| `body/dcss_lh2` | `tank_l_lh2_upper` | L, 5.4 m | 5.1 m; white barrel with cream rings | tank barrel |
+| `body/dcss_lox` | `tank_l_lox_hung` | L, inner r 1.06, 2.0 m | 3.2 m LOX tank, lengthened on the 5 m stage, silver blanket, black composite truss, red bottles | ring/skirt |
+| `body/vulcan_tank` | `tank_l_methalox_orthogrid` | L, 9.6 m | 5.4 m; LOX over LNG, orange foam over orthogrid | tank barrel |
+| `body/centerbody_l` | `centerbody_l` | L, 1.4 m | Delta IV composite centerbody, swing-arm plates | ring/skirt |
+| `body/forward_skirt_l` | `forward_skirt_l` | L, 1.2 m | S-IC corrugated / S-II hat stringers | ring/skirt |
+| `body/aft_skirt_l` | `aft_skirt_l` | L, 1.0 m | S-IVB / S-II aft skirts | ring/skirt |
+| `body/sls_forward_skirt` | `avionics_skirt_l` | L, 1.4 m | SLS forward skirt, flight-computer racks | ring/skirt |
+| `body/truss_hot_m` | `hotstage_truss_m` | M, 0.9 m | Soyuz and N1 open lattice | truss |
+| `body/truss_hot_l` | `hotstage_truss_l` | L, 1.2 m | Proton V95 lattice | truss |
+| `body/hotstage_ring` | `hotstage_ring_l` | L, 0.8 m | Super Heavy vented ring, stainless | ring/skirt |
+| `body/sivb_aps` | `aps_module` | side, 0.9 m | S-IVB APS: 3 attitude thrusters + 1 ullage engine | side hardware |
+| `body/ullage_motor` | `ullage_motors` | side, 1.0 m | TX-280 class solid, canted 10° | side hardware |
 
-Reliable and Workhorse presets are unchanged (same part numbers): no warnings, both reach Mars.
+**Inner pieces.**
+- Each model carries its own `slot_<key>` pieces, with option variants named `slot_<key>__<optionId>`.
+- There is no shared library: code-drawn tanks keep the code-drawn pieces.
+- Dimensions, colours and reference images for every model are in the wave 4 `models.md` and `refs/`.
 
-## Requests to the lead
+**What `art.js` needs** (stage 2; not edited in the data pass):
+- New `look` fields:
+  - `look.build` values `cluster` (with `outer`, `center`, `ring`: the number of outer tanks and their sizes as fractions of the radius) and `spheres`.
+  - `look.skin: "blanket"` (the silver-wrapped LOX tank).
+  - `look.bulkheadAt` (PSLV).
+- New slot art keys: `grid` (wall stiffening), `coldplate` (avionics cooling), `shield` (hot-staging heat shield).
+- `centerbody_l` in the `BETWEEN` set, with the LOX tank above (`look.fuelAbove: false`).
+- The `foam_white` insulation option should draw white foam.
 
-1. **Re-bake the card icons** (`node src/builder/tools/bake-icons.mjs`): `data/icons.json` lists baked PNGs for the old tanks, `wiring_tunnel`, `centerbody_m`, `interstage_m`, `avionics_ring_m` and the old `int:tank:*` / `int:avionics:*` options, so the cards still show the old art for those. New parts and new options render live already.
-2. **Delta core / Workhorse look:** the Workhorse preset (and the `delta_core` shape that matches it) puts the M-size `centerbody_m` and `avionics_ring_m` between L tanks, so the 3D shows a step in and out. The real Delta II was one diameter (2.44 m). Keeping the stack recognised as the preset was more important than fixing it inside my folder; an L centerbody plus a preset update would fix it.
-3. The tail section's `octaweb` tail currently makes the Falcon 9 body LOW_DV and costs about $8.4M; the Falcon 9 body flies well on the `soyuz` tail. Worth a look when the tail balance settles.
-4. New body parts have no Role 3 flight-scene art yet (the known hologram issue in docs/SHARE_PROBLEMS.md).
+**Shapes that share tanks must look different:**
+
+| Shared parts | Shapes | What differs |
+|---|---|---|
+| `tank_l_hydrolox` + `intertank_l` + `tank_l_hydrolox_stretch` | `hydrolox_core`, `long_march_5`, `energia_core` | ET: orange foam, external LOX line, cable tray. LM-5: white foam, one long duct. Energia: no outside line (LOX tunnel), waffle LH2 wall; check photos for its enamel colour |
+| the same with `avionics_skirt_l` on top | `sls_core` | orthogrid under orange foam, two LOX lines on opposite sides |
+| `tank_l_hydrolox` + `centerbody_l` + `tank_l_hydrolox_stretch` | `delta_iv_cbc` | dark composite centerbody, isogrid under orange foam, LOX line beside the wiring tunnel |
+| `tank_m_hydrolox` + `intertank_m` + `tank_m_hydrolox` | `h2a_s1` | orange-brown foam, pale ribbed center-body band, thin raceway |
+| `tank_m_kerolox_stretch` + `intertank_m` + `tank_m_kerolox` | `atlas_v_ccb`, `zenit_s1` | Atlas V: bare isogrid aluminium with the copper-tan anodised finish of the CCB, no foam, LOX line and avionics pod on the RP tank. Zenit: grey waffle, nothing outside |
+| `forward_skirt_l` + kerolox L tanks + `intertank_l` | `saturn_sic` | corrugated skirt and intertank, white with the black roll pattern |
+| `tank_l_hydrolox_common` | `saturn_sii`, `saturn_sivb` | S-II: forward skirt, systems tunnel, insulation outside. S-IVB: Instrument Unit, insulation inside, APS pods, waffle wall |
+
+## Main sources
+
+Each shape lists its own URLs in `section.json`. The ones relied on most:
+- McCutcheon's Saturn stage pages on enginehistory.org: RPE08.10 (S-IC), RPE08.20 (S-II), RPE08.30 (S-IVB), RPE08.31 (IU), RPE07 (Saturn I/IB), RPE06 (Titan), RPE05 (Atlas).
+- NASA image library cutaways 0100981, 9801810, 0100983, 0100984, 0100801 and 9801795.
+- NASA fact sheets: Shuttle Super Lightweight Tank, SLS core stage, ICPS.
+- ULA user's guides: Atlas V 2010, Delta IV 2013, Vulcan.
+- Ariane 5 User's Manual (Issue 5) and ESA pages.
+- Arianespace Soyuz user's manual (2012).
+- MHI H-IIA user's manual.
+- RussianSpaceWeb: Soyuz, Proton, N1.
+- B.I. Gubanov on buran.ru: Energia, Zenit.
+- Wikipedia for figures that other sources did not give.
+
+## Not confirmed (kept out of player text)
+
+- The PSLV second stage tank order.
+- The Soyuz Block A waist and top diameters (only the 2.95 m maximum is sourced).
+- The N1 sphere diameters.
+- Why the Vulcan and H-IIA cores look orange (seen in photos; not named in documents).
+- Whether the Long March 5 and Ariane 5 white is paint or a foam topcoat.
+- The Energia enamel colour.
+- The Super Heavy vented-ring vent count and mass.
+- Dry masses where sources disagree (S-II, S-IVB, Titan II, SLS, N1).
+- The S-IVB waffle angle.
