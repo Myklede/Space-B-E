@@ -336,7 +336,20 @@
 .vd-title { display: flex; flex-direction: column; line-height: 1.1; flex: 0 0 auto; }
 .vd-kicker { font-size: 10px; letter-spacing: 0.2em; text-transform: uppercase; color: var(--hud-muted); }
 .vd-ship-name { font: 500 var(--hud-text-md) var(--hud-font); color: var(--hud-cyan); background: none; border: 0; border-bottom: 1px dashed var(--hud-line); padding: 0; cursor: pointer; text-align: left; max-width: 200px; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
-.vd-stats { display: flex; gap: 6px; flex: 1 1 auto; min-width: 0; justify-content: center; overflow: hidden; }
+.vd-stats { display: flex; gap: 6px; flex: 1 1 auto; min-width: 0; justify-content: safe center; overflow: hidden; }
+/* narrower windows (Role 3's report: values ran into each other at 1280 px): drop the small second lines (they stay in the
+   chip's tooltip) and tighten the bar, so every value keeps its own box */
+@media (max-width: 1320px) {
+  .vd-top { gap: 10px; padding: 0 10px; }
+  .vd-chip { padding: 3px 7px; }
+  .vd-chip-sub { display: none; }
+  .vd-actions { gap: 4px; }
+  .vd-actions .vd-btn { padding: 7px 8px; }
+}
+@media (max-width: 1060px) {
+  .vd-kicker { display: none; }
+  .vd-chip-label { letter-spacing: 0.06em; }
+}
 .vd-chip { flex: 0 0 auto; display: flex; flex-direction: column; min-width: max-content; padding: 3px 10px; border: 1px solid var(--hud-line); border-radius: var(--hud-radius); background: rgb(0 0 0 / 0.3); line-height: 1.15; }
 .vd-chip-label { font-size: 9.5px; letter-spacing: 0.12em; text-transform: uppercase; color: var(--hud-muted); }
 .vd-chip-value { font-size: var(--hud-text-sm); font-weight: 500; color: var(--hud-cyan); white-space: nowrap; }

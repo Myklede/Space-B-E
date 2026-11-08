@@ -754,7 +754,7 @@ export function createDesignPage({ assembly, catalog, sections, materials, engin
     const c = h('div', 'vd-chip');
     c.dataset.state = st;
     c.append(h('span', 'vd-chip-label', label), h('span', 'vd-chip-value', value));
-    if (sub) c.append(h('span', 'vd-chip-sub', sub));
+    if (sub) { c.append(h('span', 'vd-chip-sub', sub)); c.title = sub; } // the small line hides on narrow windows; the tooltip keeps it
     return c;
   }
   function renderStats(result) {
