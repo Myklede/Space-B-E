@@ -35,3 +35,7 @@ Images for the "In Memoriam" tribute (`public/assets/tributes/`, details in `cre
 | `columbia-crew.jpg`: STS-107 official crew photograph, 2001 | [File:Crew_of_STS-107,_official_photo.jpg](https://commons.wikimedia.org/wiki/File:Crew_of_STS-107,_official_photo.jpg), by NASA | Public domain (NASA) |
 | `apollo1-crew.jpg`: Apollo 1 crew in front of Launch Complex 34 | [File:Apollo1-Crew_01.jpg](https://commons.wikimedia.org/wiki/File:Apollo1-Crew_01.jpg), by NASA | Public domain (NASA) |
 | `soyuz11-crew.jpg`: Soyuz 11 cosmonauts, USSR memorial stamp 1971 (cropped) | [File:Soyuz_11_crew.jpg](https://commons.wikimedia.org/wiki/File:Soyuz_11_crew.jpg), by USSR Post | Public domain (PD-RU-exempt, cropped stamp) |
+
+## Voices, sound effects and music (ElevenLabs)
+
+All files in `public/assets/audio/demo/` were generated with ElevenLabs (elevenlabs.io) on a paid Starter plan: six original voices made with Voice Design (no real person's voice imitated), 44 lines with Eleven v3 text-to-speech, 20 sound effects, and 3 instrumental scores with Eleven Music. `manifest.json` lists every file with its subtitle and length.
