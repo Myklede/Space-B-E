@@ -32,15 +32,24 @@ import {
   airDensity, pressureRatio, dynamicPressure, heatFlux, atmosphereTop, HEAT_REAL_SCALE,
 } from './atmosphere.js';
 import { closestApproach } from './debris.js';
+import { createPartEffects } from './effects/index.js';
 
 export const FIXED_DT = 1 / 120;
 export const WARP_IN_AIR = 4; // max time warp inside the atmosphere
 export const WARP_THIN_AIR = 10; // max time warp where the air is almost vacuum (density below WARP_THIN_DENSITY)
 export const WARP_THIN_DENSITY = 1e-4; // kg/m³
+/** Heat flux the shield can take. planned: what the flight computer believes (an unseen gouge is not in its plan). */
+export function heatLimitFor(ship, { planned = false } = {}) {
+  const L = TUNING.heatLimit;
+  if (!ship.hasHeatShield) return L.none;
+  if (!ship.heatShieldDamaged || (planned && ship.heatShieldUnseen)) return L.shield;
+  return ship.heatShieldInspected ? L.damagedMapped : L.damaged;
+}
+
 export const TRIM_ACCEL = 6; // m/s²: RCS-style corridor trim before entry (W/S), costs real fuel
 
 // Local notice → contract flight:event type (contract.js FLIGHT_EVENT_TYPES). Others stay local.
-const BUS_FLIGHT_EVENTS = { maxq_warning: 'maxq', debris_hit: 'debris_hit', blackout: 'blackout', skip_off: 'skip_off' };
+const BUS_FLIGHT_EVENTS = { maxq_warning: 'maxq', debris_hit: 'debris_hit', blackout: 'blackout', skip_off: 'skip_off', part_failure: 'part_failure' }; // part_failure: a chosen part failed (./effects/)
 
 // Plain-sentence causes for flight:failed (contract: "cause is one plain sentence").
 const CAUSES = {
@@ -49,6 +58,8 @@ const CAUSES = {
   g_force_blackout: 'The g-force was so high that the pilot blacked out and lost the ship.',
   no_heat_shield: 'With no heat shield, the ship burned up on atmospheric entry.',
   heat_shield_damaged: 'The damaged heat shield let hot plasma in during entry.',
+  heat_shield_unseen: 'A debris strike in Earth orbit had damaged the heat shield, and no one inspected it. On entry, hot gas got in.',
+  pad_fire: 'A wiring spark in a pure-oxygen cabin started a fire during the pad test; in pure oxygen it spread in seconds.',
   heat_overload: 'The entry was too fast and steep, and the heat shield could not take it.',
   seal_failure_cold: 'The cheap seals went stiff in the cold, leaked hot gas, and the rocket broke up.',
   crash_landing: 'The ship hit the ground too fast.',
@@ -66,7 +77,9 @@ export const TUNING = {
   gSustainedLimit: 6, // g held for gSustainedTime → blackout → loss of vehicle
   gSustainedTime: 4,
   gInstantLimit: 12,
-  heatLimit: { none: 4e3, damaged: 7e3, shield: 2e5 }, // W/m² (game units); a good Mars entry peaks ≈ 1e4
+  // W/m² (game units); a good Mars entry peaks ≈ 1e4. damagedMapped: the gouge was found by inspection, so the computer
+  // knows where it is and rolls the ship to keep that edge out of the hottest flow (a little better than blind damage).
+  heatLimit: { none: 4e3, damaged: 7e3, damagedMapped: 1e4, shield: 2e5 },
   chuteMaxSpeed: 500, // m/s: supersonic chute (Perseverance opened at about Mach 1.7)
   chuteMaxAltitude: 15000, // m
   heatGrace: 1.0, // s above the limit before failure
@@ -106,6 +119,8 @@ export function shipParams(spec = {}) {
     hasLegs: s.hasLegs ?? true,
     hasHeatShield: s.hasHeatShield ?? true,
     heatShieldDamaged: s.heatShieldDamaged ?? false,
+    heatShieldInspected: false, // the strike gouge was found by the RCS camera sweep
+    heatShieldUnseen: false, // true while a debris-strike gouge has not been found: the flight computer's corridor ignores it
     coldRatedSeals: s.coldRatedSeals ?? true,
     armorHits: s.armorHits ?? 0,
     radius: s.radius ?? 2, // m, collision radius of the ship
@@ -127,7 +142,11 @@ export class FlightController {
     this.planetId = planetId;
     this.planet = planets[planetId];
     this.mu = this.planet.g * this.planet.radius ** 2; // GM = g·R²
-    this.ship = shipParams(shipSpec);
+    // the parts the player chose act in flight (./effects/, built by Role 1 with all roles' agreement): a launch from
+    // the pad starts a new flight record; the later scenes of the same launch carry on with it
+    // (not enumerable: it holds functions, and prediction copies and snapshots take only plain fields)
+    Object.defineProperty(this, 'fx', { value: createPartEffects(shipSpec, { fresh: start === 'pad' && planetId === 'earth', rng }), writable: true, enumerable: false });
+    this.ship = this.fx.value('params', shipParams(shipSpec), { fc: this });
     this.scenario = scenario ?? { tempC: shipSpec?.launch?.tempC ?? 15 }; // launch weather (Cold Morning ending)
     this.rng = rng;
 
@@ -235,7 +254,8 @@ export class FlightController {
     const rho = airDensity(this.planet, alt);
     const r = len(this.pos);
     const orb = this.orbit();
-    const thrust = this.thrustNow(alt) * this.throttle;
+    const fxCtx = { fc: this, dt: 0, alt, speed, phase: this.phase };
+    const thrust = Math.max(0, this.fx.value('thrust', this.thrustNow(alt) * this.throttle, fxCtx)); // what the engines really give (an engine out, the pad holding back)
     const gLocal = this.mu / (r * r);
     const hf = vVert < 0 ? heatFlux(this.planetId, rho, speed, this.ship.noseRadius) : 0;
     return {
@@ -252,11 +272,11 @@ export class FlightController {
       deltaVLeft: this.deltaVLeft(),
       isp: this.isp(alt),
       thrust,
-      twr: this.thrustNow(alt) / (this.mass * gLocal),
+      twr: Math.max(0, this.fx.value('thrust', this.thrustNow(alt), fxCtx)) / (this.mass * gLocal),
       gravity: gLocal,
       airDensity: rho,
       dynamicPressure: dynamicPressure(rho, speed),
-      maxQ: TUNING.maxQ,
+      maxQ: this._maxQNow ?? TUNING.maxQ,
       gLoad: this._lastNonGravAccel / this.g0,
       heatFlux: hf,
       heatFluxRealEq: hf * HEAT_REAL_SCALE,
@@ -367,7 +387,8 @@ export class FlightController {
     const up = this.up;
     const r = len(this.pos);
     const gravityAcc = scale(up, -this.mu / (r * r));
-    const thrustN = this.thrustNow(alt) * throttle;
+    const fxCtx = { fc: this, dt, alt, speed, phase: this.phase };
+    const thrustN = Math.max(0, this.fx.value('thrust', this.thrustNow(alt) * throttle, fxCtx)); // an engine out, the pad holding back…
     const thrustAcc = scale(this.forward, thrustN / this.mass);
     const rho = airDensity(this.planet, alt);
     this._updateParachute(alt, speed);
@@ -376,7 +397,7 @@ export class FlightController {
       this._event('fairing_sep');
     }
     const bodyCdA = this.inFairing ? this.ship.ascentCdA : this.ship.cdA;
-    const cdA = bodyCdA + (this.chuteOpen ? this.ship.chuteCdA : 0);
+    const cdA = bodyCdA + (this.chuteOpen ? this.fx.value('chuteCdA', this.ship.chuteCdA, fxCtx) : 0); // only the canopies open and whole (./effects/landing.js)
     const dragN = 0.5 * rho * speed * speed * cdA;
     const dragAcc = speed > 0 ? scale(norm(this.vel), -dragN / this.mass) : v3();
     const nonGrav = add(thrustAcc, dragAcc);
@@ -405,6 +426,7 @@ export class FlightController {
         this.liftoffT = this.t;
         this._event('liftoff');
         this._scheduleColdSealFailure();
+        this.fx.fire('liftoff', fxCtx);
       }
     }
 
@@ -419,6 +441,9 @@ export class FlightController {
     if (this.failed) return;
     this._moveObstacles(dt);
     if (this.failed) return;
+    // what the chosen parts do this step (an engine failing, a structure giving way…): may end the flight
+    const partFailure = this.fx.fire('step', { ...fxCtx, rho, q: dynamicPressure(rho, speed) });
+    if (partFailure) return this._fail(partFailure.endingId, partFailure.cause, partFailure.data ?? {}, partFailure.historyHint ?? null);
     this._checkTouchdown();
     if (this.failed || this.onGround) return;
     this._checkStranded(dt);
@@ -456,7 +481,7 @@ export class FlightController {
   }
 
   // --- rotation ----------------------------------------------------------------
-  _turnAccel() { return this.ship.hasRCS ? TUNING.turnAccel.rcs : TUNING.turnAccel.noRcs; }
+  _turnAccel() { return this.fx.value('turnAccel', this.ship.hasRCS ? TUNING.turnAccel.rcs : TUNING.turnAccel.noRcs, { fc: this }); } // the steering the player chose (gimbal, RCS)
 
   _steerInput(pitch, yaw, dt) {
     const a = this._turnAccel();
@@ -498,7 +523,8 @@ export class FlightController {
   _updateParachute(alt, speed) {
     if (this.chuteOpen || !this.ship.chuteCdA || this.inFairing) return;
     if (this.onGround || dot(this.vel, this.up) >= 0) return;
-    if (alt < TUNING.chuteMaxAltitude && speed < TUNING.chuteMaxSpeed && airDensity(this.planet, alt) > 0) {
+    const lim = this.fx.value('chuteDeploy', { maxSpeed: TUNING.chuteMaxSpeed, maxAltitude: TUNING.chuteMaxAltitude }, { fc: this, alt, speed }); // the chutes the player chose (./effects/landing.js)
+    if (alt < lim.maxAltitude && speed < lim.maxSpeed && airDensity(this.planet, alt) > 0) {
       this.chuteOpen = true;
       this._event('parachute', { altitude: alt, speed });
     }
@@ -513,6 +539,11 @@ export class FlightController {
       return false;
     }
     this.ignitionsLeft -= 1;
+    if (!this.fx.value('ignite', true, { fc: this })) { // the igniter is spent, but the engine did not light
+      this._flags.ignition_failed = false;
+      this._event('ignition_failed', { left: this.ignitionsLeft });
+      return false;
+    }
     this.engineLit = true;
     this._flags.ignition = false; // every ignition is reported
     this._event('ignition', { left: this.ignitionsLeft });
@@ -535,10 +566,19 @@ export class FlightController {
       const d = len(sub(o.pos, this.pos));
       if (!(d >= o.minDist)) o.minDist = d; // closest centre distance so far (rating)
       if (d <= o.radius + this.ship.radius) {
-        if (this.armorLeft > 0) {
-          this.armorLeft -= 1;
+        // what the hit does depends on the armour, the skin and the shield the player chose (./effects/structure.js)
+        const hit = this.fx.value('debrisHit', { absorbed: this.armorLeft > 0, armorUsed: this.armorLeft > 0 ? 1 : 0, damage: 0 }, { fc: this, obstacle: o });
+        if (hit.absorbed) {
+          this.armorLeft = Math.max(0, this.armorLeft - (hit.armorUsed ?? 0));
           this._flags.debris_hit = false;
-          this._event('debris_hit', { id: o.id, armorLeft: this.armorLeft, radius: o.radius });
+          // An Earth-orbit strike also gouges the heat shield, on the side the crew cannot see (Columbia, 2003).
+          let shield = false;
+          if (this.planetId === 'earth' && this.ship.hasHeatShield && !this.ship.heatShieldDamaged) {
+            this.ship.heatShieldDamaged = true;
+            this.ship.heatShieldUnseen = true;
+            shield = true;
+          }
+          this._event('debris_hit', { id: o.id, armorLeft: this.armorLeft, radius: o.radius, armorUsed: hit.armorUsed ?? 0, ...(shield && { heatShieldDamaged: true }) }); // armorUsed 0: the skin or wall took it
           continue; // absorbed: the piece is gone
         }
         this._fail('rud', 'debris_impact', { id: o.id, radius: o.radius });
@@ -569,9 +609,9 @@ export class FlightController {
 
   // --- limits & failures -------------------------------------------------------
   _heatLimit() {
-    const L = TUNING.heatLimit;
-    if (!this.ship.hasHeatShield) return L.none;
-    return this.ship.heatShieldDamaged ? L.damaged : L.shield;
+    // base limit from the shield state (damaged / damaged but inspected and mapped: heatLimitFor), then the shield the
+    // player chose (./effects/structure.js)
+    return this.fx.value('heatLimit', heatLimitFor(this.ship), { fc: this });
   }
 
   _updateEngineHeat(throttle, dt) {
@@ -590,9 +630,10 @@ export class FlightController {
     const T = TUNING;
     const speed = len(this.vel);
     const q = dynamicPressure(rho, speed);
-    if (q > T.maxQ * T.maxQWarnFrac) this._event('maxq_warning', { q });
-    else if (q < T.maxQ * 0.6) this._flags.maxq_warning = false;
-    if (q > T.maxQ) return this._fail('rud', 'max_q_exceeded', { q });
+    const maxQ = this._maxQNow = this.fx.value('maxQ', T.maxQ, { fc: this, dt, rho, speed, q }); // the structure the player chose
+    if (q > maxQ * T.maxQWarnFrac) this._event('maxq_warning', { q });
+    else if (q < maxQ * 0.6) this._flags.maxq_warning = false;
+    if (q > maxQ) return this._fail('rud', 'max_q_exceeded', { q });
 
     const g = this._lastNonGravAccel / this.g0;
     if (g > T.gWarn) this._event('g_high', { g });
@@ -611,7 +652,7 @@ export class FlightController {
       this._timers.heat = hf > this._heatLimit() ? this._timers.heat + dt : 0;
       if (this._timers.heat > T.heatGrace) {
         if (!this.ship.hasHeatShield) return this._fail('burnup', 'no_heat_shield');
-        if (this.ship.heatShieldDamaged) return this._fail('theFoam', 'heat_shield_damaged', {}, 'columbia');
+        if (this.ship.heatShieldDamaged) return this._fail('theFoam', this.ship.heatShieldUnseen ? 'heat_shield_unseen' : 'heat_shield_damaged', {}, 'columbia');
         return this._fail('burnup', 'heat_overload');
       }
     }
@@ -634,11 +675,13 @@ export class FlightController {
     if (this.altitude > 0) return;
     const up = this.up;
     const speed = len(this.vel);
-    const limit = this.ship.hasLegs ? TUNING.touchdownLimit.legs : TUNING.touchdownLimit.noLegs;
+    const limit = this.fx.value('touchdownLimit', this.ship.hasLegs ? TUNING.touchdownLimit.legs : TUNING.touchdownLimit.noLegs, { fc: this }); // the legs the player chose
     const upright = dot(this.forward, up) >= TUNING.uprightCos;
     this.pos = scale(up, this.planet.radius);
     if (speed <= limit && upright) {
       this.landingSpeed = speed;
+      this.throttle = 0; // engine cut at contact (Apollo's contact light, Falcon's shutdown): a landed ship stays down
+      this.engineLit = false;
       this.vel = v3();
       this.omega = v3();
       this.onGround = true;
@@ -647,6 +690,7 @@ export class FlightController {
       this.engineLit = false;
       this._braking = false;
       this._setPhase('landed');
+      this.fx.fire('end', { fc: this, landed: true, touchdownSpeed: speed });
       this.bus.emit('flight:landed', { touchdownSpeed: speed });
     } else {
       this._fail('rud', speed > limit ? 'crash_landing' : 'tipped_over', { touchdownSpeed: speed });
@@ -713,11 +757,15 @@ export class FlightController {
     if (busType) this.bus.emit('flight:event', { type: busType, t: this.t, data });
   }
 
+  /** Public failure path for scripted tragic endings owned by Role 2 (pad fire). causeId is a key of CAUSES. */
+  failWith(endingId, causeId, data = {}, historyHint = null) { this._fail(endingId, causeId, data, historyHint); }
+
   _fail(endingId, causeId, data = {}, historyHint = null) {
     if (this.failed) return;
     const cause = CAUSES[causeId] ?? causeId;
     this.failed = { endingId, cause, causeId, historyHint, t: this.t, ...data };
     this.throttle = 0;
+    this.fx?.fire('end', { fc: this, failed: this.failed });
     this.onNotice?.('failed', this.failed);
     this.bus.emit('flight:failed', { endingId, cause, causeId, historyHint, t: this.t, ...data });
   }
