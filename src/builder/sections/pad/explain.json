@@ -178,6 +178,7 @@
         "without": "Thick sea fog is common, and its flame trench is a little smaller than the big Florida pads."
       },
       "vi": {
+        "name": "SLC-4E",
         "what": "Một bệ phóng trên bờ biển California, nơi tên lửa bay về phía nam qua đại dương, vào những quỹ đạo đi qua cả hai cực Trái Đất.",
         "why": "Ở đây rất hiếm khi có sét, và biển lạnh giữ cho trời mát nhưng hầu như không bao giờ đóng băng.",
         "without": "Sương mù biển dày rất hay gặp, và rãnh dẫn lửa nhỏ hơn một chút so với các bệ lớn ở Florida.",
@@ -542,6 +543,7 @@
         "without": "In January it is the rainy season, so thunderstorms are common, and there is no way for a crew to get on board."
       },
       "vi": {
+        "name": "ELA-3",
         "what": "Sân bay vũ trụ của châu Âu ở Guyane thuộc Pháp, gần xích đạo. Kính viễn vọng James Webb đã được phóng từ đây.",
         "why": "Có rãnh dẫn lửa lớn, tháp nước khổng lồ và bốn tháp chống sét. Trời ấm quanh năm nên không bao giờ có sương giá.",
         "without": "Tháng Một là mùa mưa nên hay có giông sét, và không có lối nào cho phi hành đoàn lên tàu.",
@@ -598,6 +600,7 @@
         "without": "It is one of the dearer pads, and there is no escape route for a crew."
       },
       "vi": {
+        "name": "Văn Xương LC-101",
         "what": "Sân bay vũ trụ ven biển của Trung Quốc trên đảo nhiệt đới Hải Nam. Sứ mệnh sao Hỏa đầu tiên của Trung Quốc, Thiên Vấn 1, đã bay từ đây.",
         "why": "Tên lửa bay ra biển nên các tầng rơi xuống không bao giờ rơi vào làng mạc. Bệ lớn, có tháp và nước, mùa đông khô và dễ chịu.",
         "without": "Đây là một trong những bệ đắt, và không có lối thoát hiểm cho phi hành đoàn.",
@@ -685,6 +688,7 @@
         "without": "It is often windy, and there is no crew access."
       },
       "vi": {
+        "name": "Yoshinobu LA-Y1",
         "what": "Sân bay vũ trụ chính của Nhật Bản, trên một hòn đảo xanh thường được gọi là bãi phóng đẹp nhất thế giới. Tàu thăm dò Hope của UAE đã bay đi sao Hỏa từ đây.",
         "why": "Tên lửa được lắp trong nhà trên một bệ di động và chỉ được đưa ra nửa ngày trước khi phóng. Mùa đông mát nhưng không có sương giá.",
         "without": "Thường có gió mạnh, và không có lối lên tàu cho phi hành đoàn.",
@@ -865,6 +869,7 @@
         "without": "Everything is sized for a small rocket. A big ship pushes far more than it can take, so the engines must be held back and the pad gets wrecked."
       },
       "vi": {
+        "name": "Rocket Lab LC-1",
         "what": "Một bãi phóng tư nhân nhỏ trên một trang trại cừu ở New Zealand, xây cho tên lửa Electron bé nhỏ của Rocket Lab.",
         "why": "Đây là bệ rẻ nhất, và tháng Một ở đó là mùa hè: ấm áp và có gió nhẹ.",
         "without": "Mọi thứ được làm cho tên lửa nhỏ. Một con tàu lớn đẩy mạnh hơn nhiều so với sức chịu của bệ, nên động cơ phải bị giữ bớt lại và bệ bị phá hỏng.",
@@ -921,6 +926,7 @@
         "without": "On a weak mount a strong rocket must hold its engines back at first, flying chunks of concrete may hit an engine, and the pad needs costly repairs."
       },
       "vi": {
+        "name": "Bệ đỡ và rãnh dẫn lửa",
         "what": "Thứ mà tên lửa đứng lên, và đường đi của ngọn lửa trong những giây đầu sau khi động cơ bật.",
         "why": "Khí phụt của tên lửa nóng hơn dung nham và nhanh hơn viên đạn. Nếu không có chỗ thoát, nó dội ngược vào động cơ và cày nát mặt đất.",
         "without": "Trên một bệ yếu, tên lửa mạnh phải giữ bớt ga lúc đầu, bê tông văng có thể đập vào động cơ, và bệ phải sửa rất tốn tiền."
@@ -933,6 +939,7 @@
         "without": "A big rocket blasts the concrete apart and throws the pieces back at itself."
       },
       "vi": {
+        "name": "Nền bê tông phẳng",
         "what": "Một tấm bê tông phẳng bình thường. Lửa đập thẳng vào nó.",
         "why": "Không tốn đồng nào, và đủ dùng cho một tên lửa rất nhỏ.",
         "without": "Tên lửa lớn sẽ thổi tung bê tông và hất các mảnh vỡ ngược vào chính nó.",
@@ -953,6 +960,7 @@
         "without": "There is no trench: without water, when the rocket is too strong the ground under the table is dug up and flung around."
       },
       "vi": {
+        "name": "Bệ nâng cao, không có rãnh",
         "what": "Một cái bàn thép chắc chắn đứng trên chân, nâng động cơ cao vài mét khỏi mặt đất để lửa toả ra trước khi chạm đất.",
         "why": "Chịu lửa tốt hơn tấm bê tông phẳng mà giá rẻ, và khi có tấm thép làm mát bằng nước bên dưới, nó được nước giúp nhiều hơn mọi loại bệ khác.",
         "without": "Không có rãnh dẫn lửa: khi không có nước mà tên lửa lại quá mạnh, mặt đất dưới bàn bị khoét lên và hất tung khắp nơi.",
@@ -999,6 +1007,7 @@
         "without": "It is a big building job, and its heat-proof bricks wear out over time."
       },
       "vi": {
+        "name": "Rãnh dẫn lửa và tấm chắn hai phía",
         "what": "Một con mương bê tông dài dưới tên lửa. Một khối thép hình mái nhà chẻ đôi ngọn lửa và đẩy ra hai đầu mương.",
         "why": "Lửa và những mảnh vụn nó cuốn theo đi thật xa khỏi tên lửa và tháp. Tên lửa lớn có thể cất cánh hết công suất.",
         "without": "Xây rất tốn công, và gạch chịu nhiệt bị mòn dần theo thời gian.",
@@ -1019,6 +1028,7 @@
         "without": "It is the most expensive mount, and moving it to the pad is slow."
       },
       "vi": {
+        "name": "Bệ phóng di động đặt trên rãnh",
         "what": "Một bệ thép hai tầng khổng lồ. Tên lửa được lắp trên nó ở trong nhà, rồi cả bệ được chở ra đặt lên trên rãnh dẫn lửa.",
         "why": "Động cơ nằm cao phía trên rãnh nên lửa toả ra rộng hơn nữa. Đây là loại chịu lửa tốt nhất, và tên lửa được lắp ráp tránh mưa gió.",
         "without": "Đây là loại đắt nhất, và chở bệ ra chỗ phóng rất chậm.",
@@ -1040,6 +1050,7 @@
         "without": "The pad takes all the heat, loose concrete flies more easily, and the noise shakes the ship's wiring and instruments."
       },
       "vi": {
+        "name": "Phun nước và giảm âm",
         "what": "Một trận nước xối xả phun dưới và quanh động cơ ngay lúc chúng bật lửa.",
         "why": "Nước biến thành hơi và hút bớt nhiệt, nên bệ chịu được tên lửa mạnh hơn. Nước còn nuốt bớt tiếng gầm, thứ âm thanh đủ to để làm rung chuyển cả tên lửa.",
         "without": "Bệ phải gánh toàn bộ sức nóng, bê tông dễ bị hất văng hơn, và tiếng ồn làm rung dây điện và thiết bị trên tàu."
@@ -1052,6 +1063,7 @@
         "without": "The pad gets the full heat, and the ship gets the full roar."
       },
       "vi": {
+        "name": "Không có nước",
         "what": "Không có chút nước nào.",
         "why": "Miễn phí.",
         "without": "Bệ chịu toàn bộ sức nóng, còn tàu chịu toàn bộ tiếng gầm.",
@@ -1071,6 +1083,7 @@
         "without": "It helps a lot, but a water tower helps even more."
       },
       "vi": {
+        "name": "Phun nước",
         "what": "Ống và vòi phun nước vào ngọn lửa lúc cất cánh, hoặc một tấm thép dưới tên lửa phun nước thẳng lên trên.",
         "why": "Bệ chịu thêm được khoảng một phần ba lực đẩy, và tàu rung ít hơn nhiều.",
         "without": "Giúp được nhiều, nhưng một tháp nước còn giúp nhiều hơn.",
@@ -1090,6 +1103,7 @@
         "without": "It is expensive, and the giant tank must be refilled after every launch."
       },
       "vi": {
+        "name": "Tháp nước và vòi phun lớn",
         "what": "Một tháp nước cao xả cả bồn nước khổng lồ xuống bệ trong chưa đầy một phút. Đám mây trắng bạn thấy ở những lần phóng lớn phần lớn là nước này biến thành hơi.",
         "why": "Bệ chịu được nhiều lửa nhất, và tàu được chuyến đi êm nhất.",
         "without": "Đắt, và sau mỗi lần phóng phải bơm đầy lại cái bồn khổng lồ.",
@@ -1136,6 +1150,7 @@
         "without": "With no clamps the rocket lifts off as soon as it can, and a bad engine is only discovered in the air."
       },
       "vi": {
+        "name": "Kẹp giữ",
         "what": "Những cái kẹp chắc chắn ghì tên lửa xuống bệ trong lúc động cơ tăng lên hết công suất.",
         "why": "Trong vài giây, máy tính kiểm tra từng động cơ. Nếu có cái không ổn, động cơ tắt và tên lửa vẫn an toàn trên mặt đất.",
         "without": "Không có kẹp thì tên lửa bay lên ngay khi đủ sức, và động cơ hỏng chỉ bị phát hiện khi đã ở trên trời."
@@ -1148,6 +1163,7 @@
         "without": "There is no chance to check the engines before the rocket leaves the ground."
       },
       "vi": {
+        "name": "Không có kẹp giữ",
         "what": "Không có gì giữ tên lửa lại.",
         "why": "Miễn phí.",
         "without": "Không có cơ hội kiểm tra động cơ trước khi tên lửa rời mặt đất.",
@@ -1162,7 +1178,7 @@
     "equip:clamps/tulip": {
       "en": {
         "what": "Four steel arms that hold the rocket by its sides over the flame pit. Nothing bolts it down: it hangs there by its own weight.",
-        "why": "The engines start at low power while the weight still keeps the rocket in the arms, so a bad start can be stopped. When the push becomes bigger than the weight, the rocket rises and the arms fall open.",
+        "why": "They carry the whole rocket over the flame pit with nothing to unlatch. The engines start at low power while the weight still keeps the rocket in the arms, so a bad start can be stopped; when the push becomes bigger than the weight, the rocket rises and the arms fall open.",
         "without": "Once the push passes the weight, nothing holds the rocket back any more, so problems that only show at full power are found in the air.",
         "inside": "Each arm pivots on the launch ring and carries a heavy counterweight. While the rocket presses down, the arms stay closed; as it lifts, the counterweights swing them back out of the way.",
         "analogy": "Like a cup sitting in a hand: lift the cup and the fingers simply open."
@@ -1170,7 +1186,7 @@
       "vi": {
         "name": "Tay đỡ \"hoa tulip\"",
         "what": "Bốn cánh tay thép đỡ tên lửa ở hai bên hông, treo nó trên hố lửa. Không có bu-lông nào giữ cả: tên lửa treo ở đó nhờ chính sức nặng của nó.",
-        "why": "Động cơ khởi động ở mức lực đẩy thấp trong lúc sức nặng vẫn giữ tên lửa trong các cánh tay, nên nếu khởi động lỗi thì vẫn kịp dừng lại. Khi lực đẩy lớn hơn trọng lượng, tên lửa nâng lên và các cánh tay bung ra.",
+        "why": "Chúng đỡ cả tên lửa phía trên hố lửa mà không có gì phải mở ra. Động cơ khởi động ở mức lực đẩy thấp trong lúc sức nặng vẫn giữ tên lửa trong các cánh tay, nên nếu khởi động lỗi thì vẫn kịp dừng lại; khi lực đẩy lớn hơn trọng lượng, tên lửa nâng lên và các cánh tay bung ra.",
         "without": "Khi lực đẩy đã vượt trọng lượng thì không còn gì giữ tên lửa lại, nên những trục trặc chỉ lộ ra ở mức lực đẩy tối đa sẽ bị phát hiện khi đã bay.",
         "inside": "Mỗi cánh tay xoay trên vòng bệ phóng và mang một quả đối trọng nặng (counterweight). Khi tên lửa còn đè xuống, các tay khép lại; khi nó nâng lên, đối trọng kéo các tay ngả ra xa.",
         "analogy": "Giống như cái cốc đặt trong lòng bàn tay: nhấc cốc lên thì các ngón tay tự mở ra.",
@@ -1192,6 +1208,7 @@
         "without": "Some problems only show up later, in the air."
       },
       "vi": {
+        "name": "Kẹp giữ",
         "what": "Kẹp giữ chặt đáy tên lửa khoảng ba giây sau khi động cơ bật.",
         "why": "Chúng bắt được khoảng một nửa số động cơ hỏng trong lúc tên lửa còn an toàn trên bệ. Falcon 9 làm vậy ở mọi lần phóng.",
         "without": "Có những trục trặc chỉ lộ ra sau đó, khi đã bay.",
@@ -1211,6 +1228,7 @@
         "without": "They are the most expensive clamps and need a lot of work after each launch."
       },
       "vi": {
+        "name": "Tay giữ, thả từ từ",
         "what": "Những cánh tay nặng giữ tên lửa khoảng sáu giây, rồi thả ra từ từ thay vì giật mạnh.",
         "why": "Kiểm tra lâu hơn nên bắt được phần lớn động cơ hỏng, và thả từ từ thì đỡ hại cho thân tên lửa. Tên lửa Saturn V lên Mặt Trăng đã dùng loại này.",
         "without": "Đây là loại kẹp đắt nhất và cần sửa sang nhiều sau mỗi lần phóng.",
@@ -1231,6 +1249,7 @@
         "without": "Without one, a small problem high up on the rocket means rolling it all the way back to the hangar."
       },
       "vi": {
+        "name": "Tháp phục vụ và đường cấp dịch",
         "what": "Một cái tháp hoặc khung đứng cạnh tên lửa, đưa ống dẫn, dây cáp và lối đi lên tới tên lửa.",
         "why": "Cho tới những giây cuối, nó giữ cho tên lửa được nạp đầy, có điện và được làm mát, và cho người ta với tới mọi chỗ trên tên lửa.",
         "without": "Không có tháp, một trục trặc nhỏ ở trên cao cũng buộc phải kéo tên lửa về tận nhà chứa."
@@ -1243,6 +1262,7 @@
         "without": "Nobody can reach the upper part of the rocket on the pad."
       },
       "vi": {
+        "name": "Không có tháp",
         "what": "Không có tháp: chỉ có một đầu cắm nhỏ ở chân tên lửa đưa nhiên liệu và điện vào.",
         "why": "Miễn phí, và không có gì gần ngọn lửa để bị hư.",
         "without": "Không ai với tới được phần trên của tên lửa khi nó đã ở trên bệ.",
@@ -1287,6 +1307,7 @@
         "without": "Once the rocket is standing, its top is hard to reach."
       },
       "vi": {
+        "name": "Khung dựng (strongback)",
         "what": "Một khung thép chở tên lửa nằm ngang ra bệ, dựng nó đứng thẳng lên và giữ các ống dẫn.",
         "why": "Nhanh và rẻ, và vài phút trước khi phóng nó ngả ra xa khỏi ngọn lửa.",
         "without": "Khi tên lửa đã đứng thẳng thì rất khó với tới phần đỉnh.",
@@ -1331,6 +1352,7 @@
         "without": "It stands right next to the fire, so it gets scorched when the rocket is too strong for the pad."
       },
       "vi": {
+        "name": "Tháp cấp dịch cố định",
         "what": "Một tháp thép cao có nhiều tầng sàn và những cánh tay xoay với tới mọi tầng của tên lửa.",
         "why": "Người và ống dẫn với tới được bất cứ chỗ nào trên tên lửa cho tới những giây cuối.",
         "without": "Tháp đứng ngay cạnh ngọn lửa, nên bị cháy sém khi tên lửa quá mạnh so với bệ.",
@@ -1351,6 +1373,7 @@
         "without": "It is a big, costly machine standing right beside the fire."
       },
       "vi": {
+        "name": "Tháp lắp ráp có tay bắt",
         "what": "Một tháp rất cao với hai cánh tay khổng lồ, có biệt danh \"đôi đũa\", nhấc các phần của tên lửa lên và chồng chúng lại.",
         "why": "Không cần cần cẩu hay nhà chứa để lắp tên lửa, và hai cánh tay còn bắt được tầng đẩy khi nó bay về.",
         "without": "Đây là một cỗ máy to và đắt đứng ngay cạnh ngọn lửa.",
@@ -1397,6 +1420,7 @@
         "without": "It is the most expensive tower, and swinging it away takes hours."
       },
       "vi": {
+        "name": "Kết cấu phục vụ xoay",
         "what": "Một tháp cố định cộng thêm một toà nhà cao gắn bản lề, xoay quanh tên lửa như một cánh cửa, tạo thành phòng sạch bao quanh nó.",
         "why": "Công việc ở phần trên tên lửa được làm trong nhà, tránh mưa gió.",
         "without": "Đây là loại tháp đắt nhất, và xoay nó ra mất hàng giờ.",
@@ -1417,6 +1441,7 @@
         "without": "The rocket is the tallest metal thing around, so it becomes the lightning rod."
       },
       "vi": {
+        "name": "Chống sét",
         "what": "Những cột cao hoặc dây căng phía trên bệ, cho sét một thứ cao hơn tên lửa để đánh vào.",
         "why": "Dòng sét chạy xuống đất ở xa tên lửa thay vì chạy qua các thiết bị điện tử của nó.",
         "without": "Tên lửa là vật bằng kim loại cao nhất quanh đó, nên nó thành cột thu lôi."
@@ -1429,6 +1454,7 @@
         "without": "A strike near the pad can hit the rocket itself."
       },
       "vi": {
+        "name": "Không chống sét",
         "what": "Không có gì chống sét.",
         "why": "Miễn phí, và tạm ổn ở nơi rất hiếm khi có giông.",
         "without": "Một tia sét gần bệ có thể đánh thẳng vào tên lửa.",
@@ -1472,6 +1498,7 @@
         "without": "A strike close by can still upset cables and electronics."
       },
       "vi": {
+        "name": "Cột thu lôi",
         "what": "Một cột nhọn cao với dây cáp thép kéo xuống đất.",
         "why": "Ngăn được phần lớn tia sét đánh vào tên lửa, với rất ít tiền.",
         "without": "Sét đánh gần đó vẫn có thể làm nhiễu dây điện và thiết bị.",
@@ -1491,6 +1518,7 @@
         "without": "Extra towers cost extra money."
       },
       "vi": {
+        "name": "Tháp và dây chống sét",
         "what": "Ba hoặc bốn cái tháp cao hơn mọi thứ, nối với nhau bằng dây căng phủ trên tên lửa như một cái lều.",
         "why": "Cả bệ được che chứ không chỉ một chỗ, nên hầu như không tia sét nào tới được tên lửa.",
         "without": "Thêm tháp thì thêm tiền.",
@@ -1509,6 +1537,7 @@
         "without": "Without an escape route, the capsule's own escape rocket is the only way out."
       },
       "vi": {
+        "name": "Lối lên tàu và thoát hiểm",
         "what": "Cách phi hành đoàn vào khoang lái khi tàu ở trên bệ, và cách họ chạy thoát thật nhanh nếu có chuyện.",
         "why": "Một tên lửa đầy nhiên liệu rất nguy hiểm. Nếu nó bắt lửa trước khi phóng, phi hành đoàn cần lối thoát nhanh.",
         "without": "Không có lối thoát, tên lửa thoát hiểm trên khoang lái là đường thoát duy nhất."
@@ -1521,6 +1550,7 @@
         "without": "If something goes wrong after that, there is no way down. In 1983 a Soyuz crew escaped a burning rocket only because their escape rocket fired."
       },
       "vi": {
+        "name": "Chỉ có thang máy, không có lối thoát",
         "what": "Phi hành đoàn đi thang máy lên, rồi thang máy được kéo đi trước khi phóng.",
         "why": "Miễn phí.",
         "without": "Nếu sau đó có chuyện thì không có đường xuống. Năm 1983, một phi hành đoàn Soyuz thoát khỏi tên lửa đang cháy chỉ nhờ tên lửa thoát hiểm kịp bắn.",
@@ -1539,6 +1569,7 @@
         "without": "It does not take the crew away from the pad by itself."
       },
       "vi": {
+        "name": "Cầu dẫn phi hành đoàn",
         "what": "Một lối đi có mái che từ tháp tới cửa khoang, với một \"phòng trắng\" nhỏ nơi người hỗ trợ giúp phi hành đoàn vào.",
         "why": "Phi hành đoàn lên tàu an toàn, có người giúp, và cánh tay có thể xoay trở lại cửa khoang thật nhanh khi cần.",
         "without": "Bản thân nó không đưa phi hành đoàn ra khỏi bệ.",
@@ -1583,6 +1614,7 @@
         "without": "One more system to test and look after."
       },
       "vi": {
+        "name": "Cầu dẫn và giỏ cáp trượt",
         "what": "Những cái giỏ treo trên dây thép chạy từ tầng phi hành đoàn xuống một hầm trú ẩn ở xa.",
         "why": "Phi hành đoàn nhảy vào, kéo cần gạt và trượt ra xa tên lửa trong khoảng nửa phút, kể cả khi mất điện.",
         "without": "Thêm một hệ thống phải kiểm tra và bảo dưỡng.",
@@ -1628,6 +1660,7 @@
         "without": "Slow, manual loading makes every day of waiting expensive, because everything must be drained and filled again."
       },
       "vi": {
+        "name": "Nạp nhiên liệu",
         "what": "Cách nhiên liệu và ôxy lỏng siêu lạnh đi từ bồn chứa vào tên lửa.",
         "why": "Ôxy lỏng luôn bay hơi, nên phải châm thêm cho tới những phút cuối, nếu không bồn sẽ không đầy lúc cất cánh.",
         "without": "Nạp bằng tay chậm chạp khiến mỗi ngày chờ đều tốn kém, vì phải xả hết rồi nạp lại từ đầu."
@@ -1640,6 +1673,7 @@
         "without": "It is slow and easy to get wrong, and waiting a day costs the most."
       },
       "vi": {
+        "name": "Xe bồn, van tay",
         "what": "Xe bồn bơm nhiên liệu vào trong lúc công nhân mở và đóng van bằng tay.",
         "why": "Miễn phí và đơn giản.",
         "without": "Chậm và dễ sai sót, và chờ thêm một ngày thì tốn nhất.",
@@ -1660,6 +1694,7 @@
         "without": "The timeline is tight, with little time to spot a problem."
       },
       "vi": {
+        "name": "Nạp nhanh, làm lạnh sâu",
         "what": "Nhiên liệu được làm lạnh sâu hơn bình thường và bơm vào thật nhanh, chỉ trong nửa giờ cuối trước khi phóng.",
         "why": "Không có gì nằm lâu trong bồn, nên chờ thêm một ngày tốn rất ít.",
         "without": "Lịch trình rất gấp, ít thời gian để phát hiện trục trặc.",
@@ -1679,6 +1714,7 @@
         "without": "It costs a pad fee, and loading takes hours."
       },
       "vi": {
+        "name": "Bồn cầu, tự động châm đầy",
         "what": "Những bồn chứa lớn cách nhiệt cạnh bệ nạp cho tên lửa qua đường ống, và máy tính luôn châm đầy các bồn.",
         "why": "Chính xác và lần nào cũng như lần nào: bồn đầy đúng lúc cất cánh, và chờ thêm một ngày rẻ hơn.",
         "without": "Phải trả thêm phí bệ, và nạp mất hàng giờ.",
@@ -1699,6 +1735,7 @@
         "without": "With a cheap watch the forecast can be several degrees wrong, so you may launch into weather you did not expect."
       },
       "vi": {
+        "name": "Theo dõi thời tiết",
         "what": "Đội ngũ và máy móc dự báo thời tiết cho ngày phóng và theo dõi bầu trời.",
         "why": "Trời lạnh làm gioăng cao su cứng lại, gió mạnh trên cao có thể làm cong tên lửa, và mây tích điện có thể khiến tên lửa đang bay lên gây ra sét.",
         "without": "Với trạm thời tiết rẻ, dự báo có thể sai vài độ, nên bạn có thể phóng vào kiểu thời tiết không ngờ tới."
@@ -1711,6 +1748,7 @@
         "without": "The forecast can be off by several degrees, and charged clouds cannot be seen from the ground."
       },
       "vi": {
+        "name": "Nhìn trời",
         "what": "Có người nhìn lên trời rồi đoán.",
         "why": "Miễn phí.",
         "without": "Dự báo có thể lệch vài độ, và từ dưới đất không thể nhìn thấy mây tích điện.",
@@ -1730,6 +1768,7 @@
         "without": "Balloons cannot tell whether a cloud is full of electric charge."
       },
       "vi": {
+        "name": "Bóng thám không, tháp đo gió",
         "what": "Bóng thám không được thả lên trước khi phóng để đo gió và nhiệt độ ở mọi độ cao, còn các tháp ghi lại những cơn gió giật.",
         "why": "Một cách rẻ để có dự báo tốt hơn nhiều.",
         "without": "Bóng thám không không cho biết đám mây có tích điện hay không.",
@@ -1749,6 +1788,7 @@
         "without": "It costs a pad fee."
       },
       "vi": {
+        "name": "Radar và máy đo điện trường",
         "what": "Ra-đa thời tiết, cộng với các \"máy đo điện trường\" đo điện trong không khí, và một chuyên gia đặt ra luật phóng.",
         "why": "Dự báo đúng tới khoảng một độ, và tên lửa không bao giờ bay vào đám mây có thể sinh ra sét.",
         "without": "Phải trả thêm phí bệ.",

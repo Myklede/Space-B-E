@@ -117,8 +117,8 @@ raised 900, flame pit or bucket 1,550, trench 1,700, mobile platform 2,000 kN. W
 | Rocket Lab LC-1 | pacific · 2016– | $80k | 22 kN | 224 kN | 84 %, −11.2 m/s, 50 % damage, $280k | 92 %, −5.4 m/s, 50 % damage, $280k | $9k |
 | Omelek Island | pacific · 2006–2009 | $85k | 41 kN | 410 kN | 84 %, −11.2 m/s, 50 % damage, $280k | 92 %, −5.4 m/s, 50 % damage, $280k | $30k |
 
-18 of 31 complexes hold Reliable back; 8 take Workhorse at full thrust. The default (SLC-40) and 12 strong pads take
-both; the small historic pads were built for small rockets. LC-39A stays the dearest kit ($283k), Rocket Lab LC-1 the
+18 of 31 complexes hold Reliable back, so 13 take it at full thrust; only 8 take Workhorse at full thrust (SLC-40,
+LC-39A, LC-39B, both Starbase pads, SLC-41, Site 110, ELA-4). The small historic pads were built for small rockets. LC-39A stays the dearest kit ($283k), Rocket Lab LC-1 the
 cheapest ($80k), Starbase Pad 2 takes the most fire, LC-1 the least. Reliable and Workhorse launch from SLC-40 for $180k
 (the crew escape chute added $8k in wave 4). Fees are game values: complex $10k–$50k ($140k at Starbase, renting
 SpaceX's own site), options $3k–$65k, hold $15k–$60k a day × the propellant loading's `holdF`.

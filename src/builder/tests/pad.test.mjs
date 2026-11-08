@@ -234,6 +234,13 @@ for (const key of ['reliable', 'workhorse']) {
   check(!viBad.length, `Vietnamese pros, cons and facts for every complex and option${viBad.length ? ` (missing ${viBad.join(', ')})` : ''}`);
   const viText = Object.values(explain).map((e) => Object.values(e.vi ?? {}).join(' ')).join(' ');
   check(/[ăâđêôơưạảấầẩẫậắằẳẵặẹẻẽếềểễệỉịọỏốồổỗộớờởỡợụủứừửữựỳỵỷỹ]/i.test(viText), 'the Vietnamese has its diacritics');
+  const noName = keys.filter((k) => !explain[k]?.vi?.name);
+  check(!noName.length, `every complex, equipment and option has its Vietnamese name${noName.length ? ` (missing ${noName.join(', ')})` : ''}`);
+  // a full stop (or ? !) glued to the next sentence: "Virginia.The"
+  const glued = [JSON.stringify(pad.sites), JSON.stringify(pad.equipment), JSON.stringify(explain)].join(' ').match(/[^\s\d.][.!?]\p{Lu}/gu) ?? [];
+  check(!glued.length, `every sentence is followed by a space${glued.length ? ` (not: ${glued.join(', ')})` : ''}`);
+  const arms = explain['equip:clamps/tulip'];
+  check(arms?.en?.why && arms?.vi?.why && !/clamp|kẹp/i.test(arms.en.why + arms.vi.why), 'the support arms explain themselves without calling themselves clamps');
 }
 
 console.log(failures ? `\n${failures} pad failure(s).` : '\nAll pad checks passed.');
