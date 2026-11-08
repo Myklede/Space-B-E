@@ -48,6 +48,26 @@ Copy this block. Keep each line short and factual. Don't commit screenshots.
 
 ## Role 1: Rocket Builder
 
+### Role 3 needs a few builder functions exported from `src/builder/index.js` to draw your models when no Assembly exists
+- **For:** Role 1 · **From:** Role 3 (dtri) · **Found:** 2026-11-08 on dev d7a68d4 · **Severity:** blocker for Role 3's model swap
+- **Where:** `src/builder/index.js` (public file); Role 3's new `src/graphics/shipArt.js` (not pushed yet)
+- **Steps:** the user asked Role 3 to delete all of Role 3's old rocket and lander models and use yours everywhere. With an Assembly your `setRocketPartArt` hook already does it; without one (debug starts, the default ship, `lander` on Mars, a part type missing from the layout) Role 3 builds your models itself from the Apollo preset and your catalogue. check:static (rightly) refuses imports of your inner files.
+- **Expected:** Role 3 imports from `/src/builder/index.js` only
+- **Actual:** the functions are not exported there
+- **Suggested fix:** add these lines at the end of `src/builder/index.js` (tested on dev d7a68d4 with Role 3's shipArt.js: check:boot passes, no import-order problem):
+  ```js
+  // Role 3's flight art (src/graphics/shipArt.js) builds Role 1's models when no Assembly exists yet (debug starts, the default ship)
+  export { createCatalog, Assembly } from './assembly.js';
+  export { partsJson, internalsJson } from './catalogData.js';
+  export { skinFor, mountRadial } from './bay/hullArt.js';
+  export { partArt } from './bay/partArt.js';
+  export { requestPartArt } from './bay/nasa.js';
+  export { flightArtGate } from './flightArtGate.js';
+  export { default as apolloPreset } from './data/presets/apollo.json';
+  ```
+  Optional later: a `legs_m` / `legs_l` model of yours, so Role 3 can delete its last built-in part (your `partArt` still asks `rocketPart:legs_m` under `flightArtGate`).
+- **Status:** open
+
 ### About 63 MB downloads before the hangar is ready
 - **For:** Role 1 · **From:** Role 3 (dtri) · **Found:** 2026-11-07 on dev 0722c4e · **Severity:** polish
 - **Where:** `src/builder/bay/` loaders, `public/assets/nasa/`, `public/assets/polyhaven/`
@@ -67,6 +87,15 @@ Copy this block. Keep each line short and factual. Don't commit screenshots.
 - **Status:** open
 
 ## Role 2: Flight & Astronaut
+
+### Mars surface: the lander's size and hatch are hard-coded (the lander is now the player's ship)
+- **For:** Role 2 · **From:** Role 3 (dtri) · **Found:** 2026-11-08 on dev d7a68d4 · **Severity:** polish
+- **Where:** `src/surface/index.js` (`LANDER_RADIUS = 3.2`, `HATCH = { x: 0, z: 3.6 }`); `src/flight/index.js` `buildRocket`
+- **Steps:** with Role 3's next push, `lander` (from `getMars().lander`) is the ship the player built, standing at its base (Apollo preset: about 30 m tall, radius 3.26 m incl. legs/boosters, hatch at x 0, z 3.76)
+- **Expected:** the walker's collider and the climb-in spot follow the ship
+- **Actual:** fixed numbers fit only the old lander
+- **Suggested fix:** read `getMars().lander.userData.radius` (+0.3 m margin) and `.userData.hatch` lazily (the lander rebuilds when the ship changes). Also in flight: `buildRocket` can use `assets.get('ship')` when there is no Assembly, and add `assets.get('builder:rocketSkin')` (fairings, skirts) and place `builder:launchPad`: the pad shots still show bare parts on Role 3's tower.
+- **Status:** open (lands with Role 3's next push)
 
 ### After orbit the game cuts to CRUISE: the player should unbuckle and float back to the cabin
 - **For:** Role 2 · **From:** Role 3 (dtri, the player's design) · **Found:** 2026-11-08 on dev 5948880 · **Severity:** feature
@@ -210,7 +239,7 @@ Copy this block. Keep each line short and factual. Don't commit screenshots.
 - **Steps:** fly to orbit, press T
 - **Expected:** CRUISE starts where Role 2's orbit scene ends: the player floating inside the cabin, which is attached to the cockpit in the space scene (`cockpit.userData.attachCabin(assets.get('cabin'))`), moving with Role 2's zero-g float controller. Earth shrinks and Mars grows through the cabin windows; the cruise UI and time warp stay as they are, drawn over the cabin (or on its screens). Before ENTRY the player floats back to the couch (Role 2's timeline).
 - **Actual:** a hard cut to an outside view of a fixed engine + capsule, which are not the player's ship.
-- **Suggested fix:** use the cockpit + cabin as the cruise scene; if an outside view stays (e.g. key C), draw `assets.get('ship')` (the player's ship from Role 1's models, coming with Role 3's next push) instead of the two fixed `rocketPart:` parts.
+- **Suggested fix:** use the cockpit + cabin as the cruise scene; if an outside view stays (e.g. key C), draw `assets.get('ship')` (the player's ship from Role 1's models, coming with Role 3's next push) instead of the two fixed `rocketPart:` parts. Same for `src/story/views.js` (`rocketPart:capsule_m`).
 - **Status:** open (Role 3 side in progress)
 
 ### Reset money on the bankrupt ending
