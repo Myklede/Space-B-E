@@ -111,6 +111,7 @@ Copy this block. Keep each line short and factual. Don't commit screenshots.
 - **Actual:** both ships fly exactly the same; the reliability the player paid for never shows up
 - **Suggested fix:** one roll per flight phase, e.g. a chance of `(1 − reliability) / 3` at liftoff, max-Q and staging/entry, that triggers an existing failure (`rud`, or an engine-out that cuts thrust); `spec.engines.length > 1` could mean the ship survives losing one engine. Needs agreement on which ending a random failure uses
 - **Status:** open
+- **More (2026-11-07, Role 1):** the builder now flies an as-built ship (src/builder/asBuilt.js: factory spread and rare defects already lower thrust, Isp or propellant, set `heatShieldDamaged` or raise `ascentCdA`). What only flight can do, proposed for the whole team: (1) a per-phase roll from `stats.reliability` (for example 50 % of 1 − reliability on ascent, 10 % cruise, 25 % entry, 15 % landing) that emits `part_failure` and the matching ending (no new names); (2) skin limits as ShipSpec extras `stats.maxQKPa` and `stats.maxSkinTempC` (from `hull.js` limits, ignored if absent) so an overloaded skin can break up on the climb instead of the fixed 40 kPa.
 
 ### The launch scene's tower and pad dwarf the ship: use Role 1's launch pad and skin
 - **For:** Role 2 · **From:** Role 1 (Myklede) · **Found:** 2026-11-07 on dev 3d4fa59 · **Severity:** bug (the whole team agreed on the fix: the pad is part of the ship Role 1 builds and pays for)
