@@ -17,10 +17,13 @@
 // strongback 1.02 × H, tower 1.3 D wide about 1 D off the hull, a mobile service tower 3 D square, the opening under
 // the ship 1.2 D, a launch ring about 1.9 D, a mobile platform deck about 3 D, a flame trench 1.9 D wide.
 //
-// Blender models (wave 4): `opts.models` may map a planned model id (PAD_MODELS below, NOTES.md) to a loaded
-// THREE.Object3D built for the reference ship (20 m × 2.5 m); where one is given it replaces the procedural piece,
-// scaled along one axis family (towers in height with H / 20, mounts across with D / 2.5). Without models (today)
-// every piece is drawn here.
+// Blender models (wave 4): src/builder/tools/blender/pad/ builds the ground pieces (public/assets/models/builder/pad/,
+// PAD_MODELS below; pieces.json there lists each one's anchor, nodes and budget), all for the reference ship
+// (20 m × 2.5 m). padArt asks for the files the complex needs (bay/nasa.js loadGroundModel, each file once) and draws
+// the code pieces meanwhile; when they arrive the pad redraws itself in place with the models, scaled along one axis
+// family (towers and masts in height by the ratio rules, mounts across with D / 2.5, far-field gear to the size the
+// code gives it) and posed (arms, chopsticks, doors) to fit the ship. A missing file keeps the code piece. Card
+// pictures (`icon`) always use the code pieces. `opts.models` (id → loaded scene) may hand models in directly.
 //
 // Layout (in the pad's own frame, before it is turned): the service tower stands on +x. The pad is then turned so the
 // tower sits behind and to the right of the vehicle as the studio first frames it, at 67.5°: between the 45° legs and
@@ -29,6 +32,7 @@
 import * as THREE from 'three';
 import { BASE_RADIUS, SIZE_SCALE } from '../../assembly.js';
 import * as noseArt from '../nose/art.js'; // read-only: the real surface radius of a capsule (surfaceRadius)
+import { loadGroundModel } from '../../bay/nasa.js';
 
 const DEG = Math.PI / 180;
 const FACING_DEG = 67.5; // where the tower ends up (radial-part angle convention: 0° = +x, 90° = -z)
@@ -63,17 +67,115 @@ const M = {
 /** A complex's tower colour (site.look.tower): Saturn-era red by default. */
 const TOWER = { red: M.red, white: M.white, grey: M.grey, dark: M.steelDark };
 
-/** The Blender models planned for the pad (wave 4): equipment option → model id (public/assets/models/builder/pad/). */
+/**
+ * The Blender models of the pad (wave 4): equipment option → model id (public/assets/models/builder/pad/<id>.glb);
+ * some mounts are picked by complex (padModelIds). Built by src/builder/tools/blender/pad/build.py.
+ */
 export const PAD_MODELS = Object.freeze({
-  mount: { raised: 'pad/mount_raised', deflector: 'pad/deflectors', trench: 'pad/deflectors', mlp: 'pad/mlp' },
-  tower: { tsm: 'pad/holddown', strongback: 'pad/strongback', gantry: 'pad/soyuz_gantry', fixed: 'pad/tower_lattice', catch: 'pad/catch_tower', mst: 'pad/mst', rss: 'pad/rss' },
-  clamps: { tulip: 'pad/soyuz_launcher', hold: 'pad/holddown', release: 'pad/holddown' },
+  mount: { slab: 'pad/slab', trench: 'pad/trench', raised: 'pad/mount_raised', deflector: 'pad/pit', mlp: 'pad/mlp_shuttle' },
+  mountBySite: { lc39a: 'pad/mlp_saturn', wenchang: 'pad/mlp_saturn', jiuquan: 'pad/mlp_saturn', lc39b: 'pad/ml1', ela3: 'pad/table_ela3', lc34: 'pad/pedestal_lc34', starbase2: 'pad/mount_olm2' },
+  tower: { strongback: 'pad/strongback', gantry: 'pad/soyuz_gantry', fixed: 'pad/tower_fixed', rss: 'pad/tower_fixed', catch: 'pad/catch_tower', mst: 'pad/mst' },
+  rss: 'pad/rss',
+  clamps: { tulip: 'pad/soyuz_launcher' },
   deluge: { tower: 'pad/water_tower', iop: 'pad/water_tower' },
   lightning: { mast: 'pad/lightning_tower', catenary: 'pad/lightning_tower' },
-  access: { slidewire: 'pad/egress', blastroom: 'pad/egress', chute: 'pad/egress' },
-  propellant: { auto: 'pad/sphere', loadgo: 'pad/sphere' },
+  access: { slidewire: 'pad/egress' },
+  propellant: { auto: ['pad/sphere', 'pad/sphere_lox'], loadgo: ['pad/sphere', 'pad/sphere_lox'] },
   weather: { radar: 'pad/weather_gear' },
 });
+/** The model ids one pad uses ({ mount, trench, tower, rss, tulip, water, lightning, egress, spheres: [], weather }). */
+export function padModelIds(o, siteId) {
+  const bySite = o.mount === 'mlp' || o.mount === 'raised' || o.mount === 'deflector' ? PAD_MODELS.mountBySite[siteId] : null;
+  const mount = bySite ?? (o.mount === 'mlp' && o.tower === 'fixed' ? 'pad/mlp_saturn' : PAD_MODELS.mount[o.mount] ?? null);
+  return {
+    mount,
+    trench: o.mount === 'trench' || (o.mount === 'mlp' && mount !== 'pad/table_ela3') ? 'pad/trench' : null,
+    tower: mount === 'pad/ml1' ? null : PAD_MODELS.tower[o.tower] ?? null,
+    rss: o.tower === 'rss' ? PAD_MODELS.rss : null,
+    tulip: PAD_MODELS.clamps[o.clamps] ?? null,
+    water: PAD_MODELS.deluge[o.deluge] ?? null,
+    lightning: PAD_MODELS.lightning[o.lightning] ?? null,
+    egress: PAD_MODELS.access[o.access] ?? null,
+    spheres: PAD_MODELS.propellant[o.propellant] ?? [],
+    weather: PAD_MODELS.weather[o.weather] ?? null,
+  };
+}
+
+// ---------- the Blender models: each file loads once and stays here; every pad that shows one draws a copy ----------
+const groundModels = new Map(); // id -> { scene: THREE.Object3D | null, settled: boolean, promise }
+function requestGround(id) {
+  if (!groundModels.has(id)) {
+    const entry = { scene: null, settled: false, promise: null };
+    entry.promise = loadGroundModel(id).then(
+      (scene) => { entry.scene = scene; entry.settled = true; return scene; },
+      () => { entry.settled = true; return null; },
+    );
+    groundModels.set(id, entry);
+  }
+  return groundModels.get(id);
+}
+/** A fresh copy of a loaded model (or of one node of it), its materials copied so a scene may dim and dispose them. */
+function copyOf(source, nodeName = null) {
+  const src = nodeName ? source?.getObjectByName(nodeName) : source;
+  if (!src) return null;
+  const c = src.clone(true);
+  c.position.set(0, 0, 0);
+  c.rotation.set(0, 0, 0);
+  c.scale.set(1, 1, 1);
+  c.traverse((o) => {
+    if (!o.isMesh) return;
+    o.material = Array.isArray(o.material) ? o.material.map((m) => m.clone()) : o.material.clone();
+    o.castShadow = true;
+    o.receiveShadow = true;
+    o.userData.padModel = true; // its geometry is shared with the loaded model: never disposed here
+  });
+  return c;
+}
+/** Recolours a model's `paint` material (a tower's colour). */
+function paint(obj, color) {
+  obj.traverse((o) => { if (o.isMesh) for (const m of Array.isArray(o.material) ? o.material : [o.material]) if (m.name === 'paint') m.color.copy(color); });
+  return obj;
+}
+/** Hides the named nodes of a model copy. */
+function hide(obj, ...names) {
+  for (const n of names) { const c = obj.getObjectByName(n); if (c) c.visible = false; }
+  return obj;
+}
+
+/**
+ * Swaps a drawn pad's contents for a fresh drawing once its models have arrived, keeping the caller's group and the
+ * look a scene gave it (designScene dims and tints the pad through cloned materials: the new ones get the same).
+ */
+function redrawInPlace(g, made) {
+  let look = null;
+  g.traverse((o) => { if (!look && o.isMesh) { const m = Array.isArray(o.material) ? o.material[0] : o.material; if (m?.userData?.vdCloned) look = m; } });
+  let flagPad = false;
+  g.traverse((o) => { if (o.userData.pad) flagPad = true; });
+  for (const c of [...g.children]) {
+    g.remove(c);
+    c.traverse((o) => {
+      if (o.geometry && !o.userData.padModel) o.geometry.dispose();
+      if (o.material) for (const m of Array.isArray(o.material) ? o.material : [o.material]) m.dispose?.();
+    });
+  }
+  for (const c of [...made.object.children]) g.add(c);
+  g.userData.fit = made.object.userData.fit;
+  g.traverse((o) => {
+    if (flagPad) o.userData.pad = true;
+    if (!look || !o.isMesh) return;
+    const mats = (Array.isArray(o.material) ? o.material : [o.material]).map((m) => {
+      const c = m.clone();
+      c.userData = { ...m.userData, vdCloned: true, baseOpacity: m.opacity, baseTransparent: m.transparent, baseEmissive: m.emissive ? m.emissive.clone() : null, baseEmissiveIntensity: m.emissiveIntensity ?? 1 };
+      c.transparent = look.transparent;
+      c.opacity = Math.min(m.opacity, look.opacity);
+      c.depthWrite = look.depthWrite;
+      if (c.emissive && look.emissive) { c.emissive.copy(look.emissive); c.emissiveIntensity = look.emissiveIntensity; }
+      m.dispose();
+      return c;
+    });
+    o.material = Array.isArray(o.material) ? mats : mats[0];
+  });
+}
 
 // ---------- ground: a soft disc of the site's own land ----------
 // keyed by a complex's climate.ground (or its id)
@@ -370,7 +472,8 @@ function shipModel(layout) {
 }
 
 // ---------- the pad ----------
-export function padArt(state, { radius = 1.25, height = 20, layout = null, icon = false, only = null, models = null } = {}) {
+export function padArt(state, opts = {}) {
+  const { radius = 1.25, height = 20, layout = null, icon = false, only = null, models = null } = opts;
   const R = Math.max(0.9, radius || 1.25);
   const H = height > 0.5 ? height : 16; // an empty pad is sized for a typical ship
   const ship = shipModel(layout);
@@ -388,6 +491,19 @@ export function padArt(state, { radius = 1.25, height = 20, layout = null, icon 
   const far = (d) => (near ? d * 0.22 : d);
   const site = state?.site ?? null;
   const kit = new Kit();
+  // the Blender models this pad uses: the loaded ones replace code pieces; pending ones redraw the pad when they arrive
+  const ids = padModelIds(o, site?.id);
+  const wanted = icon || near || bare ? [] : [ids.mount, ids.trench, ids.tower, ids.rss, ids.tulip, ids.water, ids.lightning, ids.egress, ...ids.spheres, ids.weather].filter(Boolean);
+  const pending = [];
+  const modelOf = (id) => {
+    if (!id || !wanted.includes(id)) return null;
+    if (models) return models[id] ?? null;
+    const e = requestGround(id);
+    if (!e.settled) pending.push(e.promise);
+    return e.scene;
+  };
+  const extras = []; // model copies, in the pad's frame
+  const kitPoint = (x, y, z) => new THREE.Vector3(x, y, z).applyMatrix4(kit.stack[kit.stack.length - 1]);
 
   // sizes shared by the pieces (the ratio rules: README "Ground models"; D = the ship's width)
   const D = 2 * R;
@@ -396,7 +512,9 @@ export function padArt(state, { radius = 1.25, height = 20, layout = null, icon 
   const trenchW = D * 1.9; // a flame trench 1.8–2.1 × the width
   // tower width and its centre's distance from the ship's axis: about one width off the hull, and back far enough to
   // clear any side part reaching its way
-  const towerW = Math.min(5, Math.max(2.2, D * 1.3)), towerD = Math.max(R + D + towerW / 2, ship.clearance(FACING_DEG, towerW / 2) + towerW / 2 + 0.5);
+  const across = D / 2.5; // the scale across of a mount or arm model (built for a ship 2.5 m wide)
+  let towerW = Math.min(5, Math.max(2.2, D * 1.3)), towerD = Math.max(R + D + towerW / 2, ship.clearance(FACING_DEG, towerW / 2) + towerW / 2 + 0.5);
+  if (ids.mount === 'pad/ml1') { towerW = 3.67 * across; towerD = Math.max(5.94 * across, towerD); } // ML-1's own tower (NASA model)
   // a mobile platform deck about 3 × the width; a launch umbilical tower rides on it, so the deck reaches under the tower
   const towerOnDeck = o.tower === 'fixed';
   const mlpHZ = D * 1.5, mlpX0 = -D * 1.5, mlpX1 = towerOnDeck ? towerD + towerW / 2 + 0.4 : D * 1.5;
@@ -406,18 +524,6 @@ export function padArt(state, { radius = 1.25, height = 20, layout = null, icon 
   const sea = site?.climate?.ground === 'ocean';
   const C = sea ? M.deck : M.concrete;
   // Blender models, when the caller has them (none yet): placed instead of the procedural piece
-  const extras = [];
-  const useModel = (slug, x, y, z, { sx = 1, sy = 1, sz = 1, ry = 0 } = {}) => {
-    const m = models?.[slug];
-    if (!m) return false;
-    const obj = m.clone();
-    obj.position.set(x, y, z);
-    obj.rotation.y = ry;
-    obj.scale.set(sx, sy, sz);
-    extras.push(obj);
-    return true;
-  };
-  const across = D / 2.5, tall = H / 20; // one-axis scale factors against the reference ship (20 m × 2.5 m)
   let peak = null; // the top of the tallest tower drawn: { x, y, z } (a lightning rod goes there)
 
   // the complex's land (no ground on a card picture)
@@ -454,10 +560,19 @@ export function padArt(state, { radius = 1.25, height = 20, layout = null, icon 
     }
   } else if (o.mount === 'deflector') {
     // a one-way flame pit or bucket (Gagarin's Start, Pad 39B's ramp, Starbase Pad 2): the ship stands on a ring over
-    // the edge of a deep pit that opens out on one side (-x); a sloped deflector at its bottom sends the fire that way
-    hs = 1.2;
-    const mountH = Math.max(2.4, D * 1.2), S = ringS, pitW = trenchW * 1.3;
+    // the edge of a deep pit that opens out on one side (-x); a sloped deflector at its bottom sends the fire that way.
+    // Starbase Pad 2: a square mount on four legs over a dug trench (the model's heights: pad 2.0, table 5.0 at D 2.5)
+    const olm2 = ids.mount === 'pad/mount_olm2';
+    const sy = olm2 ? across : (1.2 + Math.max(2.4, D * 1.2)) / 4.2; // the pit model: pad 1.2 m, ring top 4.2 m at D 2.5
+    hs = olm2 ? 2.0 * across : 1.2 * sy;
+    const mountH = olm2 ? 3.0 * across : 3.0 * sy, S = ringS, pitW = trenchW * 1.3;
     top = hs + mountH;
+    const mm = modelOf(ids.mount);
+    if (mm) {
+      const c = copyOf(mm);
+      c.scale.set(across, sy, across);
+      extras.push(c);
+    } else {
     prism(kit, C, clip(oct, 1, 0, hole / 2), 0, hs);
     prism(kit, C, clip(clip(oct, -1, 0, -hole / 2), 0, 1, pitW / 2), 0, hs);
     prism(kit, C, clip(clip(oct, -1, 0, -hole / 2), 0, -1, pitW / 2), 0, hs);
@@ -472,18 +587,28 @@ export function padArt(state, { radius = 1.25, height = 20, layout = null, icon 
     // the steel launch ring on four concrete legs (the Soyuz support arms, when chosen, are drawn with the clamps)
     for (const [sx, sz] of [[1, 1], [1, -1], [-1, 1], [-1, -1]]) box(kit, M.concreteOld, 0.8, mountH - 0.5, 0.8, sx * (S / 2 - 0.4), hs + (mountH - 0.5) / 2, sz * (S / 2 - 0.4));
     ring(S, 0.5, top);
+    }
   } else if (o.mount === 'raised') {
     // Starbase-style launch mount: a heavy steel table on six legs, the bare concrete (or a water-cooled steel plate) under it;
     // 1.2–2.2 × the ship's width tall, by the size of the complex (Starbase tall, Mahia low)
     hs = 0.45;
     const mountH = Math.max(3.2, R * 3.4 * Math.min(1.1, 0.55 + (site?.scale ?? 1) * 0.4)), S = ringS + 0.4;
     top = hs + mountH;
+    const mm = modelOf(ids.mount);
+    if (mm) {
+      // the models: Starbase's mount (table top 5.0 m at D 2.5) or LC-34's pedestal (3.45 m), fitted to this height
+      const c = copyOf(mm);
+      c.scale.set(across, top / (ids.mount === 'pad/pedestal_lc34' ? 3.45 : 5.0), across);
+      hide(c, 'holddown'); // the clamps are drawn below, fitted to the ship
+      if (o.deluge === 'none') hide(c, 'plate');
+      extras.push(c);
+    } else {
     prism(kit, C, oct, 0, hs);
     if (o.deluge !== 'none') {
       box(kit, M.steelDark, S + 1.0, 0.25, S + 1.0, 0, hs + 0.125, 0); // the water-cooled steel plate
       for (let i = -2; i <= 2; i++) box(kit, M.steel, 0.12, 0.06, S + 0.6, i * (S / 5), hs + 0.28, 0);
     } else disc(kit, M.scorch, R * 2.8, 0, hs + 0.012, 0);
-    if (!useModel(PAD_MODELS.mount.raised, 0, hs, 0, { sx: across, sy: mountH / 4.68, sz: across })) {
+    {
       for (let k = 0; k < 6; k++) {
         const [lx, lz] = polar(30 + 60 * k, S / 2 + 0.1);
         box(kit, M.steelDark, 0.95, mountH - 0.9, 0.95, lx, hs + (mountH - 0.9) / 2, lz, (30 + 60 * k) * DEG);
@@ -493,8 +618,36 @@ export function padArt(state, { radius = 1.25, height = 20, layout = null, icon 
       ring(S, 0.9, top);
       box(kit, M.steelDark, S + 0.2, 0.12, S + 0.2, 0, top - 0.95, 0);
     }
+    }
+  } else if (o.mount === 'mlp' && ids.mount === 'pad/table_ela3') {
+    // ELA-3: the Ariane 5 launch table on its concrete pad over the flame duct (the model: pad 2.875 m, deck 4.625 m)
+    hs = 2.875 * across;
+    top = 4.625 * across;
+    const mm = modelOf(ids.mount);
+    if (mm) {
+      const c = copyOf(mm);
+      c.scale.setScalar(across);
+      extras.push(c);
+    } else {
+      prism(kit, C, clip(oct, 1, 0, trenchW / 2), 0, hs);
+      prism(kit, C, clip(oct, -1, 0, trenchW / 2), 0, hs);
+      box(kit, M.trench, trenchW, 0.1, 2 * RH + 10, 0, 0.05, 0);
+      for (const [sx, sz] of [[1, 1], [1, -1], [-1, 1], [-1, -1]]) box(kit, M.grey, 0.4, top - hs, 0.4, sx * (D * 1.5 - 0.3), (hs + top) / 2, sz * (D * 1.2 - 0.3));
+      box(kit, M.deck, D * 3, 0.5, D * 2.4, 0, top - 0.25, 0);
+    }
   } else if (o.mount === 'trench' || o.mount === 'mlp') {
     hs = Math.max(2.4, D * 1.2); // the pad stands about 1.2 × the ship's width above the trench floor (LC-39: 12 m / 10.1 m)
+    const mt = modelOf(ids.trench);
+    if (mt) {
+      // the trench model (pad 3.0 m at D 2.5): its launch table spans the trench when there is no platform; Pad 39B has
+      // its one-way ramp, the others the two-way wedge; under NASA's big ML-1 the hardstand reaches further
+      const c = copyOf(mt);
+      const st = across * (ids.mount === 'pad/ml1' ? 1.45 : 1);
+      c.scale.set(st, hs / 3.0, st);
+      if (o.mount !== 'trench') hide(c, 'table');
+      hide(c, site?.id === 'lc39b' ? 'deflector_wedge' : 'deflector_ramp');
+      extras.push(c);
+    } else {
     prism(kit, C, clip(oct, 1, 0, trenchW / 2), 0, hs);
     prism(kit, C, clip(oct, -1, 0, trenchW / 2), 0, hs);
     // trench floor running out past the pad both ways, heat-proof brick on its walls
@@ -507,14 +660,17 @@ export function padArt(state, { radius = 1.25, height = 20, layout = null, icon 
       const len = Math.hypot(run, ridge - 0.12);
       box(kit, M.steelDark, trenchW - 0.12, 0.3, len, 0, (ridge + 0.12) / 2, s * run / 2, 0, s * Math.atan2(ridge - 0.12, run));
     }
+    }
     if (o.mount === 'trench') {
       // a steel launch table spanning the trench
       const S = ringS, t = 0.7;
       top = hs + t;
-      box(kit, M.steel, S, t, (S - hole) / 2, 0, hs + t / 2, (S + hole) / 4);
-      box(kit, M.steel, S, t, (S - hole) / 2, 0, hs + t / 2, -(S + hole) / 4);
-      box(kit, M.steel, (S - hole) / 2, t, hole, (S + hole) / 4, hs + t / 2, 0);
-      box(kit, M.steel, (S - hole) / 2, t, hole, -(S + hole) / 4, hs + t / 2, 0);
+      if (!mt) {
+        box(kit, M.steel, S, t, (S - hole) / 2, 0, hs + t / 2, (S + hole) / 4);
+        box(kit, M.steel, S, t, (S - hole) / 2, 0, hs + t / 2, -(S + hole) / 4);
+        box(kit, M.steel, (S - hole) / 2, t, hole, (S + hole) / 4, hs + t / 2, 0);
+        box(kit, M.steel, (S - hole) / 2, t, hole, -(S + hole) / 4, hs + t / 2, 0);
+      }
     } else {
       // the mobile launcher platform: a two-storey steel deck on pedestals, set down over the trench. About 3 × the ship's
       // width across, 0.75 × its width high on pedestals 0.65 × its width (Saturn and Shuttle: 49 × 41 × 7.6 m on 6.7 m);
@@ -522,7 +678,27 @@ export function padArt(state, { radius = 1.25, height = 20, layout = null, icon 
       const ped = Math.max(1.0, D * 0.65), deckH = Math.max(1.4, D * 0.75), y0 = hs + ped;
       top = y0 + deckH;
       const L = mlpX1 - mlpX0, cx = (mlpX0 + mlpX1) / 2, Wd = 2 * mlpHZ;
-      if (!useModel(PAD_MODELS.mount.mlp, 0, hs, 0, { sx: across, sy: across, sz: across })) {
+      const mp = modelOf(ids.mount);
+      if (mp) {
+        // the platform models: Saturn V's (deck 3.5 m at D 2.5, reaching under its tower), the Shuttle's, NASA's ML-1
+        const c = copyOf(mp);
+        c.position.y = hs;
+        const ys = (ped + deckH) / 3.5;
+        if (ids.mount === 'pad/ml1') {
+          const base = c.getObjectByName('base'), tower = c.getObjectByName('tower');
+          base.scale.set(across, (ped + deckH) / 3.509, across);
+          tower.position.set(towerD, top - hs, 0);
+          tower.scale.set(across, (H * (site?.look?.towerH ?? 1.10)) / 22.0, across);
+          hide(c, 'attach_deck', 'attach_tower');
+        } else if (ids.mount === 'pad/mlp_saturn') {
+          c.scale.set(Math.max(across, mlpX1 / 7.5), ys, across);
+          hide(c, 'holddown', 'tsm');
+        } else {
+          c.scale.set(across, ys, across);
+          hide(c, 'tsm', 'posts');
+        }
+        extras.push(c);
+      } else {
         for (const px of [mlpX0 + 0.65, mlpX1 - 0.65]) for (const s of [-1, 1]) box(kit, M.concreteOld, 1.3, ped, 1.3, px, hs + ped / 2, s * (mlpHZ - 0.65));
         box(kit, M.deck, -hole / 2 - mlpX0, deckH, Wd, (mlpX0 - hole / 2) / 2, y0 + deckH / 2, 0);
         box(kit, M.deck, mlpX1 - hole / 2, deckH, Wd, (mlpX1 + hole / 2) / 2, y0 + deckH / 2, 0);
@@ -546,8 +722,15 @@ export function padArt(state, { radius = 1.25, height = 20, layout = null, icon 
     // a flat concrete slab, scorched where the engines fire straight down
     hs = 0.45;
     top = hs;
-    prism(kit, C, oct, 0, hs);
-    disc(kit, M.scorch, R * 2.6, 0, hs + 0.012, 0);
+    const mm = modelOf(ids.mount);
+    if (mm && !sea) {
+      const c = copyOf(mm);
+      c.scale.set(RH / 8.5, 1, RH / 8.5);
+      extras.push(c);
+    } else {
+      prism(kit, C, oct, 0, hs);
+      disc(kit, M.scorch, R * 2.6, 0, hs + 0.012, 0);
+    }
   }
   const base = o.mount === 'mlp' && towerOnDeck ? top : hs; // where towers stand
   const y = (f) => top + H * f; // a height on the ship, as a fraction of its length
@@ -597,7 +780,20 @@ export function padArt(state, { radius = 1.25, height = 20, layout = null, icon 
   // ----- service tower -----
   if (o.tower === 'fixed' || o.tower === 'rss') {
     const tm = TOWER[site?.look?.tower] ?? M.red; // Saturn-era red, or a complex's own colour
-    if (!useModel(PAD_MODELS.tower.fixed, towerD, base, 0, { sx: across, sy: (towerTop - base) / 22, sz: across })) {
+    // the models: the umbilical tower (22 m above its deck at H 20, 3.25 m wide: body stretched to the ratio rule, the
+    // crane carried to the top), or NASA's ML-1 which brings its own tower and arms
+    const mTower = modelOf(ids.tower);
+    const mlTower = ids.mount === 'pad/ml1' && !!modelOf(ids.mount);
+    const sw = towerW / 3.25;
+    if (mTower) {
+      const c = paint(copyOf(mTower), tm.color);
+      hide(c, 'top_mast', 'pose_arm_1', 'pose_arm_2', 'pose_arm_3');
+      c.position.set(towerD, base, 0);
+      c.scale.set(sw, 1, sw);
+      c.getObjectByName('body').scale.y = (towerTop - base) / 22;
+      c.getObjectByName('head').position.y = towerTop - base;
+      extras.push(c);
+    } else if (!mlTower) {
       lattice(kit, tm, { x: towerD, w: towerW, y0: base, y1: towerTop, bay: 2.4, t: 0.18 });
       box(kit, tm, towerW * 2.4, 0.35, 0.4, towerD - towerW * 0.5, towerTop + 0.2, 0); // hammerhead crane
       box(kit, tm, 0.6, 1.2, 0.6, towerD, towerTop + 0.6, 0);
@@ -611,9 +807,20 @@ export function padArt(state, { radius = 1.25, height = 20, layout = null, icon 
       if (hh == null || (empty && access && Math.abs(hh - crewH) < 1.4)) continue;
       used.push(hh);
       fit.arms.push([+hh.toFixed(2), +((empty ? 1.25 : ship.hullMax(hh - 0.31, hh + 0.31))).toFixed(2)]);
+      if (mlTower) continue; // ML-1's own arms
       box(kit, M.grey, towerW + 0.6, 0.12, towerW + 0.6, towerD, top + hh - 0.32, 0); // service floor
+      const xh = (empty ? 1.25 : ship.hullMax(hh - 0.31, hh + 0.31)) + 0.02;
+      if (mTower) {
+        // the model's swing arm (2.5 m long at H 20), stretched to reach this hull, or swung back along the tower face
+        const arm = paint(copyOf(mTower, 'pose_arm_1'), tm.color);
+        arm.position.set(x0 - 0.05, top + hh, 0);
+        arm.scale.set(Math.max(0.3, x0 - 0.05 - xh) / 2.5, sw, sw);
+        if (empty) arm.rotation.y = -Math.PI / 2;
+        extras.push(arm);
+        continue;
+      }
       if (empty) swungBack(kit, x0, towerW);
-      swingArm(kit, tm, x0, (empty ? 1.25 : ship.hullMax(hh - 0.31, hh + 0.31)) + 0.02, top + hh);
+      swingArm(kit, tm, x0, xh, top + hh);
       if (empty) kit.pop();
     }
     if (access) crew = { angle: 0, d: towerD, w: towerW };
@@ -621,6 +828,18 @@ export function padArt(state, { radius = 1.25, height = 20, layout = null, icon 
       // the rotating service structure, swung back 120° on its hinge column beside the tower
       const Dr = 2.6, P = [towerD - towerW / 2 - 0.1, -(R + 0.2 + Dr / 2)];
       const Lr = P[0] + R + 1.2, yb = y(0.28), yt = y(0.93);
+      const mr = modelOf(ids.rss);
+      if (mr) {
+        // the model: mated along -x from its hinge (6.1 m long, 18.6 m tall at H 20), swung back 120 degrees
+        const c = copyOf(mr);
+        c.position.set(P[0], base, P[1]);
+        c.scale.set(1, (yt - base) / 18.6, 1);
+        const rot = c.getObjectByName('pose_rss');
+        rot.scale.x = Lr / 6.1;
+        rot.rotation.y = -120 * DEG;
+        c.getObjectByName('rail').scale.set(Lr / 6.1, 1, Lr / 6.1);
+        extras.push(c);
+      } else {
       kit.push(trs(P[0], 0, P[1], 1, 1, 1, 0, -120 * DEG, 0));
       box(kit, M.white, Lr, yt - yb, Dr, -Lr / 2, (yb + yt) / 2, 0);
       for (let k = 1; k < 4; k++) box(kit, M.grey, Lr + 0.06, 0.14, Dr + 0.06, -Lr / 2, yb + ((yt - yb) * k) / 4, 0);
@@ -632,35 +851,61 @@ export function padArt(state, { radius = 1.25, height = 20, layout = null, icon 
       const rail = new THREE.TorusGeometry(Lr - 0.4, 0.07, 4, 36, 120 * DEG);
       kit.add(rail, M.steel, trs(P[0], base + 0.05, P[1], 1, 1, 1, -Math.PI / 2, 60 * DEG, 0));
       rail.dispose();
+      }
     }
   } else if (o.tower === 'catch') {
     // Starbase-style integration tower: a wide square lattice, a carriage with two long catch arms ('chopsticks')
     // that pass either side of the ship near its top, and a quick-disconnect arm that feeds the upper ship
     // its top stands 1.05 × the ship's height above the mount top (Starbase: 146 m beside a 121–124 m Starship)
     const W = towerW + 0.6, x0 = towerD - W / 2, catchTop = top + H * 1.05;
-    if (!useModel(PAD_MODELS.tower.catch, towerD, base, 0, { sx: across, sy: (catchTop - base) / 21, sz: across })) {
-      lattice(kit, M.steelDark, { x: towerD, w: W, y0: base, y1: catchTop, bay: 2.6, t: 0.22 });
-      box(kit, M.steelDark, W + 0.4, 0.4, W + 0.4, towerD, catchTop + 0.2, 0);
-    }
-    post(kit, M.steel, 0.12, Math.max(1.5, H * 0.08), towerD, catchTop + 0.4, 0, CYL8); // lightning rod and antennas on the top
-    peak = { x: towerD, y: catchTop + 0.4 + Math.max(1.5, H * 0.08), z: 0, rod: true };
     const ch = empty ? H * 0.82 : Math.min(H * 0.86, Math.max(H * 0.6, ship.capsule ? ship.capsule.y - 0.8 : H * 0.8));
     const yc = top + ch;
-    box(kit, M.grey, W + 0.9, 2.2, W + 0.9, towerD, yc, 0); // the carriage around the tower
     const rArm = (empty ? 1.25 : ship.hullMax(ch - 0.6, ch + 0.6)) + 0.55;
     const tipX = empty ? x0 - 2.5 : -R * 0.7, open = empty ? 2.6 : rArm;
-    for (const s of [-1, 1]) {
-      beam(kit, M.steel, [x0 - 0.2, yc, s * (W / 2 - 0.2)], [tipX, yc, s * open], 0.62);
-      box(kit, M.yellow, 0.5, 0.5, 0.25, tipX, yc - 0.1, s * (open - 0.35)); // catch pads
-    }
     fit.chopsticks = [+ch.toFixed(2), +rArm.toFixed(2)];
-    // the quick-disconnect arm, lower down, reaching the hull
     const qh = empty ? H * 0.55 : ship.armHeight(FACING_DEG, H * 0.6, [ch, ...(access ? [crewH] : [])]);
-    if (qh != null) {
-      fit.arms.push([+qh.toFixed(2), +((empty ? 1.25 : ship.hullMax(qh - 0.31, qh + 0.31))).toFixed(2)]);
-      if (empty) swungBack(kit, x0, W);
-      swingArm(kit, M.steelDark, x0, (empty ? 1.25 : ship.hullMax(qh - 0.31, qh + 0.31)) + 0.02, top + qh);
-      if (empty) kit.pop();
+    const qr = qh == null ? 0 : (empty ? 1.25 : ship.hullMax(qh - 0.31, qh + 0.31)) + 0.02;
+    if (qh != null) fit.arms.push([+qh.toFixed(2), +qr.toFixed(2)]);
+    const mc = modelOf(ids.tower);
+    if (mc) {
+      // the model (3.85 m wide, 26 m tall beside a 5 m mount at H 20): body stretched to mount top + 1.05 H, the
+      // carriage at the catch height, the chopsticks turned to pass either side of the ship, the QD arm at its height
+      const c = copyOf(mc), sw = W / 3.85, sy = (catchTop - base) / 26;
+      c.position.set(towerD, base, 0);
+      c.scale.set(sw, 1, sw);
+      c.getObjectByName('body').scale.y = sy;
+      c.getObjectByName('head').position.y = 26.5 * sy;
+      c.getObjectByName('pose_carriage').position.y = yc - base;
+      for (const [name, s] of [['pose_chopstick_a', -1], ['pose_chopstick_b', 1]]) {
+        const arm = c.getObjectByName(name);
+        const px = towerD - 2.875 * sw, pz = s * 1.825 * sw; // its hinge in the pad's frame
+        arm.rotation.y = Math.atan2(s * open - pz, px - Math.min(0, tipX + 2));
+      }
+      const qd = c.getObjectByName('pose_arm_qd');
+      if (qh == null) qd.visible = false;
+      else {
+        qd.position.y = top + qh - base;
+        qd.scale.x = Math.max(0.3, x0 - 0.05 - qr) / (2.5 * sw);
+        if (empty) qd.rotation.y = -Math.PI / 2;
+      }
+      extras.push(c);
+      peak = { x: towerD, y: catchTop + 4.5 * sy, z: 0, rod: true };
+    } else {
+      lattice(kit, M.steelDark, { x: towerD, w: W, y0: base, y1: catchTop, bay: 2.6, t: 0.22 });
+      box(kit, M.steelDark, W + 0.4, 0.4, W + 0.4, towerD, catchTop + 0.2, 0);
+      post(kit, M.steel, 0.12, Math.max(1.5, H * 0.08), towerD, catchTop + 0.4, 0, CYL8); // lightning rod and antennas on the top
+      peak = { x: towerD, y: catchTop + 0.4 + Math.max(1.5, H * 0.08), z: 0, rod: true };
+      box(kit, M.grey, W + 0.9, 2.2, W + 0.9, towerD, yc, 0); // the carriage around the tower
+      for (const s of [-1, 1]) {
+        beam(kit, M.steel, [x0 - 0.2, yc, s * (W / 2 - 0.2)], [tipX, yc, s * open], 0.62);
+        box(kit, M.yellow, 0.5, 0.5, 0.25, tipX, yc - 0.1, s * (open - 0.35)); // catch pads
+      }
+      // the quick-disconnect arm, lower down, reaching the hull
+      if (qh != null) {
+        if (empty) swungBack(kit, x0, W);
+        swingArm(kit, M.steelDark, x0, qr, top + qh);
+        if (empty) kit.pop();
+      }
     }
     if (access) crew = { angle: 0, d: towerD, w: W };
   } else if (o.tower === 'strongback') {
@@ -668,15 +913,35 @@ export function padArt(state, { radius = 1.25, height = 20, layout = null, icon 
     const depth = 1.0, W = Math.max(2.0, R * 1.5);
     const x0 = Math.max(R + 1.0, ship.clearance(FACING_DEG, W / 2) + 0.35), sbTop = y(1.02), px = x0 + depth;
     fit.strongback = +x0.toFixed(2);
-    kit.push(new THREE.Matrix4().makeTranslation(px, base, 0).multiply(new THREE.Matrix4().makeRotationZ(-4 * DEG)).multiply(new THREE.Matrix4().makeTranslation(-px, -base, 0)));
-    lattice(kit, M.white, { x: x0 + depth / 2, w: depth, d: W, y0: base + 0.4, y1: sbTop, bay: 2.0, t: 0.24 });
-    const used = [];
+    const clamps = [];
     for (const f of [0.22, 0.52, 0.82]) {
       // clamp arms, opened: they stop a hand's width off the hull at their own height
-      const hh = empty ? H * f : ship.armHeight(FACING_DEG, H * f, used);
+      const hh = empty ? H * f : ship.armHeight(FACING_DEG, H * f, clamps.map((c) => c.hh));
       if (hh == null) continue;
-      used.push(hh);
-      const xt = (empty ? 1.25 : ship.hullMax(hh - 0.35, hh + 0.35)) + 0.25, len = Math.max(0.3, x0 - xt);
+      const xt = (empty ? 1.25 : ship.hullMax(hh - 0.35, hh + 0.35)) + 0.25;
+      clamps.push({ hh, len: Math.max(0.3, x0 - xt) });
+    }
+    const ms = modelOf(ids.tower);
+    if (ms) {
+      // the model (1 x 2 m frame, 20 m above its 0.4 m hinge at H 20): leaned back 4 degrees on its hinge, the frame
+      // stretched to 1.02 H, its three clamp arms moved to the fitted heights and lengths
+      const c = copyOf(ms);
+      c.position.set(x0 + depth / 2, base, 0);
+      c.scale.set(1, 1, W / 2.0);
+      c.getObjectByName('pose_frame').rotation.z = -4 * DEG;
+      c.getObjectByName('body').scale.y = (sbTop - base - 0.4) / 20.0;
+      for (let i = 0; i < 3; i++) {
+        const node = c.getObjectByName(`pose_clamp_${i + 1}`);
+        const cl = clamps[i];
+        if (!cl) { node.visible = false; continue; }
+        node.position.y = top + cl.hh - base - 0.4;
+        node.scale.x = cl.len / 0.75;
+      }
+      extras.push(c);
+    } else {
+    kit.push(new THREE.Matrix4().makeTranslation(px, base, 0).multiply(new THREE.Matrix4().makeRotationZ(-4 * DEG)).multiply(new THREE.Matrix4().makeTranslation(-px, -base, 0)));
+    lattice(kit, M.white, { x: x0 + depth / 2, w: depth, d: W, y0: base + 0.4, y1: sbTop, bay: 2.0, t: 0.24 });
+    for (const { hh, len } of clamps) {
       box(kit, M.white, len, 0.3, 0.3, x0 - len / 2, top + hh, 0);
       box(kit, M.steelDark, 0.12, 0.7, 1.1, x0 - len - 0.06, top + hh, 0); // clamp jaws, open
     }
@@ -685,6 +950,7 @@ export function padArt(state, { radius = 1.25, height = 20, layout = null, icon 
     // the transporter-erector it stands on, and its lifting pistons
     box(kit, M.grey, 3.6, 0.6, W + 0.6, px + 1.6, base + 0.3, 0);
     for (const s of [-1, 1]) pipe(kit, M.steel, [px + 2.9, base + 0.6, s * (W / 2 - 0.2)], [px + Math.sin(4 * DEG) * H * 0.3, y(0.3), s * (W / 2 - 0.2)], 0.14);
+    }
     peak = { x: x0 + depth / 2 + Math.sin(4 * DEG) * (sbTop - base), y: sbTop, z: 0 };
     if (access) crew = { angle: 55, d: Math.max(towerD, ship.clearance(FACING_DEG + 55, 1.0) + 1.5), w: 2.0, own: true };
   } else if (o.tower === 'gantry') {
@@ -696,7 +962,17 @@ export function padArt(state, { radius = 1.25, height = 20, layout = null, icon 
       const dist = Math.max(R + 0.9, ship.clearance(FACING_DEG + a, wide / 2) + 0.4) + depth / 2, px = dist + depth / 2;
       kit.push(turn(a));
       kit.push(new THREE.Matrix4().makeTranslation(px, base, 0).multiply(new THREE.Matrix4().makeRotationZ(-tilt)).multiply(new THREE.Matrix4().makeTranslation(-px, -base, 0)));
-      if (!useModel(PAD_MODELS.tower.gantry, dist, base, 0, { sx: across, sy: (gTop - base) / 19, sz: across })) {
+      const mg = modelOf(ids.tower);
+      if (mg) {
+        // the model (one half: 1.4 m deep, 4 m wide, 19 m tall at H 20), in the same turned and tilted frame
+        const c = copyOf(mg);
+        c.scale.set(depth / 1.4, (gTop - base) / 19, wide / 4.0);
+        const holder = new THREE.Group();
+        holder.matrixAutoUpdate = false;
+        holder.matrix.copy(kit.stack[kit.stack.length - 1]).multiply(new THREE.Matrix4().makeTranslation(dist, base, 0));
+        holder.add(c);
+        extras.push(holder);
+      } else {
         lattice(kit, M.grey, { x: dist, w: depth, d: wide, y0: base + 0.3, y1: gTop, bay: 2.2, t: 0.16 });
         for (let f = 0.15; f < 0.95; f += 0.16) box(kit, M.grey, 0.9, 0.1, wide * 0.85, dist - depth / 2 - 0.45, top + H * f, 0); // floors toward the ship
       }
@@ -712,7 +988,16 @@ export function padArt(state, { radius = 1.25, height = 20, layout = null, icon 
     const F = D * 3, mH = H * 1.15, back = F * 0.6;
     const x0 = Math.max(R + 1.4, ship.clearance(FACING_DEG, F / 2) + 0.6) + back, xc = x0 + F / 2;
     for (const s of [-1, 1]) box(kit, M.steel, xc + F / 2 + 2, 0.12, 0.2, (xc + F / 2 + 2) / 2 - 1, base + 0.06, s * F * 0.36); // its rails
-    if (!useModel(PAD_MODELS.tower.mst, xc, base, 0, { sx: across, sy: mH / 23, sz: across })) {
+    const mm = modelOf(ids.tower);
+    if (mm) {
+      // the model (7.5 m square, 23 m tall at H 20), rolled back with its door leaves swung open toward the pad
+      const c = copyOf(mm);
+      c.position.set(xc, base, 0);
+      c.scale.set(F / 7.5, mH / 23, F / 7.5);
+      c.getObjectByName('pose_door_a').rotation.y = -0.55 * Math.PI;
+      c.getObjectByName('pose_door_b').rotation.y = 0.55 * Math.PI;
+      extras.push(c);
+    } else {
       for (const s of [-1, 1]) box(kit, M.white, F, mH, 0.25, xc, base + 0.6 + mH / 2, s * F / 2); // side walls
       box(kit, M.white, 0.25, mH, F, xc + F / 2, base + 0.6 + mH / 2, 0); // back wall
       for (const s of [-1, 1]) box(kit, M.white, F * 0.5, mH * 0.95, 0.18, x0 + F * 0.25, base + 0.6 + mH * 0.475, s * (F / 2 + 0.25)); // door leaves folded open
@@ -821,14 +1106,26 @@ export function padArt(state, { radius = 1.25, height = 20, layout = null, icon 
     const rg = empty || !ship.lowest ? R : surfaceOf(ship.lowest, 0.05);
     const px = Math.max(hole / 2 + 0.35, rg + 0.7);
     const wy = Math.max(hs + 0.45, top - 1.6); // the counterweight hangs below the ring where there is room
-    const placed = useModel(PAD_MODELS.clamps.tulip, 0, top, 0, { sx: across, sy: across, sz: across });
+    const mt = modelOf(ids.tulip);
     fit.tulip = [+gy.toFixed(2), +rg.toFixed(2)];
     for (const a0 of [22.5, 112.5, 202.5, 292.5]) {
       const a = [a0, a0 + 11.25, a0 - 11.25].find((t) => empty || !ship.blocked(t, 0, gy + 0.3, 0.4));
-      if (a == null || placed) continue;
+      if (a == null) continue;
       kit.push(turn(wa(a)));
       box(kit, M.steelDark, 0.7, 0.6, 0.7, px, top + 0.3, 0); // the pivot block on the ring
       const tip = empty ? [px + 1.4, top + gy + 1.6, 0] : [rg + 0.08, top + gy, 0];
+      if (mt) {
+        // the model's arm: hinge at its origin 0.3 m above the ring, +x outward, its head 0.69 m in and 2.4 m up at
+        // D 2.5; turned and scaled about its hinge so the head meets this ship's side (or stands open)
+        const arm = copyOf(mt, 'pose_arm_1');
+        const hy = top + 0.3 * across, vx = tip[0] - px, vy = tip[1] - hy;
+        arm.position.copy(kitPoint(px, hy, 0));
+        arm.rotation.set(0, wa(a) * DEG, Math.atan2(vy, vx) - Math.atan2(2.4, -0.69));
+        arm.scale.setScalar(Math.hypot(vx, vy) / Math.hypot(0.69, 2.4));
+        extras.push(arm);
+        kit.pop();
+        continue;
+      }
       beam(kit, M.green, [px, top + 0.6, 0], tip, 0.32);
       box(kit, M.steelDark, 0.25, 0.7, 0.55, tip[0] + 0.1, tip[1], 0); // the grip on the ship's side
       beam(kit, M.green, [px, top + 0.6, 0], [px + 1.2, wy + 0.4, 0], 0.28); // the counterweight lever
@@ -891,12 +1188,22 @@ export function padArt(state, { radius = 1.25, height = 20, layout = null, icon 
       }
       const [wx, wz] = polar(80, icon ? RH + 2.5 : 14);
       const wh = Math.max(12, H * 0.75 + 4);
+      const mw = modelOf(ids.water);
+      if (mw) {
+        // the model is Pad 39B's real tower (88.8 m): drawn at the size the code gives it here, its outlet toward the pad
+        const c = copyOf(mw);
+        c.scale.setScalar((wh + 4.4) / 88.8);
+        c.position.set(wx, 0, wz);
+        c.rotation.y = Math.atan2(-wz, wx);
+        extras.push(c);
+      } else {
       for (const [dx, dz] of [[1, 1], [1, -1], [-1, 1], [-1, -1]]) beam(kit, M.grey, [wx + dx * 1.9, 0, wz + dz * 1.9], [wx + dx * 1.2, wh, wz + dz * 1.2], 0.22);
       for (let h = 3; h < wh; h += 3.5) box(kit, M.grey, 2.9 - (h / wh) * 1.2, 0.14, 2.9 - (h / wh) * 1.2, wx, h, wz);
       post(kit, M.steel, 0.35, wh, wx, 0, wz); // riser
       post(kit, M.white, 2.2, 3.4, wx, wh, wz);
       sphere(kit, M.white, 2.2, wx, wh + 3.4, wz, 0.45);
       pipe(kit, M.steel, [wx, 0.25, wz], [wx * 0.45, 0.25, wz * 0.45], 0.25);
+      }
     }
   }
 
@@ -907,10 +1214,16 @@ export function padArt(state, { radius = 1.25, height = 20, layout = null, icon 
     else {
       [mx, mz] = polar(o.tower === 'mst' ? -115 : -30, icon ? RH * 0.8 : 8.5); // clear of a rolled-back service tower
       mt = towerTop;
-      lattice(kit, M.grey, { x: mx, z: mz, w: 1.1, y0: 0, y1: mt, bay: 2.6, t: 0.14 });
+      const ml = modelOf(ids.lightning);
+      if (ml) {
+        const c = copyOf(ml);
+        c.scale.setScalar((mt + Math.max(5, H * 0.28)) / 183.8);
+        c.position.set(mx, 0, mz);
+        extras.push(c);
+      } else lattice(kit, M.grey, { x: mx, z: mz, w: 1.1, y0: 0, y1: mt, bay: 2.6, t: 0.14 });
     }
     const mh = Math.max(5, H * 0.28);
-    kit.add(CONE, M.white, trs(mx, mt + mh / 2, mz, 0.22, mh, 0.22));
+    if (!(peak && (o.tower === 'fixed' || o.tower === 'rss' || o.tower === 'catch')) && modelOf(ids.lightning)) { /* the model has its own fibreglass mast */ } else kit.add(CONE, M.white, trs(mx, mt + mh / 2, mz, 0.22, mh, 0.22));
     // the cable from the mast tip to an anchor on each side
     const dir = o.tower === 'fixed' || o.tower === 'rss' || o.tower === 'catch' ? [0, 1] : [-Math.sin(30 * DEG), Math.cos(30 * DEG)];
     for (const s of [-1, 1]) {
@@ -932,8 +1245,17 @@ export function padArt(state, { radius = 1.25, height = 20, layout = null, icon 
     const tops = [];
     for (const a of [20, 140, 260]) {
       const [cx, cz] = polar(a, Rc);
-      lattice(kit, M.grey, { x: cx, z: cz, w: 1.0, y0: 0, y1: hc, bay: 3, t: 0.12, ry: a });
-      kit.add(CONE, M.white, trs(cx, hc + mh / 2, cz, 0.25, mh, 0.25));
+      const ml = modelOf(ids.lightning);
+      if (ml) {
+        const c = copyOf(ml);
+        c.scale.setScalar((hc + mh) / 183.8);
+        c.position.set(cx, 0, cz);
+        c.rotation.y = a * DEG;
+        extras.push(c);
+      } else {
+        lattice(kit, M.grey, { x: cx, z: cz, w: 1.0, y0: 0, y1: hc, bay: 3, t: 0.12, ry: a });
+        kit.add(CONE, M.white, trs(cx, hc + mh / 2, cz, 0.25, mh, 0.25));
+      }
       tops.push([cx, hc + mh * 0.8, cz]);
       if (!icon) {
         const [ox, oz] = polar(a, Rc + 9);
@@ -969,14 +1291,23 @@ export function padArt(state, { radius = 1.25, height = 20, layout = null, icon 
     }
   } else if (showFar && (o.propellant === 'auto' || o.propellant === 'loadgo')) {
     // insulated storage spheres, the oxidiser (bigger) and the fuel
-    for (const [a, r] of [[105, 2.4], [124, 2.0]]) {
+    [[105, 2.4], [124, 2.0]].forEach(([a, r], i) => {
       const [sx, sz] = polar(near ? a * 3 : a, near ? 3.2 : 15.5);
       const legH = 1.5;
-      for (let k = 0; k < 8; k++) { const [lx, lz] = polar(k * 45, r * 0.7); post(kit, M.grey, 0.12, legH + r * 0.6, sx + lx, 0, sz + lz, CYL8); }
-      sphere(kit, M.white, r, sx, legH + r, sz);
-      box(kit, M.grey, 1.0, 0.1, 1.0, sx, legH + 2 * r + 0.05, sz);
+      const ms = modelOf(ids.spheres[i]);
+      if (ms) {
+        const c = copyOf(ms);
+        c.scale.setScalar((legH + 2 * r) / (i === 0 ? 26.7 : 24.6));
+        c.position.set(sx, 0, sz);
+        c.rotation.y = Math.atan2(-sz, sx);
+        extras.push(c);
+      } else {
+        for (let k = 0; k < 8; k++) { const [lx, lz] = polar(k * 45, r * 0.7); post(kit, M.grey, 0.12, legH + r * 0.6, sx + lx, 0, sz + lz, CYL8); }
+        sphere(kit, M.white, r, sx, legH + r, sz);
+        box(kit, M.grey, 1.0, 0.1, 1.0, sx, legH + 2 * r + 0.05, sz);
+      }
       feed(sx, sz);
-    }
+    });
     if (o.propellant === 'loadgo') {
       // the propellant chilling plant: storage bullets and a heat exchanger with its fans
       const [cx, cz] = polar(210, near ? 6 : 16);
@@ -1017,11 +1348,21 @@ export function padArt(state, { radius = 1.25, height = 20, layout = null, icon 
   if (showFar && o.weather === 'radar') {
     // a weather radar under its dome, and field mills that measure the charge in the air
     const [rx, rz] = polar(-35, near ? 4.5 : 15);
-    lattice(kit, M.grey, { x: rx, z: rz, w: 1.8, y0: 0, y1: 6, bay: 2, t: 0.15 });
-    box(kit, M.grey, 2.4, 0.2, 2.4, rx, 6.1, rz);
-    sphere(kit, M.white, 1.8, rx, 7.6, rz, 1);
+    const mr = modelOf(ids.weather);
+    if (mr) {
+      const c = copyOf(mr, 'radar');
+      c.position.set(rx, 0, rz);
+      c.rotation.y = Math.atan2(-rz, rx);
+      extras.push(c);
+    } else {
+      lattice(kit, M.grey, { x: rx, z: rz, w: 1.8, y0: 0, y1: 6, bay: 2, t: 0.15 });
+      box(kit, M.grey, 2.4, 0.2, 2.4, rx, 6.1, rz);
+      sphere(kit, M.white, 1.8, rx, 7.6, rz, 1);
+    }
     for (const a of [-100, -10, 75, 162, 220]) {
       const [fx, fz] = polar(a, near ? 6 : 10.5);
+      const mill = mr && copyOf(mr, 'field_mill');
+      if (mill) { mill.position.set(fx, 0, fz); extras.push(mill); continue; }
       post(kit, M.steel, 0.06, 0.9, fx, 0, fz, CYL8);
       post(kit, M.steelDark, 0.28, 0.14, fx, 0.9, fz);
     }
@@ -1041,10 +1382,20 @@ export function padArt(state, { radius = 1.25, height = 20, layout = null, icon 
   const inner = new THREE.Group();
   inner.rotation.y = FACING;
   kit.build(inner);
-  for (const e of extras) inner.add(e); // Blender models placed instead of procedural pieces (opts.models)
+  for (const e of extras) inner.add(e); // Blender models placed instead of procedural pieces
   g.add(inner);
   g.userData.padOptions = { site: site?.id ?? null, ...o };
   g.userData.fit = fit;
+  g.userData.padModels = wanted;
   if (icon) g.scale.setScalar(0.4); // the picture camera sees about 100 m: keep the whole complex well inside it
+  // models still on their way: when they have all arrived (or failed), draw again and swap the contents in place, as
+  // long as the pad is still in a scene (a scene that moved on to another pad has dropped this one)
+  if (pending.length) {
+    Promise.all(pending).then(() => {
+      if (!g.parent) return;
+      if (!wanted.some((id) => groundModels.get(id)?.scene)) return;
+      redrawInPlace(g, padArt(state, opts));
+    });
+  }
   return { object: g, top };
 }
