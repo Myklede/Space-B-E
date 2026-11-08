@@ -1,7 +1,8 @@
 // Outer skin checks (hull agent), Node only: node src/builder/tests/hull.test.mjs
 // Builds every nose × body × tail shape combination on the Reliable preset and checks that the skin makes one
 // continuous body (no radius jump without a cone, no gap, no overlapping skins, no double cones on adapters), that it
-// clears what it covers, that equipment riding inside sits inside the skin and never in the propellant, that the
+// clears what it covers, that equipment riding inside sits inside the skin and never in the propellant (what fits
+// nowhere goes into one automatic equipment bay, never a pod on the outside), that the
 // ShipSpec positions keep Role 2's flight stack right, that masses and costs are real, that the physics behaves
 // (heat and cork, buckling, drag), that the presets still reach Mars, and that everything is deterministic.
 import { readFileSync } from 'node:fs';
@@ -84,8 +85,8 @@ check(outsideList.every((id) => !H.ridesInside(g(id))), `outside the skin: ${out
 const base = presets.reliable;
 const combos = [];
 for (const n of sections.nose.shapes) for (const b of sections.body.shapes) for (const t of sections.tail.shapes) combos.push([n, b, t]);
-const problems = { overlap: [], jump: [], gap: [], uncovered: [], clearance: [], inside: [], propellant: [], axis: [], flight: [], mass: [], adapterCone: [], steep: [], determinism: [], cache: [] };
-let maxMass = 0, maxMassCombo = '', withSkin = 0, pods = 0, steepest = 0, steepestTag = '';
+const problems = { overlap: [], jump: [], gap: [], uncovered: [], clearance: [], inside: [], propellant: [], axis: [], flight: [], mass: [], adapterCone: [], steep: [], determinism: [], cache: [], bay: [] };
+let maxMass = 0, maxMassCombo = '', withSkin = 0, bays = 0, maxBay = 0, steepest = 0, steepestTag = '';
 for (const [n, b, t] of combos) {
   const tag = `${n.id}+${b.id}+${t.id}`;
   const a = new Assembly(base, catalog);
@@ -94,9 +95,29 @@ for (const [n, b, t] of combos) {
   const hull = H.computeHull(lay, { catalog, hull: a.hull });
   const skin = H.buildSkin(lay);
   if (skin !== H.buildSkin(lay)) problems.cache.push(tag);
-  const ring = hull.segments.filter((s) => s.kind !== 'pod');
-  pods += hull.segments.length - ring.length;
+  const ring = hull.segments;
   if (ring.length) withSkin += 1;
+  // the automatic equipment bay: only when something fits nowhere else, one at most, items standing round it apart
+  const baySegs = ring.filter((s) => s.kind === 'bay');
+  const inBay = lay.filter((e) => e.attach === 'radial' && e.bay === 'bay');
+  if (ring.some((s) => s.kind === 'pod') || lay.some((e) => e.bay === 'pod' || e.bay === 'orphan')) problems.bay.push(`${tag}: a pod or a homeless item`);
+  if (baySegs.length > 1 || (baySegs.length === 1) !== (inBay.length > 0)) problems.bay.push(`${tag}: ${baySegs.length} bays for ${inBay.length} items`);
+  if (baySegs.length) {
+    bays += 1;
+    const b = baySegs[0], H = b.y1 - b.y0;
+    maxBay = Math.max(maxBay, H);
+    if (H < hullData.inside.bay.minHeight - EPS || H > hullData.inside.bay.maxHeight + EPS || Math.abs(lay.equipmentBay.y0 - b.y0) > EPS) problems.bay.push(`${tag}: bay ${H.toFixed(2)} m`);
+    for (const e of inBay) if (e.y < b.y0 - EPS || e.y + e.height > b.y1 + EPS + 0.3) problems.bay.push(`${tag}: ${e.type} outside the bay`);
+    for (let i = 0; i < inBay.length; i++) for (let k = i + 1; k < inBay.length; k++) {
+      const p = inBay[i], q = inBay[k];
+      if (Math.min(p.y + p.height, q.y + q.height) - Math.max(p.y, q.y) <= 0) continue; // different rings
+      const r = b.r0 - 0.04 - Math.max(widthOf(p.def), widthOf(q.def)) / 2;
+      const d = Math.abs(((p.angle - q.angle + 540) % 360) - 180) * (Math.PI / 180) * r;
+      if (d < (widthOf(p.def) + widthOf(q.def)) / 2 - EPS) problems.bay.push(`${tag}: ${p.type} and ${q.type} overlap in the bay`);
+    }
+  }
+  // the stack is honest about the bay: everything above it was lifted, so the stack height includes it
+  if (baySegs.length && Math.abs(Math.max(...lay.filter((e) => e.attach === 'axial').map((e) => e.y + e.height)) - skin.top) > EPS) problems.bay.push(`${tag}: stack top`);
   if (hull.mass > maxMass) { maxMass = hull.mass; maxMassCombo = tag; }
   // no two skins at the same height
   const segs = [...ring].sort((x, y) => x.y0 - y.y0);
@@ -138,8 +159,8 @@ for (const [n, b, t] of combos) {
   for (const e of lay) {
     if (e.attach !== 'radial' || !e.inside) continue;
     const r = Math.hypot(e.x, e.z), w = widthOf(e.def), h = e.height;
-    if (e.bay === 'axis' || e.bay === 'pod') {
-      if (Math.abs(r - (e.bay === 'axis' ? e.radius : e.skinR)) > EPS || r < 0.05) problems[e.bay === 'axis' ? 'axis' : 'inside'].push(`${tag}: ${e.type} (${e.bay}) at r ${r.toFixed(2)}, its host's wall is ${(e.bay === 'axis' ? e.radius : e.skinR).toFixed(2)}`);
+    if (e.bay === 'axis') {
+      if (Math.abs(r - e.radius) > EPS) problems.axis.push(`${tag}: ${e.type} at r ${r.toFixed(2)}, its host's wall is ${e.radius.toFixed(2)}`);
       continue;
     }
     if (!(r >= 0) || r + w > e.skinR + EPS || Math.abs(r - (e.mountR - w / 2)) > EPS) problems.inside.push(`${tag}: ${e.type} (${e.bay}) inner face ${r.toFixed(2)} + ${w.toFixed(2)} vs skin ${e.skinR.toFixed(2)}`);
@@ -178,8 +199,9 @@ check(!problems.gap.length, `${combos.length} combinations: no gap in the outer 
 check(!problems.uncovered.length, `${combos.length} combinations: trusses, payload adapters, kick motors and spin tables are always covered${show(problems.uncovered)}`);
 check(!problems.clearance.length, `${combos.length} combinations: the skin clears everything it covers${show(problems.clearance)}`);
 check(!problems.steep.length, `${combos.length} combinations: no skin cone steeper than 60° (steepest ${steepest.toFixed(0)}°: ${steepestTag})${show(problems.steep)}`);
-check(!problems.inside.length, `${combos.length} combinations: equipment inside the skin sits within it, its ShipSpec x/z the inner face (pods on the tank wall)${show(problems.inside)}`);
-check(!problems.propellant.length, `${combos.length} combinations: no equipment rides inside propellant (only helium bottles may); ${pods} items in all ride in pods${show(problems.propellant)}`);
+check(!problems.inside.length, `${combos.length} combinations: equipment inside the skin sits within it, its ShipSpec x/z the inner face${show(problems.inside)}`);
+check(!problems.propellant.length, `${combos.length} combinations: no equipment rides inside propellant (only helium bottles may)${show(problems.propellant)}`);
+check(!problems.bay.length, `${combos.length} combinations: no pods; an equipment bay only where something fits nowhere else (${bays} ships, the tallest ${maxBay.toFixed(2)} m), its items standing apart round it, the stack lifted to make room${show(problems.bay)}`);
 check(!problems.axis.length, `${combos.length} combinations: seals and gimbal actuators keep their ShipSpec position on the host's wall${show(problems.axis)}`);
 check(!problems.flight.length, `${combos.length} combinations: only axial parts sit on the axis in the ShipSpec (Role 2's flight stack)${show(problems.flight)}`);
 check(!problems.mass.length, `${combos.length} combinations: skin masses and costs are positive and match their material and cork${show(problems.mass)}`);
@@ -205,7 +227,7 @@ check(maxMass < 1000, `heaviest default skin ${maxMass.toFixed(0)} kg (${maxMass
   const a = new Assembly(base, catalog);
   for (const [sec, id] of [['tail', 'space_shuttle'], ['body', 'saturn_sivb'], ['nose', 'big_cabin']]) SEC.applyShape(a, sections[sec], sections[sec].shapes.find((s) => s.id === id));
   const hull = H.computeHull(a.layout(), { catalog, hull: a.hull });
-  check(!hull.segments.some((s) => s.kind !== 'pod'), 'Orion cabin on an S-IVB: already one diameter, so no skirt, cone or fairing is needed');
+  check(!hull.segments.some((s) => s.kind !== 'bay'), 'Orion cabin on an S-IVB: already one diameter, so no skirt, cone or fairing is needed (only the equipment bay)');
 }
 {
   // a stowed inflatable shield between a capsule and a wider tank: packed, and a cone that climbs the capsule's base
@@ -227,12 +249,14 @@ for (const [key, json] of Object.entries(presets)) {
   const r = computeShipSpec(a, deps);
   const hull = r.breakdown.hull;
   const hottest = Math.max(...hull.segments.map((s) => s.peakTempC - H.hullMaterial(a.hull, s.section).maxTempC));
-  check(hull && hull.mass > 0 && hull.mass < 400 && hull.risk.maxQ === 0 && hull.risk.heat === 0 && Number.isFinite(hull.limits.maxQKPa) && hottest < -30, `${key}: ${hull.mass.toFixed(0)} kg of default skin (cork ${Math.round(hull.segments.reduce((t, s) => t + (s.corkMass ?? 0), 0))} kg, ${hull.segments.filter((s) => s.kind === 'pod').length} pods), $${Math.round(hull.cost).toLocaleString('en-US')}, no buckling or heat risk, ${Math.round(-hottest)} °C under its limit at the hottest spot`);
+  const bay = hull.segments.find((s) => s.kind === 'bay');
+  check(hull && hull.mass > 0 && hull.mass < 500 && hull.risk.maxQ === 0 && hull.risk.heat === 0 && Number.isFinite(hull.limits.maxQKPa) && hottest < -30, `${key}: ${hull.mass.toFixed(0)} kg of default skin (cork ${Math.round(hull.segments.reduce((t, s) => t + (s.corkMass ?? 0), 0))} kg${bay ? `, a ${(bay.y1 - bay.y0).toFixed(2)} m equipment bay of ${bay.mass.toFixed(0)} kg at ${bay.y0.toFixed(2)} m` : ''}), $${Math.round(hull.cost).toLocaleString('en-US')}, no buckling or heat risk, ${Math.round(-hottest)} °C under its limit at the hottest spot`);
   check(hull.cdAFactor >= 0.9 && hull.cdAFactor <= 1.05, `${key}: cdAFactor ${hull.cdAFactor.toFixed(3)} (steps smoothed; equipment boxes were never charged)`);
   if (key === 'reliable' || key === 'workhorse') check(!r.spec.warnings.length && r.spec.stats.deltaV >= r.breakdown.oneWay && r.spec.stats.twrEarth >= 1.2, `${key}: still reaches Mars without warnings (Δv ${Math.round(r.spec.stats.deltaV)} m/s)`);
   const inside = new Set(hull.insideIds);
   const lay = a.layout();
-  check(r.spec.parts.filter((p) => inside.has(p.id)).every((p) => { const e = lay.find((x) => x.id === p.id); return e.bay === 'pod' || e.bay === 'axis' || Math.hypot(p.x, p.z) + widthOf(e.def) <= e.skinR + EPS; }), `${key}: ShipSpec puts the ${inside.size} inside parts inside the skin`);
+  check(r.spec.parts.filter((p) => inside.has(p.id)).every((p) => { const e = lay.find((x) => x.id === p.id); return e.bay === 'axis' || Math.hypot(p.x, p.z) + widthOf(e.def) <= e.skinR + EPS; }), `${key}: ShipSpec puts the ${inside.size} inside parts inside the skin`);
+  check(Math.abs(r.breakdown.stackHeight - Math.max(...lay.filter((e) => e.attach === 'axial').map((e) => e.y + e.height))) < EPS && r.breakdown.stabilityMargin > 0, `${key}: stack height ${r.breakdown.stackHeight.toFixed(2)} m includes any bay; stable (margin ${(r.breakdown.stabilityMargin * 100).toFixed(1)} %)`);
 }
 {
   const a = new Assembly(presets.coldMorning, catalog);

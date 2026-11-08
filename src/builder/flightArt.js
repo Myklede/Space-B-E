@@ -11,6 +11,7 @@ import { padArt } from './sections/pad/art.js';
 import { padSetup } from './sections/pad/effects.js';
 import { weatherFor } from './weather.js';
 import launchData from './data/launch.json';
+import { flightArtGate } from './flightArtGate.js';
 
 /**
  * registerFlightArt({ assets, getAssembly, getSpec, padSection })
@@ -30,10 +31,11 @@ export function registerFlightArt({ assets, getAssembly, getSpec, padSection }) 
     return cache;
   };
 
-  // partArt falls back to assets.get('rocketPart:…') for a few parts: that inner call must reach Role 3's built-in part
+  // partArt falls back to assets.get('rocketPart:…') for a few parts (legs): inside the builder, and inside this hook,
+  // that call must reach Role 3's built-in part (flightArtGate)
   let busy = false;
   assets.setRocketPartArt((type) => {
-    if (busy) return null;
+    if (busy || flightArtGate.bypass) return null;
     const c = current();
     const e = c?.layout.find((x) => x.type === type);
     if (!e) return null;

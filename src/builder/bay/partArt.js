@@ -4,6 +4,7 @@
 // the whole cluster.
 import * as THREE from 'three';
 import { assets } from '/src/graphics/index.js';
+import { withoutFlightArt } from '../flightArtGate.js';
 import { nasaPartArt } from './nasa.js';
 import {
   adapterMesh, airbagMesh, avionicsRingMesh, chuteMesh, finMesh, heatShieldMesh, hiadMesh, instrumentMesh, kickMotorMesh, moduleMesh, noseMesh,
@@ -94,7 +95,7 @@ function singleArt(entry) {
   }
   const made = proceduralArt(entry);
   if (made) return made;
-  return assets.get(`rocketPart:${entry.type}`); // Role 3's art (legs, capsules and engines until the real model loads)
+  return withoutFlightArt(() => assets.get(`rocketPart:${entry.type}`)); // Role 3's own art (legs, capsules and engines until the real model loads)
 }
 
 /** Returns an Object3D for a layout entry { type, attach, height, radius, def, cluster? }. */

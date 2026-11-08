@@ -21,9 +21,11 @@
 // standard atmosphere, faster on flares and fairing shoulders, cooled by its own radiation; cork is glued where real
 // engineers would), the chance the skin wrinkles at Max-Q (against the crewed factor of safety 1.4), and how much
 // smoother the skinned body is than the bare stack (cdAFactor). Side equipment that really rides inside a rocket
-// (data/hull.json "inside") is placed by placeInside(), which assembly.layout() calls: in a dry bay (under the skin, in
-// a dry structure, in the cabin, or in a tank's forward or aft skirt), never in the propellant; with no dry room near
-// enough it rides on the wall under a small pod fairing.
+// (data/hull.json "inside") is placed by fitEquipment(), which assembly.layout() calls: in a dry bay (under the skin, in
+// a dry structure, in the cabin, or in a tank's forward or aft skirt), never in the propellant. What fits nowhere goes
+// into one automatic equipment bay: a short cylinder of skin at the body's diameter, like a service module (Apollo SM,
+// Orion ESM, Soyuz instrument compartment, Dragon trunk), just under the capsule or payload; everything above it moves
+// up by its height.
 import HULL from './data/hull.json' with { type: 'json' };
 
 /** Sections that get a skin. */
@@ -82,6 +84,7 @@ export const ridesOnAxis = (def) => !!def && (INSIDE.axisFlags ?? []).some((f) =
 // The shape of each axial part seen from outside
 // ---------------------------------------------------------------------------------------------------------------
 function profileOf(def) {
+  if (def.id === BAY_ID) return { kind: 'bay' };
   const p = HULL.profiles[def.id];
   if (p) return p;
   if (def.engine) return { kind: 'engine' };
@@ -101,9 +104,19 @@ function profileAt(points, R, h, yLocal) {
   return R * points[points.length - 1][0];
 }
 
+/** The id of the automatic equipment bay's virtual element. */
+export const BAY_ID = 'equipment-bay';
+
 /** Elements of the axial stack, top first: { id, entry, def, section, kind, y0, y1, h, R, rT, rB, need, bareT, bareB, climb, rAt }. */
 function elementsOf(layout) {
-  const axial = layout.filter((e) => e.attach === 'axial' && e.def).sort((a, b) => b.y - a.y);
+  const axial = layout.filter((e) => e.attach === 'axial' && e.def);
+  const bay = layout.equipmentBay;
+  if (bay) {
+    // the automatic equipment bay is a plain cylinder of skin in the stack (no part: the layout left room for it)
+    const def = { id: BAY_ID, name: 'Equipment bay', section: bay.section, size: 'm', height: bay.y1 - bay.y0, aero: { sideArea: 0 }, flags: {} };
+    axial.push({ id: BAY_ID, type: BAY_ID, def, attach: 'axial', y: bay.y0, height: bay.y1 - bay.y0, radius: bay.R });
+  }
+  axial.sort((a, b) => b.y - a.y);
   const els = axial.map((e) => {
     const def = e.def, p = profileOf(def), R = e.radius ?? sizeRadius(def.size), h = e.height ?? def.height;
     const el = { id: e.id, entry: e, def, section: def.section ?? null, kind: p.kind, y0: e.y, y1: e.y + h, h, R, rT: R, rB: R, need: R, bareT: R, bareB: R, climb: 0, rAt: () => R, openBelow: p.openBelow ?? 0, heatShield: !!def.flags?.heatShield };
@@ -283,7 +296,7 @@ function buildSkinNow(layout) {
   }
 
   // 4. steps between parts of different diameter: a cone over the end of the narrower part
-  const climbable = (item) => item.kind === 'part' && item.el.kind !== 'adapter';
+  const climbable = (item) => item.kind === 'part' && item.el.kind !== 'adapter' && item.el.kind !== 'bay';
   for (let k = 0; k < line.length - 1; k++) {
     const a = line[k], b = line[k + 1];
     if (a.kind === 'gap' || b.kind === 'gap') continue;
@@ -329,7 +342,9 @@ function buildSkinNow(layout) {
     if (up) a.stepBelow = idx; else b.stepAbove = idx;
   }
 
-  // 5. the open lower part of a single-engine thrust frame (Redstone, Delta II) gets its skirt
+  // 5. the automatic equipment bay is skin all round; the open lower part of a single-engine thrust frame (Redstone,
+  // Delta II) gets its skirt
+  for (const el of els) if (el.kind === 'bay') segments.push({ section: el.section, kind: 'bay', y0: el.y0, y1: el.y1, r0: el.R, r1: el.R, covers: [] });
   for (const el of els) {
     if (el.kind !== 'shell' || !el.openBelow) continue;
     segments.push({ section: el.section, kind: 'skirt', y0: el.y0, y1: el.y0 + el.h * el.openBelow, r0: el.R, r1: el.R, covers: [el.id], openFrame: true });
@@ -371,7 +386,7 @@ export function radiusAt(skin, y) {
 function coreRadiusAt(skin, y) {
   let r = 0;
   for (const el of skin.elements) {
-    if (!joins(el) || y < el.y0 - 1e-6 || y > el.y1 + 1e-6) continue;
+    if (!joins(el) || el.kind === 'bay' || y < el.y0 - 1e-6 || y > el.y1 + 1e-6) continue;
     r = Math.max(r, el.kind === 'inner' ? el.need - PHYS.clearance : el.rAt(y - el.y0));
   }
   return r;
@@ -393,7 +408,7 @@ const tankSafe = (def) => !!def && ((INSIDE.tankSafeIds ?? []).includes(def.id) 
 function dryBays(skin) {
   const bays = [];
   skin.segments.forEach((s, i) => {
-    if (s.kind === 'pod') return;
+    if (s.kind === 'bay') return; // the equipment bay holds the items it was sized for (layout.equipmentBay.slots)
     bays.push({
       kind: 'skin', y0: s.y0, y1: s.y1, partId: null, seg: i,
       wall: (y) => radiusAt(skin, y) - 0.04,
@@ -401,7 +416,7 @@ function dryBays(skin) {
     });
   });
   for (const el of skin.elements) {
-    if (!joins(el) || el.heatShield || el.kind === 'cover' || (el.kind === 'inner' && el.def.booster)) continue; // (a kick motor fills its own frame)
+    if (!joins(el) || el.heatShield || el.kind === 'cover' || el.kind === 'bay' || (el.kind === 'inner' && el.def.booster)) continue; // (a kick motor fills its own frame)
     if (el.def.fuel) {
       const s = Math.min(el.h / 2, (INSIDE.skirtFrac ?? 0.35) * el.R);
       const depth = Math.min(INSIDE.skirtDepth ?? 0.5, el.R * 0.4);
@@ -444,9 +459,10 @@ const placedLayouts = new WeakSet();
  *   ShipSpec attachment point (README setRocketPartArt: origin at the attachment point, +x outwards), which is the
  *   part's inner face, mountR - width / 2.
  *   bay: 'skin' (the ring under a skirt, cone or fairing), 'dry' (a dry structure), 'cabin' (a crew capsule), 'skirt'
- *   (a tank's forward or aft skirt), 'part' (a helium bottle left in its tank, as on Falcon 9), 'pod' (no dry room big
- *   enough nearby: on its host's wall under a small fairing; x / z on the wall, mountR the art's centre outside) or
- *   'axis' (seals, gimbal actuators drawn round the axis; x / z stay on the host's wall).
+ *   (a tank's forward or aft skirt), 'bay' (the automatic equipment bay; its angle is reassigned so the items stand
+ *   round the bay), 'part' (a helium bottle left in its tank, as on Falcon 9, or an item sharing a host's room),
+ *   'orphan' (no room anywhere yet: fitEquipment() makes the equipment bay for these) or 'axis' (seals, gimbal
+ *   actuators drawn round the axis; x / z stay on the host's wall).
  * Equipment never rides inside propellant: an item clamped to a tank moves (y changes) to the nearest dry bay.
  * Returns the skin it used.
  */
@@ -454,14 +470,17 @@ export function placeInside(layout, skin = buildSkin(layout)) {
   if (Array.isArray(layout)) placedLayouts.add(layout);
   for (const e of layout) if (e.attach === 'axial') e.covered = skin.covered.has(e.id);
   let bays = null;
+  const eqBay = layout.equipmentBay ?? null;
   for (const e of layout) {
     if (e.attach !== 'radial' || !e.def) continue;
     if (!(ridesInside(e.def) || skin.covered.has(e.parentId))) continue;
     e.inside = true;
-    const a = ((e.angle ?? 0) * Math.PI) / 180;
     if (ridesOnAxis(e.def)) { e.bay = 'axis'; e.mountR = 0; e.skinR = e.radius; e.bayPart = null; continue; } // x / z stay on the host's wall
-    bays ??= dryBays(skin);
     const w = widthOf(e.def), h = e.height ?? e.def.height ?? 0.5;
+    const slot = eqBay?.slots?.[e.id];
+    if (slot) { intoBay(e, eqBay, slot, w); continue; }
+    const a = ((e.angle ?? 0) * Math.PI) / 180;
+    bays ??= dryBays(skin);
     const host = skin.elements.find((el) => el.id === e.parentId);
     const inPropellant = !!host?.def.fuel;
     const allowed = (b) => (b.kind !== 'cabin' || (INSIDE.cabinFor ?? ['nose']).includes(e.def.section)) && !(inPropellant && tankSafe(e.def) && b.partId === host.id && b.kind === 'skirt');
@@ -503,16 +522,17 @@ export function placeInside(layout, skin = buildSkin(layout)) {
       e.bayPart = host.id;
       e.mountR = Math.max(w / 2 + 0.1, wall - w / 2);
       e.skinR = wall + 0.04;
+    } else if (eqBay) {
+      // the equipment bay was sized without it (rare: its first choice moved): it squeezes in at the bay's base
+      intoBay(e, eqBay, { dy: 0.1, angle: e.angle ?? 0 }, w);
+      continue;
     } else {
-      // no dry room big enough anywhere near (a tank wall, or a shelter too big for a small capsule): it rides on its
-      // host's wall under a small fairing of its section's skin; x / z stay on the wall (the attachment point)
-      const wall = radiusAt(skin, e.y + h / 2) || e.radius;
-      e.bay = 'pod';
+      // no dry room big enough anywhere near (a tank wall, or a shelter too big for a small capsule): the equipment
+      // bay is made for it (fitEquipment); it waits on its host's wall meanwhile
+      e.bay = 'orphan';
       e.bayPart = null;
-      e.mountR = wall + w * 0.45;
-      e.skinR = wall;
-      e.x = wall * Math.cos(a);
-      e.z = -wall * Math.sin(a);
+      e.mountR = e.radius + w * 0.45;
+      e.skinR = e.radius;
       continue;
     }
     const face = Math.max(0, e.mountR - w / 2); // the attachment point: its inner face, the art reaches out to the skin
@@ -520,6 +540,129 @@ export function placeInside(layout, skin = buildSkin(layout)) {
     e.z = -face * Math.sin(a);
   }
   return skin;
+}
+
+/** An item in its slot of the equipment bay: on the bay wall, at the slot's height and angle. */
+function intoBay(e, bay, slot, w) {
+  const y = bay.y0 + slot.dy;
+  e.centerY += y - e.y;
+  e.y = y;
+  e.angle = slot.angle;
+  e.bay = 'bay';
+  e.bayPart = null;
+  e.mountR = bay.R - 0.04 - w / 2;
+  e.skinR = bay.R;
+  const face = Math.max(0.1, e.mountR - w / 2), a = (slot.angle * Math.PI) / 180;
+  e.x = face * Math.cos(a);
+  e.z = -face * Math.sin(a);
+}
+
+/**
+ * Where the automatic equipment bay goes and how tall it is, for the items placeInside() could not fit (bay 'orphan'),
+ * or null when nothing needs it. Where (data/hull.json inside.bay.prefer, the first that exists): 'intertank', just
+ * under the topmost tank above the next body part (real intertanks carry avionics); 'nose', just under the capsule or
+ * payload on top of the body's first part below any adapter (where service modules ride); else on top of the topmost
+ * tank. The intertank comes first because a bay up front puts its side area ahead of the centre of mass and tipped
+ * the presets into UNSTABLE. Its diameter is that of the part below it (or of the part above, if that one is wider
+ * with no adapter between, so the step still resolves on the narrower side). Height: the items stand round the bay wall in rings, each ring as tall as its
+ * tallest item plus room to reach in, inside ring frames at both ends (data/hull.json inside.bay).
+ * Returns { y0 (where it is inserted, before anything moves), height, R, section, slots: { id: { dy, angle } } }.
+ */
+export function planEquipmentBay(layout, skin = buildSkin(layout)) {
+  const orphans = layout.filter((e) => e.attach === 'radial' && e.bay === 'orphan');
+  if (!orphans.length) return null;
+  const B = INSIDE.bay;
+  const els = skin.elements.filter(joins);
+  let below = null, above = null;
+  const tryNose = () => {
+    const noseLow = [...els].reverse().find((el) => el.section === 'nose' && el.kind !== 'cover');
+    if (!noseLow) return;
+    const i = els.indexOf(noseLow);
+    const next = els.slice(i + 1).find((el) => el.kind !== 'adapter');
+    if (next && next.section === 'body' && els.slice(i + 1, els.indexOf(next)).every((el) => el.kind === 'adapter')) { below = next; above = els[els.indexOf(next) - 1]; }
+  };
+  const tryIntertank = () => {
+    // under the topmost tank, where real intertanks carry avionics (the part below must be in the body, not an engine)
+    const tank = els.find((el) => el.def.fuel);
+    const next = tank && els[els.indexOf(tank) + 1];
+    if (next && next.section === 'body' && next.kind !== 'adapter') { below = next; above = tank; }
+  };
+  for (const where of B.prefer ?? ['nose', 'intertank']) { if (!below) (where === 'nose' ? tryNose : tryIntertank)(); }
+  if (!below) {
+    const tank = els.find((el) => el.def.fuel);
+    if (tank) { below = tank; above = els[els.indexOf(tank) - 1] ?? null; }
+  }
+  if (!below) return null;
+  let R = below.kind === 'inner' ? below.R : below.rT;
+  if (above && above.kind !== 'adapter' && above.kind !== 'cover' && (above.rB ?? 0) > R + TOL) R = above.rB;
+  // rings round the wall, tallest items first
+  const items = orphans.map((e) => ({ e, w: widthOf(e.def), h: e.height ?? e.def.height ?? 0.5 })).sort((p, q) => q.h - p.h || p.e.id.localeCompare(q.e.id));
+  const wMax = Math.max(...items.map((it) => it.w));
+  const around = 2 * Math.PI * Math.max(0.3, R - 0.04 - wMax / 2) * B.useOfRing;
+  const rings = [];
+  for (const it of items) {
+    const ring = rings[rings.length - 1];
+    if (ring && ring.arc + it.w + B.gap <= around) { ring.items.push(it); ring.arc += it.w + B.gap; ring.h = Math.max(ring.h, it.h); } else rings.push({ items: [it], arc: it.w + B.gap, h: it.h });
+  }
+  const height = clamp(B.frame * 2 + rings.reduce((t, r) => t + r.h + B.headroom, 0) - B.headroom, B.minHeight, B.maxHeight);
+  const slots = {};
+  let dy = B.frame;
+  for (const ring of rings) {
+    // keep the items in the order they stood round the rocket, spaced evenly round the ring
+    const order = [...ring.items].sort((p, q) => (p.e.angle ?? 0) - (q.e.angle ?? 0));
+    const start = order[0].e.angle ?? 0;
+    const spare = (around / B.useOfRing - ring.arc) / order.length;
+    const rMid = Math.max(0.3, R - 0.04 - wMax / 2);
+    let s0 = 0;
+    for (const it of order) {
+      slots[it.e.id] = { dy: Math.min(dy, Math.max(B.frame, height - B.frame - it.h)), angle: Math.round((start + ((s0 + (it.w + B.gap) / 2) / rMid) * (180 / Math.PI)) % 360 * 10) / 10 };
+      s0 += it.w + B.gap + spare;
+    }
+    dy += ring.h + B.headroom;
+  }
+  return { y0: below.y1, height, R, section: below.section === 'nose' ? 'body' : below.section ?? 'body', slots };
+}
+
+/** Lifts everything above the equipment bay by its height and records the bay on the layout (layout.equipmentBay). */
+export function applyEquipmentBay(layout, plan) {
+  const lifted = new Set();
+  for (const e of layout) if (e.attach === 'axial' && e.y >= plan.y0 - 1e-6) { e.y += plan.height; e.centerY += plan.height; lifted.add(e.id); }
+  for (const e of layout) if (e.attach === 'radial' && lifted.has(e.parentId)) { e.y += plan.height; e.centerY += plan.height; }
+  Object.defineProperty(layout, 'equipmentBay', { value: { y0: plan.y0, y1: plan.y0 + plan.height, R: plan.R, section: plan.section, slots: plan.slots }, enumerable: false });
+  return layout;
+}
+
+/** Items with no room and no equipment bay to go to (a stack with no tank): they share their host's room. */
+function settleOrphans(layout, skin) {
+  for (const e of layout) {
+    if (e.attach !== 'radial' || e.bay !== 'orphan') continue;
+    const w = widthOf(e.def), h = e.height ?? e.def.height ?? 0.5;
+    const wall = Math.max(w + 0.14, Math.min(radiusAt(skin, e.y) || e.radius, radiusAt(skin, e.y + h) || e.radius) - 0.04);
+    e.bay = 'part';
+    e.bayPart = e.parentId;
+    e.mountR = wall - w / 2;
+    e.skinR = wall + 0.04;
+    const face = e.mountR - w / 2, a = ((e.angle ?? 0) * Math.PI) / 180;
+    e.x = face * Math.cos(a);
+    e.z = -face * Math.sin(a);
+  }
+}
+
+/**
+ * The layout with every inside item placed (assembly.layout() calls this with a function that lays the parts out from
+ * scratch): place what fits in the dry bays; if anything is left over, lay out again with an equipment bay inserted
+ * for it (everything above it moves up) and place again.
+ */
+export function fitEquipment(makeLayout) {
+  let out = makeLayout();
+  const skin = placeInside(out);
+  const plan = planEquipmentBay(out, skin);
+  if (plan) {
+    out = applyEquipmentBay(makeLayout(), plan);
+    placeInside(out);
+  }
+  settleOrphans(out, buildSkin(out));
+  return out;
 }
 
 // ---------------------------------------------------------------------------------------------------------------
@@ -643,38 +786,27 @@ const SECTION_WORD = { en: { nose: 'nose', body: 'body', tail: 'tail' }, vi: { n
 const VI_MATERIAL = { al2219: 'nhôm 2219', al2195: 'nhôm-liti 2195', carbon: 'sợi carbon', steel: 'thép không gỉ', honeycomb: 'nhôm tổ ong' };
 const fmt = (v, lang) => (lang === 'vi' ? String(v).replace('.', ',') : String(v));
 
-/** The pods (small fairings) over equipment that found no dry room inside: { section, kind: 'pod', … }. */
-function podsOf(lay) {
-  const out = [];
-  for (const e of lay) {
-    if (e.attach !== 'radial' || e.bay !== 'pod') continue;
-    const w = widthOf(e.def), h = e.height ?? e.def.height ?? 0.5;
-    out.push({ section: e.def.section, kind: 'pod', y0: e.y - 0.15, y1: e.y + h + 0.15, r0: e.skinR ?? e.radius, r1: e.skinR ?? e.radius, angle: e.angle ?? 0, width: w + 0.12, depth: w + 0.08, partId: e.id, covers: [e.id], itemSideArea: e.def.aero?.sideArea ?? h * w });
-  }
-  return out;
-}
-
 /** Does this section have any skin on this layout (so its skin material changes anything)? */
 export function hullHasSkin(layout, sectionId) {
   const lay = layout ?? [];
   const skin = buildSkin(lay);
-  if (Array.isArray(lay) && !placedLayouts.has(lay)) placeInside(lay, skin);
-  return skin.segments.some((s) => s.section === sectionId) || podsOf(lay).some((p) => p.section === sectionId);
+  if (Array.isArray(lay) && !placedLayouts.has(lay)) { placeInside(lay, skin); settleOrphans(lay, skin); }
+  return skin.segments.some((s) => s.section === sectionId);
 }
 
 /**
  * computeHull(layout, { catalog, hull }) → the skin around the stack.
- *   segments: [{ section, kind: 'skirt' | 'cone' | 'fairing' | 'pod', y0, y1, r0, r1, material, mass, cost, sideArea,
- *               centerY, area, covers, peakTempC, heatFactor, cork, corkMass }]  (y0 < y1 in metres from the stack base; r0 at y0, r1 at
- *               y1). A 'pod' is a small fairing on a tank wall over one item (angle, width, depth, partId); the others
- *               go all round the rocket.
+ *   segments: [{ section, kind: 'skirt' | 'cone' | 'fairing' | 'bay', y0, y1, r0, r1, material, mass, cost, sideArea,
+ *               centerY, area, covers, peakTempC, heatFactor, cork, corkMass }]  (y0 < y1 in metres from the stack base;
+ *               r0 at y0, r1 at y1). 'bay' is the automatic equipment bay (layout.equipmentBay), its items in
+ *               insideIds with bay 'bay'.
  *   mass, cost, sideArea: totals added to the ship by stats.js (sideArea is what the skin adds to the side silhouette:
  *               the parts it covers already count their own)
  *   cdAFactor: multiplies the ascent drag area: clamp(skinned steps / bare steps, minFactor, maxFactor) x the skins'
  *               surface finish (equipment boxes count in neither: the game's drag never charged them)
  *   bySection: { nose: { material, name, mass, cost, area, segments, peakTempC, maxTempC, strengthKPa, fatiguePerFlight,
  *               buckleChance, heatChance }, body: …, tail: … }
- *   insideIds: radial parts that ride inside the skin or under a pod (drawn only while their section's card is open)
+ *   insideIds: radial parts that ride inside the skin (drawn only while their section's card is open)
  *   coveredIds: axial parts the skin covers completely (likewise drawn only while their card is open)
  *   risk: { maxQ: 0..1, heat: 0..1, notes: [English strings], detail: [{ kind, section, material, chance, en, vi, … }] }
  *   limits: { maxQKPa, maxTempC } of the weakest skin on the ship; both null when the ship has no skin at all
@@ -684,7 +816,7 @@ export function computeHull(layout, { catalog = null, hull = {} } = {}) {
   void catalog;
   const lay = layout ?? [];
   const skin = buildSkin(lay);
-  if (Array.isArray(lay) && !placedLayouts.has(lay)) placeInside(lay, skin);
+  if (Array.isArray(lay) && !placedLayouts.has(lay)) { placeInside(lay, skin); settleOrphans(lay, skin); }
   const D = PHYS.drag;
   const insideIds = lay.filter((e) => e.attach === 'radial' && e.def && e.inside).map((e) => e.id);
   const axial = skin.elements;
@@ -707,18 +839,7 @@ export function computeHull(layout, { catalog = null, hull = {} } = {}) {
       sideArea: Math.max(0, projected - coveredArea), centerY: (s.y0 + s.y1) / 2, covers: [...s.covers], peakTempC: heat.peak, heatFactor: f, cork: heat.cork, corkMass: heat.corkMass,
     };
   });
-  const pods = podsOf(lay).map((p) => {
-    const mat = hullMaterial(hull, p.section ?? 'body');
-    const len = p.y1 - p.y0;
-    const area = (Math.PI / 2) * (p.width / 2 + p.depth) * len; // half of an elliptic tube round the item
-    const heat = corked(mat, skin.top - p.y1, PHYS.shoulderHeat, area);
-    return {
-      ...p, y0: round(p.y0, 1000), y1: round(p.y1, 1000), r0: round(p.r0, 1000), r1: round(p.r1, 1000), material: mat.id, area,
-      mass: area * mat.massPerM2 + heat.corkMass, cost: area * mat.costPerM2 + heat.corkCost, sideArea: p.itemSideArea * 1.2, centerY: (p.y0 + p.y1) / 2,
-      covers: [...p.covers], peakTempC: heat.peak, heatFactor: PHYS.shoulderHeat, cork: heat.cork, corkMass: heat.corkMass,
-    };
-  });
-  const segments = [...ring, ...pods];
+  const segments = ring;
 
   const bySection = {};
   for (const sec of HULL_SECTIONS) {
@@ -769,7 +890,7 @@ export function computeHull(layout, { catalog = null, hull = {} } = {}) {
   const bare = stepDrag(joined.map((el) => ({ rT: el.kind === 'cover' ? el.bareB : el.bareT, rB: el.bareB, len: el.kind === 'adapter' ? el.h : 0, nose: noseKind(el) })));
   const smooth = stepDrag(skin.bands.map((b) => ({ rT: b.rT, rB: b.rB, len: b.y1 - b.y0, nose: b.skin < 0 && (b.kind === 'own' || b.kind === 'cover') })));
   const noseCdA = lay.find((e) => e.def?.aero?.cdA != null)?.def.aero.cdA ?? D.noseCdA;
-  const wetted = joined.reduce((t, el) => t + 2 * Math.PI * Math.max(el.rT ?? 0, el.rB ?? 0) * el.h, 0) + segments.reduce((t, s) => t + s.area, 0);
+  const wetted = joined.filter((el) => el.kind !== 'bay').reduce((t, el) => t + 2 * Math.PI * Math.max(el.rT ?? 0, el.rB ?? 0) * el.h, 0) + segments.reduce((t, s) => t + s.area, 0);
   const finish = wetted > 0 ? 1 + segments.reduce((t, s) => t + (hullMaterial(hull, s.section ?? 'body').cdAFactor - 1) * s.area, 0) / wetted : 1;
   const shape = clamp((noseCdA + smooth) / (noseCdA + bare), D.minFactor, D.maxFactor);
   const cdAFactor = lay.length ? shape * finish : 1;

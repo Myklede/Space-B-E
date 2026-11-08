@@ -1,8 +1,8 @@
 // 3D art for the outer skin (hull agent): the skirts, cones and fairings hull.js works out, in the look of their
 // material (light brushed aluminium 2219 with rivet rows, slightly darker welded aluminium-lithium, black carbon twill,
 // bright welded stainless rings, bonded aluminium honeycomb panels), with ring frames at their ends and along long
-// skirts. Payload fairings, cork-covered flares and the small pods over equipment on a tank wall are painted white, as
-// real ones are; fairings also get their separation rails. Also the one placement rule for side-mounted parts both 3D
+// skirts. Payload fairings and cork-covered flares are painted white, as real ones are; fairings also get their
+// separation rails, and the automatic equipment bay its access doors. Also the one placement rule for side-mounted parts both 3D
 // views share (designScene.js, hangarScene.js), now that equipment can ride inside the skin.
 // Units: metres, in the vehicle's frame (y = 0 at the stack base). Textures are drawn once per material and reused.
 import * as THREE from 'three';
@@ -160,24 +160,8 @@ const tagged = (g, seg, index) => {
   return g;
 };
 
-/** A pod: a small streamlined fairing on a tank wall over one item (seg.angle, width, depth, r0 = the wall). */
-function podArt(seg, index) {
-  const g = new THREE.Group();
-  const len = seg.y1 - seg.y0;
-  const pivot = new THREE.Group();
-  pivot.position.y = (seg.y0 + seg.y1) / 2;
-  pivot.rotation.y = (seg.angle ?? 0) * DEG;
-  const shell = new THREE.Mesh(new THREE.CapsuleGeometry(0.5, 1, 8, 20), skinMaterial(seg.material, 1, Math.max(1, len / TILE), true));
-  shell.scale.set(seg.depth * 2, len / 2, seg.width);
-  shell.position.x = seg.r0;
-  pivot.add(shell);
-  g.add(pivot);
-  return tagged(g, seg, index);
-}
-
 /** One skin segment { kind, y0, y1, r0, r1, material, section }: shell, frames, and rails on a fairing. */
 function segmentArt(seg, index) {
-  if (seg.kind === 'pod') return podArt(seg, index);
   const g = new THREE.Group();
   const len = seg.y1 - seg.y0;
   if (!(len > 0.005)) return g;
@@ -195,6 +179,21 @@ function segmentArt(seg, index) {
   for (const f of [Math.min(0.5, 0.035 / len), Math.max(0.5, 1 - 0.035 / len)]) { const p = at(f); g.add(ringFrame(p.r, p.y, frameMat)); }
   const bays = Math.floor(len / 1.2);
   if (seg.material !== 'carbon') for (let i = 1; i <= bays; i++) { const p = at(i / (bays + 1)); g.add(ringFrame(p.r, p.y, frameMat, seg.material === 'steel' ? 0.01 : 0.016)); }
+  if (seg.kind === 'bay') {
+    // the equipment bay: two access doors and an umbilical plate, as on a service module
+    const dark = new THREE.MeshStandardMaterial({ color: 0x2a2f35, roughness: 0.6, metalness: 0.4 });
+    const r = rb + 0.008, h = Math.min(0.9, len * 0.6);
+    for (const [az, w] of [[35, 0.6], [215, 0.45]]) {
+      const door = new THREE.Mesh(new THREE.CylinderGeometry(r, r, h, 12, 1, true, (az * DEG) + Math.PI / 2 - w / r / 2, w / r), new THREE.MeshStandardMaterial({ color: new THREE.Color(look.color).multiplyScalar(0.8), roughness: 0.5, metalness: 0.4, side: THREE.DoubleSide }));
+      door.position.y = (seg.y0 + seg.y1) / 2;
+      g.add(door);
+    }
+    const plate = new THREE.Mesh(new THREE.BoxGeometry(0.06, Math.min(0.3, len * 0.3), 0.36), dark);
+    const az = 125 * DEG;
+    plate.position.set(Math.cos(az) * (r + 0.02), (seg.y0 + seg.y1) / 2, -Math.sin(az) * (r + 0.02));
+    plate.rotation.y = az;
+    g.add(plate);
+  }
   if (seg.kind === 'fairing') {
     // the two halves' separation rails and the clamp band at the base
     const rail = new THREE.MeshStandardMaterial({ color: 0x23272c, roughness: 0.55, metalness: 0.6 });
@@ -228,7 +227,7 @@ export function skinFor(layout) {
 
 /**
  * Puts the art of a side-mounted layout entry in place and returns the pivot to add to the vehicle. Outside parts
- * and items under a pod sit on their host's wall as before; equipment riding inside the skin (entry.inside, from
+ * sit on their host's wall as before; equipment riding inside the skin (entry.inside, from
  * assembly.layout()) sits at entry.mountR, pulled in so its real width stays inside the skin; rings and steering
  * hardware drawn round the axis stay on the axis (only in the art: their ShipSpec position stays on the wall).
  */
@@ -237,7 +236,7 @@ export function mountRadial(art, e, layout) {
   pivot.position.set(0, e.y, 0);
   pivot.rotation.y = e.angle * DEG;
   const isFin = /fin/.test(e.type), isLegs = /leg/.test(e.type), isSrb = !!art.userData.srb;
-  if (e.inside && e.bay !== 'pod') { // (an item under a pod sits on the tank wall like an outside part)
+  if (e.inside) {
     if (art.userData.ring) art.position.x = 0;
     else if (e.def?.flags?.gimbal) art.position.x = e.radius + (art.userData.width ?? 0.6) * 0.45; // drawn round the axis already
     else {

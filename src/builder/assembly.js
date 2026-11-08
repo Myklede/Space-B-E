@@ -1,7 +1,8 @@
 // The rocket as a tree of parts hanging on attachment nodes (README-ARCH.md "Assembly JSON").
 // Pure JS: no browser APIs, so Node tests and the other builder files can use it freely. Its only import is the pure
-// hull.js, which says where the equipment that rides inside the outer skin goes (layout()).
-import { placeInside } from './hull.js';
+// hull.js, which says where the equipment that rides inside the outer skin goes, and whether the stack needs an
+// automatic equipment bay for it (layout()).
+import { fitEquipment } from './hull.js';
 
 export const NODES = Object.freeze(['top', 'bottom', 'radial']);
 export const SYMMETRIES = Object.freeze([1, 2, 3, 4, 6]);
@@ -490,6 +491,19 @@ export class Assembly {
   // ---------- layout ----------
   /** Positions in metres (README-ARCH.md "Layout"). Root base at 0, then shifted so the lowest axial base is 0. */
   layout() {
+    // Equipment that really rides inside the outer skin (hull.js, data/hull.json "inside") goes into a dry bay (never
+    // the propellant; it may move up or down to the nearest one): inside, bay, bayPart, mountR, skinR, and x / z at its
+    // attachment point (the inner face, +x outwards); axial parts get covered. What fits nowhere goes into one automatic
+    // equipment bay (a service-module ring of skin, layout.equipmentBay): fitEquipment lays the parts out again with
+    // everything above the bay lifted by its height, so ShipSpec y and the stack height stay honest.
+    const out = fitEquipment(() => this.#positions());
+    // the skin materials travel with the layout, so the 3D views can draw the skin from the layout alone
+    Object.defineProperty(out, 'hullMaterials', { value: { ...this.hull }, enumerable: false });
+    return out;
+  }
+
+  /** The parts' positions alone (the layout before the equipment is placed). */
+  #positions() {
     const root = this.root;
     const out = [];
     if (!root) return out;
@@ -539,13 +553,6 @@ export class Assembly {
       e.y -= min;
       e.centerY -= min;
     }
-    // equipment that really rides inside the outer skin (hull.js, data/hull.json "inside") moves into a dry bay (never
-    // the propellant; it may move up or down to the nearest one) or under a small pod: inside, bay, bayPart, mountR,
-    // skinR, and x / z at its attachment point (the inner face, +x outwards); axial parts get covered. ShipSpec.parts
-    // still say where everything really is.
-    placeInside(out);
-    // the skin materials travel with the layout, so the 3D views can draw the skin from the layout alone
-    Object.defineProperty(out, 'hullMaterials', { value: { ...this.hull }, enumerable: false });
     return out;
   }
 
