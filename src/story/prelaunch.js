@@ -5,7 +5,7 @@
 import { input, requestState, save, ui } from '/src/core/index.js';
 import data from './data.json';
 import { button, el } from './dom.js';
-import { canQuickStart, finalMessage, quickStartData, stepIndex } from './prelaunchFlow.js';
+import { canQuickStart, finalMessage, quickStartData, scheduleBriefAdvance, stepIndex } from './prelaunchFlow.js';
 
 let visits = 0; // PRELAUNCH entries this session
 
@@ -46,6 +46,7 @@ export function showPrelaunch() {
   let chosen = data.photos.some((p) => p.id === saved.familyPhoto) ? saved.familyPhoto : data.photos[0].id;
   let step = 'brief'; // 'brief' | 'photo' | 'message'
   let launched = false;
+  let cancelBrief = () => {};
 
   const root = el('div', 'role4-screen role4-prelaunch');
   root.dataset.screen = 'PRELAUNCH';
@@ -56,6 +57,7 @@ export function showPrelaunch() {
   const launch = (quickStart) => {
     if (launched) return;
     launched = true;
+    cancelBrief();
     save.update({ familyPhoto: chosen, messageHome: finalMessage(message.value, data.prelaunch.defaultMessage) });
     requestState('LAUNCH', quickStart ? quickStartData() : undefined);
   };
@@ -127,6 +129,7 @@ export function showPrelaunch() {
 
   /* ---- navigation ---- */
   const show = (next) => {
+    cancelBrief();
     step = next;
     root.dataset.step = next;
     stage.replaceChildren({ brief, photo: photoStep, message: messageStep }[next]);
@@ -178,5 +181,7 @@ export function showPrelaunch() {
 
   paint();
   show('brief');
+  cancelBrief = scheduleBriefAdvance({ quick, delayMs: data.prelaunch.briefDurationMs, onAdvance: () => show('photo') });
   ui.mount(root);
+  return () => { cancelBrief(); launched = true; };
 }

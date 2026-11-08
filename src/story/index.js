@@ -116,7 +116,7 @@ export default {
   enter(state) {
     if (state === 'PRELAUNCH') {
       showView('earth');
-      showPrelaunch();
+      dispose = showPrelaunch();
     } else if (state === 'RETURN') {
       clearRadio();
       dispose = showReturn();
