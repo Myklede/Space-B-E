@@ -103,7 +103,7 @@ export function computeCorridor(fc) {
   let good = null;
   for (let deg = -8; deg >= -80; deg -= 2) if (ok(deg)) { good = deg; break; }
   // a damaged shield leaves a corridor under a degree wide: a coarse scan can step right over it
-  if (good === null) for (let deg = -12; deg >= -30; deg -= 0.1) if (ok(deg)) { good = deg; break; }
+  if (good === null && fc.ship.heatShieldDamaged) for (let deg = -12; deg >= -30; deg -= 0.1) if (ok(deg)) { good = deg; break; }
   if (good === null) return { steepDeg: -45, shallowDeg: -15, centreDeg: -30, none: true };
   const shallowDeg = find(good, -3);
   const steepDeg = find(good, -89);
