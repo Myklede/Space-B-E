@@ -275,6 +275,15 @@ Người dùng muốn làm lại giao diện trang thiết kế:
   - Claude kiểm tra rồi lắp vào game: hangarScene, thang máy, sàn rút, cầu dẫn, bàn máy, âm thanh và khói.
   - Prompt gửi Codex: `C:/Users/Thainguyen/Downloads/CODEX-PROMPT-VAB-HANGAR.md`.
 
+- **Codex 1 xong** (commit `4d303c8`, chưa push): khung VAB đúng như đã chốt, gồm 24 GLB, `layout.json`, sandbox và test. Nhưng trông "nhựa": thanh hộp đơn giản, một vật liệu phẳng, ánh sáng đều.
+- **Codex 2 (người dùng chốt 2026-11-08):** tăng độ chân thật.
+  - Khoảng 1 triệu tam giác, ≥ 60 FPS, tối đa 20 MB.
+  - Texture CC0 (ambientCG, Poly Haven), nướng AO và vết bẩn.
+  - Ánh sáng tối và sâu như ảnh Artemis.
+  - Ưu tiên kết cấu thép thật, sàn lưới và lan can, mép sàn ôm tàu; đồ lặt vặt ít.
+  - Sandbox phải dựng đúng chuỗi xử lý ảnh của game (bloom, tone mapping, HDRI).
+  - Prompt: `C:/Users/Thainguyen/Downloads/CODEX2-PROMPT-VAB-DETAIL.md`.
+
 ## 5. Việc tồn đọng
 
 - **Đã làm cho Role 3 (2026-11-08):**
