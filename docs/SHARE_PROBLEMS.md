@@ -120,6 +120,7 @@ Copy this block. Keep each line short and factual. Don't commit screenshots.
 - **Actual:** about 20 s after touchdown the HUD switches to "FLIGHT / ASCENT · Gravity turn: tipping 14° toward the horizon", the ship climbs (5.8 km at 415 m/s, then 27 km), FUEL LOW, then NO FUEL; the state stays LANDING and the objective still says "Touch down under 3 m/s". At touchdown the cockpit camera also tilts sideways onto the FLIGHT MODE panel. No console errors. Screenshots: `~/SpaceB-E-tools/shots/land-*.jpg` on dtri's machine.
 - **Suggested fix:** once `fc.landed` is true, keep the flight computer idle (throttle 0, no ascent program) until the state changes; probably related to "F toggles manual control any time" (1aba680)
 - **Status:** **Taken by Role 3 (dtri)** (all four agreed, 2026-11-08, docs/DECISIONS.md): Role 3 changes the files named here. Role 2/4: please don't start it; tell dtri before touching the same lines. Before: open (camera only). Checked by Role 3 on dev af00548: the liftoff is fixed (25 s after touchdown: altitude 0, throttle 0, still landed). Still happens: at touchdown the camera's forward drops from 90° (straight up the ship's nose) to about 30° above the horizon while `look` stays (0, 0), so the view sits close and slanted on the console instead of the normal seat view; same with the flight deck and the Apollo capsule, so it comes from the landed camera, not the cockpit model. **How to see it:** `/?debug=1&state=LANDING`, wait for touchdown, compare with the descent view.
+- **More (2026-11-08, Role 2):** the Mars powered descent is now guided and near-vertical (2b3db6f, autopilot only, no camera code touched): max tilt 9.6° below 1 km, 4.6° below 200 m, touchdown upright (0.0°, drift 0.03 m/s). Part of the slanted view after touchdown came from the ship landing tilted; please re-check the landed camera on top of it.
 
 ### `stats.reliability` never matters in flight
 - **For:** Role 2 · **From:** Role 1 (Myklede) · **Found:** 2026-11-07 on dev 3d4fa59 · **Severity:** decision
@@ -229,6 +230,15 @@ Copy this block. Keep each line short and factual. Don't commit screenshots.
   - put each new area as a named prop in `userData.props` with its interaction point (`sleepStation`, `galley`, `hygiene`, `waterRecovery`, `treadmill`, `resistanceDevice`, `eclss`, `fireExtinguisher`, `dustZone`, `glovebox`, `sampleFreezer`, `plantGrowth`, `medKit`, `stormShelter`, `calendar`, `familyPhoto`): Role 2 will show a short real fact for each (no contract change needed, props are local notices);
   - export the furniture footprints as `userData.walkBoxes = [{ x, z, hx, hz }]` (cabin-local, half sizes) so the player can't walk through them (Role 2 already supports boxes);
   - optional: `userData.setLightMode(mode)` as above.
+- **Status:** open
+
+### Post-landing egress (E after a Mars touchdown): reuse your capsule hatch and float/walk path, or keep it off?
+- **For:** Role 3 · **From:** Role 2 (Minh Vuong) · **Found:** 2026-11-08 on dev 05cbd7f · **Severity:** decision (Role 2 + Role 3)
+- **Where:** `src/flight/index.js` (`EGRESS_CINEMATIC = false`, `startEgress`), `src/flight/egress.js`, `src/surface/egressArrival.js`; your capsule cockpits (1f7ad3d) and the orbit-to-cabin route you took over (hatch behind the seats, passage, `attachCabin`)
+- **Steps:** `/?debug=1&state=LANDING`, then `__role2flight.egress()` (the cinematic is switched off in normal play)
+- **Expected:** after touchdown, E plays one continuous scene: harness off, stand up in 0.38 g, through the hatch behind the seats, down into the cabin. Your orbit-to-cabin route already goes through the same hatch and passage (in zero g), so the two should look and work the same.
+- **Actual:** Role 2's egress was written for the old flight deck (`aft` node, cabin `ladderTopCabin`/`ladderBottom`); your capsules now have their own hatch, passage and harness hooks, and you own the orbit-to-cabin code in `src/flight/`
+- **Suggested fix:** your call, since you are building the same route: either (a) you extend your hatch/passage hooks with a gravity variant and Role 2 switches `EGRESS_CINEMATIC` on and drives it, or (b) you take the post-landing egress into your orbit-to-cabin work and Role 2 removes its version. Until you answer, Role 2 keeps it off and changes nothing there.
 - **Status:** open
 
 ## Role 4: Story, Cruise & Knowledge
