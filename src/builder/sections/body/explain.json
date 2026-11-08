@@ -71,7 +71,7 @@
         ],
         "cons": [
           "Chỉ dùng cho động cơ kerolox",
-          "Dài: đặt vây thấp"
+          "Dài: khó giữ thẳng hướng trong không khí hơn"
         ],
         "real": "Tầng một Falcon 9: 411 tấn oxy lỏng và RP-1 trong bồn nhôm-lithi rộng 3,7 m; tầng đẩy Atlas V: 284 tấn",
         "name": "Bồn kerolox L"
@@ -147,7 +147,7 @@
         ],
         "cons": [
           "Chỉ dùng cho động cơ methalox",
-          "Dài: đặt vây thấp"
+          "Dài: khó giữ thẳng hướng trong không khí hơn"
         ],
         "real": "Tầng một New Glenn (rộng 7 m) và Starship: metan và oxy lỏng",
         "name": "Bồn methalox L"
@@ -223,7 +223,7 @@
         ],
         "cons": [
           "Mỗi bồn chứa ít khối lượng, bay hơi dần trong chuyến đi",
-          "Dài: đặt vây thấp"
+          "Dài: khó giữ thẳng hướng trong không khí hơn"
         ],
         "real": "Bồn ngoài của tàu con thoi: 735 tấn LOX và LH2 dưới lớp bọt cam; tầng lõi Delta IV: 200 tấn; Centaur III: 20,8 tấn",
         "name": "Bồn hydrolox L"
@@ -249,7 +249,7 @@
         ],
         "cons": [
           "Chỉ dùng cho động cơ kerolox",
-          "Dài và nặng: cần một cụm động cơ mạnh"
+          "Dài và nặng: khoảng 67 tấn khi đầy"
         ],
         "real": "Saturn V S-IC: riêng bồn LOX đã chứa 1.266 m³; Delta II kéo dài bồn Thor thêm 3,8 m; Falcon 9 Full Thrust kéo dài các bồn của nó",
         "name": "Bồn kerolox L, kéo dài"
@@ -275,7 +275,7 @@
         ],
         "cons": [
           "Chỉ dùng cho động cơ kerolox",
-          "Dài: để ý trọng tâm"
+          "Dài: làm trọng tâm dịch đi khi bồn cạn dần"
         ],
         "real": "Tầng một Delta II: rộng 2,44 m, dài 26,1 m, nhôm lưới tam giác (isogrid), khoảng 96 tấn nhiên liệu; tầng lõi Soyuz: 2,95 m, 90 tấn",
         "name": "Bồn kerolox M, kéo dài"
@@ -992,14 +992,14 @@
     "part:sample_container": {
       "en": {
         "what": "Sealed tubes for three rock samples.",
-        "why": "The samples are what you bring home to study. Every kilogram has to be lifted off Mars by the return burn, so choose your rocks.",
+        "why": "The samples are what you bring home to study. Every kilogram has to be lifted off Mars by the return burn.",
         "without": "Without containers, no samples come home. The bigger vault holds six.",
         "inside": "Metal tubes with tight caps in a rack that holds them still through launch and landing.",
         "analogy": "Like specimen jars in a museum: each one keeps its find clean and labelled."
       },
       "vi": {
         "what": "Các ống niêm kín đựng ba mẫu đá (sample).",
-        "why": "Mẫu đá là thứ bạn mang về để nghiên cứu. Mỗi ki-lô-gam đều phải được lần đốt động cơ quay về nâng khỏi Sao Hỏa, nên hãy chọn đá cho khéo.",
+        "why": "Mẫu đá là thứ bạn mang về để nghiên cứu. Mỗi ki-lô-gam đều phải được lần đốt động cơ quay về nâng khỏi Sao Hỏa.",
         "without": "Không có hộp chứa, không mẫu nào về được nhà. Hầm chứa lớn hơn đựng được sáu mẫu.",
         "inside": "Các ống kim loại nắp kín, cài trên giá giữ chúng đứng yên khi phóng và khi hạ cánh.",
         "analogy": "Giống lọ đựng mẫu vật trong bảo tàng: mỗi lọ giữ món đồ sạch sẽ và có nhãn.",
@@ -1400,7 +1400,15 @@
       },
       "vi": {
         "what": "Hai bồn có nắp vòm riêng và một khúc ngắn ở giữa: đơn giản và an toàn.",
-        "name": "Nắp vòm riêng"
+        "name": "Nắp vòm riêng",
+        "pros": [
+          "Đơn giản",
+          "An toàn"
+        ],
+        "cons": [
+          "Nặng hơn: hai nắp vòm và một khoảng hở"
+        ],
+        "real": "Delta II, Atlas V"
       }
     },
     "option:tank/bulkhead/common": {
@@ -1409,7 +1417,15 @@
       },
       "vi": {
         "what": "Một vách cách nhiệt dùng chung cho cả hai chất lỏng: bớt được một nắp vòm và một mét vỏ, nhưng là phần khó làm nhất của bồn.",
-        "name": "Vách chung"
+        "name": "Vách chung",
+        "pros": [
+          "Khối lượng bồn −8 %"
+        ],
+        "cons": [
+          "Giá +25 %",
+          "Rò rỉ là nhiên liệu trộn với chất oxy hóa"
+        ],
+        "real": "Saturn S-II, Falcon 9, Starship"
       }
     },
     "slot:tank/pressurisation": {
@@ -1427,7 +1443,14 @@
       },
       "vi": {
         "what": "Các bình heli lạnh đặt ngay trong bồn oxy, nơi khí giữ được độ đặc: đã được kiểm chứng, nhưng các bình là mối nguy.",
-        "name": "Bình heli bên trong"
+        "name": "Bình heli bên trong",
+        "pros": [
+          "Đã được kiểm chứng"
+        ],
+        "cons": [
+          "Bình nằm trong bồn (AMOS-6)"
+        ],
+        "real": "Falcon 9, Delta II"
       }
     },
     "option:tank/pressurisation/autogenous": {
@@ -1436,7 +1459,16 @@
       },
       "vi": {
         "what": "Một ít nhiên liệu được động cơ làm ấm rồi dẫn ngược về bồn dưới dạng khí: không cần chút heli nào, như trên Starship và bồn ngoài của tàu con thoi.",
-        "name": "Tự tạo áp (khí nhiên liệu nóng)"
+        "name": "Tự tạo áp (khí nhiên liệu nóng)",
+        "pros": [
+          "Khối lượng −3 %",
+          "Không có heli để mà hết"
+        ],
+        "cons": [
+          "Giá +10 %",
+          "Chỉ hoạt động khi động cơ đã chạy"
+        ],
+        "real": "Starship, bồn ngoài của tàu con thoi"
       }
     },
     "option:tank/pressurisation/heated": {
@@ -1445,7 +1477,16 @@
       },
       "vi": {
         "what": "Heli từ bình lạnh được làm ấm trên động cơ trước khi vào bồn; khí ấm chiếm nhiều chỗ hơn, nên ít bình hơn vẫn đủ việc.",
-        "name": "Heli được làm ấm"
+        "name": "Heli được làm ấm",
+        "pros": [
+          "Khối lượng −1,5 %",
+          "Ít heli phải chở hơn"
+        ],
+        "cons": [
+          "Giá +4 %",
+          "Thêm một bộ trao đổi nhiệt trên động cơ"
+        ],
+        "real": "Falcon 9 (heli được làm ấm), bồn nhiên liệu của Saturn V S-IC"
       }
     },
     "option:tank/pressurisation/nitrogen": {
@@ -1454,7 +1495,16 @@
       },
       "vi": {
         "what": "Khí nitơ thường: rẻ và dễ kiếm, nhưng nặng gấp bảy lần heli khi chiếm cùng thể tích.",
-        "name": "Khí nitơ"
+        "name": "Khí nitơ",
+        "pros": [
+          "Giá −10 %",
+          "Thiết bị mặt đất đơn giản"
+        ],
+        "cons": [
+          "Khối lượng +2 %",
+          "Không dùng được cho bồn hydro"
+        ],
+        "real": "Tầng một Delta II; Soyuz đun sôi nitơ lỏng để tạo áp cho các bồn"
       }
     },
     "slot:tank/baffles": {
@@ -1472,7 +1522,14 @@
       },
       "vi": {
         "what": "Các vòng hàn vào vách trong bẻ vụn những con sóng: tên lửa chở người nào cũng có.",
-        "name": "Vòng chắn sóng"
+        "name": "Vòng chắn sóng",
+        "pros": [
+          "Nhiên liệu nằm yên"
+        ],
+        "cons": [
+          "Khối lượng +2 %"
+        ],
+        "real": "Mọi tên lửa chở người"
       }
     },
     "option:tank/baffles/none": {
@@ -1481,7 +1538,14 @@
       },
       "vi": {
         "what": "Không có vòng: nhẹ hơn, nhưng năm 2007 nhiên liệu sóng sánh đã làm chuyến bay thứ hai của Falcon 1 quay tròn mất kiểm soát.",
-        "name": "Không có vòng chắn"
+        "name": "Không có vòng chắn",
+        "pros": [
+          "Khối lượng −2 %"
+        ],
+        "cons": [
+          "Độ tin cậy −0,6 %"
+        ],
+        "real": "Chuyến bay thứ hai của Falcon 1 (2007)"
       }
     },
     "option:tank/baffles/antivortex": {
@@ -1490,7 +1554,15 @@
       },
       "vi": {
         "what": "Có vòng chắn, thêm các lá chắn chéo trên mỗi cửa xả, ngăn nhiên liệu đang chảy ra xoáy thành vòng xoáy hút khí vào bơm.",
-        "name": "Vòng chắn và lá chống xoáy"
+        "name": "Vòng chắn và lá chống xoáy",
+        "pros": [
+          "Độ tin cậy +0,2 %"
+        ],
+        "cons": [
+          "Khối lượng +0,5 %",
+          "Giá +2 %"
+        ],
+        "real": "Cửa xả LOX của Saturn V S-IC; mọi tầng tên lửa hiện đại"
       }
     },
     "slot:tank/insulation": {
@@ -1508,7 +1580,14 @@
       },
       "vi": {
         "what": "Kim loại trần: ổn với dầu hỏa, nhưng chất lỏng siêu lạnh sẽ bay hơi trong mấy giờ nằm trên bệ.",
-        "name": "Kim loại trần"
+        "name": "Kim loại trần",
+        "pros": [
+          "Nhẹ nhất"
+        ],
+        "cons": [
+          "Nhiên liệu siêu lạnh bay hơi"
+        ],
+        "real": "Falcon 9 (tầng dầu hỏa)"
       }
     },
     "option:tank/insulation/foam": {
@@ -1517,7 +1596,15 @@
       },
       "vi": {
         "what": "Bọt cách nhiệt phun lên vỏ, màu cam như bồn của tàu con thoi: giữ chất lỏng lạnh hàng giờ, nhưng một mảng bọt đã bong ra và va vào tàu Columbia.",
-        "name": "Bọt phun"
+        "name": "Bọt phun",
+        "pros": [
+          "Nhiên liệu siêu lạnh vẫn ở thể lỏng"
+        ],
+        "cons": [
+          "Khối lượng +3 %",
+          "Có thể bong mảng khi bay lên"
+        ],
+        "real": "Bồn ngoài của tàu con thoi, SLS"
       }
     },
     "option:tank/insulation/mli": {
@@ -1526,7 +1613,15 @@
       },
       "vi": {
         "what": "Nhiều lớp giấy bạc màu vàng cho chuyến đi dài: loại cách nhiệt duy nhất còn hiệu quả trong chân không suốt nhiều tuần.",
-        "name": "Chăn nhiều lớp"
+        "name": "Chăn nhiều lớp",
+        "pros": [
+          "Hàng tuần trong không gian mà không bay hơi"
+        ],
+        "cons": [
+          "Giá +15 %",
+          "Vô dụng trong không khí"
+        ],
+        "real": "Centaur, các tàu đổ bộ Mặt Trăng"
       }
     },
     "slot:tank/feedline": {
@@ -1544,7 +1639,14 @@
       },
       "vi": {
         "what": "Mỗi chất lỏng một ống lớn, như phần lớn các tên lửa.",
-        "name": "Một ống dẫn"
+        "name": "Một ống dẫn",
+        "pros": [
+          "Nhẹ"
+        ],
+        "cons": [
+          "Một van hỏng là động cơ ngừng"
+        ],
+        "real": "Phần lớn các tầng tên lửa"
       }
     },
     "option:tank/feedline/dual": {
@@ -1553,7 +1655,15 @@
       },
       "vi": {
         "what": "Mỗi chất lỏng hai ống, hai van, nên hỏng một vẫn còn một.",
-        "name": "Ống dẫn dự phòng"
+        "name": "Ống dẫn dự phòng",
+        "pros": [
+          "Độ tin cậy +0,4 %"
+        ],
+        "cons": [
+          "Khối lượng +1,5 %",
+          "Giá +8 %"
+        ],
+        "real": "Saturn V S-IC (năm ống dẫn)"
       }
     },
     "option:tank/feedline/tunnel": {
@@ -1562,7 +1672,16 @@
       },
       "vi": {
         "what": "Ống của bồn trên chạy thẳng xuống xuyên giữa lòng bồn dưới trong một đường hầm cách nhiệt: đường ngắn nhất, nhưng mỗi nắp vòm phải khoét thêm một lỗ.",
-        "name": "Đường hầm xuyên bồn"
+        "name": "Đường hầm xuyên bồn",
+        "pros": [
+          "Độ tin cậy +0,2 %",
+          "Đường ngắn nhất tới động cơ"
+        ],
+        "cons": [
+          "Khối lượng +1 %",
+          "Giá +5 %"
+        ],
+        "real": "Saturn V S-IC (năm đường hầm LOX xuyên qua bồn nhiên liệu), ống chuyển LOX của Falcon 9, ống dẫn metan xuống của Super Heavy"
       }
     },
     "slot:avionics/computer": {
@@ -1580,7 +1699,14 @@
       },
       "vi": {
         "what": "Hai máy tính, chiếc nào cũng tự lái được tên lửa một mình.",
-        "name": "Hai máy song song"
+        "name": "Hai máy song song",
+        "pros": [
+          "Hỏng một chiếc vẫn còn chiếc kia"
+        ],
+        "cons": [
+          "Chiếc nào mới đúng?"
+        ],
+        "real": "RIFCA của Delta II"
       }
     },
     "option:avionics/computer/triple": {
@@ -1589,7 +1715,15 @@
       },
       "vi": {
         "what": "Ba máy tính bỏ phiếu cho từng lệnh, nên chiếc bị lỗi sẽ bị hai chiếc kia gạt đi.",
-        "name": "Ba máy bỏ phiếu"
+        "name": "Ba máy bỏ phiếu",
+        "pros": [
+          "Độ tin cậy +1 %"
+        ],
+        "cons": [
+          "+25 kg",
+          "+80 nghìn đô"
+        ],
+        "real": "Ariane 5, Falcon 9"
       }
     },
     "slot:avionics/imu": {
@@ -1607,7 +1741,15 @@
       },
       "vi": {
         "what": "Con quay laser vòng (ring-laser gyro), loại chuẩn của tên lửa. Ánh sáng chạy hai chiều ngược nhau quanh một tam giác gương. Khi tên lửa xoay, hai chùm sáng lệch nhau, và độ lệch ấy cho máy tính biết đã xoay bao nhiêu.",
-        "name": "Con quay laser vòng"
+        "name": "Con quay laser vòng",
+        "pros": [
+          "Chính xác",
+          "Đã được kiểm chứng"
+        ],
+        "cons": [
+          "Nặng và đắt"
+        ],
+        "real": "Delta II, Atlas V"
       }
     },
     "option:avionics/imu/fog": {
@@ -1616,7 +1758,14 @@
       },
       "vi": {
         "what": "Con quay sợi quang (fibre-optic gyro): cùng mẹo ánh sáng ấy nhưng trong một cuộn sợi thủy tinh dài, nhẹ hơn và đơn giản hơn.",
-        "name": "Con quay sợi quang"
+        "name": "Con quay sợi quang",
+        "pros": [
+          "−15 kg"
+        ],
+        "cons": [
+          "Trôi lệch nhiều hơn một chút"
+        ],
+        "real": "Falcon 9, nhiều vệ tinh"
       }
     },
     "option:avionics/imu/mems": {
@@ -1625,7 +1774,15 @@
       },
       "vi": {
         "what": "Chip silicon giống trong điện thoại, lấy trung bình của cả trăm chiếc: rất nhẹ và rẻ, nhưng trôi lệch nhiều hơn.",
-        "name": "Chip MEMS"
+        "name": "Chip MEMS",
+        "pros": [
+          "−30 kg",
+          "−60 nghìn đô"
+        ],
+        "cons": [
+          "Trôi lệch: độ tin cậy −0,8 %"
+        ],
+        "real": "Vệ tinh cỡ nhỏ (cubesat), Electron"
       }
     },
     "slot:avionics/transponder": {
@@ -1643,7 +1800,14 @@
       },
       "vi": {
         "what": "Một máy phát và một máy thu lệnh, như các tên lửa nhỏ.",
-        "name": "Một máy phát"
+        "name": "Một máy phát",
+        "pros": [
+          "Nhẹ"
+        ],
+        "cons": [
+          "Hỏng một lần là trạm theo dõi mất dấu tên lửa"
+        ],
+        "real": "Tên lửa cỡ nhỏ"
       }
     },
     "option:avionics/transponder/dual": {
@@ -1652,7 +1816,15 @@
       },
       "vi": {
         "what": "Mọi thứ đều có hai, nối chéo với nhau để bộ nào cũng phục vụ được cả vòng.",
-        "name": "Hai bộ, nối chéo"
+        "name": "Hai bộ, nối chéo",
+        "pros": [
+          "Độ tin cậy +0,5 %"
+        ],
+        "cons": [
+          "+12 kg",
+          "+40 nghìn đô"
+        ],
+        "real": "Delta II, Atlas V"
       }
     },
     "slot:avionics/navaid": {
@@ -1670,7 +1842,14 @@
       },
       "vi": {
         "what": "Chỉ có con quay và gia tốc kế, như trên Saturn V: mỗi phút trôi lệch một chút và không có gì chỉnh lại.",
-        "name": "Chỉ dùng quán tính"
+        "name": "Chỉ dùng quán tính",
+        "pros": [
+          "Không cần gì bên ngoài tên lửa"
+        ],
+        "cons": [
+          "Độ trôi cộng dồn trên chuyến bay dài"
+        ],
+        "real": "Saturn V (bệ ST-124-M), Delta II"
       }
     },
     "option:avionics/navaid/gps": {
@@ -1679,7 +1858,16 @@
       },
       "vi": {
         "what": "Một máy thu GPS kiểm tra vị trí mỗi giây khi bay lên và cắt bỏ độ trôi.",
-        "name": "Quán tính có GPS hỗ trợ"
+        "name": "Quán tính có GPS hỗ trợ",
+        "pros": [
+          "Độ tin cậy +0,3 %"
+        ],
+        "cons": [
+          "+3 kg",
+          "+25 nghìn đô",
+          "Ngoài quỹ đạo Trái Đất không có GPS"
+        ],
+        "real": "Falcon 9, Atlas V, Electron"
       }
     },
     "option:avionics/navaid/stellar": {
@@ -1688,7 +1876,16 @@
       },
       "vi": {
         "what": "Một camera nhỏ nhận ra các ngôi sao và đặt lại con quay; nó dùng được ở mọi nơi, kể cả trên đường tới Sao Hỏa.",
-        "name": "Có máy theo dõi sao hỗ trợ"
+        "name": "Có máy theo dõi sao hỗ trợ",
+        "pros": [
+          "Độ tin cậy +0,4 %",
+          "Dùng được ở xa Trái Đất"
+        ],
+        "cons": [
+          "+6 kg",
+          "+60 nghìn đô"
+        ],
+        "real": "Tên lửa Trident (quán tính kết hợp định vị sao), tàu thăm dò không gian sâu"
       }
     },
     "slot:avionics/fts": {
@@ -1706,7 +1903,14 @@
       },
       "vi": {
         "what": "Một sĩ quan an toàn dưới mặt đất theo dõi đường bay và gửi lệnh hủy: cần đường liên lạc vô tuyến và một con người quyết định.",
-        "name": "Hủy theo lệnh"
+        "name": "Hủy theo lệnh",
+        "pros": [
+          "Đã được kiểm chứng suốt sáu mươi năm"
+        ],
+        "cons": [
+          "Cần đường liên lạc vô tuyến với mặt đất"
+        ],
+        "real": "Saturn V, tàu con thoi, Delta II"
       }
     },
     "option:avionics/fts/autonomous": {
@@ -1715,7 +1919,16 @@
       },
       "vi": {
         "what": "Chính máy tính của tên lửa so đường bay với các quy tắc an toàn rồi tự quyết định: không có đường liên lạc nào để mất.",
-        "name": "Tự kết thúc chuyến bay (AFTS)"
+        "name": "Tự kết thúc chuyến bay (AFTS)",
+        "pros": [
+          "Độ tin cậy +0,2 %",
+          "Ít người hơn ở trạm theo dõi"
+        ],
+        "cons": [
+          "+5 kg",
+          "+15 nghìn đô"
+        ],
+        "real": "Falcon 9 (dùng lần đầu năm 2017), Electron"
       }
     },
     "slot:solar/cells": {
@@ -1733,7 +1946,14 @@
       },
       "vi": {
         "what": "Tế bào silicon: khoảng 20 % ánh nắng thành điện; rẻ và bền.",
-        "name": "Tế bào silicon"
+        "name": "Tế bào silicon",
+        "pros": [
+          "Rẻ"
+        ],
+        "cons": [
+          "Hiệu suất 20 %"
+        ],
+        "real": "Các tấm pin ban đầu của ISS"
       }
     },
     "option:solar/cells/triple": {
@@ -1742,7 +1962,14 @@
       },
       "vi": {
         "what": "Tế bào ba lớp tiếp giáp (triple-junction): ba lớp, mỗi lớp hứng một màu ánh sáng, hiệu suất trên 30 %, như trên các tàu vũ trụ hiện đại.",
-        "name": "GaAs ba lớp tiếp giáp"
+        "name": "GaAs ba lớp tiếp giáp",
+        "pros": [
+          "Công suất +30 %"
+        ],
+        "cons": [
+          "Giá +60 %"
+        ],
+        "real": "Mọi tàu vũ trụ hiện đại"
       }
     },
     "slot:solar/drive": {
@@ -1760,7 +1987,14 @@
       },
       "vi": {
         "what": "Bắt cố định vào vỏ: điện nhiều hay ít tùy tàu đang chĩa về đâu.",
-        "name": "Cố định"
+        "name": "Cố định",
+        "pros": [
+          "Không có gì để hỏng"
+        ],
+        "cons": [
+          "Điện giảm khi chĩa lệch khỏi Mặt Trời"
+        ],
+        "real": ""
       }
     },
     "option:solar/drive/tracking": {
@@ -1769,7 +2003,15 @@
       },
       "vi": {
         "what": "Một động cơ và các tiếp điểm trượt giữ tấm pin luôn quay về phía Mặt Trời: thêm 20 % điện, nhưng thêm một bộ phận chuyển động.",
-        "name": "Xoay theo Mặt Trời"
+        "name": "Xoay theo Mặt Trời",
+        "pros": [
+          "Công suất trung bình +20 %"
+        ],
+        "cons": [
+          "+15 kg",
+          "Một động cơ không được phép kẹt"
+        ],
+        "real": "SARJ của ISS, Dawn"
       }
     },
     "slot:tank_common/bulkhead": {
@@ -1787,7 +2029,14 @@
       },
       "vi": {
         "what": "Nắp vòm chung đúng như thiết kế ban đầu của bồn; khối lượng và giá của nó đã tính sẵn trong số liệu của bồn.",
-        "name": "Vách chung, như thiết kế"
+        "name": "Vách chung, như thiết kế",
+        "pros": [
+          "Bớt được một nắp vòm và đoạn nối giữa hai bồn"
+        ],
+        "cons": [
+          "Rò rỉ là nhiên liệu trộn với chất oxy hóa"
+        ],
+        "real": "Falcon 9, Starship và Super Heavy, Electron"
       }
     },
     "option:tank_common/bulkhead/honeycomb": {
@@ -1796,7 +2045,15 @@
       },
       "vi": {
         "what": "Hai lớp vỏ dán lên một lõi tổ ong dày hơn, nên chất lỏng này không làm ấm hay đông cứng chất lỏng kia; từng ô của lớp keo đều được kiểm tra.",
-        "name": "Tổ ong kẹp, cách nhiệt thêm"
+        "name": "Tổ ong kẹp, cách nhiệt thêm",
+        "pros": [
+          "Độ tin cậy +0,3 %"
+        ],
+        "cons": [
+          "Khối lượng +2 %",
+          "Giá +12 %"
+        ],
+        "real": "Saturn V S-II (tổ ong phenolic, nhẹ đi 3,6 tấn), Centaur III (tổ ong sợi thủy tinh)"
       }
     },
     "option:tank_common/bulkhead/thin": {
@@ -1805,7 +2062,15 @@
       },
       "vi": {
         "what": "Bể axit ăn mòn bớt kim loại ở những chỗ chịu lực nhẹ: nhẹ hơn, nhưng ít dư địa cho ngày xui.",
-        "name": "Mỏng, ăn mòn hóa học"
+        "name": "Mỏng, ăn mòn hóa học",
+        "pros": [
+          "Khối lượng −3 %"
+        ],
+        "cons": [
+          "Giá +5 %",
+          "Độ tin cậy −0,4 %"
+        ],
+        "real": "Ăn mòn hóa học, dùng cho vỏ bồn và các mảnh nắp vòm từ thời các tầng Saturn"
       }
     },
     "slot:tank_common/pressurisation": {
@@ -1823,7 +2088,14 @@
       },
       "vi": {
         "what": "Các bình heli lạnh đặt ngay trong bồn oxy, nơi khí giữ được độ đặc: đã được kiểm chứng, nhưng các bình là mối nguy.",
-        "name": "Bình heli bên trong"
+        "name": "Bình heli bên trong",
+        "pros": [
+          "Đã được kiểm chứng"
+        ],
+        "cons": [
+          "Bình nằm trong bồn (AMOS-6)"
+        ],
+        "real": "Falcon 9, Delta II"
       }
     },
     "option:tank_common/pressurisation/autogenous": {
@@ -1832,7 +2104,16 @@
       },
       "vi": {
         "what": "Một ít nhiên liệu được động cơ làm ấm rồi dẫn ngược về bồn dưới dạng khí: không cần chút heli nào, như trên Starship và bồn ngoài của tàu con thoi.",
-        "name": "Tự tạo áp (khí nhiên liệu nóng)"
+        "name": "Tự tạo áp (khí nhiên liệu nóng)",
+        "pros": [
+          "Khối lượng −3 %",
+          "Không có heli để mà hết"
+        ],
+        "cons": [
+          "Giá +10 %",
+          "Chỉ hoạt động khi động cơ đã chạy"
+        ],
+        "real": "Starship, bồn ngoài của tàu con thoi"
       }
     },
     "option:tank_common/pressurisation/heated": {
@@ -1841,7 +2122,16 @@
       },
       "vi": {
         "what": "Heli từ bình lạnh được làm ấm trên động cơ trước khi vào bồn; khí ấm chiếm nhiều chỗ hơn, nên ít bình hơn vẫn đủ việc.",
-        "name": "Heli được làm ấm"
+        "name": "Heli được làm ấm",
+        "pros": [
+          "Khối lượng −1,5 %",
+          "Ít heli phải chở hơn"
+        ],
+        "cons": [
+          "Giá +4 %",
+          "Thêm một bộ trao đổi nhiệt trên động cơ"
+        ],
+        "real": "Falcon 9 (heli được làm ấm), bồn nhiên liệu của Saturn V S-IC"
       }
     },
     "option:tank_common/pressurisation/nitrogen": {
@@ -1850,7 +2140,16 @@
       },
       "vi": {
         "what": "Khí nitơ thường: rẻ và dễ kiếm, nhưng nặng gấp bảy lần heli khi chiếm cùng thể tích.",
-        "name": "Khí nitơ"
+        "name": "Khí nitơ",
+        "pros": [
+          "Giá −10 %",
+          "Thiết bị mặt đất đơn giản"
+        ],
+        "cons": [
+          "Khối lượng +2 %",
+          "Không dùng được cho bồn hydro"
+        ],
+        "real": "Tầng một Delta II; Soyuz đun sôi nitơ lỏng để tạo áp cho các bồn"
       }
     },
     "slot:tank_common/baffles": {
@@ -1868,7 +2167,14 @@
       },
       "vi": {
         "what": "Các vòng hàn vào vách trong bẻ vụn những con sóng: tên lửa chở người nào cũng có.",
-        "name": "Vòng chắn sóng"
+        "name": "Vòng chắn sóng",
+        "pros": [
+          "Nhiên liệu nằm yên"
+        ],
+        "cons": [
+          "Khối lượng +2 %"
+        ],
+        "real": "Mọi tên lửa chở người"
       }
     },
     "option:tank_common/baffles/none": {
@@ -1877,7 +2183,14 @@
       },
       "vi": {
         "what": "Không có vòng: nhẹ hơn, nhưng năm 2007 nhiên liệu sóng sánh đã làm chuyến bay thứ hai của Falcon 1 quay tròn mất kiểm soát.",
-        "name": "Không có vòng chắn"
+        "name": "Không có vòng chắn",
+        "pros": [
+          "Khối lượng −2 %"
+        ],
+        "cons": [
+          "Độ tin cậy −0,6 %"
+        ],
+        "real": "Chuyến bay thứ hai của Falcon 1 (2007)"
       }
     },
     "option:tank_common/baffles/antivortex": {
@@ -1886,7 +2199,15 @@
       },
       "vi": {
         "what": "Có vòng chắn, thêm các lá chắn chéo trên mỗi cửa xả, ngăn nhiên liệu đang chảy ra xoáy thành vòng xoáy hút khí vào bơm.",
-        "name": "Vòng chắn và lá chống xoáy"
+        "name": "Vòng chắn và lá chống xoáy",
+        "pros": [
+          "Độ tin cậy +0,2 %"
+        ],
+        "cons": [
+          "Khối lượng +0,5 %",
+          "Giá +2 %"
+        ],
+        "real": "Cửa xả LOX của Saturn V S-IC; mọi tầng tên lửa hiện đại"
       }
     },
     "slot:tank_common/insulation": {
@@ -1904,7 +2225,14 @@
       },
       "vi": {
         "what": "Kim loại trần: ổn với dầu hỏa, nhưng chất lỏng siêu lạnh sẽ bay hơi trong mấy giờ nằm trên bệ.",
-        "name": "Kim loại trần"
+        "name": "Kim loại trần",
+        "pros": [
+          "Nhẹ nhất"
+        ],
+        "cons": [
+          "Nhiên liệu siêu lạnh bay hơi"
+        ],
+        "real": "Falcon 9 (tầng dầu hỏa)"
       }
     },
     "option:tank_common/insulation/foam": {
@@ -1913,7 +2241,15 @@
       },
       "vi": {
         "what": "Bọt cách nhiệt phun lên vỏ, màu cam như bồn của tàu con thoi: giữ chất lỏng lạnh hàng giờ, nhưng một mảng bọt đã bong ra và va vào tàu Columbia.",
-        "name": "Bọt phun"
+        "name": "Bọt phun",
+        "pros": [
+          "Nhiên liệu siêu lạnh vẫn ở thể lỏng"
+        ],
+        "cons": [
+          "Khối lượng +3 %",
+          "Có thể bong mảng khi bay lên"
+        ],
+        "real": "Bồn ngoài của tàu con thoi, SLS"
       }
     },
     "option:tank_common/insulation/mli": {
@@ -1922,7 +2258,15 @@
       },
       "vi": {
         "what": "Nhiều lớp giấy bạc màu vàng cho chuyến đi dài: loại cách nhiệt duy nhất còn hiệu quả trong chân không suốt nhiều tuần.",
-        "name": "Chăn nhiều lớp"
+        "name": "Chăn nhiều lớp",
+        "pros": [
+          "Hàng tuần trong không gian mà không bay hơi"
+        ],
+        "cons": [
+          "Giá +15 %",
+          "Vô dụng trong không khí"
+        ],
+        "real": "Centaur, các tàu đổ bộ Mặt Trăng"
       }
     },
     "slot:tank_common/feedline": {
@@ -1940,7 +2284,14 @@
       },
       "vi": {
         "what": "Mỗi chất lỏng một ống lớn, như phần lớn các tên lửa.",
-        "name": "Một ống dẫn"
+        "name": "Một ống dẫn",
+        "pros": [
+          "Nhẹ"
+        ],
+        "cons": [
+          "Một van hỏng là động cơ ngừng"
+        ],
+        "real": "Phần lớn các tầng tên lửa"
       }
     },
     "option:tank_common/feedline/dual": {
@@ -1949,7 +2300,15 @@
       },
       "vi": {
         "what": "Mỗi chất lỏng hai ống, hai van, nên hỏng một vẫn còn một.",
-        "name": "Ống dẫn dự phòng"
+        "name": "Ống dẫn dự phòng",
+        "pros": [
+          "Độ tin cậy +0,4 %"
+        ],
+        "cons": [
+          "Khối lượng +1,5 %",
+          "Giá +8 %"
+        ],
+        "real": "Saturn V S-IC (năm ống dẫn)"
       }
     },
     "option:tank_common/feedline/tunnel": {
@@ -1958,7 +2317,16 @@
       },
       "vi": {
         "what": "Ống của bồn trên chạy thẳng xuống xuyên giữa lòng bồn dưới trong một đường hầm cách nhiệt, như trên Falcon 9. Đây là đường ngắn nhất, nhưng mỗi nắp vòm phải khoét thêm một lỗ.",
-        "name": "Đường hầm xuyên bồn"
+        "name": "Đường hầm xuyên bồn",
+        "pros": [
+          "Độ tin cậy +0,2 %",
+          "Đường ngắn nhất tới động cơ"
+        ],
+        "cons": [
+          "Khối lượng +1 %",
+          "Giá +5 %"
+        ],
+        "real": "Saturn V S-IC (năm đường hầm LOX xuyên qua bồn nhiên liệu), ống chuyển LOX của Falcon 9, ống dẫn metan xuống của Super Heavy"
       }
     },
     "slot:tank_balloon/pressure": {
@@ -1976,7 +2344,14 @@
       },
       "vi": {
         "what": "Từ nhà máy tới lúc rời bệ, trong bồn lúc nào cũng có khí, và một đội người trực đồng hồ áp suất suốt ngày đêm.",
-        "name": "Luôn giữ áp, có người trực"
+        "name": "Luôn giữ áp, có người trực",
+        "pros": [
+          "Đã được kiểm chứng trên mọi tên lửa Atlas"
+        ],
+        "cons": [
+          "Một van hỏng là bồn gập lại"
+        ],
+        "real": "Atlas: 5 psi (34 kPa) khí nitơ ngay cả khi rỗng"
       }
     },
     "option:tank_balloon/pressure/stretch": {
@@ -1985,7 +2360,15 @@
       },
       "vi": {
         "what": "Một giá đỡ giữ bồn rỗng luôn căng mỗi khi di chuyển, và hai bộ điều áp cùng chia việc khi bay, chiếc nào cũng tự làm một mình được.",
-        "name": "Giá căng và hai bộ điều áp"
+        "name": "Giá căng và hai bộ điều áp",
+        "pros": [
+          "Độ tin cậy +0,6 %"
+        ],
+        "cons": [
+          "Khối lượng +1 %",
+          "Giá +8 %"
+        ],
+        "real": "Giá vận chuyển và nâng hạ của Atlas và Centaur"
       }
     },
     "option:tank_balloon/pressure/thin": {
@@ -1994,7 +2377,15 @@
       },
       "vi": {
         "what": "Cán thép mỏng hơn nữa: mỗi gam bớt đi là một phần biên an toàn mất đi.",
-        "name": "Vỏ mỏng hơn"
+        "name": "Vỏ mỏng hơn",
+        "pros": [
+          "Khối lượng −8 %"
+        ],
+        "cons": [
+          "Giá +5 %",
+          "Độ tin cậy −0,8 %"
+        ],
+        "real": "Centaur III: vách thép không gỉ 0,51 mm"
       }
     },
     "slot:tank_balloon/bulkhead": {
@@ -2012,7 +2403,14 @@
       },
       "vi": {
         "what": "Vách đúng như thiết kế: một nắp vòm thép mỏng nếu là dầu hỏa, hai lớp thép trên lõi tổ ong nếu là hydro. Nó đã tính sẵn trong số liệu của bồn.",
-        "name": "Vách chung, như thiết kế"
+        "name": "Vách chung, như thiết kế",
+        "pros": [
+          "Bớt được một nắp vòm và đoạn nối giữa hai bồn"
+        ],
+        "cons": [
+          "Rò rỉ là nhiên liệu trộn với chất oxy hóa"
+        ],
+        "real": "Atlas (một vách thép đơn ở giữa), Centaur (hai lớp thép trên lõi tổ ong sợi thủy tinh)"
       }
     },
     "option:tank_balloon/bulkhead/honeycomb": {
@@ -2021,7 +2419,15 @@
       },
       "vi": {
         "what": "Hai lớp vỏ dán lên một lõi tổ ong dày hơn, nên chất lỏng này không làm ấm hay đông cứng chất lỏng kia; từng ô của lớp keo đều được kiểm tra.",
-        "name": "Tổ ong kẹp, cách nhiệt thêm"
+        "name": "Tổ ong kẹp, cách nhiệt thêm",
+        "pros": [
+          "Độ tin cậy +0,3 %"
+        ],
+        "cons": [
+          "Khối lượng +2 %",
+          "Giá +12 %"
+        ],
+        "real": "Saturn V S-II (tổ ong phenolic, nhẹ đi 3,6 tấn), Centaur III (tổ ong sợi thủy tinh)"
       }
     },
     "option:tank_balloon/bulkhead/thin": {
@@ -2030,7 +2436,15 @@
       },
       "vi": {
         "what": "Bể axit ăn mòn bớt kim loại ở những chỗ chịu lực nhẹ: nhẹ hơn, nhưng ít dư địa cho ngày xui.",
-        "name": "Mỏng, ăn mòn hóa học"
+        "name": "Mỏng, ăn mòn hóa học",
+        "pros": [
+          "Khối lượng −3 %"
+        ],
+        "cons": [
+          "Giá +5 %",
+          "Độ tin cậy −0,4 %"
+        ],
+        "real": "Ăn mòn hóa học, dùng cho vỏ bồn và các mảnh nắp vòm từ thời các tầng Saturn"
       }
     },
     "slot:tank_balloon/insulation": {
@@ -2048,7 +2462,14 @@
       },
       "vi": {
         "what": "Kim loại trần: ổn với dầu hỏa, nhưng chất lỏng siêu lạnh sẽ bay hơi trong mấy giờ nằm trên bệ.",
-        "name": "Kim loại trần"
+        "name": "Kim loại trần",
+        "pros": [
+          "Nhẹ nhất"
+        ],
+        "cons": [
+          "Nhiên liệu siêu lạnh bay hơi"
+        ],
+        "real": "Falcon 9 (tầng dầu hỏa)"
       }
     },
     "option:tank_balloon/insulation/foam": {
@@ -2057,7 +2478,15 @@
       },
       "vi": {
         "what": "Bọt cách nhiệt phun lên vỏ, màu cam như bồn của tàu con thoi: giữ chất lỏng lạnh hàng giờ, nhưng một mảng bọt đã bong ra và va vào tàu Columbia.",
-        "name": "Bọt phun"
+        "name": "Bọt phun",
+        "pros": [
+          "Nhiên liệu siêu lạnh vẫn ở thể lỏng"
+        ],
+        "cons": [
+          "Khối lượng +3 %",
+          "Có thể bong mảng khi bay lên"
+        ],
+        "real": "Bồn ngoài của tàu con thoi, SLS"
       }
     },
     "option:tank_balloon/insulation/mli": {
@@ -2066,7 +2495,15 @@
       },
       "vi": {
         "what": "Nhiều lớp giấy bạc màu vàng cho chuyến đi dài, như trên Centaur: loại cách nhiệt duy nhất còn hiệu quả trong chân không suốt nhiều tuần.",
-        "name": "Chăn nhiều lớp"
+        "name": "Chăn nhiều lớp",
+        "pros": [
+          "Hàng tuần trong không gian mà không bay hơi"
+        ],
+        "cons": [
+          "Giá +15 %",
+          "Vô dụng trong không khí"
+        ],
+        "real": "Centaur, các tàu đổ bộ Mặt Trăng"
       }
     },
     "slot:tank_balloon/feedline": {
@@ -2084,7 +2521,14 @@
       },
       "vi": {
         "what": "Mỗi chất lỏng một ống lớn, như phần lớn các tên lửa.",
-        "name": "Một ống dẫn"
+        "name": "Một ống dẫn",
+        "pros": [
+          "Nhẹ"
+        ],
+        "cons": [
+          "Một van hỏng là động cơ ngừng"
+        ],
+        "real": "Phần lớn các tầng tên lửa"
       }
     },
     "option:tank_balloon/feedline/dual": {
@@ -2093,7 +2537,15 @@
       },
       "vi": {
         "what": "Mỗi chất lỏng hai ống, hai van, nên hỏng một vẫn còn một.",
-        "name": "Ống dẫn dự phòng"
+        "name": "Ống dẫn dự phòng",
+        "pros": [
+          "Độ tin cậy +0,4 %"
+        ],
+        "cons": [
+          "Khối lượng +1,5 %",
+          "Giá +8 %"
+        ],
+        "real": "Saturn V S-IC (năm ống dẫn)"
       }
     },
     "option:tank_balloon/feedline/tunnel": {
@@ -2102,7 +2554,16 @@
       },
       "vi": {
         "what": "Ống của bồn trên chạy thẳng xuống xuyên giữa lòng bồn dưới trong một đường hầm cách nhiệt: đường ngắn nhất, nhưng mỗi nắp vòm phải khoét thêm một lỗ.",
-        "name": "Đường hầm xuyên bồn"
+        "name": "Đường hầm xuyên bồn",
+        "pros": [
+          "Độ tin cậy +0,2 %",
+          "Đường ngắn nhất tới động cơ"
+        ],
+        "cons": [
+          "Khối lượng +1 %",
+          "Giá +5 %"
+        ],
+        "real": "Saturn V S-IC (năm đường hầm LOX xuyên qua bồn nhiên liệu), ống chuyển LOX của Falcon 9, ống dẫn metan xuống của Super Heavy"
       }
     },
     "slot:stage_structure/construction": {
@@ -2120,7 +2581,15 @@
       },
       "vi": {
         "what": "Vỏ nhôm mỏng tán đinh lên các thanh gia cường dọc và khung vòng, theo kiểu đóng máy bay: dễ kiểm tra và sửa chữa.",
-        "name": "Vỏ và thanh dọc"
+        "name": "Vỏ và thanh dọc",
+        "pros": [
+          "Đã được kiểm chứng",
+          "Dễ sửa"
+        ],
+        "cons": [
+          "Hàng nghìn chi tiết bắt nối"
+        ],
+        "real": "Đoạn nối giữa hai bồn của bồn ngoài tàu con thoi, bồn nhiên liệu Falcon 9"
       }
     },
     "option:stage_structure/construction/isogrid": {
@@ -2129,7 +2598,14 @@
       },
       "vi": {
         "what": "Tấm dày được phay thành mạng lưới tam giác (isogrid): cứng đều theo mọi hướng, nhưng phần lớn kim loại thành phoi trên sàn.",
-        "name": "Lưới tam giác (isogrid)"
+        "name": "Lưới tam giác (isogrid)",
+        "pros": [
+          "Khối lượng −10 %"
+        ],
+        "cons": [
+          "Giá +15 %"
+        ],
+        "real": "Tầng một Delta II (tấm nhôm lưới tam giác), tầng đẩy Atlas V"
       }
     },
     "option:stage_structure/construction/orthogrid": {
@@ -2138,7 +2614,14 @@
       },
       "vi": {
         "what": "Cùng ý tưởng nhưng lưới ô vuông (orthogrid): dễ phay và hàn thành tấm lớn hơn, hiệu quả kém hơn một chút.",
-        "name": "Lưới ô vuông (orthogrid)"
+        "name": "Lưới ô vuông (orthogrid)",
+        "pros": [
+          "Khối lượng −7 %"
+        ],
+        "cons": [
+          "Giá +8 %"
+        ],
+        "real": "Tầng lõi SLS, lõi tầng đẩy chung của Delta IV"
       }
     },
     "option:stage_structure/construction/corrugated": {
@@ -2147,7 +2630,15 @@
       },
       "vi": {
         "what": "Vỏ dập gợn sóng như mái tôn: rất cứng khi bị nén và rẻ, nhưng nặng hơn và cản gió hơn một chút.",
-        "name": "Vỏ gợn sóng"
+        "name": "Vỏ gợn sóng",
+        "pros": [
+          "Giá −10 %",
+          "Độ tin cậy +0,2 %"
+        ],
+        "cons": [
+          "Khối lượng +3 %"
+        ],
+        "real": "Vành váy trước, khung lực đẩy và vòng nối tầng của Saturn V S-IC (nhôm 7075)"
       }
     },
     "option:stage_structure/construction/composite": {
@@ -2156,7 +2647,15 @@
       },
       "vi": {
         "what": "Hai lớp vỏ mỏng dán lên lõi tổ ong: rất cứng so với sức nặng, nhưng một vết lõm có thể giấu phần lõi đã gãy dưới lớp vỏ trông vẫn lành.",
-        "name": "Bánh kẹp tổ ong"
+        "name": "Bánh kẹp tổ ong",
+        "pros": [
+          "Khối lượng −12 %"
+        ],
+        "cons": [
+          "Giá +30 %",
+          "Độ tin cậy −0,3 %"
+        ],
+        "real": "Vòng nối tầng Falcon 9 (vỏ carbon trên tổ ong nhôm), bộ gắn tải trọng của Ariane, phần lớn các vỏ chụp"
       }
     },
     "slot:stage_structure/joints": {
@@ -2174,7 +2673,14 @@
       },
       "vi": {
         "what": "Tán đinh và bắt bu-lông: mối nối nào cũng kiểm tra và làm lại được.",
-        "name": "Tán đinh và bắt bu-lông"
+        "name": "Tán đinh và bắt bu-lông",
+        "pros": [
+          "Dễ kiểm tra và sửa chữa"
+        ],
+        "cons": [
+          "Chi tiết bắt nối nặng"
+        ],
+        "real": "Saturn V, đoạn nối giữa hai bồn của bồn ngoài tàu con thoi"
       }
     },
     "option:stage_structure/joints/fsw": {
@@ -2183,7 +2689,16 @@
       },
       "vi": {
         "what": "Hàn ma sát khuấy (friction-stir welding): một đầu dao xoay khuấy hai mép vào nhau mà không làm chảy, mối hàn gần chắc bằng chính tấm kim loại.",
-        "name": "Hàn ma sát khuấy"
+        "name": "Hàn ma sát khuấy",
+        "pros": [
+          "Khối lượng −4 %",
+          "Độ tin cậy +0,2 %"
+        ],
+        "cons": [
+          "Giá +10 %",
+          "Máy hàn to và đắt"
+        ],
+        "real": "Falcon 9, tầng lõi SLS, bồn siêu nhẹ của tàu con thoi"
       }
     },
     "option:stage_structure/joints/bonded": {
@@ -2192,7 +2707,15 @@
       },
       "vi": {
         "what": "Mối nối dán keo: phẳng, nhẹ và rẻ, nhưng chỗ keo đã bong trông y hệt chỗ còn bám chắc.",
-        "name": "Dán keo"
+        "name": "Dán keo",
+        "pros": [
+          "Khối lượng −5 %",
+          "Giá −5 %"
+        ],
+        "cons": [
+          "Độ tin cậy −0,4 %"
+        ],
+        "real": "Vòng nối tầng và vỏ chụp bằng vật liệu tổng hợp"
       }
     },
     "slot:tank_h2/bulkhead": {
@@ -2210,7 +2733,15 @@
       },
       "vi": {
         "what": "Hai bồn có nắp vòm riêng và một khúc ngắn ở giữa: đơn giản và an toàn.",
-        "name": "Nắp vòm riêng"
+        "name": "Nắp vòm riêng",
+        "pros": [
+          "Đơn giản",
+          "An toàn"
+        ],
+        "cons": [
+          "Nặng hơn: hai nắp vòm và một khoảng hở"
+        ],
+        "real": "Delta II, Atlas V"
       }
     },
     "option:tank_h2/bulkhead/common": {
@@ -2219,7 +2750,15 @@
       },
       "vi": {
         "what": "Một vách cách nhiệt dùng chung cho cả hai chất lỏng: bớt được một nắp vòm và một mét vỏ, nhưng là phần khó làm nhất của bồn.",
-        "name": "Vách chung"
+        "name": "Vách chung",
+        "pros": [
+          "Khối lượng bồn −8 %"
+        ],
+        "cons": [
+          "Giá +25 %",
+          "Rò rỉ là nhiên liệu trộn với chất oxy hóa"
+        ],
+        "real": "Saturn S-II, Falcon 9, Starship"
       }
     },
     "slot:tank_h2/pressurisation": {
@@ -2237,7 +2776,14 @@
       },
       "vi": {
         "what": "Các bình heli lạnh đặt ngay trong bồn oxy, nơi khí giữ được độ đặc: đã được kiểm chứng, nhưng các bình là mối nguy.",
-        "name": "Bình heli bên trong"
+        "name": "Bình heli bên trong",
+        "pros": [
+          "Đã được kiểm chứng"
+        ],
+        "cons": [
+          "Bình nằm trong bồn (AMOS-6)"
+        ],
+        "real": "Falcon 9, Delta II"
       }
     },
     "option:tank_h2/pressurisation/autogenous": {
@@ -2246,7 +2792,16 @@
       },
       "vi": {
         "what": "Một ít hydro và oxy được động cơ làm ấm rồi dẫn ngược về bồn dưới dạng khí, như bồn ngoài của tàu con thoi: không cần chút heli nào.",
-        "name": "Tự tạo áp (khí nhiên liệu nóng)"
+        "name": "Tự tạo áp (khí nhiên liệu nóng)",
+        "pros": [
+          "Khối lượng −3 %",
+          "Không có heli để mà hết"
+        ],
+        "cons": [
+          "Giá +10 %",
+          "Chỉ hoạt động khi động cơ đã chạy"
+        ],
+        "real": "Starship, bồn ngoài của tàu con thoi"
       }
     },
     "option:tank_h2/pressurisation/heated": {
@@ -2255,7 +2810,16 @@
       },
       "vi": {
         "what": "Heli từ bình lạnh được làm ấm trên động cơ trước khi vào bồn; khí ấm chiếm nhiều chỗ hơn, nên ít bình hơn vẫn đủ việc.",
-        "name": "Heli được làm ấm"
+        "name": "Heli được làm ấm",
+        "pros": [
+          "Khối lượng −1,5 %",
+          "Ít heli phải chở hơn"
+        ],
+        "cons": [
+          "Giá +4 %",
+          "Thêm một bộ trao đổi nhiệt trên động cơ"
+        ],
+        "real": "Falcon 9 (heli được làm ấm), bồn nhiên liệu của Saturn V S-IC"
       }
     },
     "slot:tank_h2/baffles": {
@@ -2273,7 +2837,14 @@
       },
       "vi": {
         "what": "Các vòng hàn vào vách trong bẻ vụn những con sóng: tên lửa chở người nào cũng có.",
-        "name": "Vòng chắn sóng"
+        "name": "Vòng chắn sóng",
+        "pros": [
+          "Nhiên liệu nằm yên"
+        ],
+        "cons": [
+          "Khối lượng +2 %"
+        ],
+        "real": "Mọi tên lửa chở người"
       }
     },
     "option:tank_h2/baffles/none": {
@@ -2282,7 +2853,14 @@
       },
       "vi": {
         "what": "Không có vòng: nhẹ hơn, nhưng năm 2007 nhiên liệu sóng sánh đã làm chuyến bay thứ hai của Falcon 1 quay tròn mất kiểm soát.",
-        "name": "Không có vòng chắn"
+        "name": "Không có vòng chắn",
+        "pros": [
+          "Khối lượng −2 %"
+        ],
+        "cons": [
+          "Độ tin cậy −0,6 %"
+        ],
+        "real": "Chuyến bay thứ hai của Falcon 1 (2007)"
       }
     },
     "option:tank_h2/baffles/antivortex": {
@@ -2291,7 +2869,15 @@
       },
       "vi": {
         "what": "Có vòng chắn, thêm các lá chắn chéo trên mỗi cửa xả, ngăn nhiên liệu đang chảy ra xoáy thành vòng xoáy hút khí vào bơm.",
-        "name": "Vòng chắn và lá chống xoáy"
+        "name": "Vòng chắn và lá chống xoáy",
+        "pros": [
+          "Độ tin cậy +0,2 %"
+        ],
+        "cons": [
+          "Khối lượng +0,5 %",
+          "Giá +2 %"
+        ],
+        "real": "Cửa xả LOX của Saturn V S-IC; mọi tầng tên lửa hiện đại"
       }
     },
     "slot:tank_h2/insulation": {
@@ -2309,7 +2895,14 @@
       },
       "vi": {
         "what": "Bọt cách nhiệt màu cam phun lên vỏ, đã tính sẵn trong số liệu của bồn: thiếu nó, hydro bay hơi trong vài phút và không khí đóng băng trên vỏ.",
-        "name": "Bọt phun, như thiết kế"
+        "name": "Bọt phun, như thiết kế",
+        "pros": [
+          "Hydro vẫn ở thể lỏng khi nằm trên bệ và khi bay lên"
+        ],
+        "cons": [
+          "Có thể bong mảng khi bay lên: một mảng đã va vào Columbia"
+        ],
+        "real": "Bồn ngoài của tàu con thoi, tầng lõi SLS, Delta IV"
       }
     },
     "option:tank_h2/insulation/bare": {
@@ -2318,7 +2911,16 @@
       },
       "vi": {
         "what": "Không có bọt: nhẹ và rẻ hơn, nhưng hydro bay hơi nhanh, băng bám dày trên vỏ, và động cơ khởi động bằng nhiên liệu ấm hơn.",
-        "name": "Kim loại trần"
+        "name": "Kim loại trần",
+        "pros": [
+          "Khối lượng −3 %",
+          "Giá −5 %"
+        ],
+        "cons": [
+          "Độ tin cậy −0,2 %",
+          "Đóng băng và bay hơi trên bệ"
+        ],
+        "real": "Chỉ các bồn thử nghiệm dùng ngắn hạn"
       }
     },
     "option:tank_h2/insulation/mli": {
@@ -2327,7 +2929,16 @@
       },
       "vi": {
         "what": "Bọt cho lúc nằm trên bệ và lúc bay lên, phủ thêm chăn giấy bạc vàng cho chuyến đi dài, thứ gần như chặn hết hơi nóng Mặt Trời trong chân không.",
-        "name": "Bọt dưới chăn nhiều lớp"
+        "name": "Bọt dưới chăn nhiều lớp",
+        "pros": [
+          "Độ tin cậy +0,2 %",
+          "Hàng tuần trong không gian mà ít bay hơi"
+        ],
+        "cons": [
+          "Khối lượng +2 %",
+          "Giá +12 %"
+        ],
+        "real": "Các tầng trên chạy hydro bay dài và thử nghiệm lưu trữ siêu lạnh của NASA"
       }
     },
     "slot:tank_h2/feedline": {
@@ -2345,7 +2956,14 @@
       },
       "vi": {
         "what": "Mỗi chất lỏng một ống lớn, như phần lớn các tên lửa.",
-        "name": "Một ống dẫn"
+        "name": "Một ống dẫn",
+        "pros": [
+          "Nhẹ"
+        ],
+        "cons": [
+          "Một van hỏng là động cơ ngừng"
+        ],
+        "real": "Phần lớn các tầng tên lửa"
       }
     },
     "option:tank_h2/feedline/dual": {
@@ -2354,7 +2972,15 @@
       },
       "vi": {
         "what": "Mỗi chất lỏng hai ống, hai van, nên hỏng một vẫn còn một.",
-        "name": "Ống dẫn dự phòng"
+        "name": "Ống dẫn dự phòng",
+        "pros": [
+          "Độ tin cậy +0,4 %"
+        ],
+        "cons": [
+          "Khối lượng +1,5 %",
+          "Giá +8 %"
+        ],
+        "real": "Saturn V S-IC (năm ống dẫn)"
       }
     },
     "option:tank_h2/feedline/tunnel": {
@@ -2363,7 +2989,16 @@
       },
       "vi": {
         "what": "Ống của bồn trên chạy thẳng xuống xuyên giữa lòng bồn dưới trong một đường hầm cách nhiệt: đường ngắn nhất, nhưng mỗi nắp vòm phải khoét thêm một lỗ.",
-        "name": "Đường hầm xuyên bồn"
+        "name": "Đường hầm xuyên bồn",
+        "pros": [
+          "Độ tin cậy +0,2 %",
+          "Đường ngắn nhất tới động cơ"
+        ],
+        "cons": [
+          "Khối lượng +1 %",
+          "Giá +5 %"
+        ],
+        "real": "Saturn V S-IC (năm đường hầm LOX xuyên qua bồn nhiên liệu), ống chuyển LOX của Falcon 9, ống dẫn metan xuống của Super Heavy"
       }
     },
     "slot:tank_common_h2/bulkhead": {
@@ -2381,7 +3016,14 @@
       },
       "vi": {
         "what": "Vách chung đúng như thiết kế: hai lớp kim loại dán lên lõi tổ ong, để hydro không làm oxy đông cứng. Nó đã tính sẵn trong số liệu của bồn.",
-        "name": "Vách chung, như thiết kế"
+        "name": "Vách chung, như thiết kế",
+        "pros": [
+          "Bớt được một nắp vòm và đoạn nối giữa hai bồn"
+        ],
+        "cons": [
+          "Rò rỉ là nhiên liệu trộn với chất oxy hóa"
+        ],
+        "real": "Saturn V S-II và S-IVB (tổ ong phenolic)"
       }
     },
     "option:tank_common_h2/bulkhead/honeycomb": {
@@ -2390,7 +3032,15 @@
       },
       "vi": {
         "what": "Hai lớp vỏ dán lên một lõi tổ ong dày hơn, nên chất lỏng này không làm ấm hay đông cứng chất lỏng kia; từng ô của lớp keo đều được kiểm tra.",
-        "name": "Tổ ong kẹp, cách nhiệt thêm"
+        "name": "Tổ ong kẹp, cách nhiệt thêm",
+        "pros": [
+          "Độ tin cậy +0,3 %"
+        ],
+        "cons": [
+          "Khối lượng +2 %",
+          "Giá +12 %"
+        ],
+        "real": "Lõi dày hơn từng được nghiên cứu cho các tầng hydro bay dài; Centaur III dùng tổ ong sợi thủy tinh"
       }
     },
     "option:tank_common_h2/bulkhead/thin": {
@@ -2399,7 +3049,15 @@
       },
       "vi": {
         "what": "Bể axit ăn mòn bớt kim loại ở những chỗ chịu lực nhẹ: nhẹ hơn, nhưng ít dư địa cho ngày xui.",
-        "name": "Mỏng, ăn mòn hóa học"
+        "name": "Mỏng, ăn mòn hóa học",
+        "pros": [
+          "Khối lượng −3 %"
+        ],
+        "cons": [
+          "Giá +5 %",
+          "Độ tin cậy −0,4 %"
+        ],
+        "real": "Ăn mòn hóa học, dùng cho vỏ bồn và các mảnh nắp vòm từ thời các tầng Saturn"
       }
     },
     "slot:tank_common_h2/pressurisation": {
@@ -2417,7 +3075,14 @@
       },
       "vi": {
         "what": "Các bình heli lạnh đặt ngay trong bồn oxy, nơi khí giữ được độ đặc: đã được kiểm chứng, nhưng các bình là mối nguy.",
-        "name": "Bình heli bên trong"
+        "name": "Bình heli bên trong",
+        "pros": [
+          "Đã được kiểm chứng"
+        ],
+        "cons": [
+          "Bình nằm trong bồn (AMOS-6)"
+        ],
+        "real": "Falcon 9, Delta II"
       }
     },
     "option:tank_common_h2/pressurisation/autogenous": {
@@ -2426,7 +3091,16 @@
       },
       "vi": {
         "what": "Một ít hydro và oxy được động cơ làm ấm rồi dẫn ngược về bồn dưới dạng khí: không cần chút heli nào.",
-        "name": "Tự tạo áp (khí nhiên liệu nóng)"
+        "name": "Tự tạo áp (khí nhiên liệu nóng)",
+        "pros": [
+          "Khối lượng −3 %",
+          "Không có heli để mà hết"
+        ],
+        "cons": [
+          "Giá +10 %",
+          "Chỉ hoạt động khi động cơ đã chạy"
+        ],
+        "real": "Starship, bồn ngoài của tàu con thoi"
       }
     },
     "option:tank_common_h2/pressurisation/heated": {
@@ -2435,7 +3109,16 @@
       },
       "vi": {
         "what": "Heli từ bình lạnh được làm ấm trên động cơ trước khi vào bồn; khí ấm chiếm nhiều chỗ hơn, nên ít bình hơn vẫn đủ việc.",
-        "name": "Heli được làm ấm"
+        "name": "Heli được làm ấm",
+        "pros": [
+          "Khối lượng −1,5 %",
+          "Ít heli phải chở hơn"
+        ],
+        "cons": [
+          "Giá +4 %",
+          "Thêm một bộ trao đổi nhiệt trên động cơ"
+        ],
+        "real": "Falcon 9 (heli được làm ấm), bồn nhiên liệu của Saturn V S-IC"
       }
     },
     "slot:tank_common_h2/baffles": {
@@ -2453,7 +3136,14 @@
       },
       "vi": {
         "what": "Các vòng hàn vào vách trong bẻ vụn những con sóng: tên lửa chở người nào cũng có.",
-        "name": "Vòng chắn sóng"
+        "name": "Vòng chắn sóng",
+        "pros": [
+          "Nhiên liệu nằm yên"
+        ],
+        "cons": [
+          "Khối lượng +2 %"
+        ],
+        "real": "Mọi tên lửa chở người"
       }
     },
     "option:tank_common_h2/baffles/none": {
@@ -2462,7 +3152,14 @@
       },
       "vi": {
         "what": "Không có vòng: nhẹ hơn, nhưng năm 2007 nhiên liệu sóng sánh đã làm chuyến bay thứ hai của Falcon 1 quay tròn mất kiểm soát.",
-        "name": "Không có vòng chắn"
+        "name": "Không có vòng chắn",
+        "pros": [
+          "Khối lượng −2 %"
+        ],
+        "cons": [
+          "Độ tin cậy −0,6 %"
+        ],
+        "real": "Chuyến bay thứ hai của Falcon 1 (2007)"
       }
     },
     "option:tank_common_h2/baffles/antivortex": {
@@ -2471,7 +3168,15 @@
       },
       "vi": {
         "what": "Có vòng chắn, thêm các lá chắn chéo trên mỗi cửa xả, ngăn nhiên liệu đang chảy ra xoáy thành vòng xoáy hút khí vào bơm.",
-        "name": "Vòng chắn và lá chống xoáy"
+        "name": "Vòng chắn và lá chống xoáy",
+        "pros": [
+          "Độ tin cậy +0,2 %"
+        ],
+        "cons": [
+          "Khối lượng +0,5 %",
+          "Giá +2 %"
+        ],
+        "real": "Cửa xả LOX của Saturn V S-IC; mọi tầng tên lửa hiện đại"
       }
     },
     "slot:tank_common_h2/insulation": {
@@ -2489,7 +3194,14 @@
       },
       "vi": {
         "what": "Bọt cách nhiệt màu cam phun lên vỏ, đã tính sẵn trong số liệu của bồn: thiếu nó, hydro bay hơi trong vài phút và không khí đóng băng trên vỏ.",
-        "name": "Bọt phun, như thiết kế"
+        "name": "Bọt phun, như thiết kế",
+        "pros": [
+          "Hydro vẫn ở thể lỏng khi nằm trên bệ và khi bay lên"
+        ],
+        "cons": [
+          "Có thể bong mảng khi bay lên: một mảng đã va vào Columbia"
+        ],
+        "real": "Bồn ngoài của tàu con thoi, tầng lõi SLS, Delta IV"
       }
     },
     "option:tank_common_h2/insulation/bare": {
@@ -2498,7 +3210,16 @@
       },
       "vi": {
         "what": "Không có bọt: nhẹ và rẻ hơn, nhưng hydro bay hơi nhanh, băng bám dày trên vỏ, và động cơ khởi động bằng nhiên liệu ấm hơn.",
-        "name": "Kim loại trần"
+        "name": "Kim loại trần",
+        "pros": [
+          "Khối lượng −3 %",
+          "Giá −5 %"
+        ],
+        "cons": [
+          "Độ tin cậy −0,2 %",
+          "Đóng băng và bay hơi trên bệ"
+        ],
+        "real": "Chỉ các bồn thử nghiệm dùng ngắn hạn"
       }
     },
     "option:tank_common_h2/insulation/mli": {
@@ -2507,7 +3228,16 @@
       },
       "vi": {
         "what": "Bọt cho lúc nằm trên bệ và lúc bay lên, phủ thêm chăn giấy bạc vàng cho chuyến đi dài, thứ gần như chặn hết hơi nóng Mặt Trời trong chân không.",
-        "name": "Bọt dưới chăn nhiều lớp"
+        "name": "Bọt dưới chăn nhiều lớp",
+        "pros": [
+          "Độ tin cậy +0,2 %",
+          "Hàng tuần trong không gian mà ít bay hơi"
+        ],
+        "cons": [
+          "Khối lượng +2 %",
+          "Giá +12 %"
+        ],
+        "real": "Các tầng trên chạy hydro bay dài và thử nghiệm lưu trữ siêu lạnh của NASA"
       }
     },
     "slot:tank_common_h2/feedline": {
@@ -2525,7 +3255,14 @@
       },
       "vi": {
         "what": "Mỗi chất lỏng một ống lớn, như phần lớn các tên lửa.",
-        "name": "Một ống dẫn"
+        "name": "Một ống dẫn",
+        "pros": [
+          "Nhẹ"
+        ],
+        "cons": [
+          "Một van hỏng là động cơ ngừng"
+        ],
+        "real": "Phần lớn các tầng tên lửa"
       }
     },
     "option:tank_common_h2/feedline/dual": {
@@ -2534,7 +3271,15 @@
       },
       "vi": {
         "what": "Mỗi chất lỏng hai ống, hai van, nên hỏng một vẫn còn một.",
-        "name": "Ống dẫn dự phòng"
+        "name": "Ống dẫn dự phòng",
+        "pros": [
+          "Độ tin cậy +0,4 %"
+        ],
+        "cons": [
+          "Khối lượng +1,5 %",
+          "Giá +8 %"
+        ],
+        "real": "Saturn V S-IC (năm ống dẫn)"
       }
     },
     "option:tank_common_h2/feedline/tunnel": {
@@ -2543,7 +3288,16 @@
       },
       "vi": {
         "what": "Ống của bồn trên chạy thẳng xuống xuyên giữa lòng bồn dưới trong một đường hầm cách nhiệt: đường ngắn nhất, nhưng mỗi nắp vòm phải khoét thêm một lỗ.",
-        "name": "Đường hầm xuyên bồn"
+        "name": "Đường hầm xuyên bồn",
+        "pros": [
+          "Độ tin cậy +0,2 %",
+          "Đường ngắn nhất tới động cơ"
+        ],
+        "cons": [
+          "Khối lượng +1 %",
+          "Giá +5 %"
+        ],
+        "real": "Saturn V S-IC (năm đường hầm LOX xuyên qua bồn nhiên liệu), ống chuyển LOX của Falcon 9, ống dẫn metan xuống của Super Heavy"
       }
     },
     "shape:body/methalox_core": {

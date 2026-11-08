@@ -400,7 +400,7 @@
           "Nhẹ hơn vật liệu cháy mòn"
         ],
         "cons": [
-          "Mới trở về từ quỹ đạo một lần (LOFTID 2022)",
+          "Mới trở về từ quỹ đạo đúng một lần (LOFTID, 2022)",
           "Độ tin cậy 95 %"
         ],
         "real": "LOFTID / HIAD của NASA (2022)",
@@ -821,7 +821,7 @@
         "cons": [
           "350 kg chở theo suốt chặng đường",
           "Vừa cỡ khoang lái nhỏ",
-          "Chỉ tính một lần nếu có cả động cơ thoát hiểm gắn vách: chọn một hệ thống thoát hiểm thôi"
+          "Chỉ một hệ thống thoát hiểm được tính: tháp và động cơ thoát hiểm gắn vách dùng chung một phần thưởng"
         ],
         "real": "Hệ thống thoát hiểm Mercury: động cơ Grand Central 1-KS-52000, 52.000 lbf (231 kN) trong khoảng 1 s qua ba vòi phun xiên; 1.015 lb (460 kg), gồm cả 236 lb vật dằn",
         "name": "Tháp thoát hiểm kiểu Mercury"
@@ -847,8 +847,8 @@
         ],
         "cons": [
           "1 tấn chở theo suốt chặng đường",
-          "Cần một nắp chụp hoặc mũi khoang lái chắc để đứng lên",
-          "Chỉ tính một lần nếu có cả động cơ thoát hiểm gắn vách: chọn một hệ thống thoát hiểm thôi"
+          "Bốn chân của nó tì mạnh lên phần mũi bên dưới",
+          "Chỉ một hệ thống thoát hiểm được tính: tháp và động cơ thoát hiểm gắn vách dùng chung một phần thưởng"
         ],
         "real": "Hệ thống thoát hiểm Apollo (LES): dài 33 ft (10 m), khoảng 8.000 lb (3,6 tấn); động cơ thoát hiểm khoảng 147.000 lbf (654 kN) trong 3,2 s; động cơ tách tháp 31.500 lbf; động cơ chỉnh chúc ngóc 2.420 lbf; khung giàn titan 10 ft",
         "name": "Tháp thoát hiểm kiểu Apollo"
@@ -875,8 +875,8 @@
         ],
         "cons": [
           "1,4 tấn chở theo suốt chặng đường",
-          "Mặt hông lớn ở trên cao: cần vây tốt",
-          "Chỉ tính một lần nếu có cả động cơ thoát hiểm gắn vách: chọn một hệ thống thoát hiểm thôi"
+          "Mặt hông lớn ở trên cao: kéo tâm áp lên phía trước",
+          "Chỉ một hệ thống thoát hiểm được tính: tháp và động cơ thoát hiểm gắn vách dùng chung một phần thưởng"
         ],
         "real": "SAS của Soyuz: khối thoát hiểm 7.635 kg, lực đẩy tới 76 tấn (745 kN) từ khoảng 4 tấn thuốc phóng rắn, bốn cánh ổn định gập; Soyuz T-10a (1983), MS-10 (2018)",
         "name": "Tháp thoát hiểm và vỏ chụp kiểu Soyuz"
@@ -904,7 +904,7 @@
         "cons": [
           "1,25 tấn chở theo suốt chặng đường",
           "Hệ thống thoát hiểm đắt nhất",
-          "Chỉ tính một lần nếu có cả động cơ thoát hiểm gắn vách: chọn một hệ thống thoát hiểm thôi"
+          "Chỉ một hệ thống thoát hiểm được tính: tháp và động cơ thoát hiểm gắn vách dùng chung một phần thưởng"
         ],
         "real": "LAS của Orion: động cơ thoát hiểm khoảng 400.000 lbf (1,8 MN), động cơ điều khiển tư thế cho lực lái tới 7.000 lbf, động cơ tách tháp trên 40.000 lbf; Pad Abort-1 (2010), Ascent Abort-2 (2019)",
         "name": "Hệ thống thoát hiểm kiểu Orion"
@@ -1162,7 +1162,7 @@
         "cons": [
           "Mỗi khối 130 kg, một bộ có bốn khối",
           "Nhiên liệu tự cháy (hypergolic) độc",
-          "Chỉ tính một lần nếu có cả tháp thoát hiểm: chọn một hệ thống thoát hiểm thôi"
+          "Chỉ một hệ thống thoát hiểm được tính: tháp và động cơ thoát hiểm gắn vách dùng chung một phần thưởng"
         ],
         "real": "SuperDraco: 71 kN (16.000 lbf), buồng đốt Inconel in 3D, 8 chiếc trên mỗi Crew Dragon trong 4 khối; Starliner: 4 động cơ thoát hiểm RS-88, mỗi chiếc 40.000 lbf (180 kN)",
         "name": "Khối động cơ thoát hiểm"
@@ -1208,7 +1208,15 @@
       },
       "vi": {
         "what": "Một máy tính duy nhất: rẻ và nhẹ, không có dự phòng.",
-        "name": "Một máy tính"
+        "name": "Một máy tính",
+        "pros": [
+          "Rẻ",
+          "Nhẹ"
+        ],
+        "cons": [
+          "Không có dự phòng"
+        ],
+        "real": "Mercury, Gemini"
       }
     },
     "option:capsule/computer/triple": {
@@ -1217,7 +1225,15 @@
       },
       "vi": {
         "what": "Ba máy tính kiểm tra lẫn nhau và bỏ phiếu cho từng lệnh, nên một chiếc hỏng cũng không ai nhận ra.",
-        "name": "Ba máy tính bỏ phiếu"
+        "name": "Ba máy tính bỏ phiếu",
+        "pros": [
+          "Độ tin cậy +2 %"
+        ],
+        "cons": [
+          "+60 kg",
+          "+150 nghìn đô"
+        ],
+        "real": "Dragon, Soyuz"
       }
     },
     "option:capsule/computer/quad": {
@@ -1226,7 +1242,15 @@
       },
       "vi": {
         "what": "Bốn máy tính giống hệt nhau cộng một máy thứ năm chạy phần mềm khác, như trên tàu con thoi, để ngay cả một lỗi phần mềm chung của cả bốn cũng không làm tàu tê liệt.",
-        "name": "Bốn máy cộng một dự phòng"
+        "name": "Bốn máy cộng một dự phòng",
+        "pros": [
+          "Độ tin cậy +3 %"
+        ],
+        "cons": [
+          "+90 kg",
+          "+260 nghìn đô"
+        ],
+        "real": "Các máy tính GPC của tàu con thoi"
       }
     },
     "slot:capsule/lifeSupport": {
@@ -1244,7 +1268,14 @@
       },
       "vi": {
         "what": "Oxy lấy từ bình, khí cacbonic hút vào hộp lọc, nước lấy từ túi: đơn giản, và chỉ dùng được tới khi kho cạn.",
-        "name": "Vòng hở"
+        "name": "Vòng hở",
+        "pros": [
+          "Đơn giản"
+        ],
+        "cons": [
+          "Kho dự trữ đủ vài tuần, không phải vài tháng"
+        ],
+        "real": "Apollo, Dragon"
       }
     },
     "option:capsule/lifeSupport/regenerative": {
@@ -1253,7 +1284,15 @@
       },
       "vi": {
         "what": "Nước được tách ra để lấy oxy, khí cacbonic được lọc và tái chế, như trên Trạm Vũ trụ Quốc tế: nặng hơn, nhưng chạy được nhiều tháng.",
-        "name": "Vòng tái sinh"
+        "name": "Vòng tái sinh",
+        "pros": [
+          "Chạy được nhiều tháng"
+        ],
+        "cons": [
+          "+120 kg",
+          "+200 nghìn đô"
+        ],
+        "real": "ECLSS của ISS"
       }
     },
     "slot:capsule/couches": {
@@ -1271,7 +1310,14 @@
       },
       "vi": {
         "what": "Ghế có đệm bắt chặt vào sàn: nhẹ, nhưng phi hành đoàn chịu trọn cú hạ cánh mạnh.",
-        "name": "Ghế cố định"
+        "name": "Ghế cố định",
+        "pros": [
+          "Nhẹ"
+        ],
+        "cons": [
+          "Chịu trọn cú hạ cánh mạnh"
+        ],
+        "real": "Ghế đúc theo dáng của Mercury, làm riêng cho từng phi hành gia"
       }
     },
     "option:capsule/couches/shock": {
@@ -1280,7 +1326,15 @@
       },
       "vi": {
         "what": "Ghế treo trên các thanh chống có thể bẹp lại để đỡ cú hạ cánh mạnh, giống ghế của Apollo và Orion.",
-        "name": "Ghế giảm chấn"
+        "name": "Ghế giảm chấn",
+        "pros": [
+          "Sống sót qua cú chạm đất mạnh",
+          "Độ tin cậy +0,4 %"
+        ],
+        "cons": [
+          "+40 kg"
+        ],
+        "real": "Apollo, Orion"
       }
     },
     "option:capsule/couches/ejection": {
@@ -1289,7 +1343,16 @@
       },
       "vi": {
         "what": "Mỗi ghế là một tên lửa nhỏ, phóng phi hành gia ra ngoài rồi bung dù: một lối thoát không cần tháp, nhưng chỉ dùng được khi còn thấp và chậm.",
-        "name": "Ghế phóng thoát hiểm"
+        "name": "Ghế phóng thoát hiểm",
+        "pros": [
+          "Lối thoát không cần tháp",
+          "Độ tin cậy +0,6 %"
+        ],
+        "cons": [
+          "+150 kg",
+          "Chỉ dùng được khi còn thấp và chậm"
+        ],
+        "real": "Gemini (dùng được tới độ cao khoảng 4,6 km), Vostok (phi hành gia phóng ra ngoài ở mỗi lần hạ cánh)"
       }
     },
     "slot:capsule/windows": {
@@ -1307,7 +1370,14 @@
       },
       "vi": {
         "what": "Hai ô kính nhỏ bằng thạch anh nung chảy: vách chắc nhất, nhưng nhìn được ít.",
-        "name": "Ô cửa nhỏ"
+        "name": "Ô cửa nhỏ",
+        "pros": [
+          "Vách chắc nhất"
+        ],
+        "cons": [
+          "Nhìn được ít"
+        ],
+        "real": "Soyuz"
       }
     },
     "option:capsule/windows/panoramic": {
@@ -1316,7 +1386,15 @@
       },
       "vi": {
         "what": "Cửa sổ lớn ba lớp kính: khung cảnh đáng nhớ suốt đời, đổi lại vách nặng hơn và yếu hơn.",
-        "name": "Cửa sổ toàn cảnh"
+        "name": "Cửa sổ toàn cảnh",
+        "pros": [
+          "Khung cảnh"
+        ],
+        "cons": [
+          "+50 kg",
+          "Độ tin cậy −0,4 %"
+        ],
+        "real": "Mái vòm kính của Dragon"
       }
     },
     "slot:capsule/hatch": {
@@ -1334,7 +1412,14 @@
       },
       "vi": {
         "what": "Mở ra ngoài trong vài giây, kể cả khi áp suất trong khoang đang ép vào: đây là quy tắc từ sau vụ cháy Apollo 1 năm 1967.",
-        "name": "Mở ra ngoài, nhả nhanh"
+        "name": "Mở ra ngoài, nhả nhanh",
+        "pros": [
+          "Phi hành đoàn ra ngoài trong vài giây"
+        ],
+        "cons": [
+          "Cần chốt khóa chắc"
+        ],
+        "real": "Apollo (sau Apollo 1), Dragon"
       }
     },
     "option:capsule/hatch/inward": {
@@ -1343,7 +1428,16 @@
       },
       "vi": {
         "what": "Áp suất trong khoang ép nó đóng chặt hơn, nên không mở vội được: phi hành đoàn Apollo 1 đã thiệt mạng sau một cánh cửa như thế.",
-        "name": "Cửa nút mở vào trong"
+        "name": "Cửa nút mở vào trong",
+        "pros": [
+          "−20 nghìn đô",
+          "Tự bịt kín"
+        ],
+        "cons": [
+          "Không mở được khi khoang cháy",
+          "Độ tin cậy −1 %"
+        ],
+        "real": "Apollo 1 (1967)"
       }
     },
     "slot:fairing/split": {
@@ -1361,7 +1455,12 @@
       },
       "vi": {
         "what": "Nó tách đôi ở giữa thành hai nửa, xoay ra ngoài trên bản lề.",
-        "name": "Hai nửa"
+        "name": "Hai nửa",
+        "pros": [
+          "Tiêu chuẩn"
+        ],
+        "cons": [],
+        "real": "Falcon 9, Delta II"
       }
     },
     "option:fairing/split/trisector": {
@@ -1370,7 +1469,14 @@
       },
       "vi": {
         "what": "Ba cánh nhẹ hơn, mỗi cánh có bộ đẩy riêng: nhẹ hơn 5 %, nhưng thêm nhiều cơ cấu có thể hỏng.",
-        "name": "Ba cánh"
+        "name": "Ba cánh",
+        "pros": [
+          "Khối lượng −5 %"
+        ],
+        "cons": [
+          "Nhiều cơ cấu hơn"
+        ],
+        "real": "Titan IV; vỏ chụp kim loại ba cánh 5 m của Delta IV Heavy"
       }
     },
     "slot:fairing/acoustic": {
@@ -1388,7 +1494,14 @@
       },
       "vi": {
         "what": "Vỏ trần: nhẹ nhất, nhưng lúc rời bệ bên trong ồn khoảng 140 đề-xi-ben, to như đứng gần động cơ phản lực.",
-        "name": "Không có"
+        "name": "Không có",
+        "pros": [
+          "Nhẹ nhất"
+        ],
+        "cons": [
+          "Thiết bị bị tiếng ồn làm rung"
+        ],
+        "real": ""
       }
     },
     "option:fairing/acoustic/blankets": {
@@ -1397,7 +1510,14 @@
       },
       "vi": {
         "what": "Tấm xốp và sợi giảm tiếng ồn 10 đề-xi-ben, tức năng lượng âm thanh chỉ còn một phần mười.",
-        "name": "Chăn tiêu âm"
+        "name": "Chăn tiêu âm",
+        "pros": [
+          "Độ tin cậy +0,3 %"
+        ],
+        "cons": [
+          "+30 kg"
+        ],
+        "real": "Mọi vỏ chụp hiện đại"
       }
     },
     "slot:fairing/pushers": {
@@ -1415,7 +1535,14 @@
       },
       "vi": {
         "what": "Bu-lông nổ và dây cắt bằng thuốc nổ (pyrotechnic): đã được kiểm chứng, nhưng tiếng nổ đột ngột làm rung tải trọng.",
-        "name": "Thuốc nổ"
+        "name": "Thuốc nổ",
+        "pros": [
+          "Đã được kiểm chứng"
+        ],
+        "cons": [
+          "Gây chấn động cho tải trọng"
+        ],
+        "real": "Delta II"
       }
     },
     "option:fairing/pushers/pneumatic": {
@@ -1424,7 +1551,15 @@
       },
       "vi": {
         "what": "Pít-tông khí đẩy hai nửa ra nhẹ nhàng, như trên Falcon 9.",
-        "name": "Pít-tông khí"
+        "name": "Pít-tông khí",
+        "pros": [
+          "Nhẹ nhàng",
+          "Độ tin cậy +0,2 %"
+        ],
+        "cons": [
+          "+15 nghìn đô"
+        ],
+        "real": "Falcon 9"
       }
     },
     "slot:shield/thickness": {
@@ -1442,7 +1577,10 @@
       },
       "vi": {
         "what": "Đủ cho một lần vào khí quyển, có chừa biên an toàn.",
-        "name": "Tiêu chuẩn"
+        "name": "Tiêu chuẩn",
+        "pros": [],
+        "cons": [],
+        "real": ""
       }
     },
     "option:shield/thickness/thick": {
@@ -1451,7 +1589,14 @@
       },
       "vi": {
         "what": "Thêm một phần tư vật liệu cho lần vào khí quyển dốc hoặc rất nhanh: an toàn hơn và nặng hơn.",
-        "name": "Dày"
+        "name": "Dày",
+        "pros": [
+          "Độ tin cậy +1 %"
+        ],
+        "cons": [
+          "Khối lượng +25 %"
+        ],
+        "real": "Stardust (vào khí quyển ở 12,9 km/s)"
       }
     },
     "slot:shield/gaps": {
@@ -1469,7 +1614,14 @@
       },
       "vi": {
         "what": "Các khối có chất trám mềm ở giữa: kiểu tiêu chuẩn, nhưng chất trám nhô ra có thể khuấy động luồng khí nóng.",
-        "name": "Chất trám khe"
+        "name": "Chất trám khe",
+        "pros": [
+          "Tiêu chuẩn"
+        ],
+        "cons": [
+          "Chất trám có thể nhô ra và khuấy luồng khí"
+        ],
+        "real": "Orion (Artemis I)"
       }
     },
     "option:shield/gaps/monolithic": {
@@ -1478,7 +1630,15 @@
       },
       "vi": {
         "what": "Cả tấm chắn làm thành một khối: không có đường nối, nhưng khó làm và đắt hơn.",
-        "name": "Một khối"
+        "name": "Một khối",
+        "pros": [
+          "Không có đường nối",
+          "Độ tin cậy +0,5 %"
+        ],
+        "cons": [
+          "Giá +20 %"
+        ],
+        "real": "Lớp Avcoat tổ ong của Apollo"
       }
     },
     "slot:chute/canopy": {
@@ -1496,7 +1656,12 @@
       },
       "vi": {
         "what": "Kiểu đĩa-khe-dải (disk-gap-band), chuẩn cho Sao Hỏa: một đĩa vải, một khe hở, rồi một dải vải, nên mở được khi còn nhanh hơn âm thanh mà không rách.",
-        "name": "Đĩa-khe-dải"
+        "name": "Đĩa-khe-dải",
+        "pros": [
+          "Mở ở Mach 1,7"
+        ],
+        "cons": [],
+        "real": "Từ Viking tới Perseverance"
       }
     },
     "option:chute/canopy/ringsail": {
@@ -1505,7 +1670,14 @@
       },
       "vi": {
         "what": "Các vòng vải buồm có khe hở ở giữa: lực cản nhiều hơn 15 %, nhưng phải mở ở thấp hơn và chậm hơn.",
-        "name": "Vòng buồm (ringsail)"
+        "name": "Vòng buồm (ringsail)",
+        "pros": [
+          "Lực cản +15 %"
+        ],
+        "cons": [
+          "Phải mở chậm hơn, thấp hơn"
+        ],
+        "real": "Dù chính của Apollo, Orion"
       }
     },
     "option:chute/canopy/ribbon": {
@@ -1514,7 +1686,15 @@
       },
       "vi": {
         "what": "Những dải băng vải có khe hở cho không khí lọt qua, nên chịu được cú mở ở tốc độ cao, đổi lại lực cản ít hơn 20 %.",
-        "name": "Dải băng hình nón"
+        "name": "Dải băng hình nón",
+        "pros": [
+          "Mở nhanh và ở trên cao",
+          "Độ tin cậy +0,4 %"
+        ],
+        "cons": [
+          "Lực cản −20 %"
+        ],
+        "real": "Dù mồi của Apollo và Orion"
       }
     },
     "slot:chute/reefing": {
@@ -1532,7 +1712,14 @@
       },
       "vi": {
         "what": "Mở hết một lần: một cú giật mạnh có thể xé rách dù yếu.",
-        "name": "Mở hết một lần"
+        "name": "Mở hết một lần",
+        "pros": [
+          "Đơn giản"
+        ],
+        "cons": [
+          "Lực đỉnh xé rách dù yếu"
+        ],
+        "real": ""
       }
     },
     "option:chute/reefing/staged": {
@@ -1541,7 +1728,14 @@
       },
       "vi": {
         "what": "Một sợi dây giữ tán dù khép bớt, rồi các dao cắt nhỏ thả nó ra từng nấc, giảm một nửa cú giật mạnh nhất.",
-        "name": "Mở theo nấc"
+        "name": "Mở theo nấc",
+        "pros": [
+          "Độ tin cậy +0,4 %"
+        ],
+        "cons": [
+          "+8 nghìn đô"
+        ],
+        "real": "Orion, Dragon"
       }
     },
     "slot:ablative_shield/thickness": {
@@ -1559,7 +1753,10 @@
       },
       "vi": {
         "what": "Đủ cho một lần vào khí quyển, có chừa biên an toàn.",
-        "name": "Tiêu chuẩn"
+        "name": "Tiêu chuẩn",
+        "pros": [],
+        "cons": [],
+        "real": ""
       }
     },
     "option:ablative_shield/thickness/thick": {
@@ -1568,7 +1765,14 @@
       },
       "vi": {
         "what": "Thêm một phần tư vật liệu cháy mòn (ablator) cho lần vào khí quyển dốc hoặc rất nhanh, như tàu Stardust ở 12,9 km/s: an toàn hơn và nặng hơn.",
-        "name": "Dày"
+        "name": "Dày",
+        "pros": [
+          "Độ tin cậy +1 %"
+        ],
+        "cons": [
+          "Khối lượng +25 %"
+        ],
+        "real": "Stardust (vào khí quyển ở 12,9 km/s)"
       }
     },
     "slot:ablative_shield/gaps": {
@@ -1586,7 +1790,14 @@
       },
       "vi": {
         "what": "Các khối có chất trám mềm ở giữa, như Orion từ chuyến Artemis I: kiểu tiêu chuẩn, nhưng chất trám nhô ra có thể khuấy động luồng khí nóng.",
-        "name": "Chất trám khe"
+        "name": "Chất trám khe",
+        "pros": [
+          "Tiêu chuẩn"
+        ],
+        "cons": [
+          "Chất trám có thể nhô ra và khuấy luồng khí"
+        ],
+        "real": "Orion (Artemis I)"
       }
     },
     "option:ablative_shield/gaps/monolithic": {
@@ -1595,7 +1806,15 @@
       },
       "vi": {
         "what": "Cả tấm chắn đúc thành một khối, như trên Apollo: không có đường nối, nhưng khó làm và đắt hơn.",
-        "name": "Một khối"
+        "name": "Một khối",
+        "pros": [
+          "Không có đường nối",
+          "Độ tin cậy +0,5 %"
+        ],
+        "cons": [
+          "Giá +20 %"
+        ],
+        "real": "Lớp Avcoat tổ ong của Apollo"
       }
     },
     "slot:ablative_shield/ablator": {
@@ -1613,7 +1832,14 @@
       },
       "vi": {
         "what": "Sợi silica trong nhựa epoxy, được bơm bằng tay vào từng ô của lõi tổ ong, như trên Apollo và Orion: đã được kiểm chứng khi trở về từ Mặt Trăng, nhưng làm rất lâu.",
-        "name": "Avcoat trong tổ ong"
+        "name": "Avcoat trong tổ ong",
+        "pros": [
+          "Đã được kiểm chứng khi trở về từ Mặt Trăng"
+        ],
+        "cons": [
+          "Làm lâu: từng ô được bơm bằng tay"
+        ],
+        "real": "Apollo, Orion"
       }
     },
     "option:ablative_shield/ablator/pica": {
@@ -1622,7 +1848,16 @@
       },
       "vi": {
         "what": "Một khối carbon nhẹ như xốp, tẩm nhựa, tốt nhất cho những lần vào khí quyển nhanh nhất: nhẹ hơn 18 %, nhưng giòn và đắt hơn.",
-        "name": "PICA (vật liệu cháy mòn carbon)"
+        "name": "PICA (vật liệu cháy mòn carbon)",
+        "pros": [
+          "Khối lượng −18 %",
+          "Độ tin cậy +0,2 %"
+        ],
+        "cons": [
+          "Giá +20 %",
+          "Khối giòn, có đường nối"
+        ],
+        "real": "Stardust (12,9 km/s, lần vào khí quyển nhanh nhất từng bay), PICA-X của Crew Dragon"
       }
     },
     "option:ablative_shield/ablator/sla": {
@@ -1631,7 +1866,16 @@
       },
       "vi": {
         "what": "Bần và silica trong lõi tổ ong, như trên tàu Viking và các xe tự hành Sao Hỏa: nhẹ và rẻ, đủ dùng ở Sao Hỏa, nhưng quá yếu cho chuyến về Trái Đất tốc độ cao.",
-        "name": "SLA-561V (bần và silica)"
+        "name": "SLA-561V (bần và silica)",
+        "pros": [
+          "Khối lượng −25 %",
+          "Giá −15 %"
+        ],
+        "cons": [
+          "Độ tin cậy −0,6 %",
+          "Chỉ dùng cho Sao Hỏa"
+        ],
+        "real": "Viking, Mars Pathfinder, Spirit và Opportunity"
       }
     },
     "slot:escape_tower/motor": {
@@ -1649,7 +1893,14 @@
       },
       "vi": {
         "what": "Vòi phun ở chân động cơ chĩa xiên ra ngoài để lửa không táp vào khoang lái, như Mercury và Apollo; vì thế tháp phải cao.",
-        "name": "Vòi phun xiên ở chân"
+        "name": "Vòi phun xiên ở chân",
+        "pros": [
+          "Đã được kiểm chứng trên Mercury và Apollo"
+        ],
+        "cons": [
+          "Tháp phải cao để lửa không táp vào khoang"
+        ],
+        "real": "Động cơ thoát hiểm của Apollo: bốn vòi phun xiên, khoảng 147.000 lbf (654 kN) trong 3,2 s"
       }
     },
     "option:escape_tower/motor/ring": {
@@ -1658,7 +1909,15 @@
       },
       "vi": {
         "what": "Một vòng nhiều vòi phun nhỏ chia đều lực đẩy; một vòi có cháy thủng thì các vòi còn lại vẫn kéo được khoang, như trên Soyuz.",
-        "name": "Vòng vòi phun nhỏ"
+        "name": "Vòng vòi phun nhỏ",
+        "pros": [
+          "Độ tin cậy +0,3 %"
+        ],
+        "cons": [
+          "Khối lượng +3 %",
+          "Giá +10 %"
+        ],
+        "real": "Động cơ chính SAS của Soyuz, tới 76 tấn (745 kN)"
       }
     },
     "option:escape_tower/motor/reverse": {
@@ -1667,7 +1926,15 @@
       },
       "vi": {
         "what": "Khí chạy ngược lên trong động cơ rồi quay đầu thoát ra gần đỉnh, như trên Orion: tháp ngắn hơn, và lửa bắt đầu ở xa khoang lái.",
-        "name": "Động cơ dòng ngược"
+        "name": "Động cơ dòng ngược",
+        "pros": [
+          "Độ tin cậy +0,6 %"
+        ],
+        "cons": [
+          "Khối lượng +6 %",
+          "Giá +30 %"
+        ],
+        "real": "Động cơ thoát hiểm của Orion, khoảng 400.000 lbf (1,8 MN)"
       }
     },
     "slot:escape_tower/jettison": {
@@ -1685,7 +1952,12 @@
       },
       "vi": {
         "what": "Một động cơ nhỏ gần đỉnh kéo tháp đi sau khi phóng chừng hai phút.",
-        "name": "Động cơ vứt tháp riêng"
+        "name": "Động cơ vứt tháp riêng",
+        "pros": [
+          "Tiêu chuẩn"
+        ],
+        "cons": [],
+        "real": "Động cơ tách tháp của Apollo, 31.500 lbf trong 1,1 s; Mercury 1.4-KS-785"
       }
     },
     "option:escape_tower/jettison/backup": {
@@ -1694,7 +1966,14 @@
       },
       "vi": {
         "what": "Nếu động cơ tách tháp không cháy, động cơ thoát hiểm sẽ cháy thay, nên tháp lần nào cũng rời đi.",
-        "name": "Động cơ vứt tháp có dự phòng"
+        "name": "Động cơ vứt tháp có dự phòng",
+        "pros": [
+          "Độ tin cậy +0,4 %"
+        ],
+        "cons": [
+          "+25 nghìn đô"
+        ],
+        "real": "Apollo: động cơ thoát hiểm làm dự phòng cho việc tách tháp"
       }
     },
     "option:escape_tower/jettison/shared": {
@@ -1703,7 +1982,15 @@
       },
       "vi": {
         "what": "Chính động cơ thoát hiểm kiêm luôn việc vứt tháp: nhẹ và rẻ hơn, nhưng chỉ một lần hỏng là tháp kẹt lại trên tàu.",
-        "name": "Một động cơ làm cả hai"
+        "name": "Một động cơ làm cả hai",
+        "pros": [
+          "Khối lượng −7 %",
+          "−40 nghìn đô"
+        ],
+        "cons": [
+          "Độ tin cậy −0,4 %"
+        ],
+        "real": "SAS đời đầu của Soyuz: cùng một động cơ rắn tách khoang lái, và tách cả tháp khi chuyến bay bình thường"
       }
     },
     "slot:escape_tower/steering": {
@@ -1721,7 +2008,14 @@
       },
       "vi": {
         "what": "Một cục nặng (ballast) ở mũi giữ cả khối bay thẳng như phi tiêu; sau đó khoang lái phải tự quay lại.",
-        "name": "Vật dằn ở mũi"
+        "name": "Vật dằn ở mũi",
+        "pros": [
+          "Đơn giản"
+        ],
+        "cons": [
+          "Sau đó khoang lái phải tự quay lại"
+        ],
+        "real": "Mercury: 236 lb (107 kg) vật dằn ở mũi tháp"
       }
     },
     "option:escape_tower/steering/canards": {
@@ -1730,7 +2024,15 @@
       },
       "vi": {
         "what": "Hai cánh nhỏ bật ra 11 giây sau khi thoát hiểm, lật khoang lái cho tấm chắn nhiệt quay về phía trước rồi tháp mới rời đi, như trên Apollo.",
-        "name": "Cánh canard bật ra"
+        "name": "Cánh canard bật ra",
+        "pros": [
+          "Độ tin cậy +0,5 %"
+        ],
+        "cons": [
+          "+40 kg",
+          "+45 nghìn đô"
+        ],
+        "real": "Apollo: hai cánh canard kim loại dài khoảng 4 ft"
       }
     },
     "option:escape_tower/steering/acm": {
@@ -1739,7 +2041,15 @@
       },
       "vi": {
         "what": "Một bình tạo khí nhiên liệu rắn với tám van quanh tháp lái cả khối đang thoát hiểm, kể cả ngay trên bệ phóng, như trên Orion.",
-        "name": "Động cơ điều khiển tư thế"
+        "name": "Động cơ điều khiển tư thế",
+        "pros": [
+          "Độ tin cậy +0,8 %"
+        ],
+        "cons": [
+          "+90 kg",
+          "+120 nghìn đô"
+        ],
+        "real": "Động cơ điều khiển tư thế của Orion: lực lái tới 7.000 lbf"
       }
     },
     "slot:abort_pod/chamber": {
@@ -1757,7 +2067,15 @@
       },
       "vi": {
         "what": "Mỗi buồng đốt được in 3D thành một khối hợp kim niken chịu nhiệt, liền cả rãnh làm mát: nhẹ và làm nhanh, nhưng lỗ rỗ ẩn bên trong khó phát hiện.",
-        "name": "Inconel in 3D"
+        "name": "Inconel in 3D",
+        "pros": [
+          "Nhẹ",
+          "Làm nhanh"
+        ],
+        "cons": [
+          "Lỗ rỗ khó kiểm tra"
+        ],
+        "real": "SuperDraco: 71 kN, động cơ in 3D toàn phần đầu tiên được bay"
       }
     },
     "option:abort_pod/chamber/machined": {
@@ -1766,7 +2084,15 @@
       },
       "vi": {
         "what": "Phay từ phôi rèn đặc rồi hàn lại: nặng hơn, nhưng vách và mối hàn nào cũng kiểm tra được.",
-        "name": "Rèn và phay"
+        "name": "Rèn và phay",
+        "pros": [
+          "Độ tin cậy +0,4 %"
+        ],
+        "cons": [
+          "Khối lượng +10 %",
+          "Giá +20 %"
+        ],
+        "real": "Aerojet RS-88, động cơ thoát hiểm của Starliner"
       }
     },
     "slot:abort_pod/propellant": {
@@ -1784,7 +2110,14 @@
       },
       "vi": {
         "what": "Dùng chung bồn với các động cơ đẩy nhỏ để lái: không thêm bồn, phần nhiên liệu thoát hiểm không dùng tới còn để điều khiển tàu, nhưng một động cơ đẩy rò rỉ có thể làm cạn nó.",
-        "name": "Dùng chung với động cơ đẩy nhỏ"
+        "name": "Dùng chung với động cơ đẩy nhỏ",
+        "pros": [
+          "Không thêm bồn"
+        ],
+        "cons": [
+          "Một động cơ đẩy rò rỉ có thể làm cạn nhiên liệu thoát hiểm"
+        ],
+        "real": "Crew Dragon"
       }
     },
     "option:abort_pod/propellant/dedicated": {
@@ -1793,7 +2126,15 @@
       },
       "vi": {
         "what": "Khối có bồn nhỏ và van riêng, nên không thứ gì khác làm cạn được.",
-        "name": "Bồn và van riêng"
+        "name": "Bồn và van riêng",
+        "pros": [
+          "Độ tin cậy +0,3 %"
+        ],
+        "cons": [
+          "+35 kg",
+          "+30 nghìn đô"
+        ],
+        "real": "Đường cấp riêng cho thoát hiểm, như trong khoang dịch vụ của Starliner"
       }
     },
     "shape:nose/mercury": {

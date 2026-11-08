@@ -5,14 +5,14 @@
       "en": {
         "what": "A small rocket engine. Its turbopump pushes enough propellant through it for 100 kN of thrust, about the weight of 10 tonnes on Earth. The propellant burns in the chamber and the hot gas rushes out of the nozzle, pushing the ship the other way.",
         "why": "Nothing else on the ship turns propellant into push. Small engines are cheap and cluster well: under a nine-engine frame, nine of them push like one large engine.",
-        "without": "No engine, no flight. One small engine alone cannot lift a crewed ship, and per kilonewton it is the most expensive and the heaviest.",
+        "without": "No engine, no flight. One small engine pushes with less than the weight of any crewed ship, and per kilonewton it is the most expensive and the heaviest.",
         "inside": "The turbopump forces fuel and oxygen through the injector into the chamber, where they burn at about 3,000 °C. The bell lets the hot gas expand and speeds it up to several kilometres a second, and the push of that jet drives the ship.",
         "analogy": "Like a garden hose nozzle: squeeze a lot of water through a narrow gap and it shoots out fast, pushing back on your hand."
       },
       "vi": {
         "what": "Một động cơ (engine) tên lửa cỡ nhỏ. Bơm tuabin (turbopump) của nó đẩy đủ nhiên liệu cho 100 kN lực đẩy (thrust), cỡ sức nặng của 10 tấn trên Trái Đất. Nhiên liệu cháy trong buồng đốt, khí nóng phụt ra khỏi vòi phun và đẩy con tàu theo chiều ngược lại.",
         "why": "Không bộ phận nào khác trên tàu biến nhiên liệu thành lực đẩy. Động cơ nhỏ rẻ và ghép cụm tốt: dưới khung chín động cơ, chín chiếc đẩy ngang một động cơ lớn.",
-        "without": "Không có động cơ thì không bay. Một động cơ nhỏ đơn độc không nâng nổi tàu chở người, và tính theo mỗi kilonewton thì nó đắt nhất, nặng nhất.",
+        "without": "Không có động cơ thì không bay. Một động cơ nhỏ đơn độc đẩy yếu hơn sức nặng của bất kỳ tàu chở người nào, và tính theo mỗi kilonewton thì nó đắt nhất, nặng nhất.",
         "inside": "Bơm tuabin ép nhiên liệu và oxy qua tấm phun vào buồng đốt, nơi chúng cháy ở khoảng 3.000 °C. Chuông vòi phun cho khí nóng giãn nở và tăng tốc tới vài ki-lô-mét mỗi giây, và sức đẩy của luồng khí ấy đẩy con tàu đi.",
         "analogy": "Giống đầu vòi tưới cây: ép thật nhiều nước qua khe hẹp thì nước phụt ra rất nhanh và đẩy ngược vào tay bạn.",
         "pros": [
@@ -21,7 +21,7 @@
           "Ghép cụm tốt"
         ],
         "cons": [
-          "100 kN một mình không nâng nổi tàu chở người",
+          "100 kN: nhỏ hơn sức nặng của bất kỳ tàu chở người nào",
           "Tính theo mỗi kilonewton, là bơm đắt và nặng nhất"
         ],
         "real": "Cỡ RL10 / Rutherford",
@@ -69,7 +69,7 @@
         "inside": "Một tuabin được khí nóng quay dẫn động các bơm, ép khoảng 300 kg nhiên liệu và oxy mỗi giây qua tấm phun. Chúng cháy trong buồng đốt ở khoảng 3.000 °C, và chuông vòi phun tăng tốc khí lên tới vài ki-lô-mét mỗi giây.",
         "analogy": "Giống vòi cứu hỏa so với vòi tưới vườn: cùng một nguyên lý, nhưng mỗi giây phun ra nhiều nước hơn hẳn.",
         "pros": [
-          "1.000 kN: đủ cho một tầng duy nhất đi Sao Hỏa",
+          "1.000 kN: cỡ sức nặng của 100 tấn",
           "Lực đẩy rẻ nhất tính theo mỗi kilonewton"
         ],
         "cons": [
@@ -100,7 +100,7 @@
         ],
         "cons": [
           "Một động cơ: hỏng là hết chuyến bay",
-          "Hẹp: thân rộng cần bộ chuyển đường kính"
+          "Hẹp: dưới thân rộng, game sẽ thêm bộ chuyển đường kính"
         ],
         "real": "Khối đuôi của Redstone / Mercury-Redstone (một động cơ A-7, 350 kN, rộng 1,78 m)",
         "name": "Khung lực đẩy một động cơ, cỡ nhỏ"
@@ -280,7 +280,7 @@
           "Chân đế rộng cho tên lửa đẩy phụ lớn và vây"
         ],
         "cons": [
-          "Phải mua năm động cơ: vượt ngân sách nếu dùng bơm cỡ vừa",
+          "Phải mua năm động cơ: giá gấp năm lần một chiếc",
           "Khung nặng"
         ],
         "real": "Khung lực đẩy Saturn V S-IC (năm F-1, mỗi chiếc 6.770 kN, rộng 10,1 m)",
@@ -306,7 +306,7 @@
           "Xếp khít"
         ],
         "cons": [
-          "Phải mua bảy động cơ: vượt ngân sách nếu dùng bơm cỡ vừa",
+          "Phải mua bảy động cơ: giá gấp bảy lần một chiếc",
           "Khung nặng"
         ],
         "real": "Tầng một New Glenn (bảy BE-4, 17.100 kN lúc rời bệ, rộng 7 m)",
@@ -452,14 +452,14 @@
         "what": "A small fin near the bottom of the ship.",
         "why": "Fins move the point where the air pushes towards the tail, so the ship flies nose first instead of tumbling. Small fins do this gently, for little mass.",
         "without": "Without fins, a tall ship can swing sideways in thick air and break up, unless its engine steers. Small fins give little stability on a tall stack.",
-        "inside": "A flat, stiff blade with a thin edge, bolted to the hull. Use three or four, spaced evenly around the ship.",
+        "inside": "A flat, stiff blade with a thin edge, bolted to the hull. Rockets carry them in sets of three or four, spaced evenly around the ship.",
         "analogy": "Like the flights on a dart: small, but they keep the point in front."
       },
       "vi": {
         "what": "Một chiếc vây (fin) nhỏ gần đáy tàu.",
         "why": "Vây kéo điểm không khí đẩy lên tàu dịch về phía đuôi, nên tàu bay mũi đi trước thay vì lộn nhào. Vây nhỏ làm việc này nhẹ nhàng mà tốn ít khối lượng.",
         "without": "Không có vây, con tàu cao có thể lắc ngang trong lớp khí dày rồi gãy, trừ khi động cơ tự lái được. Vây nhỏ giữ ổn định được ít cho thân tàu cao.",
-        "inside": "Một lá phẳng, cứng, mép mỏng, bắt vít vào vỏ tàu. Dùng ba hoặc bốn chiếc, chia đều quanh thân.",
+        "inside": "Một lá phẳng, cứng, mép mỏng, bắt vít vào vỏ tàu. Tên lửa thường mang ba hoặc bốn chiếc, chia đều quanh thân.",
         "analogy": "Giống đuôi phi tiêu: nhỏ thôi, nhưng giữ cho mũi luôn ở phía trước.",
         "pros": [
           "Nhẹ",
@@ -477,14 +477,14 @@
         "what": "A fin mounted low on the ship. It moves the point where the air pushes to behind the ship's balance point.",
         "why": "When the air pushes behind the centre of mass, the ship turns back nose first by itself, the way an arrow does.",
         "without": "Without fins the ship can tumble in thick air unless the engine steers hard. Fins add drag and mass.",
-        "inside": "A stiff blade with a thin edge. Use three or four, spaced evenly around the ship.",
+        "inside": "A stiff blade with a thin edge. Rockets carry them in sets of three or four, spaced evenly around the ship.",
         "analogy": "Like the feathers on an arrow: they keep the point in front."
       },
       "vi": {
         "what": "Một chiếc vây (fin) gắn thấp trên thân tàu. Nó kéo điểm không khí đẩy lên tàu ra phía sau điểm cân bằng của tàu.",
         "why": "Khi không khí đẩy ở phía sau trọng tâm (centre of mass), tàu tự quay mũi về phía trước, giống mũi tên.",
         "without": "Không có vây, tàu có thể lộn nhào trong lớp khí dày, trừ khi động cơ lái thật mạnh. Vây làm tăng lực cản và khối lượng.",
-        "inside": "Một lá cứng, mép mỏng. Dùng ba hoặc bốn chiếc, chia đều quanh thân.",
+        "inside": "Một lá cứng, mép mỏng. Tên lửa thường mang ba hoặc bốn chiếc, chia đều quanh thân.",
         "analogy": "Giống lông đuôi mũi tên: giữ cho đầu nhọn luôn ở phía trước.",
         "pros": [
           "Kéo tâm áp lùi về sau",
@@ -794,7 +794,15 @@
       },
       "vi": {
         "what": "Máy tạo khí (gas generator): một buồng đốt nhỏ quay tuabin rồi khí thải của nó bị xả ra ngoài, như Merlin và F-1. Đơn giản, đã được kiểm chứng.",
-        "name": "Máy tạo khí"
+        "name": "Máy tạo khí",
+        "pros": [
+          "Đơn giản, đã được kiểm chứng",
+          "Rẻ"
+        ],
+        "cons": [
+          "Xả bỏ 2–3 % nhiên liệu chưa cháy"
+        ],
+        "real": "Merlin 1D, Vulcain 2, F-1"
       }
     },
     "option:engine/cycle/sc": {
@@ -803,7 +811,16 @@
       },
       "vi": {
         "what": "Đốt theo tầng (staged combustion): khí thải của tuabin đi tiếp vào buồng đốt chính, nên không phí chút nào. Áp suất và Isp cao hơn, nhưng khó chế tạo hơn nhiều.",
-        "name": "Đốt theo tầng"
+        "name": "Đốt theo tầng",
+        "pros": [
+          "Isp +12 s",
+          "Không phí chút nào"
+        ],
+        "cons": [
+          "Đường ống giàu oxy nóng đỏ",
+          "Giá +40 %"
+        ],
+        "real": "RS-25, RD-180, Raptor"
       }
     },
     "option:engine/cycle/expander": {
@@ -812,7 +829,16 @@
       },
       "vi": {
         "what": "Giãn nở (expander): nhiên liệu được làm ấm trong vách buồng đốt, thường là hydro, quay tuabin. Êm và khởi động lại được nhiều lần, nhưng chỉ đủ sức cho động cơ nhỏ.",
-        "name": "Giãn nở"
+        "name": "Giãn nở",
+        "pros": [
+          "Isp +8 s",
+          "Khởi động lại mãi được",
+          "Chu trình đáng tin cậy nhất"
+        ],
+        "cons": [
+          "Lực đẩy −15 %: chu trình không đủ sức quay bơm lớn"
+        ],
+        "real": "RL10, Vinci"
       }
     },
     "option:engine/cycle/electric": {
@@ -821,7 +847,16 @@
       },
       "vi": {
         "what": "Bơm điện (electric pump): động cơ điện chạy bằng pin quay các bơm, như động cơ Rutherford của Rocket Lab. Đường ống đơn giản nhất, nhưng pin nặng.",
-        "name": "Bơm điện"
+        "name": "Bơm điện",
+        "pros": [
+          "Đường ống đơn giản nhất",
+          "Rẻ nhất"
+        ],
+        "cons": [
+          "Lực đẩy −25 %",
+          "Pin nặng"
+        ],
+        "real": "Rutherford (Electron)"
       }
     },
     "option:engine/cycle/pressure": {
@@ -830,7 +865,16 @@
       },
       "vi": {
         "what": "Nạp bằng áp suất (pressure-fed): không có bơm, áp suất trong bồn đẩy nhiên liệu vào. Khởi động lại bao nhiêu lần cũng được, nhưng mất lực đẩy và Isp.",
-        "name": "Nạp bằng áp suất (không bơm)"
+        "name": "Nạp bằng áp suất (không bơm)",
+        "pros": [
+          "Khởi động lại không giới hạn",
+          "Gần như không có gì để hỏng"
+        ],
+        "cons": [
+          "Lực đẩy −50 %",
+          "Isp −10 s"
+        ],
+        "real": "AJ10 (tầng hai Delta II), SPS của Apollo"
       }
     },
     "option:engine/cycle/ffsc": {
@@ -839,7 +883,17 @@
       },
       "vi": {
         "what": "Đốt theo tầng toàn dòng (full-flow staged combustion): hai buồng đốt sơ bộ, một giàu nhiên liệu, một giàu oxy, mỗi buồng quay một bơm riêng, rồi toàn bộ nhiên liệu cháy trong buồng chính. Raptor của SpaceX là động cơ đầu tiên loại này được bay, năm 2019.",
-        "name": "Đốt theo tầng toàn dòng"
+        "name": "Đốt theo tầng toàn dòng",
+        "pros": [
+          "Isp +16 s",
+          "Tuabin mát hơn đốt theo tầng thường"
+        ],
+        "cons": [
+          "Giá +60 %",
+          "Khối lượng ×1,15",
+          "Hai buồng đốt sơ bộ có thể hỏng"
+        ],
+        "real": "Raptor (SpaceX), động cơ toàn dòng duy nhất từng bay"
       }
     },
     "option:engine/cycle/tapoff": {
@@ -848,7 +902,16 @@
       },
       "vi": {
         "what": "Trích khí (tap-off): một ít khí nóng được trích từ mép buồng đốt chính để quay tuabin. Ít chi tiết hơn, nhưng tuabin phải chịu khí rất nóng.",
-        "name": "Trích khí buồng đốt"
+        "name": "Trích khí buồng đốt",
+        "pros": [
+          "Không phải làm máy tạo khí",
+          "Giá −10 %"
+        ],
+        "cons": [
+          "Lực đẩy −5 %",
+          "Tuabin nóng"
+        ],
+        "real": "BE-3 (New Shepard), J-2S (thử nghiệm những năm 1960)"
       }
     },
     "slot:engine/injector": {
@@ -866,7 +929,14 @@
       },
       "vi": {
         "what": "Hàng trăm vòi nhỏ, mỗi vòi có chất oxy hóa ở giữa và nhiên liệu xoáy quanh: cháy êm.",
-        "name": "Xoáy đồng trục"
+        "name": "Xoáy đồng trục",
+        "pros": [
+          "Cháy êm và hiệu quả"
+        ],
+        "cons": [
+          "Hàng trăm chi tiết chính xác"
+        ],
+        "real": "RS-25, RD-180"
       }
     },
     "option:engine/injector/pintle": {
@@ -875,7 +945,16 @@
       },
       "vi": {
         "what": "Một chốt trung tâm với ống trượt (pintle), như Merlin và động cơ hạ cánh của tàu đổ bộ Apollo: rẻ, giảm ga sâu được, khó bị cháy mất ổn định.",
-        "name": "Chốt trung tâm (pintle)"
+        "name": "Chốt trung tâm (pintle)",
+        "pros": [
+          "Giảm ga sâu được",
+          "Rẻ",
+          "Ổn định"
+        ],
+        "cons": [
+          "Trộn kém hiệu quả hơn một chút"
+        ],
+        "real": "Merlin, động cơ hạ cánh của tàu đổ bộ Apollo (LM)"
       }
     },
     "option:engine/injector/impinging": {
@@ -884,7 +963,14 @@
       },
       "vi": {
         "what": "Các tia nhiên liệu và chất oxy hóa được ngắm cho đâm vào nhau để trộn: đơn giản, nhưng dễ cháy giật cục. Động cơ F-1 mất nhiều năm thử nghiệm mới thuần phục được.",
-        "name": "Tia va nhau"
+        "name": "Tia va nhau",
+        "pros": [
+          "Rẻ nhất"
+        ],
+        "cons": [
+          "Dễ cháy mất ổn định"
+        ],
+        "real": "F-1 (sau nhiều năm thử vách chắn)"
       }
     },
     "slot:engine/nozzleExt": {
@@ -902,7 +988,14 @@
       },
       "vi": {
         "what": "Làm mát tái sinh (regenerative cooling): nhiên liệu chảy qua các rãnh trong vách trước khi cháy, làm mát kim loại và làm ấm nhiên liệu.",
-        "name": "Làm mát tái sinh"
+        "name": "Làm mát tái sinh",
+        "pros": [
+          "Chạy được chừng nào còn nhiên liệu"
+        ],
+        "cons": [
+          "Nặng: hàng trăm ống hàn vảy"
+        ],
+        "real": "RS-25, Merlin"
       }
     },
     "option:engine/nozzleExt/radiative": {
@@ -911,7 +1004,15 @@
       },
       "vi": {
         "what": "Váy mỏng bằng kim loại niobi, nóng đỏ cam và tỏa nhiệt thành ánh sáng: nhẹ, chỉ dùng trong chân không.",
-        "name": "Niobi tỏa nhiệt"
+        "name": "Niobi tỏa nhiệt",
+        "pros": [
+          "−60 kg"
+        ],
+        "cons": [
+          "Chỉ dùng trong chân không",
+          "Nóng sáng ở 1.300 °C"
+        ],
+        "real": "Váy vòi của Merlin Vacuum, SPS của Apollo"
       }
     },
     "option:engine/nozzleExt/carbon": {
@@ -920,7 +1021,16 @@
       },
       "vi": {
         "what": "Sợi carbon dệt trong nền carbon (carbon-carbon): nhẹ bằng nửa kim loại, và chịu được 2.000 °C.",
-        "name": "Váy carbon-carbon"
+        "name": "Váy carbon-carbon",
+        "pros": [
+          "−100 kg",
+          "Isp +4 s nhờ chuông dài hơn"
+        ],
+        "cons": [
+          "Giòn",
+          "Đắt"
+        ],
+        "real": "RL10B-2, Vinci"
       }
     },
     "option:engine/nozzleExt/extendable": {
@@ -929,7 +1039,15 @@
       },
       "vi": {
         "what": "Một váy thứ hai trượt xuống khi đã ra không gian, nên chuông vòi khổng lồ vẫn vừa chỗ chật lúc phóng: Isp tốt nhất trong chân không.",
-        "name": "Vòi phun kéo dài được"
+        "name": "Vòi phun kéo dài được",
+        "pros": [
+          "Isp +10 s trong chân không"
+        ],
+        "cons": [
+          "Thêm một cơ cấu phải hoạt động",
+          "+40 kg"
+        ],
+        "real": "RL10B-2 (Delta IV)"
       }
     },
     "option:engine/nozzleExt/ablative": {
@@ -938,7 +1056,16 @@
       },
       "vi": {
         "what": "Lớp lót nhựa và silica cháy thành than rồi mòn dần, mang nhiệt đi: không cần ống làm mát, rẻ và nặng, hợp cho một lần cháy dài.",
-        "name": "Lớp lót cháy mòn"
+        "name": "Lớp lót cháy mòn",
+        "pros": [
+          "−40 nghìn đô",
+          "Không cần ống làm mát"
+        ],
+        "cons": [
+          "+30 kg",
+          "Mòn dần: chỉ một lần cháy dài"
+        ],
+        "real": "RS-68 (Delta IV), phần nối dài vòi phun của LR87 (Titan II)"
       }
     },
     "slot:engine/igniter": {
@@ -956,7 +1083,14 @@
       },
       "vi": {
         "what": "Một ngọn đuốc nhỏ trong vách buồng đốt, châm bằng tia lửa điện: đánh lửa lại được miễn là còn điện.",
-        "name": "Đuốc tia lửa điện"
+        "name": "Đuốc tia lửa điện",
+        "pros": [
+          "Khởi động lại được"
+        ],
+        "cons": [
+          "Cần điện và một dòng khí mồi"
+        ],
+        "real": "RS-25, Raptor"
       }
     },
     "option:engine/igniter/pyro": {
@@ -965,7 +1099,15 @@
       },
       "vi": {
         "what": "Một ống mồi dùng một lần, giống ngòi pháo: bộ đánh lửa đơn giản nhất, chỉ khởi động được một lần.",
-        "name": "Ống mồi thuốc nổ"
+        "name": "Ống mồi thuốc nổ",
+        "pros": [
+          "Đơn giản nhất",
+          "−10 nghìn đô"
+        ],
+        "cons": [
+          "Chỉ đánh lửa một lần"
+        ],
+        "real": "F-1, Vulcain"
       }
     },
     "option:engine/igniter/tea_teb": {
@@ -974,7 +1116,15 @@
       },
       "vi": {
         "what": "Hóa chất TEA-TEB bùng thành lửa xanh lục ngay khi gặp oxy, như trên Merlin: đánh lửa lại đáng tin cậy, được bao nhiêu lần tùy số liều mang theo.",
-        "name": "Liều TEA-TEB"
+        "name": "Liều TEA-TEB",
+        "pros": [
+          "Đánh lửa lại đáng tin cậy",
+          "Độ tin cậy +0,4 %"
+        ],
+        "cons": [
+          "Số liều có hạn"
+        ],
+        "real": "Merlin (chớp lửa xanh lục lúc đánh lửa)"
       }
     },
     "slot:booster/grain": {
@@ -992,7 +1142,12 @@
       },
       "vi": {
         "what": "Lỗ hình ngôi sao: diện tích mặt cháy gần như không đổi, nên lực đẩy đều.",
-        "name": "Lỗ hình sao"
+        "name": "Lỗ hình sao",
+        "pros": [
+          "Lực đẩy đều"
+        ],
+        "cons": [],
+        "real": "Castor, GEM"
       }
     },
     "option:booster/grain/highthrust": {
@@ -1001,7 +1156,15 @@
       },
       "vi": {
         "what": "Nhiều mặt cháy hơn: lực đẩy tăng 15 % và cháy ngắn hơn, Isp thấp hơn một chút.",
-        "name": "Khối lực đẩy cao"
+        "name": "Khối lực đẩy cao",
+        "pros": [
+          "Lực đẩy +15 %"
+        ],
+        "cons": [
+          "Isp −4 s",
+          "Áp suất vỏ cao hơn"
+        ],
+        "real": "Các phiên bản GEM-40 đánh lửa từ mặt đất"
       }
     },
     "option:booster/grain/longburn": {
@@ -1010,7 +1173,15 @@
       },
       "vi": {
         "what": "Ít mặt cháy hơn: cháy lâu và êm, lực đẩy giảm 15 % nhưng Isp tăng 3 s.",
-        "name": "Khối cháy lâu"
+        "name": "Khối cháy lâu",
+        "pros": [
+          "Isp +3 s",
+          "Lực tác động nhẹ hơn"
+        ],
+        "cons": [
+          "Lực đẩy −15 %"
+        ],
+        "real": "Star 48 bản cháy lâu"
       }
     },
     "option:booster/grain/finocyl": {
@@ -1019,7 +1190,15 @@
       },
       "vi": {
         "what": "Lỗ tròn có những rãnh dài như vây ở phần đuôi (finocyl). Nó đẩy mạnh lúc rời bệ rồi dịu đi quanh tốc độ âm thanh, lúc tên lửa chịu căng nhất.",
-        "name": "Khối finocyl"
+        "name": "Khối finocyl",
+        "pros": [
+          "Lực đẩy +5 %",
+          "Nhẹ nhàng hơn khi qua max-Q"
+        ],
+        "cons": [
+          "+20 nghìn đô"
+        ],
+        "real": "Ariane 5 P241, Vega P80"
       }
     },
     "slot:booster/nozzle": {
@@ -1037,7 +1216,14 @@
       },
       "vi": {
         "what": "Bắt thẳng cố định: động cơ lõi lo việc lái.",
-        "name": "Vòi phun cố định"
+        "name": "Vòi phun cố định",
+        "pros": [
+          "Đơn giản"
+        ],
+        "cons": [
+          "Không lái được"
+        ],
+        "real": "GEM-40"
       }
     },
     "option:booster/nozzle/tvc": {
@@ -1046,7 +1232,16 @@
       },
       "vi": {
         "what": "Một khớp mềm cho vòi phun xoay vài độ, như tên lửa đẩy phụ của tàu con thoi: cần thiết khi động cơ rắn gánh phần lớn lực đẩy.",
-        "name": "Vòi phun xoay hướng"
+        "name": "Vòi phun xoay hướng",
+        "pros": [
+          "Lái bằng chính tên lửa đẩy phụ",
+          "Độ tin cậy +0,3 %"
+        ],
+        "cons": [
+          "+40 kg",
+          "+60 nghìn đô"
+        ],
+        "real": "SRB của tàu con thoi, Vega"
       }
     },
     "option:booster/nozzle/lit": {
@@ -1055,7 +1250,16 @@
       },
       "vi": {
         "what": "Vòi phun cố định và một bồn chất lỏng: phun chất lỏng vào một bên luồng khí phụt sẽ bẻ cong luồng khí. Không có vòi chuyển động, nhưng bồn thì nặng.",
-        "name": "Lái bằng phun chất lỏng"
+        "name": "Lái bằng phun chất lỏng",
+        "pros": [
+          "Lái mà vòi phun không cần chuyển động",
+          "Độ tin cậy +0,2 %"
+        ],
+        "cons": [
+          "+120 kg",
+          "+40 nghìn đô"
+        ],
+        "real": "Tên lửa đẩy phụ UA1205 của Titan IIIC"
       }
     },
     "slot:legs/shock": {
@@ -1073,7 +1277,15 @@
       },
       "vi": {
         "what": "Tổ ong nhôm bẹp lại một lần, như tàu đổ bộ Mặt Trăng của Apollo: nhẹ và chắc ăn, nhưng dùng xong là hết.",
-        "name": "Tổ ong bẹp được"
+        "name": "Tổ ong bẹp được",
+        "pros": [
+          "Nhẹ",
+          "Chắc ăn"
+        ],
+        "cons": [
+          "Dùng một lần"
+        ],
+        "real": "Tàu đổ bộ Apollo (LM)"
       }
     },
     "option:legs/shock/hydraulic": {
@@ -1082,7 +1294,15 @@
       },
       "vi": {
         "what": "Thanh chống dầu và khí bật lại được cho lần đáp sau: nặng hơn, và dùng lại được.",
-        "name": "Thanh chống thủy lực"
+        "name": "Thanh chống thủy lực",
+        "pros": [
+          "Dùng lại được",
+          "Độ tin cậy +0,3 %"
+        ],
+        "cons": [
+          "+60 kg"
+        ],
+        "real": "Falcon 9"
       }
     },
     "option:legs/shock/telescope": {
@@ -1091,7 +1311,16 @@
       },
       "vi": {
         "what": "Pít-tông lồng nhau có hộp tổ ong bẹp được bên trong, như Falcon 9: tổ ong nhận cú va, thay hộp mới là chân như cũ.",
-        "name": "Pít-tông lồng nhau và lõi bẹp"
+        "name": "Pít-tông lồng nhau và lõi bẹp",
+        "pros": [
+          "Dùng lại được khi thay hộp mới",
+          "Độ tin cậy +0,4 %"
+        ],
+        "cons": [
+          "+20 kg",
+          "+40 nghìn đô"
+        ],
+        "real": "Chân đáp Falcon 9"
       }
     },
     "slot:legs/pads": {
@@ -1109,7 +1338,14 @@
       },
       "vi": {
         "what": "Bàn chân nhỏ: ổn trên nền đá.",
-        "name": "Bàn chân nhỏ"
+        "name": "Bàn chân nhỏ",
+        "pros": [
+          "Nhẹ"
+        ],
+        "cons": [
+          "Lún trên cát mềm"
+        ],
+        "real": ""
       }
     },
     "option:legs/pads/large": {
@@ -1118,7 +1354,15 @@
       },
       "vi": {
         "what": "Bàn chân lớn, rộng khoảng 94 cm như tàu đổ bộ Mặt Trăng của Apollo: giày đi tuyết cho nền bụi.",
-        "name": "Bàn chân lớn"
+        "name": "Bàn chân lớn",
+        "pros": [
+          "Đáp được trên nền mềm",
+          "Độ tin cậy +0,3 %"
+        ],
+        "cons": [
+          "+30 kg"
+        ],
+        "real": "Bàn chân 94 cm của tàu đổ bộ Apollo (LM)"
       }
     },
     "option:legs/pads/dish": {
@@ -1127,7 +1371,15 @@
       },
       "vi": {
         "what": "Đĩa rộng và nông có vành bẹp được, như tàu đổ bộ Viking: dàn sức nặng trên cát xốp, và trượt đi thay vì cắm xuống.",
-        "name": "Bàn chân đĩa rộng"
+        "name": "Bàn chân đĩa rộng",
+        "pros": [
+          "Đáp được trên nền mềm hoặc dốc",
+          "Độ tin cậy +0,5 %"
+        ],
+        "cons": [
+          "+45 kg"
+        ],
+        "real": "Bàn chân tàu đổ bộ Viking (1976)"
       }
     },
     "slot:legs/probes": {
@@ -1145,7 +1397,14 @@
       },
       "vi": {
         "what": "Chỉ có radar đo độ cao: máy tính tắt động cơ ở một độ cao định sẵn, và một cơn gió hay một hòn đá có thể làm nó sai nửa mét.",
-        "name": "Chỉ có radar đo độ cao"
+        "name": "Chỉ có radar đo độ cao",
+        "pros": [
+          "Không thêm gì"
+        ],
+        "cons": [
+          "Động cơ có thể tắt hơi cao hoặc hơi muộn"
+        ],
+        "real": ""
       }
     },
     "option:legs/probes/probes": {
@@ -1154,7 +1413,16 @@
       },
       "vi": {
         "what": "Những thanh dài mảnh treo dưới bàn chân; ngay khi một thanh chạm đất, đèn bật sáng và phi hành đoàn tắt động cơ: “đèn tiếp xúc” (contact light) của Apollo.",
-        "name": "Thanh dò tiếp xúc"
+        "name": "Thanh dò tiếp xúc",
+        "pros": [
+          "Động cơ tắt đúng lúc",
+          "Độ tin cậy +0,3 %"
+        ],
+        "cons": [
+          "+8 kg",
+          "+15 nghìn đô"
+        ],
+        "real": "Tàu đổ bộ Mặt Trăng Apollo (thanh dò 1,7 m)"
       }
     },
     "option:legs/probes/loadcells": {
@@ -1163,7 +1431,16 @@
       },
       "vi": {
         "what": "Cảm biến lực trong mỗi chân cân con tàu khi nó hạ xuống; động cơ chỉ tắt khi cả bốn chân đều đã chịu sức nặng.",
-        "name": "Cảm biến lực trong mỗi chân"
+        "name": "Cảm biến lực trong mỗi chân",
+        "pros": [
+          "Không bao giờ tắt khi mới chạm một chân",
+          "Độ tin cậy +0,5 %"
+        ],
+        "cons": [
+          "+12 kg",
+          "+35 nghìn đô"
+        ],
+        "real": "Các tàu hạ cánh bằng động cơ hiện đại (Falcon 9, Nova-C)"
       }
     },
     "slot:thrust/baseShield": {
@@ -1181,7 +1458,13 @@
       },
       "vi": {
         "what": "Những ống bọc chần bằng vải thủy tinh và gốm quanh đỉnh mỗi động cơ: động cơ vẫn xoay được, mà khe hở vẫn kín.",
-        "name": "Rèm cách nhiệt mềm"
+        "name": "Rèm cách nhiệt mềm",
+        "pros": [
+          "Nhẹ",
+          "Cho động cơ xoay tự do"
+        ],
+        "cons": [],
+        "real": "Rèm mềm của Saturn V S-IC, chăn chắn nhiệt quanh RS-25 của tàu con thoi"
       }
     },
     "option:thrust/baseShield/rigid": {
@@ -1190,7 +1473,16 @@
       },
       "vi": {
         "what": "Một tấm kim loại và gốm chịu nhiệt trải khắp đáy, mỗi động cơ một lỗ kín. Ở nơi nhiều luồng khí nung nóng lẫn nhau, nó quan trọng nhất.",
-        "name": "Tấm chắn nhiệt đáy cứng"
+        "name": "Tấm chắn nhiệt đáy cứng",
+        "pros": [
+          "Độ tin cậy +0,4 %",
+          "Tốt nhất cho cụm động cơ lớn"
+        ],
+        "cons": [
+          "+80 kg",
+          "+30 nghìn đô"
+        ],
+        "real": "Tấm chắn nhiệt đáy của Saturn V S-IC, tấm chắn nhiệt Octaweb của Falcon 9 Block 5"
       }
     },
     "option:thrust/baseShield/none": {
@@ -1199,7 +1491,15 @@
       },
       "vi": {
         "what": "Dầm và ống để trần: một động cơ đơn trong không khí loãng còn qua được, nhưng một cụm động cơ sẽ tự nướng chín dây điện của mình. Hai lần phóng đầu tiên của tên lửa N1 Liên Xô, năm 1969, đều kết thúc bằng hỏa hoạn giữa 30 động cơ ở đuôi.",
-        "name": "Không có tấm chắn đáy"
+        "name": "Không có tấm chắn đáy",
+        "pros": [
+          "−40 kg",
+          "−10 nghìn đô"
+        ],
+        "cons": [
+          "Độ tin cậy −0,6 %"
+        ],
+        "real": "Tên lửa thám không đời đầu; hai lần phóng đầu tiên của N1 (1969) kết thúc bằng hỏa hoạn giữa 30 động cơ ở đuôi"
       }
     },
     "slot:thrust/feed": {
@@ -1217,7 +1517,14 @@
       },
       "vi": {
         "what": "Mỗi động cơ một ống cho mỗi loại nhiên liệu, mở lúc đánh lửa và đóng lúc kết thúc.",
-        "name": "Ống cấp riêng"
+        "name": "Ống cấp riêng",
+        "pros": [
+          "Đơn giản"
+        ],
+        "cons": [
+          "Động cơ rò rỉ không cô lập được khỏi bồn"
+        ],
+        "real": "Phần lớn các tầng một động cơ"
       }
     },
     "option:thrust/feed/prevalves": {
@@ -1226,7 +1533,16 @@
       },
       "vi": {
         "what": "Một ống vòng cấp cho mọi động cơ qua van khóa riêng, nên máy tính có thể cô lập một động cơ đang hỏng và các động cơ còn lại bay tiếp.",
-        "name": "Ống góp có van khóa"
+        "name": "Ống góp có van khóa",
+        "pros": [
+          "Độ tin cậy +0,5 %",
+          "Cô lập được động cơ hỏng"
+        ],
+        "cons": [
+          "+60 kg",
+          "+40 nghìn đô"
+        ],
+        "real": "Van khóa trước của Saturn V S-IC, việc tắt động cơ hỏng trên Falcon 9"
       }
     },
     "slot:thrust/pogo": {
@@ -1244,7 +1560,14 @@
       },
       "vi": {
         "what": "Ống trơn: nếu nhịp rung của lực đẩy và nhịp dồn của nhiên liệu trong ống trùng nhau, cả thân tàu sẽ nảy dọc theo chiều dài.",
-        "name": "Ống trơn"
+        "name": "Ống trơn",
+        "pros": [
+          "Không thêm gì"
+        ],
+        "cons": [
+          "Thân tàu có thể tự rung (POGO)"
+        ],
+        "real": ""
       }
     },
     "option:thrust/pogo/accumulator": {
@@ -1253,7 +1576,16 @@
       },
       "vi": {
         "what": "Những khoang nhỏ chứa khí trên ống oxy hoạt động như bộ giảm xóc, phá vỡ nhịp rung. Saturn V được lắp chúng sau khi Apollo 6 và Apollo 13 bị rung dữ dội.",
-        "name": "Bình tích khí"
+        "name": "Bình tích khí",
+        "pros": [
+          "Độ tin cậy +0,4 %",
+          "Phi hành đoàn đi êm hơn"
+        ],
+        "cons": [
+          "+35 kg",
+          "+25 nghìn đô"
+        ],
+        "real": "Saturn V S-IC và S-II (sau Apollo 6 và 13), Titan II cho Gemini"
       }
     },
     "slot:strapon/chambers": {
@@ -1271,7 +1603,12 @@
       },
       "vi": {
         "what": "Bốn buồng đốt nhỏ chung một bơm tuabin, thêm hai động cơ lái phụ xoay được, như tên lửa đẩy phụ của Soyuz: buồng nhỏ cháy êm.",
-        "name": "Bốn buồng, một bơm"
+        "name": "Bốn buồng, một bơm",
+        "pros": [
+          "Cháy êm và ổn định"
+        ],
+        "cons": [],
+        "real": "RD-107A (tên lửa đẩy phụ của Soyuz)"
       }
     },
     "option:strapon/chambers/single": {
@@ -1280,7 +1617,15 @@
       },
       "vi": {
         "what": "Một buồng đốt và vòi phun lớn: nhẹ và rẻ hơn, nhưng buồng lớn dễ tự rung tới rã ra.",
-        "name": "Một buồng lớn"
+        "name": "Một buồng lớn",
+        "pros": [
+          "−100 kg",
+          "−30 nghìn đô"
+        ],
+        "cons": [
+          "Độ tin cậy −0,6 %"
+        ],
+        "real": "Buồng đốt đơn kiểu động cơ duy trì của Atlas"
       }
     },
     "slot:strapon/turbine": {
@@ -1298,7 +1643,14 @@
       },
       "vi": {
         "what": "Hydro peroxit đậm đặc chảy qua một lớp hạt xúc tác rắn, biến thành hơi nước nóng quay tuabin, như trên Soyuz. Nó tách riêng khỏi nhiên liệu chính, nên khởi động dễ.",
-        "name": "Hơi hydro peroxit"
+        "name": "Hơi hydro peroxit",
+        "pros": [
+          "Khởi động dễ và đáng tin cậy"
+        ],
+        "cons": [
+          "Phải mang thêm bồn peroxit riêng"
+        ],
+        "real": "RD-107A / RD-108A (Soyuz)"
       }
     },
     "option:strapon/turbine/gasgen": {
@@ -1307,7 +1659,16 @@
       },
       "vi": {
         "what": "Một buồng đốt nhỏ chạy bằng chính dầu hỏa và oxy quay tuabin: không phải mang bồn peroxit.",
-        "name": "Máy tạo khí"
+        "name": "Máy tạo khí",
+        "pros": [
+          "−60 kg",
+          "Isp +2 s"
+        ],
+        "cons": [
+          "+20 nghìn đô",
+          "Khó khởi động hơn"
+        ],
+        "real": "Động cơ tầng đẩy MA-5 của Atlas, Merlin"
       }
     },
     "shape:tail/single_engine": {
