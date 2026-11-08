@@ -1631,6 +1631,7 @@ for _i, (_id, _lab, _st) in enumerate((('fire', 'FIRE', 'off'), ('dump', 'DUMP',
                                        ('apu', 'APU', 'green'), ('pwr', 'PWR', 'green'), ('comms', 'COMMS', 'green'), ('dock', 'DOCK', 'off'), ('para', 'PARA', 'off'), ('entry', 'ENTRY', 'off'))):
     BTNS.append((_id, 0.235 + 0.073 * _i, _lab, _st))
 ALARM_X = 0.135
+BTN_Y = -0.0065      # eyebrow buttons + labels sit this far below the strip's old line, so the group is centred on the strip
 EB_Y0, EB_Y1 = SHIELD_Y - HOOD_T + 0.01, SHIELD_Y - 0.005     # eyebrow face height range (local y)
 
 def strip_texture():
@@ -1640,9 +1641,9 @@ def strip_texture():
     X = lambda x: (x - xa) * ppm; Y = lambda y: (EB_Y1 - y) * ppm
     for (id_, x, lab, st) in BTNS:
         size = (0.0078 if len(lab) > 9 else 0.0098) * ppm
-        cv.mtext(lab, X(x), Y(-0.034), size, (0.97, 0.97, 0.95))
-        cv.rect(X(x) - 0.0185 * ppm, Y(0.0) - 0.0185 * ppm, 0.037 * ppm, 0.037 * ppm, None)
-    cv.mtext('MASTER ALARM', X(ALARM_X), Y(-0.034), 0.0072 * ppm, (1.0, 0.85, 0.8))
+        cv.mtext(lab, X(x), Y(-0.034 + BTN_Y), size, (0.97, 0.97, 0.95))
+        cv.rect(X(x) - 0.0185 * ppm, Y(BTN_Y) - 0.0185 * ppm, 0.037 * ppm, 0.037 * ppm, None)
+    cv.mtext('MASTER ALARM', X(ALARM_X), Y(-0.034 + BTN_Y), 0.0072 * ppm, (1.0, 0.85, 0.8))
     for x in (-0.28, 0.185, 1.05):
         cv.rect(X(x), 2, 1.5, H - 4, (0.15, 0.15, 0.16))
     return cv
@@ -1669,22 +1670,22 @@ def build_shield():
         b.acc.add('hood', slab_geo(rect((a0, a1, EB_Y0, EB_Y1)), [], 0.05))
         b.quad('strip', a1 - a0, EB_Y1 - EB_Y0, (a0 + a1) / 2, (EB_Y0 + EB_Y1) / 2, 0.0006)
         for (id_, x, lab, st) in BTNS:
-            b.box('bezel', 0.034, 0.034, 0.012, x, 0.0, 0.006, bevel=0.002)
-        b.box('bezel', 0.062, 0.046, 0.012, ALARM_X, 0.0, 0.006, bevel=0.002)
+            b.box('bezel', 0.034, 0.034, 0.012, x, BTN_Y, 0.006, bevel=0.002)
+        b.box('bezel', 0.062, 0.040, 0.012, ALARM_X, BTN_Y, 0.006, bevel=0.002)
     for (id_, x, lab, st) in BTNS:
         rgb, k = LENS[st]
         lens_material('lens.' + id_, rgb, k)
-        cap = wpos(EBF, (x, 0.0, 0.015)); lens = wpos(EBF, (x, 0.0085, 0.0195))
+        cap = wpos(EBF, (x, BTN_Y, 0.015)); lens = wpos(EBF, (x, BTN_Y + 0.0085, 0.0195))
         EMPTIES['btn:' + id_] = cap
         PIVOTS['btnCap.' + id_] = cap; PIVOTS['btnLamp.' + id_] = lens
         PARENTS['btnCap.' + id_] = 'btn:' + id_; PARENTS['btnLamp.' + id_] = 'btn:' + id_
         with EBF:
-            O('btnCap.' + id_).box('capdark', 0.027, 0.027, 0.008, x, 0.0, 0.015, bevel=0.002)
-            O('btnLamp.' + id_).box('lens.' + id_, 0.016, 0.006, 0.002, x, 0.0085, 0.0195, bevel=0)
+            O('btnCap.' + id_).box('capdark', 0.027, 0.027, 0.008, x, BTN_Y, 0.015, bevel=0.002)
+            O('btnLamp.' + id_).box('lens.' + id_, 0.016, 0.006, 0.002, x, BTN_Y + 0.0085, 0.0195, bevel=0)
     lens_material('lens.alarm', (1.0, 0.1, 0.05), 0.5)
-    PIVOTS['alarmLamp'] = wpos(EBF, (ALARM_X, 0.0, 0.0165))
+    PIVOTS['alarmLamp'] = wpos(EBF, (ALARM_X, BTN_Y, 0.0165))
     with EBF:
-        O('alarmLamp').box('lens.alarm', 0.052, 0.036, 0.011, ALARM_X, 0.0, 0.0165, bevel=0.004, segs=2)
+        O('alarmLamp').box('lens.alarm', 0.052, 0.032, 0.011, ALARM_X, BTN_Y, 0.0165, bevel=0.004, segs=2)
     # HUD units: base, two posts, a dark frame and a tinted glass plate
     for xc in (0.0, 1.10):
         zh = -0.72
@@ -1771,7 +1772,7 @@ def build_flightmode():
         with IPF:
             bp.box('dash_dark', FM_W + 0.008, FM_H + 0.008, 0.012, 0, FM_BC, 0.0025, bevel=0)
             bp.panel('label2', FM_W, FM_H, 0, FM_BC, zf, rect_)
-        by = -0.205
+        by = -0.2095      # caps centred between the bay top and the label line
         # engine cut-off: lamp, bat toggle (pivot at its base), hinged red guard (pivot at the hinge)
         xt = -0.098
         lens_material('lens.cutoff', (1.0, 0.1, 0.05), 0.4)
