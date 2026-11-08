@@ -827,6 +827,7 @@ export default {
     if (s.debrisWarning > 0) s.debrisWarning -= dt;
     if (fc.landed && !s.wasLanded) {
       audio.play('impact.small');
+      s.zoom.target = 0; s.freeHold = null; // touchdown: back to the plain forward cockpit view, no display zoom left over
       if (fc.planetId === 'mars') s.callout = { text: 'Touchdown confirmed. Welcome to Mars.', t: CALLOUT_SECONDS * 2 };
     }
     s.wasLanded = fc.landed;

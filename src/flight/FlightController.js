@@ -17,7 +17,8 @@
 // On the bus (only names from contract.js):
 //   flight:phase  { phase }                 'prelaunch'|'ascent'|'orbit'|'coast'|'entry'|'landing'|'landed'
 //   flight:event  { type, t, data }         only FLIGHT_EVENT_TYPES: 'maxq', 'debris_hit', 'blackout', 'skip_off'
-//   flight:landed { touchdownSpeed }
+//   flight:landed { touchdownSpeed }          touchdown also shuts the engine down (throttle 0, not lit: engine-stop on the
+//                                              contact light) and stands the ship upright on its legs within ~1 s
 //   flight:failed { endingId, cause, causeId, historyHint }   endingId is a key of ENDINGS, cause is one sentence
 // Local notices (fc.onNotice) also include: liftoff, fairing_sep, parachute, maxq_warning, heat_warning, engine_hot,
 //   g_high, orbit_achieved, fuel_empty, ignition, no_ignition, debris_near_miss.
@@ -322,6 +323,7 @@ export class FlightController {
 
     // throttle (min throttle + limited ignitions; X is the only way to shut down below min throttle)
     const minT = this.ship.minThrottle;
+    if (this.landed) input = { ...input, throttleUp: false, throttleDown: false, throttleTarget: undefined, cutoff: true }; // landed: engine stays off (no Mars liftoff is flown here)
     if (input.cutoff) this.throttle = 0;
     if (input.throttleUp) {
       if (this.throttle === 0 && !this.engineLit && !this._ignite()) {
@@ -392,6 +394,7 @@ export class FlightController {
         // held by the ground (or by the launch clamps during the countdown)
         this.vel = v3();
         this.pos = scale(up, this.planet.radius);
+        if (this.landed) this._levelOnLegs(dt);
         this._lastNonGravAccel = this.mu / (r * r); // you feel 1 local g standing
         this._updateEngineHeat(thrustN > 0 ? throttle : 0, dt);
         return;
@@ -640,11 +643,27 @@ export class FlightController {
       this.omega = v3();
       this.onGround = true;
       this.landed = true;
+      this.throttle = 0; // engine-stop on touchdown: a hover throttle left on would lift the ship straight off again
+      this.engineLit = false;
+      this._braking = false;
       this._setPhase('landed');
       this.bus.emit('flight:landed', { touchdownSpeed: speed });
     } else {
       this._fail('rud', speed > limit ? 'crash_landing' : 'tipped_over', { touchdownSpeed: speed });
     }
+  }
+
+  // Landed ships sit upright on their legs: ease the nose onto local up (time constant 0.25 s, so ~1 s to settle).
+  _levelOnLegs(dt) {
+    const up = this.up;
+    const f = this.forward;
+    const axis = cross(f, up);
+    const angle = Math.acos(Math.max(-1, Math.min(1, dot(f, up))));
+    if (angle < 1e-4) return;
+    const step = angle < 1e-3 ? angle : angle * (1 - Math.exp(-dt / 0.25));
+    const ax = len(axis) < 1e-9 ? qRotate(this.orient, LOCAL_RIGHT) : axis;
+    this.orient = qNorm(qMul(qFromAxisAngle(ax, step), this.orient));
+    this.omega = v3();
   }
 
   // No fuel + a trajectory that never re-enters the atmosphere = stranded → Adrift.

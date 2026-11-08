@@ -29,22 +29,24 @@ export function createAutopilot(options = {}) {
   let burning = false; // we lit the engine ourselves and must shut it down
   let circ = false; // circularise burn started: stay on it until the orbit is round
   let coastLatch = false; // after MECO: stay engine-off until the circularise burn
+  let landedOn = null; // planet the mission touched down on (the ascent guide never runs there)
   let dodgeId = null, dodgeStart = 0, dodgeDone = false;
 
   function set(id, n = 0) { step = id; arg = n; }
   function reset() {
-    step = 'standby'; arg = 0; burning = false; coastLatch = false; circ = false; dodgeId = null; dodgeStart = 0; dodgeDone = false;
+    step = 'standby'; arg = 0; burning = false; coastLatch = false; circ = false; landedOn = null; dodgeId = null; dodgeStart = 0; dodgeDone = false;
     input.aim = undefined; input.throttleTarget = undefined; input.brake = false; input.trim = 0;
   }
 
   function update(fc, ctx = {}) {
     input.aim = undefined; input.throttleTarget = undefined; input.brake = false; input.trim = 0;
     if (ctx.countdown || fc.failed) { set('standby'); return input; }
-    if (fc.landed || fc.phase === 'landed') { set('landed'); return input; }
+    // Landed: engine off, no aim. Remember it: the ascent program is for the Earth pad only, never a liftoff from Mars.
+    if (fc.landed || fc.phase === 'landed') { landedOn = fc.planetId; burning = false; input.throttleTarget = 0; set('landed'); return input; }
     if (fc.phase === 'prelaunch' || (fc.onGround && fc.liftoffT === null)) { set('standby'); return input; }
 
     const tel = fc.telemetry;
-    const guide = ascentGuide(fc);
+    const guide = fc.planetId === 'earth' && landedOn !== fc.planetId ? ascentGuide(fc) : null;
 
     // ---- Earth ascent (guide applies) ----
     if (guide) {
