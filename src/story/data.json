@@ -35,7 +35,8 @@
     "continue": "Continue",
     "back": "Back",
     "launch": "Launch",
-    "enterDebounceMs": 350
+    "enterDebounceMs": 350,
+    "briefDurationMs": 8000
   },
 
   "radio": {

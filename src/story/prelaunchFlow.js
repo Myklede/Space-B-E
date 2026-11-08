@@ -17,3 +17,14 @@ export const finalMessage = (text, fallback) => (String(text ?? '').trim() || fa
 
 /** Wrap-around photo selection for arrow keys. */
 export const stepIndex = (index, delta, count) => (index + delta + count) % count;
+
+/** One cancellable intro deadline. Back/retry screens never start a new automatic action. */
+export function scheduleBriefAdvance({ quick = false, delayMs, onAdvance, setTimer = setTimeout, clearTimer = clearTimeout }) {
+  let active = !quick;
+  const timer = active ? setTimer(() => {
+    if (!active) return;
+    active = false;
+    onAdvance();
+  }, delayMs) : null;
+  return () => { active = false; if (timer !== null) clearTimer(timer); };
+}
