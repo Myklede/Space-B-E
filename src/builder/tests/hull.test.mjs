@@ -69,7 +69,7 @@ check(H.hullMaterial({ body: 'nope' }, 'body').id === 'al2219' && H.hullMaterial
   check(s('honeycomb') >= s('al2219') && s('carbon') >= s('al2219'), 'sandwich skins (carbon, honeycomb) resist buckling at least as well as 2219');
 }
 check(PHYS.safeFactor === 1.4 && H.buckleChance(mats[0]) === 0 && H.buckleChance(byId('steel')) > 0 && H.buckleChance(byId('steel')) < 0.06, `Max-Q: crewed factor of safety ${PHYS.safeFactor}; the default skin cannot buckle, thin steel has a small chance (${(H.buckleChance(byId('steel')) * 100).toFixed(1)} %)`);
-check(H.peakSkinTempC(mats[0], 2) > H.peakSkinTempC(mats[0], 20), 'heat: a skin near the nose runs hotter than one far behind it');
+check(H.peakSkinTempC(mats[0], 0.5) > H.peakSkinTempC(mats[0], 40), 'heat: a skin right behind the nose tip runs hotter than one far behind it (in between, the air turns turbulent and heats again)');
 check(H.peakSkinTempC(mats[0], 2, 2) > H.peakSkinTempC(mats[0], 2) + 40, 'heat: a 30° flare runs much hotter than a plain skirt at the same place');
 check(H.peakSkinTempC(mats[0], 2, 2, PHYS.cork.resistance) < H.peakSkinTempC(mats[0], 2), 'heat: cork keeps the metal under a flare cooler than a bare plain skirt');
 check(H.peakSkinTempC(mats[0], 1.2) < mats[0].maxTempC - PHYS.heatMarginC - 30, `heat: a plain default skin 1.2 m behind the nose tip peaks at ${H.peakSkinTempC(mats[0], 1.2).toFixed(0)} °C, far below its ${mats[0].maxTempC} °C limit`);

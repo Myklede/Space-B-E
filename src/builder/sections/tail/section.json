@@ -153,7 +153,7 @@
       "id": "atlas_v",
       "name": "Boattail + two big solids",
       "real": "Atlas V 521 (one RD-180, two GEM-63)",
-      "desc": "One big kerosene engine with two chambers, its top hidden in a tapering boattail skirt, and two large graphite solids. Atlas V flies with none to five solids; Boeing's Starliner flies the two-solid N22.",
+      "desc": "One big kerosene engine with two chambers, its top hidden in a tapering boattail skirt, and two large graphite solids. Atlas V flies with none to five solids; Boeing's Starliner flies the two-solid N22. Here it must also do the upper stage's job (circularise, the transfer to Mars, the landing), so it is fitted with a restartable spark igniter; the real one-shot igniter is a cheaper option.",
       "pros": [
         "Engine plumbing shielded from the airflow",
         "Strong liftoff"
@@ -174,7 +174,7 @@
           "options": {
             "cycle": "sc",
             "injector": "swirl",
-            "igniter": "ampoule"
+            "igniter": "spark"
           }
         }
       ],
@@ -197,7 +197,7 @@
       "id": "ariane_5",
       "name": "Wide core + two big solids",
       "real": "Ariane 5 (one Vulcain 2, two P241 boosters)",
-      "desc": "A wide core with one hydrogen engine between two huge segmented solid boosters, which do most of the lifting for the first two minutes. Ariane 5 flew 117 times, including the James Webb Space Telescope.",
+      "desc": "A wide core with one hydrogen engine between two huge segmented solid boosters, which do most of the lifting for the first two minutes. Ariane 5 flew 117 times, including the James Webb Space Telescope. Here it must also do the upper stage's job (circularise, the transfer to Mars, the landing), so it is fitted with a restartable spark igniter; the real one-shot igniter is a cheaper option.",
       "pros": [
         "Very strong liftoff",
         "One efficient main engine"
@@ -216,7 +216,7 @@
         {
           "type": "engine_l",
           "options": {
-            "igniter": "pyro"
+            "igniter": "spark"
           }
         }
       ],
@@ -873,7 +873,7 @@
       "id": "angara_a5",
       "name": "One module + four identical modules",
       "real": "Angara A5 (2014–): five URM-1 modules, each with one RD-191",
-      "desc": "Five identical kerosene modules: one in the middle and four strapped round it, each with a single RD-191, a one-chamber cousin of the RD-170. The same module flies alone as Angara 1.2.",
+      "desc": "Five identical kerosene modules: one in the middle and four strapped round it, each with a single RD-191, a one-chamber cousin of the RD-170. The same module flies alone as Angara 1.2. Here it must also do the upper stage's job (circularise, the transfer to Mars, the landing), so it is fitted with a restartable spark igniter; the real one-shot igniter is a cheaper option.",
       "pros": [
         "Liquid boosters: far better Isp than solids",
         "Every module the same"
@@ -894,7 +894,8 @@
           "type": "engine_l",
           "options": {
             "cycle": "sc",
-            "igniter": "ampoule"
+            "igniter": "spark",
+            "injector": "swirl"
           }
         }
       ],
@@ -936,7 +937,8 @@
         {
           "type": "engine_l",
           "options": {
-            "cycle": "tapoff"
+            "cycle": "tapoff",
+            "injector": "pintle"
           }
         }
       ],
@@ -1292,7 +1294,7 @@
       "id": "ariane_64",
       "name": "Wide core + four carbon solids",
       "real": "Ariane 64 (first flight 12 February 2026): one Vulcain 2.1, four P120C",
-      "desc": "One hydrogen engine under a 5.4 m core with four one-piece carbon-fibre solids, the same motor that is Vega C's first stage. Their nozzles are steered by electric actuators, no hydraulics. Ariane 62 flies with two.",
+      "desc": "One hydrogen engine under a 5.4 m core with four one-piece carbon-fibre solids, the same motor that is Vega C's first stage. Their nozzles are steered by electric actuators, no hydraulics. Ariane 62 flies with two. Here it must also do the upper stage's job (circularise, the transfer to Mars, the landing), so it is fitted with a restartable spark igniter; the real one-shot igniter is a cheaper option.",
       "pros": [
         "Very strong liftoff",
         "Light carbon booster cases"
@@ -1311,7 +1313,7 @@
         {
           "type": "engine_l",
           "options": {
-            "igniter": "pyro"
+            "igniter": "spark"
           }
         }
       ],

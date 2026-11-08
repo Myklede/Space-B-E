@@ -125,6 +125,32 @@
         ],
         "real": "Vòng máy tính dẫn đường (Instrument Unit) của Saturn IB và Saturn V; khung tàu Apollo"
       }
+    },
+    "hull:titanium": {
+      "en": {
+        "what": "Thin sheets of titanium alloy with stiffening ribs, the metal of the SR-71 Blackbird spy plane's skin. It keeps its strength up to about 400 °C, far hotter than any aluminium.",
+        "why": "Titanium shrugs off the heat of a fast climb, wears very slowly flight after flight, and a debris hit has a harder time punching through it than through aluminium of the same thickness.",
+        "without": "It is the most expensive skin: titanium is hard to bend and must be welded in a shield of inert gas. And it is not lighter here: titanium is no stiffer for its weight than aluminium, so a skin that must not buckle needs about a quarter more mass. Against debris it helps less than you might think: the skin covers only the dry bays and cones, while the tanks and the cabin are their own walls.",
+        "analogy": "Like a titanium camping pot: it laughs at the fire and lasts for years, but it costs several times a plain aluminium one and is not much lighter."
+      },
+      "vi": {
+        "what": "Những tấm hợp kim titan mỏng có gân gia cường: chính là kim loại làm vỏ máy bay do thám SR-71 Blackbird. Nó giữ được độ bền tới khoảng 400 °C, nóng hơn nhiều so với bất kỳ loại nhôm nào.",
+        "why": "Titan không sợ cái nóng khi bay lên nhanh, mòn rất chậm sau mỗi chuyến bay, và mảnh rác vũ trụ khó xuyên thủng nó hơn so với tấm nhôm dày bằng.",
+        "without": "Đây là lớp vỏ đắt nhất: titan khó uốn và phải hàn trong lớp khí trơ bao quanh. Ở đây nó cũng không nhẹ hơn: tính cùng khối lượng thì titan không cứng hơn nhôm, nên một lớp vỏ không được móp cần nặng hơn khoảng một phần tư. Trước rác vũ trụ nó cũng giúp ít hơn ta nghĩ: lớp vỏ chỉ bọc các khoang khô và chóp nón, còn các bình và khoang lái có thành vỏ riêng.",
+        "analogy": "Giống cái nồi cắm trại bằng titan: đặt lên lửa thoải mái, dùng được nhiều năm, nhưng đắt gấp mấy lần nồi nhôm thường mà cũng không nhẹ hơn bao nhiêu.",
+        "name": "Vỏ titan Ti-6Al-4V",
+        "pros": [
+          "Giữ được độ bền tới khoảng 400 °C",
+          "Mòn rất chậm: tốt nếu muốn dùng lại tàu",
+          "Chịu va đập của rác vũ trụ tốt hơn nhôm"
+        ],
+        "cons": [
+          "Nặng hơn nhôm 2219 khoảng 25 % để cứng bằng",
+          "Lớp vỏ đắt nhất: khó tạo hình và khó hàn",
+          "Trước rác vũ trụ, kim loại của chính các bình mới quan trọng hơn: lớp vỏ chỉ che một phần nhỏ của chúng"
+        ],
+        "real": "Vỏ máy bay Lockheed A-12 và SR-71 Blackbird (titan chiếm khoảng 85-93 % khung máy bay); vỏ chịu áp suất bên trong của khoang Mercury và Gemini làm bằng titan (lớp ngói bên ngoài là hợp kim niken René 41)"
+      }
     }
   }
 }

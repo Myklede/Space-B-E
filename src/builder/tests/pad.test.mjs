@@ -23,7 +23,7 @@ const sections = SEC.createSections(sectionFiles);
 const catalog = createCatalog(partsJson, internalsJson);
 const launchData = read('src/builder/data/launch.json');
 const balance = read('src/core/balance.json');
-const deps = { catalog, engines: read('src/builder/data/engines.json'), launch: launchData, balance, planets: PLANETS, g0: G0, materials: read('src/builder/data/materials.json'), pad: sections.pad };
+const deps = { catalog, engines: read('src/builder/data/engines.json'), launch: launchData, balance, planets: PLANETS, g0: G0, materials: read('src/builder/data/materials.json'), pad: sections.pad, traitsData: { propulsion: read('src/builder/traits/propulsion.json') } };
 const presets = Object.fromEntries(['reliable', 'workhorse', 'coldMorning', 'thinSkin'].map((k) => [k, read(`src/builder/data/presets/${k}.json`)]));
 const explain = read('src/builder/sections/pad/explain.json').entries;
 const pad = sections.pad;
@@ -127,7 +127,11 @@ for (const key of ['reliable', 'workhorse']) {
   const atBase = spec(presets.workhorse, { site: 'slc40' }), atSmall = spec(presets.workhorse, { site: 'slc4e' });
   const fx = atSmall.breakdown.padFx;
   check(fx.excess > 0 && fx.liftoffLossMps > 0 && fx.damageChance > 0 && fx.repairFee > 0 && fx.holdDownCatch > 0, `Workhorse on SLC-4E's smaller trench: over the limit by ${Math.round(fx.excess * 100)} % (held at ${Math.round(fx.throttle * 100)} %, loss ${fx.liftoffLossMps} m/s, damage ${Math.round(fx.damageChance * 100)} %, repairs $${fx.repairFee / 1000}k)`);
-  check(atSmall.spec.stats.deltaV < atBase.spec.stats.deltaV && atSmall.breakdown.liftoffBurn > 0, 'the held-back liftoff burns propellant on the pad (lower Δv)');
+  // the flight holds the thrust back itself (traits.propulsion.pad); the builder no longer burns propellant for it
+  const held = atSmall.spec.stats.traits?.propulsion?.pad;
+  check(atSmall.breakdown.liftoffBurn === 0 && Math.abs(atSmall.spec.stats.fuelMass - atBase.spec.stats.fuelMass) < 1e-6, 'the held-back liftoff costs no propellant in the builder (the flight realises it)');
+  check(fx.heldBackMps === fx.liftoffLossMps && fx.liftoffLossMps > 0, `the Δv the slow climb costs stays as an estimate for the words (${fx.heldBackMps} m/s)`);
+  check((held && Math.abs(held.heldThrottle - fx.throttle) < 1e-3 && held.heldThrottle < 1 && held.clearM > 0), 'the flight gets the held throttle and the height of the tower to clear');
   check(spec(presets.coldMorning).breakdown.padFx.excess === 0, 'Cold Morning (a small engine) fits the bare slab it launches from');
   // the big solid-booster tails (2–3 MN) overload the ordinary pads and need LC-39A or Starbase with its water plate
   for (const id of ['atlas_v', 'ariane_5', 'space_shuttle']) {

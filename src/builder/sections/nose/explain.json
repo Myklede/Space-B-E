@@ -656,51 +656,53 @@
     },
     "part:o2_bottle": {
       "en": {
-        "what": "A high-pressure bottle of oxygen for refilling a spacesuit. One bottle is one refill between walks outside.",
+        "what": "A 50-litre steel bottle of oxygen at 150 bar, about 10 kg. Only about 6 kg of it can refill a spacesuit: the rest is below the suit's own pressure.",
         "why": "A person breathes about 0.84 kg of oxygen a day. A spacesuit carries only a few hours' worth, so it is refilled at the ship.",
-        "without": "With no spare oxygen, the crew can go outside fewer times. Each bottle adds 80 kg.",
+        "without": "Every trip outside costs the suit's fill, the cabin air let out through the hatch, and the cabin's breathing until the next walk: about 2 kg. One bottle gives about two trips.",
         "inside": "A strong tank with rounded ends holds oxygen squeezed very tight. A valve and a regulator let it out slowly at a safe pressure.",
         "analogy": "Like a scuba tank: a lot of air squeezed into a small, strong bottle."
       },
       "vi": {
-        "what": "Một bình oxy (oxygen) áp suất cao để nạp lại cho bộ đồ du hành. Mỗi bình là một lần nạp giữa hai chuyến ra ngoài.",
+        "what": "Một bình thép 50 lít chứa oxy ở 150 bar, khoảng 10 kg. Chỉ khoảng 6 kg dùng được để nạp bộ đồ du hành: phần còn lại thấp hơn áp suất của chính bộ đồ.",
         "why": "Mỗi người thở khoảng 0,84 kg oxy một ngày. Bộ đồ du hành chỉ mang đủ cho vài giờ, nên phải nạp lại ở tàu.",
-        "without": "Không có oxy dự phòng, phi hành đoàn ra ngoài được ít lần hơn. Mỗi bình nặng thêm 80 kg.",
+        "without": "Mỗi lần ra ngoài tốn lượng nạp cho bộ đồ, không khí trong khoang xả qua cửa, và lượng thở trong khoang tới lần ra ngoài sau: khoảng 2 kg. Một bình cho khoảng hai lần ra ngoài.",
         "inside": "Một bình chắc, hai đầu tròn, chứa oxy bị nén rất chặt. Một van và bộ điều áp cho oxy ra từ từ ở áp suất an toàn.",
         "analogy": "Giống bình lặn biển: rất nhiều không khí nén vào một chiếc bình nhỏ và chắc.",
         "pros": [
-          "Thêm một lần ra ngoài (EVA)"
+          "Rẻ",
+          "Mỗi bình có van riêng"
         ],
         "cons": [
-          "Thêm khối lượng"
+          "Áp suất thấp: 41 % không nạp được cho bộ đồ"
         ],
-        "real": "Bình PRSD của tàu con thoi / bình NORS của ISS",
+        "real": "Bình thép 50 lít chứa oxy ở 150 bar",
         "name": "Bình O₂ dự phòng"
       }
     },
     "part:o2_tank_l": {
       "en": {
-        "what": "One larger tank that holds two spacesuit refills of oxygen.",
-        "why": "One valve and one mount serve both refills, so it is a little lighter than two separate bottles.",
-        "without": "Two small bottles do the same job for 10 kg more.",
-        "inside": "The same strong, round-ended tank and regulator as the small bottle, only longer.",
-        "analogy": "Like buying one big bottle of juice instead of two small ones: less packaging for the same amount."
+        "what": "A composite-wrapped tank at 414 bar (6000 psi), like the ISS's NORS tanks: 36 kg of oxygen, and 85 % of it can fill a spacesuit.",
+        "why": "Carbon fibre over a thin metal liner holds far more pressure for its weight than steel.",
+        "without": "Five times the usable oxygen of a steel bottle, but all of it sits behind one valve: if that line is damaged, all of it can go.",
+        "inside": "A thin metal liner wound tight with carbon fibre and resin, with a valve and a regulator that let the oxygen out slowly at a safe pressure.",
+        "analogy": "Like a firefighter's carbon air tank against an old steel one: far more air, far less weight, far dearer."
       },
       "vi": {
-        "what": "Một bình lớn chứa đủ oxy (oxygen) cho hai lần nạp bộ đồ du hành.",
-        "why": "Một van và một giá gắn phục vụ cả hai lần nạp, nên nó nhẹ hơn chút ít so với hai bình rời.",
-        "without": "Hai bình nhỏ làm cùng việc đó nhưng nặng hơn 10 kg.",
-        "inside": "Vẫn là chiếc bình chắc hai đầu tròn và bộ điều áp như bình nhỏ, chỉ dài hơn.",
-        "analogy": "Giống mua một chai nước trái cây lớn thay vì hai chai nhỏ: ít vỏ chai hơn cho cùng lượng nước.",
+        "what": "Một bình bọc sợi composite ở 414 bar (6000 psi), như bình NORS của ISS: 36 kg oxy, và 85 % trong đó nạp được cho bộ đồ du hành.",
+        "why": "Sợi carbon quấn ngoài một lớp lót kim loại mỏng chịu áp suất cao hơn thép nhiều so với khối lượng của nó.",
+        "without": "Lượng oxy dùng được gấp năm lần bình thép, nhưng tất cả nằm sau một van: nếu đường ống đó hỏng thì có thể mất hết.",
+        "inside": "Một lớp lót kim loại mỏng được quấn chặt bằng sợi carbon và nhựa, cùng một van và bộ điều áp cho oxy ra từ từ ở áp suất an toàn.",
+        "analogy": "Giống bình khí carbon của lính cứu hoả so với bình thép đời cũ: nhiều khí hơn hẳn, nhẹ hơn hẳn, đắt hơn hẳn.",
         "pros": [
-          "Hai lần ra ngoài (EVA)",
-          "Nhẹ hơn hai bình rời"
+          "Lượng oxy dùng được gấp năm lần bình thép",
+          "85 % nạp được cho bộ đồ"
         ],
         "cons": [
-          "Thêm khối lượng"
+          "Đắt",
+          "Một van cho tất cả"
         ],
-        "real": "Bình O₂ của khoang dịch vụ Apollo",
-        "name": "Bình oxy đôi"
+        "real": "Bình nạp NORS (ISS)",
+        "name": "Bình oxy áp suất cao"
       }
     },
     "part:co2_scrubber": {
@@ -708,22 +710,22 @@
         "what": "A machine that takes carbon dioxide out of the cabin air. People breathe it out with every breath.",
         "why": "In a closed cabin, carbon dioxide builds up within days. First it causes headaches, then confusion, then worse. This scrubber keeps the air clean for months.",
         "without": "Without any scrubber, the crew would be poisoned by their own breath within days. Cheap LiOH canisters work too, but run out after weeks.",
-        "inside": "Fans push air through beds of special pellets that grab carbon dioxide. Heat and vacuum later drive it out again, so the pellets can be reused. That needs power.",
+        "inside": "Fans push the cabin air through two beds of amine beads that grab carbon dioxide and water vapour. While one bed works, the other is opened to space, and the vacuum pulls the gas out, so the beads are used again. It needs little power.",
         "analogy": "Like a coffee filter you can rinse out and use again."
       },
       "vi": {
         "what": "Máy lọc CO₂ (scrubber) lấy khí cacbonic ra khỏi không khí trong khoang. Con người thở ra khí này trong mỗi hơi thở.",
         "why": "Trong khoang kín, khí cacbonic tích tụ chỉ sau vài ngày. Đầu tiên là đau đầu, rồi lú lẫn, rồi tệ hơn nữa. Máy lọc này giữ không khí sạch suốt nhiều tháng.",
         "without": "Không có bộ lọc nào, phi hành đoàn sẽ bị chính hơi thở của mình đầu độc trong vài ngày. Hộp LiOH rẻ cũng dùng được, nhưng hết sau vài tuần.",
-        "inside": "Quạt thổi không khí qua những lớp hạt đặc biệt giữ lại khí cacbonic. Sau đó nhiệt và chân không đuổi khí ấy ra, nên các hạt dùng lại được. Việc này cần điện.",
+        "inside": "Quạt đẩy không khí trong khoang qua hai lớp hạt amine giữ lại khí cacbonic và hơi nước. Khi một lớp làm việc, lớp kia được mở ra không gian, chân không hút khí ra, nên các hạt dùng lại được. Nó tốn ít điện.",
         "analogy": "Giống phin lọc cà phê rửa sạch rồi dùng lại được.",
         "pros": [
           "Không khí thở được suốt nhiều tháng"
         ],
         "cons": [
-          "Cần điện"
+          "Có thể hỏng: nên có LiOH dự phòng"
         ],
-        "real": "CDRA của ISS",
+        "real": "Bộ lọc amine của Orion (CAMRAS)",
         "name": "Máy lọc CO₂"
       }
     },
@@ -755,14 +757,14 @@
       "en": {
         "what": "A machine that cleans used water, even sweat and urine, back into drinking water. It recovers about 98 % of it, like the one on the ISS.",
         "why": "A person needs a few litres of water a day. Carrying all of it for a trip of many months would weigh tonnes.",
-        "without": "Without it, a long trip needs tonnes more water on board. It uses power, and it can break down.",
+        "without": "Without it the ship carries all its drinking water: about 780 kg for the 259-day trip, against about 37 kg with it. It uses power, and it can break down.",
         "inside": "Filters, a still that boils the water at low pressure, and chemical beds that remove what is left.",
         "analogy": "Like a tiny copy of Earth's water cycle, rain to rivers to clouds, fitted in a cupboard."
       },
       "vi": {
         "what": "Máy tái chế nước biến nước đã dùng, kể cả mồ hôi và nước tiểu, trở lại thành nước uống. Nó thu hồi khoảng 98 % lượng nước, giống máy trên Trạm Vũ trụ Quốc tế (ISS).",
         "why": "Mỗi người cần vài lít nước một ngày. Mang theo toàn bộ cho chuyến đi nhiều tháng thì nặng hàng tấn.",
-        "without": "Không có nó, chuyến đi dài cần chở thêm hàng tấn nước. Nó tốn điện và có thể hỏng.",
+        "without": "Không có nó, tàu phải chở toàn bộ nước uống: khoảng 780 kg cho chuyến đi 259 ngày, so với khoảng 37 kg khi có nó. Nó tốn điện và có thể hỏng.",
         "inside": "Bộ lọc, một nồi chưng cất đun sôi nước ở áp suất thấp, và các lớp hóa chất khử nốt phần còn lại.",
         "analogy": "Giống một vòng tuần hoàn nước của Trái Đất thu nhỏ, mưa xuống sông lên mây, nằm gọn trong một chiếc tủ.",
         "pros": [
@@ -1280,17 +1282,18 @@
     },
     "option:capsule/lifeSupport/regenerative": {
       "en": {
-        "what": "Water is split to make oxygen, and carbon dioxide is cleaned out and recycled, as on the ISS: heavier, but it runs for months."
+        "what": "Water is split to make the cabin's oxygen and carbon dioxide is cleaned out and reused, as on the ISS: the spare oxygen goes only to the suit. It needs a backup scrubber: if it fails, nothing else cleans the air."
       },
       "vi": {
-        "what": "Nước được tách ra để lấy oxy, khí cacbonic được lọc và tái chế, như trên Trạm Vũ trụ Quốc tế: nặng hơn, nhưng chạy được nhiều tháng.",
+        "what": "Nước được tách ra để làm oxy cho khoang, khí cacbonic được lọc ra và dùng lại, như trên ISS: oxy dự phòng chỉ dành cho bộ đồ du hành. Cần thêm máy lọc dự phòng: nếu nó hỏng, không còn gì lọc không khí.",
         "name": "Vòng tái sinh",
         "pros": [
           "Chạy được nhiều tháng"
         ],
         "cons": [
           "+120 kg",
-          "+200 nghìn đô"
+          "+200 nghìn đô",
+          "Cần máy lọc dự phòng"
         ],
         "real": "ECLSS của ISS"
       }
@@ -1658,7 +1661,7 @@
         "what": "Kiểu đĩa-khe-dải (disk-gap-band), chuẩn cho Sao Hỏa: một đĩa vải, một khe hở, rồi một dải vải, nên mở được khi còn nhanh hơn âm thanh mà không rách.",
         "name": "Đĩa-khe-dải",
         "pros": [
-          "Mở ở Mach 1,7"
+          "Mở được tới Mach 2,2"
         ],
         "cons": [],
         "real": "Từ Viking tới Perseverance"
@@ -1666,16 +1669,16 @@
     },
     "option:chute/canopy/ringsail": {
       "en": {
-        "what": "Rings of sailcloth with slots between them: 15 % more drag, but it must open lower and slower."
+        "what": "Rings of sailcloth with slots between them: 15 % more drag, but it opens only below about Mach 0.7. On Mars that is about 2 km up, too low to slow a heavy ship alone: there it is a main chute under a supersonic one."
       },
       "vi": {
-        "what": "Các vòng vải buồm có khe hở ở giữa: lực cản nhiều hơn 15 %, nhưng phải mở ở thấp hơn và chậm hơn.",
+        "what": "Các vòng vải buồm có khe hở ở giữa: lực cản nhiều hơn 15 %, nhưng chỉ mở được khi chậm hơn khoảng Mach 0,7. Trên Sao Hỏa đó là chỉ còn khoảng 2 km, quá thấp để một mình hãm một con tàu nặng: ở đó nó làm dù chính dưới một dù siêu âm.",
         "name": "Vòng buồm (ringsail)",
         "pros": [
           "Lực cản +15 %"
         ],
         "cons": [
-          "Phải mở chậm hơn, thấp hơn"
+          "Chỉ mở dưới tốc độ âm thanh: trên Sao Hỏa khoảng 2 km"
         ],
         "real": "Dù chính của Apollo, Orion"
       }
@@ -2750,15 +2753,16 @@
     },
     "option:chute/canopy/parafoil": {
       "en": {
-        "what": "A cloth wing made of air-filled cells: it glides and can be steered to a chosen spot. It has caught falling rocket fairings, but never landed a crew."
+        "what": "A cloth wing made of air-filled cells: on Earth it glides and can be steered, and it has caught falling rocket fairings, but it has never landed a crew. It opens only when the ship is already slow, so on Mars it comes far too low to help."
       },
       "vi": {
-        "what": "Một cánh vải gồm nhiều ô phồng gió: nó lượn được và lái tới chỗ đã chọn. Nó đã đỡ những mảnh vỏ tên lửa rơi về, nhưng chưa bao giờ hạ cánh một phi hành đoàn. Gọi là dù cánh (parafoil).",
+        "what": "Một cánh vải gồm nhiều ô phồng gió: trên Trái Đất nó lượn được và lái được, đã đỡ những mảnh vỏ tên lửa rơi về, nhưng chưa bao giờ hạ cánh một phi hành đoàn. Nó chỉ mở khi tàu đã chậm, nên trên Sao Hỏa nó mở quá thấp để giúp được. Gọi là dù cánh (parafoil).",
         "name": "Dù cánh lái được",
         "pros": [
-          "Lái được tới chỗ hạ cánh"
+          "Lái được trên Trái Đất (đỡ được vỏ tên lửa)"
         ],
         "cons": [
+          "Chỉ mở khi đã rất chậm: trên Sao Hỏa quá thấp để một mình giúp được",
           "Lực cản −10 %",
           "Độ tin cậy −1 %",
           "+$30k"

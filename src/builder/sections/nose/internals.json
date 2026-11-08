@@ -77,13 +77,14 @@
             {
               "id": "regenerative",
               "name": "Regenerative loop",
-              "note": "Water split into oxygen, CO₂ scrubbed and recycled, like the station. Heavy, but it runs for months.",
+              "note": "Water is split to make the cabin's oxygen and carbon dioxide is cleaned out and reused, as on the ISS: the spare oxygen goes only to the suit. It needs a backup scrubber: if it fails, nothing else cleans the air.",
               "pros": [
                 "Runs for months"
               ],
               "cons": [
                 "+120 kg",
-                "+$200k"
+                "+$200k",
+                "Needs a backup scrubber"
               ],
               "massD": 120,
               "costD": 200000,
@@ -710,7 +711,7 @@
               "name": "Disk-gap-band",
               "note": "The Mars standard: a disk, a gap, a band. Opens supersonic without tearing.",
               "pros": [
-                "Opens at Mach 1.7"
+                "Opens up to Mach 2.2"
               ],
               "cons": [],
               "real": "Viking to Perseverance"
@@ -718,12 +719,12 @@
             {
               "id": "ringsail",
               "name": "Ringsail",
-              "note": "Rings of sail cloth: more drag per kilogram, subsonic only.",
+              "note": "Rings of sail cloth: more drag per kilogram, but subsonic only (below about Mach 0.7). On Mars that is only about 2 km up: too low to slow a heavy ship alone.",
               "pros": [
                 "+15 % drag"
               ],
               "cons": [
-                "Must open slower, lower"
+                "Subsonic only: on Mars it opens about 2 km up"
               ],
               "chuteF": 1.15,
               "massD": 10,
@@ -752,9 +753,10 @@
               "name": "Steerable parafoil",
               "note": "A ram-air wing of cloth cells that glides and can be steered to a chosen spot. It has never landed a crewed capsule.",
               "pros": [
-                "Steered to the landing spot"
+                "Steerable on Earth (catches fairings)"
               ],
               "cons": [
+                "Opens only when very slow: on Mars far too low to help alone",
                 "−10 % drag",
                 "Reliability −1 %",
                 "+$30k"
@@ -1007,15 +1009,16 @@
               "name": "Beryllium heat sink",
               "note": "No ablator at all: a thick metal plate soaks up the heat like a frying pan. It only works for a short, slow entry; a fall from orbit would melt it.",
               "pros": [
-                "Nothing burns away"
+                "Nothing burns away",
+                "Cheapest: a plain metal plate"
               ],
               "cons": [
                 "+80 % mass",
-                "Reliability −4 %: only for slow, suborbital entries"
+                "Soaks up only a short, slow entry: from orbit it can burn through"
               ],
               "massF": 1.8,
-              "costF": 0.9,
-              "rel": -0.04,
+              "costF": 0.5,
+              "rel": 0,
               "real": "Mercury-Redstone 3 and 4 (1961): beryllium heat sinks on the suborbital flights"
             }
           ]

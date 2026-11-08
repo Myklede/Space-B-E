@@ -145,7 +145,9 @@ export function computeShipSpec(assembly, { catalog, engines, launch, balance, p
   const padChoices = padFx.choices ?? [];
   const launchFee = padFx.fee ?? 0;
   const padReliability = padFx.reliability ?? 0;
-  const liftoffBurn = padFx.liftoffLossMps > 0 && ispSL > 0 ? Math.min(usableFuel, fullWet * (1 - Math.exp(-padFx.liftoffLossMps / (ispSL * g0)))) : 0;
+  // the flight holds the thrust back itself on a pad that cannot take full thrust (src/flight/effects/propulsion.js,
+  // traits.propulsion), so no propellant is taken here; padFx.liftoffLossMps stays as the estimate the words use
+  const liftoffBurn = 0;
   const fuelMass = usableFuel - liftoffBurn;
   const wetMass = dryMass + fuelMass;
   // identical strap-on boosters are a production series too (seriesFactor): n of them cost n × seriesFactor(n) / n each

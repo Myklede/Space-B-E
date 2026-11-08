@@ -747,14 +747,14 @@
       "en": {
         "what": "A nuclear battery. A few kilograms of plutonium-238 stay hot for decades, and that heat is turned into a small, steady flow of electricity.",
         "why": "It works at night, through dust storms, and just as well at Mars as at Earth. Curiosity and Perseverance run on one.",
-        "without": "Without it the ship depends on sunlight. It gives only 300 W here, and it is very expensive.",
+        "without": "Without it the ship depends on sunlight. It gives only about 110 W, as the real MMRTG does, and it is very expensive.",
         "inside": "Thermocouples, pairs of different metals joined together, make electricity when one side is hot and the other cold. Fins on the outside get rid of the extra heat.",
         "analogy": "Like a hot-water bottle that stays warm for decades, with a tiny generator stuck to it."
       },
       "vi": {
         "what": "Máy phát điện đồng vị phóng xạ (RTG) là một “cục pin hạt nhân”. Vài ki-lô-gam plutoni-238 nóng suốt hàng chục năm, và nhiệt ấy được biến thành một dòng điện nhỏ, đều đặn.",
         "why": "Nó chạy cả ban đêm, cả trong bão bụi, và ở Sao Hỏa cũng khỏe như ở Trái Đất. Xe tự hành Curiosity và Perseverance chạy bằng loại này.",
-        "without": "Không có nó, tàu phải trông vào ánh nắng. Trong game nó chỉ cho 300 W, và rất đắt.",
+        "without": "Không có nó, tàu phải trông vào ánh nắng. Nó chỉ cho khoảng 110 W, như MMRTG thật, và rất đắt.",
         "inside": "Cặp nhiệt điện, tức những cặp kim loại khác nhau hàn vào nhau, sinh ra điện khi một đầu nóng còn đầu kia lạnh. Các lá tản nhiệt bên ngoài thải bớt phần nhiệt thừa.",
         "analogy": "Giống túi chườm nóng giữ ấm hàng chục năm, có gắn một máy phát điện tí hon.",
         "pros": [
@@ -762,7 +762,7 @@
           "Bộ phận đáng tin cậy nhất xưởng"
         ],
         "cons": [
-          "Chỉ 300 W",
+          "Chỉ 110 W",
           "Rất đắt"
         ],
         "real": "MMRTG (Curiosity, Perseverance): 110 W điện, 45 kg",
@@ -821,14 +821,14 @@
     "part:whipple_shield": {
       "en": {
         "what": "A thin outer sheet a hand's width in front of the wall. A fast particle hits the sheet first and shatters into a spray before it reaches the wall.",
-        "why": "It gives the same protection as solid armour for about half the mass. The astronomer Fred Whipple came up with it in the 1940s.",
+        "why": "It is the lightest way to stop the small, fast grains of orbital debris. The astronomer Fred Whipple came up with it in the 1940s; bigger pieces need the heavier stuffed panel.",
         "without": "Solid armour is cheaper but heavier. Without either, a debris strike lands on the bare hull.",
         "inside": "The thin bumper, an empty gap, then the real wall. The gap lets the spray spread out, so its force lands on a wide patch instead of one point.",
         "analogy": "Like a snowball that breaks on a fence before it reaches you: only powder gets through."
       },
       "vi": {
         "what": "Một tấm chắn Whipple (Whipple shield) mỏng đặt trước vách tàu một khoảng bằng bàn tay. Mảnh vụn bay nhanh đâm vào tấm mỏng trước và vỡ tung thành bụi trước khi tới vách.",
-        "why": "Nó bảo vệ ngang tấm giáp đặc mà chỉ nặng khoảng một nửa. Nhà thiên văn Fred Whipple nghĩ ra nó vào những năm 1940.",
+        "why": "Đây là cách nhẹ nhất để chặn những hạt mảnh vụn nhỏ và nhanh trên quỹ đạo. Nhà thiên văn Fred Whipple nghĩ ra nó vào những năm 1940; mảnh lớn hơn thì cần tấm chắn nhồi nặng hơn.",
         "without": "Giáp đặc rẻ hơn nhưng nặng hơn. Không có cả hai, mảnh rác đâm thẳng vào vỏ tàu trần.",
         "inside": "Tấm chắn mỏng, một khoảng trống, rồi tới vách thật. Khoảng trống cho đám bụi tỏa rộng ra, nên lực của nó dàn lên cả một mảng rộng thay vì dồn vào một điểm.",
         "analogy": "Giống quả cầu tuyết vỡ tan trên hàng rào trước khi tới chỗ bạn: chỉ còn bụi tuyết lọt qua.",

@@ -7,15 +7,24 @@
 // The heat limit is the thrust the pad takes at full power without damage:
 //   heatLimitKN = mount.heatKN × complex.scale × (deluge.heatF + mount.waterPlate when there is water)
 // A ship pushing more on the pad (thrustSL) than that gets all four consequences the user chose (NOTES.md, "Heat limit"):
-//   (a) the engines are held back for the first CLEAR_S seconds: a small Δv loss (stats.js burns it as propellant),
+//   (a) the engines are held back until the ship clears the tower (about CLEAR_S seconds): the flight does it for real
+//       (traits.propulsion.pad, src/flight/effects/propulsion.js), so the climb off a cheap pad is visibly slow; the Δv it
+//       costs (liftoffLossMps, alias heldBackMps) is an estimate for the words only, nothing is subtracted in the builder,
 //   (b) hot gas and flying concrete may hurt an engine: damageChance (asBuilt.js rolls it),
 //   (c) the pad needs repairs, charged with the next launch: repairFee,
 //   (d) hold-down clamps check the engines at full thrust before release: holdDownCatch (any bad engine, debris or not).
 // Every formula and its real basis is in NOTES.md.
 
 // ---------- model constants (game values; the real basis of each is in NOTES.md) ----------
-/** Seconds the plume plays on the pad: until the ship clears its tower (the Shuttle cleared the tower about 7 s in). */
+/** Seconds the plume plays on the pad: until the ship clears its tower (the Shuttle cleared it about 7 s in). The rough Δv
+ * estimate when the ship's mass is not known. */
 export const CLEAR_S = 7;
+/**
+ * Height of the tower the held ship must clear for the Δv estimate (m): 1.2 × the 20 m reference ship of the pad models
+ * (the pad art's real proportion, tower 1.1–1.3 × the rocket). The flight uses the real ship's height
+ * (traits.propulsion.pad.clearM).
+ */
+export const CLEAR_M = 24;
 /** Booster engines at liftoff are not run below about 60 % (the RS-25 throttled to 67 %, Merlin and Raptor lower). */
 export const MIN_THROTTLE = 0.6;
 /** Even held back, the slower climb keeps the fire on the pad longer: half of the overload's heat dose remains. */
@@ -101,7 +110,16 @@ export function liftoffOn(limitKN, thrustKN, { g = null, wetMass = null } = {}) 
   const throttle = clamp(Math.max(1 / r, MIN_THROTTLE, floorTwr), 0, 1);
   const residual = Math.max(0, r * throttle - 1); // still over the limit at that throttle
   const overload = residual + DOSE_SHARE * (excess - residual);
-  const lossMps = g * CLEAR_S * (1 - throttle);
+  // what the slow climb costs, as the flight flies it (held until the ship clears the tower, then full thrust): against
+  // a full-thrust start, the extra time under gravity to the tower top, g · (t_held − t_full), plus the speed still
+  // missing there, √(2 a_full H) − √(2 a_held H) (a = (TWR × throttle − 1) g, H = CLEAR_M). Without the mass: the rough
+  // g · CLEAR_S · (1 − throttle).
+  const twr = weight > 0 && thrustKN > 0 ? (thrustKN * 1000) / weight : 0;
+  let lossMps = g * CLEAR_S * (1 - throttle);
+  if (twr > 1 && twr * throttle > 1) {
+    const aFull = (twr - 1) * g, aHeld = (twr * throttle - 1) * g;
+    lossMps = g * (Math.sqrt((2 * CLEAR_M) / aHeld) - Math.sqrt((2 * CLEAR_M) / aFull)) + (Math.sqrt(2 * aFull * CLEAR_M) - Math.sqrt(2 * aHeld * CLEAR_M));
+  }
   return { excess, throttle, residual, overload, lossMps };
 }
 
@@ -114,7 +132,8 @@ const kn = (n) => `${Math.round(n).toLocaleString('en-US')} kN`;
  *   choices: [{ eq, option, fromKit }] the equipment in use,
  *   fee: launch fees paid at confirm (complex + equipment + days of HOLD from weather.fee + launch.repairDue),
  *   reliability: added to the ship's reliability as (1 + reliability) (equipment bonuses minus the acoustic load),
- *   heatLimitKN, excess (share of thrust over the limit, 0..), liftoffLossMps (Δv spent held back on the pad),
+ *   heatLimitKN, excess (share of thrust over the limit, 0..), throttle (the held throttle the flight flies),
+ *   liftoffLossMps (estimate of the Δv the slow climb costs, for the words; alias heldBackMps; the flight realises it),
  *   damageChance (0..1, an engine hurt by debris), repairFee (charged before the next launch),
  *   holdDownCatch (0..1, chance a bad engine is caught on the pad), lightningRisk (0..1),
  *   notes: [] plain English lines for the investigation board, notesI18n: [{ en, vi }] the same lines in both languages,
@@ -160,7 +179,7 @@ export function padEffects(launch, { pad = null, weather = null, thrustSL = 0, e
   const say = (en, vi) => lines.push({ en, vi });
   if (complex) say(`${complex.name}, ${complex.place}. Heat limit ${kn(heatLimitKN)}; the ship pushed ${kn(thrustKN)} on the pad.`, `${complex.name}, ${complex.placeVi ?? complex.place}. Bệ chịu được ${kn(heatLimitKN)}; tàu đẩy ${kn(thrustKN)} lên bệ.`);
   if (lift.excess > 0) {
-    say(`The engines were held at ${pct(lift.throttle)} for the first ${CLEAR_S} s to spare the pad: about ${Math.round(liftoffLossMps)} m/s of Δv went into the slow climb.`, `Động cơ bị giữ ở ${pct(lift.throttle)} lực đẩy trong ${CLEAR_S} giây đầu để đỡ hại bệ: khoảng ${Math.round(liftoffLossMps)} m/s Δv mất vào lúc leo chậm.`);
+    say(`The engines were held at ${pct(lift.throttle)} until the ship cleared the tower, to spare the pad: the slow climb costs about ${Math.round(liftoffLossMps)} m/s of Δv.`, `Động cơ bị giữ ở ${pct(lift.throttle)} lực đẩy cho tới khi tàu vượt khỏi tháp, để đỡ hại bệ: leo chậm như vậy tốn khoảng ${Math.round(liftoffLossMps)} m/s Δv.`);
     if (damageChance > 0) say(`Fire and flying concrete under the engines: about ${pct(damageChance)} chance of hurting an engine.`, `Lửa và bê tông văng dưới động cơ: khoảng ${pct(damageChance)} khả năng làm hỏng một động cơ.`);
     if (repairFee > 0) say(`The pad needs about ${money(repairFee)} of repairs before the next launch.`, `Bệ cần sửa khoảng ${money(repairFee)} trước lần phóng sau.`);
   }
@@ -173,7 +192,7 @@ export function padEffects(launch, { pad = null, weather = null, thrustSL = 0, e
   if (repairDue > 0) say(`Repairs left from the last launch: ${money(repairDue)}.`, `Tiền sửa bệ còn nợ từ lần phóng trước: ${money(repairDue)}.`);
 
   return {
-    choices, fee, reliability, heatLimitKN, excess: Math.round(lift.excess * 1000) / 1000, liftoffLossMps, damageChance, repairFee, holdDownCatch, lightningRisk,
+    choices, fee, reliability, heatLimitKN, excess: Math.round(lift.excess * 1000) / 1000, liftoffLossMps, heldBackMps: liftoffLossMps, damageChance, repairFee, holdDownCatch, lightningRisk,
     notes: lines.map((l) => l.en), notesI18n: lines,
     launch: {
       tempC: weather?.tempC ?? 15,

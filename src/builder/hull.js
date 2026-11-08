@@ -44,7 +44,7 @@ const sizeRadius = (size) => BASE_R * (SIZE_SCALE[size] ?? 1);
 const MATERIALS = Object.freeze(HULL.materials.map((m) => Object.freeze({ ...m, pros: [...(m.pros ?? [])], cons: [...(m.cons ?? [])] })));
 
 /**
- * The skin materials a section may use; the first one is the default. Every section offers the same five.
+ * The skin materials a section may use; the first one is the default. Every section offers the same six.
  * Each: { id, name, short, note, pros, cons, real, massPerM2 (kg), costPerM2 ($), maxTempC, strengthKPa (the Max-Q its
  * standard skin takes), fatiguePerFlight (share of its life one flight uses), cdAFactor (surface finish), density,
  * specificHeat, sources }.
@@ -740,8 +740,9 @@ export function heatFactor(seg) {
 const peakCache = new Map();
 /**
  * Peak skin temperature on the climb x metres behind the nose tip (data/hull.json physics._about): a thin skin of the
- * material's mass and specific heat, heated by a turbulent boundary layer (flat-plate Stanton number 0.0296 Re_x^-0.2
- * Pr^-2/3, recovery factor 0.89) along the reference climb through the 1976 standard atmosphere, times `factor` once
+ * material's mass and specific heat, heated by the boundary layer (flat plate: laminar Stanton number 0.332 Re_x^-0.5
+ * Pr^-2/3 below the transition Reynolds number physics.transitionRe, turbulent 0.0296 Re_x^-0.2 Pr^-2/3 above it;
+ * recovery factor 0.89) along the reference climb through the 1976 standard atmosphere, times `factor` once
  * supersonic (a flare or a fairing shoulder, ramping in from Mach 1 to 2), through a cork layer of thermal resistance
  * corkR (m²K/W, 0 = bare), and cooled by its own radiation. Deterministic.
  */
@@ -761,7 +762,8 @@ export function peakSkinTempC(material, x, factor = 1, corkR = 0) {
     const mu = (1.458e-6 * Ta ** 1.5) / (Ta + 110.4); // Sutherland
     const re = Math.max(1, (rho * v * xx) / mu);
     const local = 1 + (ff - 1) * clamp(mach - 1, 0, 1);
-    const hc = 0.0296 * re ** -0.2 * 0.72 ** (-2 / 3) * rho * v * 1005 * local; // W/m²/K
+    const st = re < (PHYS.transitionRe ?? 0) ? 0.332 * re ** -0.5 : 0.0296 * re ** -0.2; // laminar below the transition, turbulent above
+    const hc = st * 0.72 ** (-2 / 3) * rho * v * 1005 * local; // W/m²/K
     const q = (Taw - Tw) / (1 / hc + corkR) - PHYS.emissivity * SIGMA * (Tw ** 4 - Ta ** 4); // a cork layer (corkR, m²K/W) in series
     Tw += (q * dt) / heatCap;
     peak = Math.max(peak, Tw);
@@ -817,7 +819,7 @@ function stepDrag(list) {
 }
 
 const SECTION_WORD = { en: { nose: 'nose', body: 'body', tail: 'tail' }, vi: { nose: 'mũi', body: 'thân', tail: 'đuôi' } };
-const VI_MATERIAL = { al2219: 'nhôm 2219', al2195: 'nhôm-liti 2195', carbon: 'sợi carbon', steel: 'thép không gỉ', honeycomb: 'nhôm tổ ong' };
+const VI_MATERIAL = { al2219: 'nhôm 2219', al2195: 'nhôm-liti 2195', carbon: 'sợi carbon', steel: 'thép không gỉ', honeycomb: 'nhôm tổ ong', titanium: 'titan' };
 const fmt = (v, lang) => (lang === 'vi' ? String(v).replace('.', ',') : String(v));
 
 /** Does this section have any skin on this layout (so its skin material changes anything)? */

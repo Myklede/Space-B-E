@@ -23,6 +23,7 @@ const LOOKS = {
   carbon: { color: 0xffffff, roughness: 0.32, metalness: 0.2, frame: 0x34383d, bump: 0.003, pattern: 'twill' },
   steel: { color: 0xeef1f3, roughness: 0.24, metalness: 0.5, frame: 0xb7bdc3, bump: 0.003, pattern: 'rings' },
   honeycomb: { color: 0xe6e3da, roughness: 0.5, metalness: 0.3, frame: 0xa3a19a, bump: 0.004, pattern: 'bonded', tile: 1.6 },
+  titanium: { color: 0xb9bcc0, roughness: 0.38, metalness: 0.55, frame: 0x7e848b, bump: 0.004, pattern: 'welded' }, // Ti-6Al-4V: darker, warmer grey than aluminium
 };
 /** The tank finishes an equipment bay may wear, in the colours sections/body/art.js gives the tanks. */
 const BAY_FINISH = {
