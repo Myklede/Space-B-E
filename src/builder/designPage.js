@@ -105,7 +105,7 @@ export function createDesignPage({ assembly, catalog, sections, materials, engin
   const toast = (m, kind) => hooks.onToast?.(m, kind);
   const kitOf = (def) => catalog.kit?.(def) ?? null;
   const materialFamily = (def) => materials?.families?.[def.materialFamily] ?? null;
-  const materialOf = (part, def) => { const fam = materialFamily(def); return fam ? (fam.options.find((o) => o.id === part?.material) ?? fam.options[0]) : null; };
+  const materialOf = (part, def) => { const fam = materialFamily(def); return fam ? (fam.options.find((o) => o.id === part?.material) ?? fam.options.find((o) => o.id === def.defaultMaterial) ?? fam.options[0]) : null; };
   const entryOf = (id) => assembly.layout().find((e) => e.id === id) ?? null;
   const figuresOf = (def, part = null) => partFigures(def, { engines, g0, materials, catalog, materialId: part?.material ?? null, options: part?.options ?? null, engineDef: part?.engine ?? null, count: part ? (entryOf(part.id)?.cluster?.count ?? 1) : 1 });
   const dims = (def) => ({ radius: BASE_RADIUS * (SIZE_SCALE[def.size] ?? 1), height: def.height });
@@ -122,7 +122,7 @@ export function createDesignPage({ assembly, catalog, sections, materials, engin
   const priceOfShape = (shape) => {
     let cost = 0, mass = 0;
     for (const t of shape.stack) { const d = catalog.get(t); if (!d) continue; const f = figuresOf(d); const n = d.engine ? (catalog.get(shape.stack[shape.stack.indexOf(t) - 1])?.mounts?.count ?? 1) : 1; cost += f.cost * (d.engine ? seriesFactor(n) : n); mass += f.wet === f.mass ? f.mass * n : f.wet; } // a cluster is priced as a series (stats.js seriesFactor)
-    for (const r of shape.radial ?? []) { const d = catalog.get(r.type); if (!d) continue; const f = figuresOf(d); cost += f.cost * (r.symmetry ?? 1); mass += f.wet * (r.symmetry ?? 1); }
+    for (const r of shape.radial ?? []) { const d = catalog.get(r.type); if (!d) continue; const f = figuresOf(d); cost += f.cost * (d.booster ? seriesFactor(r.symmetry ?? 1) : (r.symmetry ?? 1)); mass += f.wet * (r.symmetry ?? 1); }
     return { cost, mass };
   };
   const shapeIcon = (shape) => {

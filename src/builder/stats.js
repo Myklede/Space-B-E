@@ -91,7 +91,7 @@ export function computeShipSpec(assembly, { catalog, engines, launch, balance, p
   const materialOf = (e) => {
     const fam = materials?.families?.[e.def.materialFamily];
     if (!fam) return null;
-    return fam.options.find((o) => o.id === e.material) ?? fam.options[0];
+    return fam.options.find((o) => o.id === e.material) ?? fam.options.find((o) => o.id === e.def.defaultMaterial) ?? fam.options[0];
   };
   const massFactor = (e) => materialOf(e)?.mass ?? 1;
   const costFactor = (e) => materialOf(e)?.cost ?? 1;
@@ -138,7 +138,11 @@ export function computeShipSpec(assembly, { catalog, engines, launch, balance, p
   const liftoffBurn = padFx.liftoffLossMps > 0 && ispSL > 0 ? Math.min(usableFuel, fullWet * (1 - Math.exp(-padFx.liftoffLossMps / (ispSL * g0)))) : 0;
   const fuelMass = usableFuel - liftoffBurn;
   const wetMass = dryMass + fuelMass;
-  const cost = sum(layout, (e) => (e.def.cost * costFactor(e) + mod(e).costD) * mod(e).costF) + sum(engineEntries, (e, i) => engineSpecs[i].cost * costFactor(e) * seriesFactor(countOf(e))) + (hull.cost ?? 0);
+  // identical strap-on boosters are a production series too (seriesFactor): n of them cost n × seriesFactor(n) / n each
+  const boosterCount = {};
+  for (const e of boosterEntries) boosterCount[e.type] = (boosterCount[e.type] ?? 0) + 1;
+  const seriesShare = (e) => (e.def.booster && boosterCount[e.type] > 1 ? seriesFactor(boosterCount[e.type]) / boosterCount[e.type] : 1);
+  const cost = sum(layout, (e) => (e.def.cost * costFactor(e) + mod(e).costD) * mod(e).costF * seriesShare(e)) + sum(engineEntries, (e, i) => engineSpecs[i].cost * costFactor(e) * seriesFactor(countOf(e))) + (hull.cost ?? 0);
 
   // Performance (one stage: the flight model burns everything with the thrust-weighted Isp)
   const deltaV = fuelMass > 0 && dryMass > 0 ? ispVac * g0 * Math.log(wetMass / dryMass) : 0;
@@ -239,7 +243,7 @@ export function computeShipSpec(assembly, { catalog, engines, launch, balance, p
   };
 
   const breakdown = {
-    parts: layout.map((e) => ({ id: e.id, type: e.type, name: e.def.name, family: e.def.family, mass: massOf(e), dry: dryOf(e) + (e.def.engine ? engineStats(engineDefOf(e), engines, g0, mod(e)).mass * massFactor(e) * countOf(e) : 0), cost: (e.def.cost * costFactor(e) + mod(e).costD) * mod(e).costF + (e.def.engine ? engineStats(engineDefOf(e), engines, g0, mod(e)).cost * costFactor(e) * seriesFactor(countOf(e)) : 0), fuel: (e.def.fuel?.mass ?? 0) + (e.def.booster?.propellant ?? 0), y: e.y, height: e.height, sideArea: e.def.aero.sideArea, attach: e.attach, material: materialOf(e)?.name ?? null, reliability: Math.min(1, (e.def.reliability ?? 1) + reliabilityDelta(e) + mod(e).rel) })),
+    parts: layout.map((e) => ({ id: e.id, type: e.type, name: e.def.name, family: e.def.family, mass: massOf(e), dry: dryOf(e) + (e.def.engine ? engineStats(engineDefOf(e), engines, g0, mod(e)).mass * massFactor(e) * countOf(e) : 0), cost: (e.def.cost * costFactor(e) + mod(e).costD) * mod(e).costF * seriesShare(e) + (e.def.engine ? engineStats(engineDefOf(e), engines, g0, mod(e)).cost * costFactor(e) * seriesFactor(countOf(e)) : 0), fuel: (e.def.fuel?.mass ?? 0) + (e.def.booster?.propellant ?? 0), y: e.y, height: e.height, sideArea: e.def.aero.sideArea, attach: e.attach, material: materialOf(e)?.name ?? null, reliability: Math.min(1, (e.def.reliability ?? 1) + reliabilityDelta(e) + mod(e).rel) })),
     fuelPartIds: layout.filter((e) => e.def.fuel || e.def.booster).map((e) => e.id),
     enginePartIds: [...engineEntries, ...boosterEntries].map((e) => e.id),
     finPartIds: layout.filter((e) => /fin/.test(e.type)).map((e) => e.id),
@@ -255,7 +259,7 @@ export function computeShipSpec(assembly, { catalog, engines, launch, balance, p
 /** Numbers for one catalogue part on its own (cards and the detail panel), with material and options applied. */
 export function partFigures(def, { engines, g0, materials = null, catalog = null, materialId = null, options = null, engineDef = null, count = 1 }) {
   const fam = materials?.families?.[def.materialFamily];
-  const mat = fam ? (fam.options.find((o) => o.id === materialId) ?? fam.options[0]) : null;
+  const mat = fam ? (fam.options.find((o) => o.id === materialId) ?? fam.options.find((o) => o.id === def.defaultMaterial) ?? fam.options[0]) : null;
   const m = def.internals && catalog?.optionsOf ? optionMods(catalog.optionsOf(def, options)) : NO_MODS;
   const matMass = mat?.mass ?? 1, matCost = mat?.cost ?? 1;
   let mass = (def.mass * matMass + m.massD) * m.massF;

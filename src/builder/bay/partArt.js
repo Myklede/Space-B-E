@@ -116,8 +116,10 @@ export function partArt(entry) {
   const r = c.hostRadius ?? entry.radius ?? 1.25;
   const s = c.scale ?? 0.4;
   const spots = (c.layout ?? []).slice(0, c.count);
+  // a big cluster (Super Heavy's 33) draws the engine's low-detail model when it has one (model.lod)
+  const lod = (c.count ?? 1) > 9 ? nasaPartArt(`${entry.type}#lod`) : null;
   for (const [fx, fz] of spots) {
-    const one = singleArt(entry);
+    const one = lod ? lod.clone(true) : singleArt(entry);
     one.scale.multiplyScalar(s);
     one.position.set(fx * r, entry.height * (1 - s), fz * r);
     g.add(one);

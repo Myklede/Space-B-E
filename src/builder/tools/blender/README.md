@@ -24,7 +24,17 @@ the code-drawn parts, in the design studio, on the hangar stand, in the explanat
   `hullProfile` in the part data (`data/hull.json` profiles show the format).
 - **Radial parts** (on the side): origin at the attachment point on the host's wall, +X pointing outward, height along
   +Y from the mount; a part that rides inside the skin is placed by the game, model it standing on y = 0 centred.
-- **Engine clusters**: model one engine; the thrust structure's `mounts` places the copies.
+- **Engine clusters**: model one engine; the thrust structure's `mounts` places the copies. An engine that may sit in a
+  cluster of more than 9 also ships a low-detail copy (at most 2,500 triangles, no inner pieces) named in its data:
+  `"model": { "builder": "tail/<slug>", "lod": "tail/<slug>_lod" }`.
+- **Parts drawn as a set** (landing legs, fins in a symmetric group): the game places each copy; model one unit.
+- **Which size**: by the real rocket's diameter: under 2.5 m S, 2.5–4.5 m M (Falcon 9, Atlas, Titan, Soyuz), over 4.5 m
+  L (Saturn V, the Shuttle tank, SLS, Starship, Energia, N1, Vulcan, Ariane 5, Long March 5). Strap-on boosters keep the
+  real booster ÷ core diameter ratio of their rocket, so a family stays recognisable.
+- **Inner-piece budget**: every node counts towards the 20k triangles, choice variants (slot_<key>__<option>) included:
+  keep each variant small (a few hundred triangles).
+- A part may set `"defaultMaterial"` (an option id of its material family) when its real build differs from the family's
+  first option (carbon cases, steel tanks).
 - Nothing below y = 0 for axial parts except an engine's own bell when the part data says so.
 
 ## Inner pieces (the explanation card pulls them apart)

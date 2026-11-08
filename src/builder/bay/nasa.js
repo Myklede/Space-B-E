@@ -27,7 +27,10 @@ export const NASA_PARTS = {};
 /** Reads each part's `model` field (sections/<id>/parts.json) into NASA_PARTS. Call once with the catalogue. */
 export function registerNasaModels(catalog) {
   for (const def of catalog.parts) {
-    if (def.model?.builder) NASA_PARTS[def.id] = { builder: def.model.builder };
+    if (def.model?.builder) {
+      NASA_PARTS[def.id] = { builder: def.model.builder };
+      if (def.model.lod) NASA_PARTS[`${def.id}#lod`] = { builder: def.model.lod }; // the low-detail copy for big clusters
+    }
     else if (def.model?.model) NASA_PARTS[def.id] = def.model;
   }
   return Object.keys(NASA_PARTS).length;
@@ -125,7 +128,7 @@ function normalise(source, cfg, height) {
  */
 export function requestPartArt(partId, catalog) {
   const cfg = NASA_PARTS[partId];
-  const def = catalog.get(partId);
+  const def = catalog.get(partId.split('#')[0]);
   if (!cfg || !def) return Promise.resolve(false);
   if (protos.has(partId)) return Promise.resolve(true);
   if (!pending.has(partId)) {
@@ -147,6 +150,7 @@ export function requestPartArt(partId, catalog) {
 
 /** Loads the models for a list of part ids. Resolves to the number that now have real art. */
 export async function preloadNasaParts(catalog, ids = Object.keys(NASA_PARTS)) {
+  ids = [...ids, ...ids.filter((id) => NASA_PARTS[`${id}#lod`]).map((id) => `${id}#lod`)]; // a part's low-detail copy loads with it
   const results = await Promise.all([...new Set(ids)].map((id) => requestPartArt(id, catalog)));
   if (failures.size) console.warn('[nasa] models that did not load:', Object.fromEntries(failures));
   return results.filter(Boolean).length;
