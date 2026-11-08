@@ -134,7 +134,7 @@ function elementsOf(layout) {
     } else if (p.kind === 'own') {
       if (p.profile) {
         el.rAt = (y) => profileAt(p.profile, R, h, y);
-        el.rB = R; el.rT = el.rAt(h);
+        el.rB = el.rAt(0); el.rT = el.rAt(h); // a waisted part (Soyuz Blok A) meets the joint below at its own radius: the skin cones it
         el.climb = PHYS.capsuleClimb;
       } else {
         el.rT = el.rB = p.absR ?? R;
