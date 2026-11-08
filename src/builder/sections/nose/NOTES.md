@@ -98,9 +98,49 @@ new shapes that only fly when money allows (allowed by the lead for new crewed s
 
 All 28 fly within $5M on at least one combination; none needs more. The kept shapes fit as before (Apollo $4.98M, Orion $4.88M, Crew Dragon $4.76M at their cheapest).
 
-## Planned Blender models (for the nose modeller, stage 2)
+### Real hardware options on the shapes (after the models, commit 834291e)
 
-No part has a `model` field yet: set `"model": { "builder": "nose/<slug>" }` only when the GLB exists. Scripts in
+The ship shows a slot's first option when a shape sets none, so the shapes now set the real ones (stack items
+`{ type, options }` in section.json), as the modeller listed:
+- `las_soyuz` motor ring, steering grid fins (soyuz, soyuz_7k); `las_shenzhou` steering grid fins; `las_gaganyaan` motor
+  staged, steering grid fins; `las_orion` motor reverse-flow.
+- Fairings: pneumatic pushers on Falcon 9 (`fairing_composite_l`, cygnus), Electron (`nose_pointed_s`) and New Glenn
+  (`fairing_newglenn`); acoustic blankets on the large fairings (`fairing_composite_l`, `fairing_newglenn`, `nose_pointed_l`
+  on atv and dream_chaser, `nose_hammerhead_m` on mars_rover, `fairing_h2b`, `fairing_cz5`).
+- `vostok_instrument_module` engine main (fairing_capsule, voskhod); `soyuz_service_module` power solar wings (soyuz,
+  progress). Both are the neutral first options, written out so the shapes say what they carry.
+
+Left off because they would push a kept shape over $5M (same search as above):
+- `les_tower_apollo` steering canards (+40 kg, +$45k): apollo would need $5.03M at its cheapest. The real Apollo tower had
+  canards; the player can fit them.
+- `las_orion` steering ACM (+90 kg, +$120k): big_cabin with the reverse-flow motor and the ACM needs $5.27M; with the ACM
+  alone, $5.00M at Δv 5,400, on both limits. The motor alone fits ($4.98M). The real Orion LAS has its ACM; the player can
+  fit it.
+- New Glenn's fairing separation system is not confirmed by a source read (TODO verify); the pneumatic choice follows the
+  modeller's reference.
+
+Kept shapes with these options (cheapest flying combination):
+
+| Kept shape | Ship + fees | Δv (m/s) | Height (m) | Body + tail + extras |
+|---|---|---|---|---|
+| mercury | $3.23M | 5517 | 20.9 | titan_ii + single_engine |
+| fairing_capsule | $3.49M | 5547 | 23.2 | vulcan_booster + single_engine |
+| gemini | $3.58M | 5409 | 19.8 | atlas_balloon + single_engine |
+| apollo (no canards) | $4.98M | 5434 | 30.2 | titan_ii + single_engine + 2 srb_s + tank_l_kerolox |
+| soyuz | $4.87M | 5511 | 31.3 | titan_ii + single_engine + 2 srb_s + tank_l_kerolox |
+| big_cabin (reverse motor, no ACM) | $4.98M | 5402 | 28.2 | titan_ii + single_engine + 2 srb_s + tank_l_kerolox |
+| crew_dragon | $4.76M | 5474 | 23.2 | pslv_ps2 + single_engine + 2 srb_s + tank_l_kerolox |
+| bare_capsule | $3.40M | 5428 | 18.0 | methalox_core + single_engine |
+| dawn_stack | $4.14M | 5509 | 24.5 | vulcan_booster + single_engine |
+
+New shapes with options, cheapest: shenzhou $4.74M, gaganyaan $4.44M, soyuz_7k $4.73M, cygnus $4.66M, htv $4.82M, atv
+$4.75M, dream_chaser $4.79M, mars_rover $4.72M, mengzhou $4.50M, new_glenn $4.58M, electron $3.14M, progress $4.30M,
+voskhod $3.48M: all still within $5M.
+
+## Blender models (the plan the nose modeller worked from)
+
+The models are committed (834291e, 65 GLBs; ASSETS.md lists them); this table is the original plan. A part has
+`"model": { "builder": "nose/<slug>" }` only when its GLB exists. Scripts in
 `src/builder/tools/blender/nose/`, output `public/assets/models/builder/nose/<slug>.glb`. Caps: about 200 KB for a capsule,
 about 120 KB for a module or fairing, 20k triangles each, all inner pieces (`slot_<key>`, `slot_<key>__<option>`) inside
 the part's own GLB (no shared library). The section stays under 12 MB.

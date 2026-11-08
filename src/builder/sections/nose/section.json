@@ -236,7 +236,8 @@
         {
           "type": "vostok_instrument_module",
           "options": {
-            "power": "batteries"
+            "power": "batteries",
+            "engine": "main"
           }
         }
       ],
@@ -290,7 +291,8 @@
         {
           "type": "vostok_instrument_module",
           "options": {
-            "power": "batteries"
+            "power": "batteries",
+            "engine": "main"
           }
         }
       ],
@@ -476,7 +478,13 @@
       "diameter": "m",
       "icon": "soyuz_7k_service_module",
       "stack": [
-        "las_soyuz",
+        {
+          "type": "las_soyuz",
+          "options": {
+            "motor": "ring",
+            "steering": "gridfins"
+          }
+        },
         {
           "type": "soyuz_orbital_module",
           "options": {
@@ -543,7 +551,13 @@
       "diameter": "m",
       "icon": "las_soyuz",
       "stack": [
-        "las_soyuz",
+        {
+          "type": "las_soyuz",
+          "options": {
+            "motor": "ring",
+            "steering": "gridfins"
+          }
+        },
         {
           "type": "soyuz_orbital_module",
           "options": {
@@ -568,7 +582,8 @@
         {
           "type": "soyuz_service_module",
           "options": {
-            "engine": "main_backup"
+            "engine": "main_backup",
+            "power": "solar_wings"
           }
         }
       ],
@@ -616,7 +631,10 @@
       "icon": "las_shenzhou",
       "stack": [
         {
-          "type": "las_shenzhou"
+          "type": "las_shenzhou",
+          "options": {
+            "steering": "gridfins"
+          }
         },
         {
           "type": "shenzhou_orbital_module",
@@ -682,7 +700,10 @@
       "icon": "las_orion",
       "stack": [
         {
-          "type": "las_orion"
+          "type": "las_orion",
+          "options": {
+            "motor": "reverse"
+          }
         },
         {
           "type": "capsule_orion",
@@ -878,7 +899,11 @@
       "icon": "las_gaganyaan",
       "stack": [
         {
-          "type": "las_gaganyaan"
+          "type": "las_gaganyaan",
+          "options": {
+            "motor": "staged",
+            "steering": "gridfins"
+          }
         },
         {
           "type": "capsule_gaganyaan",
@@ -981,7 +1006,10 @@
       "icon": "capsule_mengzhou",
       "stack": [
         {
-          "type": "fairing_cz5"
+          "type": "fairing_cz5",
+          "options": {
+            "acoustic": "blankets"
+          }
         },
         {
           "type": "capsule_mengzhou",
@@ -1186,7 +1214,12 @@
         },
         "capsule_s",
         "heat_shield_s",
-        "soyuz_service_module"
+        {
+          "type": "soyuz_service_module",
+          "options": {
+            "power": "solar_wings"
+          }
+        }
       ],
       "radial": [
         {
@@ -1224,7 +1257,13 @@
       "diameter": "l",
       "icon": "cygnus_pcm",
       "stack": [
-        "fairing_composite_l",
+        {
+          "type": "fairing_composite_l",
+          "options": {
+            "pushers": "pneumatic",
+            "acoustic": "blankets"
+          }
+        },
         {
           "type": "cygnus_pcm",
           "options": {
@@ -1272,7 +1311,10 @@
       "icon": "htv_logistics",
       "stack": [
         {
-          "type": "fairing_h2b"
+          "type": "fairing_h2b",
+          "options": {
+            "acoustic": "blankets"
+          }
         },
         {
           "type": "htv_logistics",
@@ -1330,7 +1372,12 @@
       "diameter": "l",
       "icon": "atv_icc",
       "stack": [
-        "nose_pointed_l",
+        {
+          "type": "nose_pointed_l",
+          "options": {
+            "acoustic": "blankets"
+          }
+        },
         {
           "type": "atv_icc",
           "options": {
@@ -1377,7 +1424,12 @@
       "diameter": "l",
       "icon": "dream_chaser",
       "stack": [
-        "nose_pointed_l",
+        {
+          "type": "nose_pointed_l",
+          "options": {
+            "acoustic": "blankets"
+          }
+        },
         {
           "type": "dream_chaser",
           "options": {
@@ -1470,7 +1522,12 @@
       "diameter": "l",
       "icon": "cruise_stage_mars",
       "stack": [
-        "nose_hammerhead_m",
+        {
+          "type": "nose_hammerhead_m",
+          "options": {
+            "acoustic": "blankets"
+          }
+        },
         "capsule_l",
         {
           "type": "heat_shield_l",
@@ -1523,7 +1580,11 @@
       "icon": "fairing_newglenn",
       "stack": [
         {
-          "type": "fairing_newglenn"
+          "type": "fairing_newglenn",
+          "options": {
+            "pushers": "pneumatic",
+            "acoustic": "blankets"
+          }
         },
         {
           "type": "capsule_l"
@@ -1660,7 +1721,12 @@
       "diameter": "s",
       "icon": "nose_pointed_s",
       "stack": [
-        "nose_pointed_s",
+        {
+          "type": "nose_pointed_s",
+          "options": {
+            "pushers": "pneumatic"
+          }
+        },
         "capsule_s",
         "heat_shield_s"
       ],
