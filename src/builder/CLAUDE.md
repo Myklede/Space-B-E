@@ -294,6 +294,19 @@ Người dùng muốn làm lại giao diện trang thiết kế:
   - Cụm bàn cong 4 máy ở tầng trệt: thời tiết và cửa sổ phóng sang sao Hỏa, máy build tàu, thử động cơ và mô phỏng bay, bàn chỉ huy Go/No-Go. Người ngồi quay lưng về phía tàu; đứng dậy quay người lại là thấy toàn cảnh tàu từ dưới nhìn lên.
   - Prompt: `C:/Users/Thainguyen/Downloads/CODEX3-PROMPT-VAB-CONSOLES.md`.
 
+- **Codex v3 xong** (commit `b90cab3`, nhãn `hangar-v3`).
+  - Hết chói; vẽ ở 100 % độ phân giải, tự hạ tối thiểu 80 %.
+  - Vành sàn ôm đúng thân tàu; sandbox vẽ tàu thật; 4 bàn máy và hoạt cảnh quay người.
+  - Claude sửa lỗi không kéo chuột được: module đồ hoạ của game tự tạo canvas phủ kín màn hình, nên sandbox phải ẩn nó.
+- **Codex v4 (người dùng chốt 2026-11-08):**
+  - Mỗi tầng là bệ ôm 3/4 vòng (270°) quanh tàu, chừa khe nhìn 90° quay về phía bàn máy và cửa (−Z). Từ bàn máy quay lại thấy trọn tàu qua khe.
+  - Mỗi tầng chia 3 mảnh rút ra: trái và phải trượt ngang, mảnh sau lùi về phía sau. Thêm tháp hoặc giàn phía sau.
+  - Thêm chi tiết kim loại như ảnh NASA: dầm vàng, ống đỏ, hộp thiết bị trắng, tủ điện cam, cột xanh, cầu thang giữa các tầng.
+  - Làm đẹp 4 bàn máy theo Firing Room thật.
+  - Camera sandbox bay tự do (WASD, Q/E, chuột phải) và có góc máy sẵn cho cụm bàn máy.
+  - Giữ `?v=2` và `?v=3`.
+  - Prompt: `C:/Users/Thainguyen/Downloads/CODEX4-PROMPT-VAB-WRAP.md`.
+
 ## 5. Việc tồn đọng
 
 - **Đã làm cho Role 3 (2026-11-08):**
