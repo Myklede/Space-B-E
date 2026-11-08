@@ -4,12 +4,12 @@ function createFlightHUD({ parent = document.body } = {}) {
   root.className = "flight-presentation";
   root.innerHTML = `<style>
 .flight-presentation{position:absolute;inset:0;pointer-events:none;color:#d8eff1;font:12px/1.5 ui-monospace,monospace;--cyan:#72e6e0;--amber:#ffbe75}
-.flight-presentation *{box-sizing:border-box}.flight-presentation .top{position:absolute;top:30px;left:32px;right:32px;display:flex;justify-content:space-between;letter-spacing:.18em}
+.flight-presentation *{box-sizing:border-box;text-shadow:0 1px 2px #000}.flight-presentation .top{position:absolute;top:30px;left:32px;right:32px;display:flex;justify-content:space-between;letter-spacing:.18em}
 .flight-presentation small{color:#8daeb8;font-size:10px;letter-spacing:.15em}.flight-presentation .readings{position:absolute;left:32px;bottom:92px;display:flex;gap:28px}
 .flight-presentation strong{display:block;font-size:26px;font-weight:400}.flight-presentation .panel{position:absolute;right:32px;bottom:92px;width:255px;padding:18px;border:1px solid #72e6e033;background:#071419bc}
 .flight-presentation .row{display:flex;justify-content:space-between;margin:6px 0}.flight-presentation meter{width:100%;height:5px;display:block;accent-color:var(--cyan)}
-.flight-presentation .formula{position:absolute;left:32px;top:100px;max-width:330px;color:#b3d3da}.flight-presentation .formula b{color:var(--cyan);font-weight:400;font-size:18px}
-.flight-presentation .warnings{position:absolute;left:25%;right:25%;top:23%;text-align:center;color:var(--amber);letter-spacing:.12em}.flight-presentation .red{color:#ff6978}.flight-presentation .manual-offer{color:#72e6e0;font-size:14px;letter-spacing:.16em}
+.flight-presentation .formula{position:absolute;left:32px;top:100px;max-width:330px;color:#b3d3da;background:rgba(4,14,18,.72);padding:3px 10px;border-radius:4px}.flight-presentation .formula b{color:var(--cyan);font-weight:400;font-size:18px}
+.flight-presentation .warnings{position:absolute;left:25%;right:25%;top:23%;text-align:center;color:var(--amber);letter-spacing:.12em}.flight-presentation .warnings>div{background:rgba(4,14,18,.72);padding:3px 10px;border-radius:4px;display:inline-block;margin:1px 0}.flight-presentation .warnings{display:flex;flex-direction:column;align-items:center}.flight-presentation .formula:empty{display:none}.flight-presentation .red{color:#ff6978}.flight-presentation .manual-offer{color:#72e6e0;font-size:14px;letter-spacing:.16em}
 .flight-presentation .reticle{position:absolute;left:50%;top:50%;width:28px;height:28px;transform:translate(-50%,-50%);border:1px solid #72e6e066;border-radius:50%}
 .flight-presentation .marker{position:absolute;display:none;color:var(--cyan);transform:translate(-50%,-50%);font-size:24px}.flight-presentation .retro{color:var(--amber)}.flight-presentation .collision{color:#ff6978}
 .flight-presentation .vignette{position:absolute;inset:0;background:radial-gradient(ellipse,transparent 25%,#000 100%);opacity:0}

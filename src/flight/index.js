@@ -26,6 +26,7 @@ import { createPacer, createEventDetector, paceContext } from './pacing.js';
 import { approachBack, computeCorridor, corridorGauge, predictInterface } from './corridor.js';
 import { createChecklist, objectiveText } from './objectives.js';
 import { clearPhaseRatings, createPhaseTracker, getPhaseRatings } from './rating.js';
+import { attitudeDeg } from './attitude.js';
 import { dot, qRotate, LOCAL_RIGHT, LOCAL_UP } from './vec.js';
 import { STARTS } from './presets.js';
 import { createFlightHUD } from './hud/createFlightHUD.js';
@@ -818,6 +819,8 @@ export default {
       events.emit('flight:telemetry', {
         t: fc.t, phase: t.phase, altitude: t.altitude, speed: t.speed, gForce: t.gLoad, q: t.dynamicPressure,
         fuelKg: t.fuel, engineTemp: t.engineTemp, radiationMsv: astronaut.body.doseMSv,
+        verticalSpeed: t.verticalSpeed, throttle: t.thrust > 0 ? fc.throttle : 0, fuelMax: fc.ship.fuelMass, fuelFrac: t.fuelFrac,
+        thrust: t.thrust, twr: t.twr, isp: t.isp, deltaVLeft: t.deltaVLeft, maxQ: t.maxQ, ...attitudeDeg(fc),
       });
     }
 
