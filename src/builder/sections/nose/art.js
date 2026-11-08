@@ -127,6 +127,9 @@ const decal = (text, sub, w = 0.7) => mesh(new THREE.PlaneGeometry(w, w / 2), ne
 // ---------- capsule geometry (shared by the skin, the side equipment and the exploded view) ----------
 /** Outer silhouette of a capsule, [r, y] from the bottom centre to the top centre. */
 function capsuleProfile(type, R, h) {
+  // a capsule with its own outline in the data (hullProfile.profile, the same one its Blender model follows)
+  const own = NOSE_DEFS[type]?.hullProfile?.profile;
+  if (own) return [[0, 0], ...own.map(([rf, yf]) => [rf * R, yf * h]), [0, h]];
   const kind = capsuleKind(type, R);
   if (kind === 'mercury') {
     const yc = Math.min(h * 0.7, 0.035 + (R - 0.5) / 0.44);
@@ -248,6 +251,8 @@ function heatShieldArt(def, R) {
 const FAIRING_KIND = {
   nose_pointed_s: 'ogive', nose_pointed_m: 'ogive', nose_pointed_l: 'ogive', nose_blunt_m: 'blunt', nose_hammerhead_m: 'hammer',
   nose_vonkarman_m: 'haack', nose_biconic_m: 'biconic', fairing_composite_l: 'composite',
+  // wave 4 (their Blender models replace this art once loaded; it shows while they download)
+  vostok_shroud: 'blunt', fairing_newglenn: 'ogive', fairing_h2: 'ogive', fairing_h2b: 'ogive', fairing_cz5: 'haack', fairing_pslv: 'blunt',
 };
 const CYL_FRACTION = { ogive: 0.04, blunt: 0.12, hammer: 0.34, haack: 0.03, biconic: 0.05, composite: 0.3 };
 
@@ -368,6 +373,9 @@ const TOWERS = {
   les_tower_apollo: { motor: [1.55, 3.15, 0.3], jet: [3.15, 3.55, 0.3], nose: 3.75, canard: [3.86, 0.2], acm: [3.05, 0.3] },
   las_soyuz: { motor: [3.65, 5.25, 0.24], jet: [4.95, 5.25, 0.24], nose: 5.25, canard: [5.0, 0.24], acm: [3.8, 0.24] },
   las_orion: { motor: [0.45, 2.9, 0.44], jet: [2.9, 3.6, 0.38], acmSpan: [3.6, 3.95], nose: 3.95, canard: [3.35, 0.4], acm: null, steerY: 3.78 },
+  // CZ-2F and Gaganyaan escape systems: a shroud with grid fins and a tower on top, drawn like the Soyuz SAS
+  las_shenzhou: { motor: [2.62, 3.85, 0.2], jet: [3.6, 3.85, 0.17], nose: 3.85, canard: [3.7, 0.2], acm: [2.8, 0.2], yc: 1.95, yt: 2.55 },
+  las_gaganyaan: { motor: [2.65, 4.0, 0.28], jet: [3.7, 4.0, 0.2], nose: 4.0, canard: [3.85, 0.22], acm: [2.9, 0.28], yc: 1.85, yt: 2.65 },
 };
 
 function mercuryTower(def, opts) {
@@ -442,11 +450,11 @@ function addSteering(g, opts, T) {
 
 function soyuzLas(def, R, opts, entry) {
   const H = def.height;
-  const T = TOWERS.las_soyuz;
+  const T = TOWERS[def.id] ?? TOWERS.las_soyuz; // Soyuz SAS; the CZ-2F and Gaganyaan systems share its layout
   const g = new THREE.Group();
   // the fairing: a shroud round the capsule below (or a boat-tail down to a bare nose), cylinder, then a cone up to the tower
   const cap = capsuleBelow(entry, R);
-  const bt = cap ? 0 : 0.55, yc = 2.4, yt = 3.3;
+  const bt = cap ? 0 : 0.55, yc = T.yc ?? 2.4, yt = T.yt ?? 3.3;
   const pts = cap ? [[0, 0], [R, 0], [R, yc], [R * 0.97, yc + 0.06], [0.42, yt], [0, yt]] : [[0, 0], [NECK, 0], [NECK + 0.02, 0.03], [R - 0.02, bt - 0.03], [R, bt], [R, yc], [R * 0.97, yc + 0.06], [0.42, yt], [0, yt]];
   // (round a capsule, the fairing below this cone is the outer skin: hull.js)
   g.add(lathe(pts, new THREE.MeshStandardMaterial({ color: 0xe9e9e4, roughness: 0.45, metalness: 0.1, bumpMap: panelBump(5, 2), bumpScale: 0.003 }), 72));
@@ -464,7 +472,7 @@ function soyuzLas(def, R, opts, entry) {
     for (let i = 1; i < 4; i++) fin.add(at(box(0.012, hh, 0.02, finMat), 0, 0, -w / 2 + (w / 4) * i));
     for (let i = 1; i < 6; i++) fin.add(at(box(0.012, 0.012, w, finMat), 0, -hh / 2 + (hh / 6) * i, 0));
     fin.add(at(box(0.03, 0.06, 0.1, dark), -0.02, hh / 2 - 0.02, 0)); // the hinge
-    const p = group(at(fin, R + 0.05, 1.25, 0));
+    const p = group(at(fin, R + 0.05, Math.min(1.25, yc * 0.5), 0));
     p.rotation.y = az * DEG;
     g.add(p);
   }
@@ -792,6 +800,7 @@ export function partArt(entry) {
     case 'les_tower_apollo': return apolloTower(def, opts);
     case 'las_soyuz': return soyuzLas(def, R, opts, entry);
     case 'las_orion': return orionLas(def, opts);
+    case 'las_shenzhou': case 'las_gaganyaan': return soyuzLas(def, R, opts, entry);
     case 'bpc_apollo': return bpcArt(def);
     case 'nosecap_dragon': return noseCapArt(def, entry);
     case 'nose_gemini_rr': return geminiNoseArt(def, entry);
@@ -800,7 +809,58 @@ export function partArt(entry) {
   }
   if (FAIRING_KIND[def.id]) return fairingArt(def, R, entry);
   if (def.flags?.heatShield && !/hiad/.test(def.id)) return heatShieldArt(def, R);
+  if (MODULE_LOOK[def.id] || def.internals === 'service_module' || def.internals === 'module') return moduleDrumArt(def, R);
   return null;
+}
+
+/**
+ * Dresses a loaded Blender model of a nose part (bay/partArt.js calls this after the slot choices are applied; null
+ * keeps the model as it is now):
+ * - a capsule registers itself, so side equipment seats on its real cone (seatFor), and a side part's model is seated;
+ * - covers carry two bases (src/builder/tools/blender/nose/fairings.py): form_shroud, a cylinder down round a capsule
+ *   that fits inside, and form_neck, a boat-tail onto the docking ring; the one hull.js chose shows (entry.shrouded);
+ * - a cover or nose cap with a part standing on it uses the drawn art, which ends in a flat top with an attach ring.
+ */
+export function wrapModel(model, entry) {
+  const def = entry?.def;
+  if (!def || def.section !== 'nose') return null;
+  const R = entry.radius ?? 1.25;
+  if (def.flags?.capsule && entry.id) capsuleHosts.set(entry.id, { y: entry.y ?? 0, height: entry.height ?? def.height, radius: R, type: def.id });
+  if (entry.attach === 'radial') {
+    // a side part on a capsule (a SuperDraco pod) is pulled in and tilted onto the cone, like the drawn side parts
+    const seat = entry.inside ? null : seatFor(entry);
+    if (entry.parentId) { if (seat) seatCache.set(`${def.id}:${entry.radius}`, seat); else seatCache.delete(`${def.id}:${entry.radius}`); }
+    return seat ? seated(model, seat, model.userData.width ?? 0.6) : null;
+  }
+  if (entry.above && entry.attach === 'axial') {
+    if (FAIRING_KIND[def.id]) return fairingArt(def, R, entry);
+    if (def.id === 'nosecap_dragon') return noseCapArt(def, entry);
+    if (def.id === 'nose_gemini_rr') return geminiNoseArt(def, entry);
+  }
+  const shroud = model.getObjectByName('form_shroud'), neck = model.getObjectByName('form_neck');
+  if (shroud && neck) { shroud.visible = !!entry.shrouded; neck.visible = !entry.shrouded; }
+  return null;
+}
+
+// ---------- service, orbital and cargo modules (their Blender models replace this while they download) ----------
+const MODULE_LOOK = {
+  soyuz_orbital_module: 0x646b55, soyuz_service_module: 0x646b55, soyuz_7k_service_module: 0x646b55, progress_cargo_module: 0x646b55,
+  apollo_sm: 0xc4c8cc, cygnus_sm: 0xc49a45, htv_logistics: 0xc49a45, htv_propulsion: 0xc49a45, vostok_instrument_module: 0xbfc3c6,
+  voskhod_backup_retro: 0x34383d, retropack_mercury: 0xa3a8ad, cruise_stage_mars: 0xb7b8b2,
+};
+/** A plain drum (or the module's own outline) at the width the outer skin sees, with frames top and bottom. */
+function moduleDrumArt(def, R) {
+  const H = def.height;
+  const p = def.hullProfile ?? {};
+  const color = MODULE_LOOK[def.id] ?? 0xe9e8e3;
+  const skin = std(color, { roughness: 0.55, metalness: color === 0xc4c8cc ? 0.6 : 0.15 });
+  const g = new THREE.Group();
+  const r = p.kind === 'inner' ? R * (p.rMax ?? 1) : R;
+  const pts = p.kind === 'own' && p.profile ? [[0, 0], ...p.profile.map(([rf, yf]) => [rf * R, yf * H]), [0, H]] : [[0, 0], [r, 0], [r, H], [0, H]];
+  g.add(lathe(pts, skin, 64));
+  const dark = metal(DARK, 0.55, 0.6);
+  g.add(ring(pts[1][0] + 0.004, 0.02, 0.015, dark), ring(pts[pts.length - 2][0] + 0.004, H - 0.02, 0.015, dark));
+  return g;
 }
 
 // ---------- the exploded view ----------
@@ -846,6 +906,95 @@ function capsuleInternals(def, options, R, h) {
   const hatch = onWall(group(hatchPanel, at(mesh(new THREE.TorusGeometry(0.08, 0.014, 6, 16), metal(DARK)), 0.03, 0, 0)), pts, h * hy, haz, opt('hatch') === 'inward' ? -0.1 : 0.02);
   const a = haz * DEG;
   add('hatch', 'Hatch', hatch, V(Math.cos(a), 0.2, -Math.sin(a)));
+  // the wave-4 slots (a capsule's Blender model replaces these with its own pieces: docking, suits, landing)
+  const top = h - 0.1;
+  const dk = opt('docking') ?? 'none';
+  const dock = new THREE.Group();
+  if (dk !== 'none') {
+    dock.add(at(cyl(NECK - 0.06, NECK - 0.04, 0.07, metal(0xb9bdc2, 0.4, 0.7)), 0, top, 0));
+    if (dk === 'probe_drogue' || dk === 'ssvp') dock.add(at(cyl(0.03, 0.06, 0.22, metal()), 0, top + 0.06, 0));
+    else if (dk === 'cbm') dock.add(at(box(0.5, 0.04, 0.5, metal(0xd9dde2, 0.4, 0.7)), 0, top + 0.04, 0));
+    else for (let i = 0; i < 3; i++) { const q = (i / 3) * Math.PI * 2; const pet = box(0.18, 0.16, 0.02, metal(0xd9dde2, 0.4, 0.7)); pet.position.set(Math.cos(q) * 0.3, top + 0.1, Math.sin(q) * 0.3); pet.rotation.y = -q + Math.PI / 2; pet.rotation.x = 0.3; dock.add(pet); }
+  }
+  add('docking', 'Docking mechanism', dock, V(0, 1, 0));
+  const air = group(at(ball(0.14, metal(0x3b82c4, 0.4, 0.5)), inner(h * 0.45) * 0.55, h * 0.45, -0.35), at(ball(0.12, metal(0xd9dde2)), inner(h * 0.45) * 0.55, h * 0.45, 0.0));
+  if (opt('atmosphere') === 'pure_o2') air.children[1].visible = false;
+  add('atmosphere', 'Cabin air', air, V(0.7, 0.3, -0.6));
+  const suitMat = std(opt('suits') === 'pressure' ? 0xe2e0d8 : 0x6c7480, { roughness: 0.8, metalness: 0 });
+  const suits = new THREE.Group();
+  for (let i = 0; i < seats; i++) {
+    const z = (i - (seats - 1) / 2) * 0.48;
+    suits.add(at(box(0.5, 0.16, 0.3, suitMat), 0.1, h * 0.16 + 0.12, z));
+    if (opt('suits') === 'pressure') suits.add(at(ball(0.13, suitMat), -0.22, h * 0.16 + 0.32, z));
+  }
+  add('suits', 'Suits', suits, V(-0.3, 0.4, 1));
+  const ld = opt('landing') ?? 'splash';
+  const land = group(at(cyl(0.16, 0.16, 0.36, std(0xcfc6ad, { roughness: 0.9 })), inner(h * 0.7) * 0.6, h * 0.62, 0.3));
+  if (ld === 'rockets') for (let i = 0; i < 6; i++) { const q = (i / 6) * Math.PI * 2; land.add(at(cyl(0.05, 0.05, 0.26, metal()), Math.cos(q) * R * 0.5, 0.16, Math.sin(q) * R * 0.5)); }
+  if (ld === 'airbags') for (let i = 0; i < 6; i++) { const q = (i / 6) * Math.PI * 2; const bag = box(0.4, 0.07, 0.3, std(0xd8c69a, { roughness: 0.85 })); bag.position.set(Math.cos(q) * R * 0.6, 0.05, Math.sin(q) * R * 0.6); bag.rotation.y = -q; land.add(bag); }
+  add('landing', 'Landing system', land, V(0.4, -1, 0.5));
+  return out;
+}
+
+/** Service modules (kit service_module): power (wings, body cells, fuel cells, batteries) and the engine. */
+function serviceInternals(def, options, R, h) {
+  const opt = (k) => options?.[k]?.id;
+  const out = [];
+  const add = (key, name, object, dir) => out.push({ key, name, object, dir: dir.normalize() });
+  const r = R * (def.hullProfile?.kind === 'inner' ? def.hullProfile.rMax ?? 1 : 1);
+  const pw = opt('power') ?? 'solar_wings';
+  const power = new THREE.Group();
+  if (pw === 'solar_wings') for (const s of [-1, 1]) power.add(at(box(0.06, h * 0.6, Math.min(1, r * 0.7), std(0x18233e, { roughness: 0.35, metalness: 0.4 })), s * (r - 0.15), h * 0.45, 0));
+  else if (pw === 'body_cells') power.add(at(mesh(new THREE.CylinderGeometry(r - 0.03, r - 0.03, h * 0.6, 40, 1, true, 0, Math.PI), std(0x18233e, { roughness: 0.35, metalness: 0.4, side: THREE.DoubleSide })), 0, h * 0.45, 0));
+  else if (pw === 'fuel_cells') for (let i = 0; i < 3; i++) { const q = (i / 3) * Math.PI * 2; power.add(at(cyl(0.13, 0.13, 0.5, metal(0xbfc3c7)), Math.cos(q) * r * 0.55, h * 0.45, Math.sin(q) * r * 0.55)); }
+  else for (let i = 0; i < 4; i++) { const q = (i / 4) * Math.PI * 2 + 0.78; power.add(at(box(0.3, 0.22, 0.4, metal(DARK)), Math.cos(q) * r * 0.6, h * 0.45, Math.sin(q) * r * 0.6)); }
+  add('power', 'Power', power, V(1, 0.2, 0.3));
+  const en = opt('engine') ?? 'main';
+  const engine = new THREE.Group();
+  const nozMat = std(0x3b3e42, { roughness: 0.5, metalness: 0.5, side: THREE.DoubleSide });
+  if (en !== 'thrusters_only') engine.add(at(bell(r * 0.1, r * 0.3, Math.min(h * 0.5, r * 0.8), nozMat), 0, 0.02, 0));
+  if (en === 'main_backup') for (const s of [-1, 1]) engine.add(at(bell(r * 0.04, r * 0.1, h * 0.25, nozMat), s * r * 0.5, 0.02, 0));
+  if (en === 'thrusters_only') for (let i = 0; i < 4; i++) { const q = (i / 4) * Math.PI * 2 + 0.78; engine.add(at(box(0.1, 0.12, 0.1, metal(0x8d9296)), Math.cos(q) * r * 0.8, 0.12, Math.sin(q) * r * 0.8)); }
+  for (let i = 0; i < 2; i++) engine.add(at(ball(r * 0.22, metal(i ? 0xd9dde2 : 0xa3a8ad)), (i ? 1 : -1) * r * 0.42, h * 0.55, 0));
+  add('engine', 'Engine and tanks', engine, V(0, -1, 0));
+  return out;
+}
+
+/** Orbital and cargo modules (kit module): the docking port on top and the stowage inside. */
+function moduleInternals(def, options, R, h) {
+  const opt = (k) => options?.[k]?.id;
+  const out = [];
+  const add = (key, name, object, dir) => out.push({ key, name, object, dir: dir.normalize() });
+  const r = R * (def.hullProfile?.rMax ?? 1);
+  const dk = opt('docking') ?? 'none';
+  const dock = new THREE.Group();
+  if (dk !== 'none') {
+    dock.add(at(cyl(NECK - 0.06, NECK - 0.04, 0.07, metal(0xb9bdc2, 0.4, 0.7)), 0, h - 0.1, 0));
+    if (dk === 'probe_drogue' || dk === 'ssvp') dock.add(at(cyl(0.03, 0.06, 0.22, metal()), 0, h - 0.16, 0));
+    if (dk === 'cbm') dock.add(at(box(0.5, 0.04, 0.5, metal(0xd9dde2, 0.4, 0.7)), 0, h - 0.06, 0));
+  }
+  add('docking', 'Docking port', dock, V(0, 1, 0));
+  const st = opt('stowage') ?? 'bags';
+  const stow = new THREE.Group();
+  const mat = std(st === 'water_wall' ? 0x3c5f9a : st === 'racks' ? 0xd9d8d2 : 0xcfc6ad, { roughness: 0.85 });
+  for (let i = 0; i < 6; i++) { const q = (i / 6) * Math.PI * 2; const b = box(0.3, h * 0.5, 0.45, mat); b.position.set(Math.cos(q) * r * 0.6, h * 0.5, Math.sin(q) * r * 0.6); b.rotation.y = -q; stow.add(b); }
+  add('stowage', 'Stowage', stow, V(1, 0.1, 0.4));
+  return out;
+}
+
+/** RCS packs (kit rcs): the propellant tanks and the thruster rings. */
+function rcsInternals(options, h) {
+  const opt = (k) => options?.[k]?.id;
+  const out = [];
+  const add = (key, name, object, dir) => out.push({ key, name, object, dir: dir.normalize() });
+  const prop = opt('propellant') ?? 'hypergolic';
+  const tanks = group(at(ball(0.08, metal(prop === 'cold_gas' ? 0x3b82c4 : 0xd9dde2)), 0, h * 0.55, -0.08));
+  if (prop === 'hypergolic') tanks.add(at(ball(0.08, std(0x9a3412, { roughness: 0.5, metalness: 0.4 })), 0, h * 0.55, 0.08));
+  add('propellant', 'Propellant', tanks, V(1, 0.3, 0));
+  const rings = group();
+  const n = opt('rings') === 'dual' ? 2 : 1;
+  for (let k = 0; k < n; k++) for (let i = 0; i < 4; i++) { const q = (i / 4) * Math.PI * 2; rings.add(at(cyl(0.015, 0.03, 0.06, metal(0x2a2e33)), 0.05 + Math.cos(q) * 0.06, h * (0.3 + 0.2 * k), Math.sin(q) * 0.06)); }
+  add('rings', 'Thruster rings', rings, V(0, -1, 0.3));
   return out;
 }
 
@@ -947,6 +1096,9 @@ export function internalsArt(def, options, dims) {
   else if (def.internals === 'abort_pod') out = podInternals(options, h);
   else if (def.internals === 'ablative_shield') out = shieldInternals(options, R, h);
   else if (def.internals === 'chute' && def.attach === 'radial') out = chuteInternals(options, h);
+  else if (def.internals === 'service_module') out = serviceInternals(def, options, R, h);
+  else if (def.internals === 'module') out = moduleInternals(def, options, R, h);
+  else if (def.internals === 'rcs') out = rcsInternals(options, h);
   if (!out) return null;
   // a side part on a capsule is pulled in and tilted onto the cone (seatFor): its pieces start from the same place
   const seat = def.attach === 'radial' ? seatCache.get(`${def.id}:${R}`) : null;
