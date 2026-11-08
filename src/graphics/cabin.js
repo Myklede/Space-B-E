@@ -14,6 +14,16 @@ import {
 const W = 4, L = 8, H = 2.6, WALL_H = 2.15;
 const hw = W / 2, hl = L / 2, cx = hw - 0.45;
 
+// Ceiling hatch to the flight deck and the ladder below it. The hatch is 0.64 m square, centred at (HX, HZ), left of the
+// aisle, 1.5 m in front of the airlock and over 1 m from every other station's approach. The climber faces +Z on the ladder.
+const HX = -0.68, HZ = 2.3, HH = 0.32, SHAFT = 0.72;
+/** The flat ceiling as four quads around the hatch opening (same UV mapping as one big quad). */
+function ceilingPieces() {
+  const x0 = HX - HH, x1 = HX + HH, z0 = HZ - HH, z1 = HZ + HH;
+  const q = (a, b2, c, d) => [[a, H, c], [b2, H, c], [b2, H, d], [a, H, d]];
+  return [q(-cx, x0, -hl, hl), q(x1, cx, -hl, hl), q(x0, x1, -hl, z0), q(x0, x1, z1, hl)];
+}
+
 // ---- Materials, built once -------------------------------------------------------------------------------------
 let M = null;
 let litCache = null;
@@ -156,6 +166,61 @@ const cableBundle = (s, points, colors, radius = 0.01) => {
   });
 };
 
+
+/** Ceiling hatch (framed opening, open lid with seal and latch, lit shaft) and a free-standing ladder down to the floor. */
+function hatchAndLadder(group, m) {
+  const b = (w, h, d, mat, x, y, z, r = 0.01) => box(w, h, d, mat, x, y, z, r);
+  const x0 = HX - HH, x1 = HX + HH, z0 = HZ - HH, z1 = HZ + HH;
+  // Frame on the ceiling underside: four bars, a hazard-yellow border and corner bolts.
+  const fw = 0.07;
+  group.add(b(2 * HH + 2 * fw, 0.07, fw, m.rib, HX, H - 0.035, z0 - fw / 2), b(2 * HH + 2 * fw, 0.07, fw, m.rib, HX, H - 0.035, z1 + fw / 2));
+  group.add(b(fw, 0.07, 2 * HH, m.rib, x0 - fw / 2, H - 0.035, HZ), b(fw, 0.07, 2 * HH, m.rib, x1 + fw / 2, H - 0.035, HZ));
+  group.add(b(2 * HH + 2 * fw, 0.012, 0.025, m.paintLine, HX, H - 0.074, z0 - fw - 0.0125, 0), b(2 * HH + 2 * fw, 0.012, 0.025, m.paintLine, HX, H - 0.074, z1 + fw + 0.0125, 0));
+  group.add(b(0.025, 0.012, 2 * HH + 2 * fw + 0.05, m.paintLine, x0 - fw - 0.0125, H - 0.074, HZ, 0), b(0.025, 0.012, 2 * HH + 2 * fw + 0.05, m.paintLine, x1 + fw + 0.0125, H - 0.074, HZ, 0));
+  [x0 - fw / 2, x1 + fw / 2].forEach((x) => [z0 - fw / 2, z1 + fw / 2].forEach((z) => group.add(cyl(0.014, 0.014, m.metal, x, H - 0.077, z, 'y', 8))));
+  // Shaft above the opening: four walls, a lit cap (the flight deck's light) and a lit strip.
+  const sh = SHAFT, wy = H + sh / 2;
+  group.add(b(2 * HH, sh, 0.03, m.paintGrey, HX, wy, z0 - 0.015, 0), b(2 * HH, sh, 0.03, m.paintGrey, HX, wy, z1 + 0.015, 0));
+  group.add(b(0.03, sh, 2 * HH + 0.06, m.paintGrey, x0 - 0.015, wy, HZ, 0), b(0.03, sh, 2 * HH + 0.06, m.paintGrey, x1 + 0.015, wy, HZ, 0));
+  group.add(b(2 * HH + 0.06, 0.03, 2 * HH + 0.06, m.dark, HX, H + sh + 0.015, HZ, 0));
+  group.add(b(0.5, 0.012, 0.5, lit('#cfe0ff', 1.6), HX, H + sh - 0.004, HZ, 0));
+  group.add(b(0.025, 0.012, 2 * HH, lit('#ffcf70', 1.8), x0 + 0.02, H + 0.25, HZ, 0));
+  // Lid: hinged on the +X edge and swung open (about 98 degrees), seal and latch on its underside.
+  const lid = new THREE.Group();
+  lid.name = 'ceilingHatchLid';
+  lid.position.set(x1, H + 0.05, HZ);
+  lid.rotation.z = -(Math.PI / 2 + 0.17);
+  const lw = 2 * HH - 0.02;
+  lid.add(b(lw, 0.05, lw, m.paint, -lw / 2, 0, 0, 0.01));
+  lid.add(b(lw - 0.12, 0.008, lw - 0.12, m.paintGrey, -lw / 2, -0.028, 0, 0.004));
+  lid.add(b(lw - 0.03, 0.02, 0.03, m.rubber, -lw / 2, -0.03, lw / 2 - 0.03, 0.006), b(lw - 0.03, 0.02, 0.03, m.rubber, -lw / 2, -0.03, -lw / 2 + 0.03, 0.006));
+  lid.add(b(0.03, 0.02, lw - 0.09, m.rubber, -lw + 0.03, -0.03, 0, 0.006), b(0.03, 0.02, lw - 0.09, m.rubber, -0.03, -0.03, 0, 0.006));
+  lid.add(b(0.2, 0.012, 0.1, m.dark, -lw + 0.2, -0.04, 0, 0.004));
+  lid.add(cyl(0.012, 0.05, m.metal, -lw + 0.27, -0.065, 0, 'y', 8), cyl(0.012, 0.05, m.metal, -lw + 0.13, -0.065, 0, 'y', 8));
+  lid.add(cyl(0.016, 0.18, m.orange, -lw + 0.2, -0.09, 0, 'x', 10));
+  lid.add(b(0.04, 0.012, 0.03, lit('#ffb347', 1.8), -lw + 0.2, -0.04, 0.06, 0));
+  group.add(lid);
+  [z0 + 0.06, z1 - 0.06].forEach((z) => group.add(cyl(0.02, 0.1, m.metal, x1 + 0.015, H + 0.05, z, 'z', 10)));
+  // Floor marking under the hatch (a yellow outline).
+  const sq = (x, z, w, d) => group.add(new THREE.Mesh(quad([[x - w / 2, 0.007, z - d / 2], [x + w / 2, 0.007, z - d / 2], [x + w / 2, 0.007, z + d / 2], [x - w / 2, 0.007, z + d / 2]], [[0, 0], [1, 0], [1, 1], [0, 1]]), m.paintLine));
+  const fz0 = HZ - 0.95, fz1 = HZ + 0.1, fx0 = HX - 0.5, fx1 = HX + 0.5;
+  sq(HX, fz0, fx1 - fx0, 0.04); sq(HX, fz1, fx1 - fx0, 0.04); sq(fx0, (fz0 + fz1) / 2, 0.04, fz1 - fz0); sq(fx1, (fz0 + fz1) / 2, 0.04, fz1 - fz0);
+
+  // Ladder: two yellow rails in the plane z = HZ, rungs every 0.28 m, floor feet and ceiling braces (free-standing).
+  const rx = 0.2, top = H + 0.45;
+  const rail = (x) => {
+    group.add(b(0.045, top, 0.045, m.paintLine, x, top / 2, HZ, 0.012));
+    group.add(b(0.16, 0.02, 0.16, m.dark, x, 0.01, HZ, 0.005), b(0.12, 0.012, 0.12, m.metal, x, 0.026, HZ, 0.004));
+    group.add(rod([x, H - 0.1, HZ], [x, H - 0.03, z1 + 0.03], 0.014, m.metal, 8));
+  };
+  rail(HX - rx); rail(HX + rx);
+  for (let y = 0.3; y < H + 0.4; y += 0.28) {
+    group.add(cyl(0.017, 2 * rx, m.metal, HX, y, HZ, 'x', 10));
+    group.add(cyl(0.021, 0.012, m.dark, HX - rx + 0.06, y, HZ, 'x', 8), cyl(0.021, 0.012, m.dark, HX + rx - 0.06, y, HZ, 'x', 8));
+  }
+  group.add(cyl(0.014, 2 * rx, m.orange, HX, H + 0.1, HZ - 0.12, 'x', 8));
+}
+
 // A cabin-wide cache of box geometry hands every build the same shells, so only meshes are created per call.
 let buildCount = 0;
 
@@ -173,7 +238,7 @@ export function createCabin() {
   // ---- Shell ----
   const shell = [
     [quad([[-hw, 0, -hl], [hw, 0, -hl], [hw, 0, hl], [-hw, 0, hl]], [[0, 0], [W, 0], [W, L], [0, L]]), m.floor],
-    [quad([[-cx, H, -hl], [cx, H, -hl], [cx, H, hl], [-cx, H, hl]], [[0, 0], [cx, 0], [cx, L / 2], [0, L / 2]]), m.hull],
+    ...ceilingPieces().map((c) => [quad(c, c.map(([x, , z]) => [(x + cx) * 0.5, (z + hl) * 0.5])), m.hull]),
     [quad([[-hw, 0, hl], [-hw, 0, -hl], [-hw, WALL_H, -hl], [-hw, WALL_H, hl]], [[0, 0], [1, 0], [1, 1], [0, 1]]), m.walls.left],
     [quad([[hw, 0, -hl], [hw, 0, hl], [hw, WALL_H, hl], [hw, WALL_H, -hl]], [[0, 0], [1, 0], [1, 1], [0, 1]]), m.walls.right],
     [quad([[-hw, 0, -hl], [hw, 0, -hl], [hw, WALL_H, -hl], [-hw, WALL_H, -hl]], [[0, 0], [1, 0], [1, 1], [0, 1]]), m.walls.front],
@@ -261,6 +326,8 @@ export function createCabin() {
   const alarmLight = new THREE.PointLight(0xff2a1f, 0, 7, 2);
   alarmLight.position.set(0, H - 0.4, 0);
   group.add(alarmLight);
+
+  hatchAndLadder(group, m);
 
   // ---- Windows: a wide one over the console and portholes on both end walls ----
   const porthole = (x, y, z, face) => { // face = +1 looks toward +z (back wall), -1 toward -z (front wall)
@@ -725,10 +792,23 @@ export function createCabin() {
   rackAnchor('ventL', -1.72, 1.5, left, (s) => { vent(s, m, 0.4, 0.5, 0, 1.5, -0.25); vent(s, m, 0.4, 0.2, 0, 0.5, -0.25); label(s, m, 0.2, 0.05, 6, 0, 1.15, -0.245); });
   rackAnchor('ventR', 1.72, 1.65, right, (s) => { vent(s, m, 0.3, 0.5, 0, 1.5, -0.25); vent(s, m, 0.3, 0.2, 0, 0.5, -0.25); });
 
+  // Eye positions for Role 2's climb (cabin-local, empty Object3Ds, +Y up). ladderBottom: standing at the foot of the ladder,
+  // facing into the cabin (-Z). ladderTopCabin: on the top rungs inside the hatch, facing the ladder (+Z).
+  const ladderBottom = new THREE.Object3D();
+  ladderBottom.name = 'ladderBottom';
+  ladderBottom.position.set(HX, 1.65, HZ - 0.62);
+  const ladderTopCabin = new THREE.Object3D();
+  ladderTopCabin.name = 'ladderTopCabin';
+  ladderTopCabin.position.set(HX, H - 0.12, HZ - 0.26);
+  ladderTopCabin.rotation.y = Math.PI;
+  group.add(ladderBottom, ladderTopCabin);
+
   const triangles = bake(group);
 
   // Fixed meshes are merged, so only the dimmable lights and blinking lamps stay live.
   let alarm = false;
+  group.userData.ladderBottom = ladderBottom;
+  group.userData.ladderTopCabin = ladderTopCabin;
   group.userData.stations = stations;
   group.userData.props = props;
   group.userData.triangles = triangles;
