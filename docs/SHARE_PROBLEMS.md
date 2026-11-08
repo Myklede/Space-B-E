@@ -79,53 +79,32 @@ Copy this block. Keep each line short and factual. Don't commit screenshots.
 
 ## Role 3: Graphics, Audio & Core
 
-### New cockpit: please include the CUT-OFF, RETRO and ASSIST controls
-- **For:** Role 3 · **From:** Role 2 (Minh Vuong) · **Found:** 2026-11-07 on dev 1fb9625 · **Severity:** polish
-- **Where:** the new cockpit interior you are building (`src/graphics/cockpitParts.js`)
-- **Steps:** in flight, look down at the hands while pressing X, holding Space or pressing F
-- **Expected:** players who look down see what each input does: the stick and throttle already move through `setControls`; X (engine cut-off), Space (retro brake) and F (Flight Assist) should also have a visible control near the hands
-- **Actual:** nothing moves for X, Space or F. Role 2 paused its own add-on switches so they don't clash with the new cockpit.
-- **Suggested fix:** model a guarded red ENGINE CUT-OFF toggle, an amber RETRO button and a cyan ASSIST button near the hands, either animated by extending `setControls({ pitch, yaw, throttle, cutoff, brake, assist })` (Role 2 will pass the three booleans) or named (`cutoffSwitch`, `retroButton`, `assistButton`) so Role 2 can animate them. Your call.
-- **Status:** fixed in a5c2f8c, Role 2 (Minh Vuong) please verify. Pass `cutoff`, `brake`, `assist` booleans to `setControls` every frame (omitted keys keep their last value); the guard lifts, the toggle flips, the buttons press in and light up.
+### Flight switches still read F ASSIST and Space RETRO, but the new controls use F = MANUAL and Space = LOCK
+- **For:** Role 3 · **From:** Role 2 (Minh Vuong) · **Found:** 2026-11-07 on dev f3deb43 · **Severity:** polish
+- **Where:** `src/graphics/cockpitParts.js` (the flight switches near the hands: `retroButton`/`retroCap` and `assistButton`/`assistCap`, and their silk-screen labels)
+- **Steps:** `/?debug=1&state=LAUNCH`, look down at the switches by the hands
+- **Expected:** the new flight controls (design change by Role 2, no contract change): the flight computer flies by default; during three short manual windows (ascent gravity turn, Mars entry, final landing) the player presses **F** to take MANUAL control, steers with the mouse on the centre display, and presses **Space** to LOCK guidance back to the computer. W/S/A/D, Q/E and the Space retro brake go away. X (ENGINE CUT-OFF) stays.
+- **Actual:** the labels still say F ASSIST and Space RETRO
+- **Suggested fix:** relabel the cyan button `F  MANUAL` and the amber button `SPACE  LOCK`; keep the part names and `setControls({ pitch, yaw, throttle, cutoff, brake, assist })` exactly as they are. Role 2 will pass `assist: true` while the player has manual control (lamp lit = MANUAL) and `brake: true` for about 0.3 s when Space locks guidance (button presses in). The stick and throttle keep moving through `pitch`/`yaw`/`throttle` (the computer's inputs, or the player's during a manual window), so the gloves need no change.
+- **Status:** open
 
-### Core input has no mouse wheel (Role 2 needs it to zoom the outside camera)
-- **For:** Role 3 · **From:** Role 2 (Minh Vuong) · **Found:** 2026-11-07 on dev 1fb9625 · **Severity:** polish
-- **Where:** `src/core/input.js` (only `onPress`, `onEscape`, `mouseDelta`, `lockPointer`, `unlockPointer`, `clear`; no wheel)
-- **Steps:** in flight press C (outside camera) and scroll the mouse wheel
-- **Expected:** the wheel zooms the outside camera in and out (the player asked for the wheel, not keys)
-- **Actual:** core input doesn't read the wheel, and Role 2 may not add its own listener
-- **Suggested fix:** add `input.wheelDelta()` that returns the summed `deltaY` since the last frame and resets like `mouseDelta()` (call `preventDefault` on wheel over the game so the page doesn't scroll; normalise `deltaMode` lines/pages to pixels). Role 2's camera already calls `input.wheelDelta?.()`, so zoom starts working as soon as it exists.
-- **Status:** fixed in a5c2f8c, Role 2 (Minh Vuong) please verify. Call `input.wheelDelta()` once per frame (pixels, positive = wheel down); it now exists.
+### Optional: let the centre display draw the manual-control aim (○ circle on a + target)
+- **For:** Role 3 · **From:** Role 2 (Minh Vuong) · **Found:** 2026-11-07 on dev f3deb43 · **Severity:** polish
+- **Where:** `src/graphics/interiors.js` (the steering display, `cockpit.userData.setTrajectory`, mesh named `centreDisplay`)
+- **Steps:** (design request, nothing to reproduce yet) during a manual window the camera zooms into the centre display
+- **Expected:** the display shows a target `+`, the player's aim circle `○`, an accuracy bar, the seconds left and a `LOCK READY · SPACE` cue, drawn on the screen itself like the trajectory plot
+- **Actual:** the display can only draw the trajectory, so Role 2 will first draw the ○/+ as an HTML overlay placed over the `centreDisplay` mesh. Please keep the mesh name `centreDisplay` stable so the overlay and the camera zoom can find it.
+- **Suggested fix:** optional, only if you have time: add `cockpit.userData.setAim({ target: { x, y }, aim: { x, y }, radius, accuracy, timeLeft, lockReady, label })` or `setAim(null)`, with x, y in screen units 0–1 and y UP (the same convention as `setTrajectory`), `radius` in the same units, `accuracy` 0–1, `timeLeft` in seconds, `label` a short title such as `ASCENT · GRAVITY TURN`. While an aim is set it draws on top of the trajectory plot. Role 2 calls `setAim?.()` and drops its HTML overlay as soon as the function exists. The existing stable-API agreement for `setControls` and `setTrajectory` (the comment at the top of the steering display code) still holds.
+- **Status:** open
 
-### Steering moves to the cockpit trajectory screen: keep its API stable in every cockpit update
-- **For:** Role 3 · **From:** Role 2 (Minh Vuong) · **Found:** 2026-11-07 on dev a439097 · **Severity:** bug (flight control will depend on it)
-- **Where:** `src/graphics/interiors.js`, `drawTrajectory` (the centre display of the new cockpit), and the `cockpit` row in README "Role 3 APIs"
-- **Steps:** (design agreement, nothing to reproduce yet)
-- **Expected:** the player's design: the centre HUD markers go away and the player **flies by the cockpit screen**, keeping the ship icon on a dashed reference trajectory. The centre display shows (1) the planned trajectory as a dashed line, (2) a predicted line ("where you go if you hold these inputs"), (3) the ship icon, (4) one short key hint, e.g. "Low: hold S ▲" or "✓ On track". Role 2 computes all of it from the physics (ascent profile, orbit, entry and landing) and sends it a few times per second.
-- **Actual:** the centre display draws an altitude curve from `flight:telemetry`; it can't show a planned or predicted line or a hint yet, so Role 2 can't wire the steering to it
-- **Suggested fix:**
-  - Add `cockpit.userData.setTrajectory({ planned: [[x, y], …], predicted: [[x, y], …], ship: { x, y, heading }, view: 'side' | 'top', hint: { text, level: 'ok' | 'warn' } })` (points in screen units 0–1, or metres plus a scale; tell Role 2 which you prefer and Role 2 will match it). Calling it with `null` hands the display back to your own telemetry drawing.
-  - **Treat it like `setControls`: a stable API.** Every future cockpit redesign must keep `setTrajectory` and `setControls` working with the same arguments, keep the trajectory display large and readable from the default pilot view (dashed and predicted lines distinguishable, hint text legible at 1280×720), and document both in the README `cockpit` row. If an argument must change, write it here first so Role 2 updates the steering in the same push.
-  - Role 2 will keep a fallback: if `setTrajectory` is missing, the old HUD markers come back, so a cockpit without it never leaves the player unable to fly.
-- **Status:** fixed in a5c2f8c, Role 2 (Minh Vuong) please verify. Coordinate convention: points are screen units 0...1 of the plot area, x to the right and y UP, and `ship.heading` is in radians with 0 = pointing right and counter-clockwise positive; `setTrajectory(null)` hands the display back to telemetry.
-
-### Phase 0 (strap-in): pressable cockpit buttons HATCH, CABIN, O2 and a new ARM ENGINE
-- **For:** Role 3 · **From:** Role 2 + Role 4 (Minh Vuong; our team now also keeps Role 4) · **Found:** 2026-11-07 on dev 3d4fa59 · **Severity:** polish
-- **Where:** the button row under the cockpit displays (`src/graphics/cockpitParts.js` / `interiors.js`): it already has O2, CABIN, HATCH (and FIRE, DUMP, DOCK, PARA, ENTRY); there is no ARM ENGINE button
-- **Steps:** `/?debug=1&state=LAUNCH`, look down at the button row
-- **Expected:** the agreed Phase 0 pre-launch checklist: before the countdown the player closes the HATCH, pressurises the CABIN, opens O2 and presses ARM ENGINE, each light turning from amber to green (red for ARMED), with a short press animation
-- **Actual:** the buttons are static models without names or an API, and ARM ENGINE doesn't exist
-- **Suggested fix:** name the buttons (`btn:hatch`, `btn:cabin`, `btn:o2`, `btn:arm`, …), add an ARM ENGINE button, and expose `cockpit.userData.setButton(id, state)` with `state` `'off' | 'amber' | 'green' | 'red'` plus a `press(id)` animation. Until then Role 2 shows the checklist on the HUD (keys 1–4) and calls `setButton?.()` so it lights up as soon as it exists.
-- **Status:** fixed in a5c2f8c, Role 2 (Minh Vuong) please verify. Ids `hatch`, `cabin`, `o2`, `arm`, `fire`, `dump`, `rcs-a`, `rcs-b`, `main`, `apu`, `pwr`, `comms`, `dock`, `para`, `entry` (with or without `btn:`); `cockpit.userData.setButton(id, state)` and `press(id)` exist.
-
-### Phase 0 sounds: harness click, hatch lock, cabin pressurise hiss, O2 flow, switch toggle
-- **For:** Role 3 · **From:** Role 2 + Role 4 (Minh Vuong) · **Found:** 2026-11-07 on dev 3d4fa59 · **Severity:** polish
-- **Where:** `src/audio/index.js` (today: alarm.master, ambience.mars, ambience.ship, engine.rumble, gonogo.tick, impact.small, radio.blip, radio.static, suit.breath, ui.click, ui.error, ui.hover, ui.snap)
-- **Steps:** the Phase 0 strap-in and checklist
-- **Expected:** `crew.harness` (buckle click), `cockpit.hatch` (heavy latch), `cockpit.pressurise` (2–3 s hiss), `suit.o2flow` (soft flow, loopable), `cockpit.switch` (toggle click)
-- **Actual:** none of these exist; Role 2 falls back to `ui.click`
-- **Suggested fix:** add the five ids (CC0 sounds, credit in CREDITS.md). Role 2 plays them by these names and falls back to `ui.click` while they are missing.
-- **Status:** fixed in a5c2f8c, Role 2 (Minh Vuong) please verify. The five ids are synthesised in `src/audio/index.js`; `audio.play('suit.o2flow')` loops until `audio.stop('suit.o2flow')`.
+### Optional: core input has no mouse buttons (manual control wants a click to LOCK)
+- **For:** Role 3 · **From:** Role 2 (Minh Vuong) · **Found:** 2026-11-07 on dev f3deb43 · **Severity:** polish
+- **Where:** `src/core/input.js` (has `isDown`, `onPress`, `onEscape`, `mouseDelta`, `wheelDelta`, `lockPointer`, `unlockPointer`, `isLocked`, `clear`; no mouse buttons)
+- **Steps:** during a manual window, click the left mouse button
+- **Expected:** the player asked to lock guidance with a mouse click as well as Space
+- **Actual:** core input doesn't read mouse buttons, and Role 2 may not add its own listener, so Role 2 uses Space only
+- **Suggested fix:** optional: treat mouse buttons as codes in the existing API, e.g. `input.isDown('Mouse0')` and `input.onPress('Mouse0', fn)` (`Mouse2` = right button), fired from `mousedown`/`mouseup` only while the pointer is locked, so the click that locks the pointer doesn't count. Role 2 will register `onPress('Mouse0', …)` next to Space, so it starts working as soon as core supports it.
+- **Status:** open
 
 ## Role 4: Story, Cruise & Knowledge
 
