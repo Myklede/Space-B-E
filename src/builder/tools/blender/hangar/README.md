@@ -11,7 +11,7 @@ From the repository root, in PowerShell (Node 26.13.0, Blender 5.2.3 LTS):
 npx vite --port 5280 --strictPort --config src/builder/tools/blender/hangar/vite.config.mjs --configLoader native
 ```
 
-One Blender command rebuilds **all 24 GLBs and layout.json**. No installation required. The generator disables Python bytecode writes before importing the existing `common.py`; it uses `common.G`, materials and Draco export. Export in one batch, with nobody inspecting a half-written GLB. The Vite config uses `%TEMP%/hangar-scratch/vite-cache-5280`, isolating the dependency optimizer from the user's running game server. On this environment Vite needs normal process permissions: restricted execution produced `spawn EPERM` on DRACOLoader's asset resolution.
+One Blender command rebuilds **all 26 GLBs and layout.json**. No installation required. The generator disables Python bytecode writes before importing the existing `common.py`; it uses `common.G`, materials and Draco export. Export in one batch, with nobody inspecting a half-written GLB. The Vite config uses `%TEMP%/hangar-scratch/vite-cache-5280`, isolating the dependency optimizer from the user's running game server. On this environment Vite needs normal process permissions: restricted execution produced `spawn EPERM` on DRACOLoader's asset resolution.
 
 Open **http://localhost:5280/sandbox/role1.hangar.html**. Add `?blockout=1` for grey-box massing. The page has a placeholder rocket, three collar sizes, top-down retraction, elevator stops, crew-arm extension, crane trolley/hook and door controls; ground, overview and access-level cameras; first-person ground walking; LOD, wireframe and collider overlays. The cutaway switch hides front cladding and door for inspection. Turn it off to see the complete envelope.
 
@@ -23,7 +23,7 @@ npm run check:static
 node src/builder/tools/blender/hangar/inspect.mjs
 ```
 
-The last command uses **one** Chrome process and one page, sequentially. It captures original geometry, tests S/M/L against 8/36/60 m ships, checks moving nodes and ground collision, measures complete-hall budgets, then opens the actual game's HANGAR on 5280. It writes `refs/inspection.json`, eight small JPGs under `refs/shots`, and two original-render comparison sheets. It does not start/stop any server. `refs/models-test.log`, `builder-test.log`, and `static-check.log` hold the requested existing-check results.
+The last command uses **one** Chrome process and one page, sequentially. It captures original geometry, tests S/M/L against 8/36/60 m ships, checks moving nodes and ground collision, measures complete-hall budgets, then opens the actual game's HANGAR on 5280. It writes `refs/inspection.json`, sequential JPEG captures under `refs/shots`, and original-render comparison sheets. It does not start/stop any server. `refs/models-test.log`, `builder-test.log`, and `static-check.log` hold the requested existing-check results.
 
 ## Coordinate and motion contract
 
@@ -57,11 +57,11 @@ The last command uses **one** Chrome process and one page, sequentially. It capt
 
 The numeric `bytes` and bounds in this example are illustrative; read each actual manifest entry. Rotations are **degrees**, XYZ Euler order. Additional top-level data: `radii`, `hallBounds`, `consoleArea`, `playerEntry`, `levels`, `elevator`, `crewArm`, `colliders`. A placement may have `dynamic`, `level` and `side`. Every placement has a unique ID. `levels[].halves` contains the relevant placement IDs.
 
-`sandbox/role1.hangar.js` loads with GLTFLoader + DRACOLoader, decoder path `/assets/draco/`, and one decode worker. It caches materials by name and groups all placements by **module + mesh node** into InstancedMesh batches. Thus ordinary kit modules are one draw call each; independently moving or optional hero nodes use their own batches. Geometry is shared, never cloned per placement. World transforms must include the GLTF scene root transform. Do not merge away `pose_`, `attach_` or `slot_` hierarchy.
+`sandbox/role1.hangar.js` loads with GLTFLoader + DRACOLoader, decoder path `/assets/draco/`, and one decode worker. It caches materials by name and groups all placements by **module + mesh node** into InstancedMesh batches. Thus ordinary kit modules are one draw call per mesh/material each; independently moving or optional hero nodes use their own batches. Geometry is shared, never cloned per placement. Closed meshes use back-face culling, avoiding the substantial cost of two-sided steel. World transforms must include the GLTF scene root transform. Do not merge away `pose_`, `attach_` or `slot_` hierarchy.
 
-For height-based LOD, use a placement's `lod` file when its base Y > 30. Tower, wall and roof LODs are respectively 20%, approximately 13%, and approximately 14% of the full triangle count. Platform variants are filtered before batching. Do not draw all collar variants on top of each other. The viewer updates instance matrices every frame for clarity; production should freeze static batches and update only moving instances. Disable helper overlays when measuring rendering cost.
+For height-based LOD, use a placement's `lod` file when its base Y > 30. Tower, wall and roof LODs are respectively 20%, approximately 13%, and approximately 14% of the full triangle count. Platform variants are filtered before batching. Do not draw all collar variants on top of each other. The viewer freezes static instance matrices after assembly; only independently moving modules update each frame. Disable helper overlays when measuring rendering cost.
 
-All GLB geometry has baked transforms, triangulated faces, consistent outward normals, `m_<node>` mesh names, shared PBR vertex-paint materials (metalness .35, roughness .56), and Draco compression. Lamp geometry uses an emissive material, **no glTF lights**. No external textures or photographs. No dependency additions.
+All GLB geometry has baked transforms, triangulated faces, consistent outward normals, `m_<node>` mesh names, module-specific baked PBR materials (see v2 notes below), and Draco compression. Lamp geometry uses an emissive material, **no glTF lights**. External bake atlases and original CC0 texture sources accompany the portable embedded-texture GLBs; no reference photographs are included. No dependency additions.
 
 ## Colliders and integration limits
 
@@ -69,9 +69,58 @@ All GLB geometry has baked transforms, triangulated faces, consistent outward no
 
 Floor, wall, ML, tower, landing and platform boxes are supplied. Platform tapers are approximated by four AABBs per half. These boxes deliberately omit the tiny curved collar infill; use deck geometry or radial tests if walking around that edge. Tower volumes and stairs are **conservative envelopes**, suitable for the ground demo; they are not a navigable multi-storey collision mesh. The sandbox walk is a ground-plane, axis-separated 0.30 m-radius collision check (eye Y 1.7), not a replacement for the game's controller. Do not use the solid tower envelopes to block players riding upstairs: replace with structural post colliders, walk surfaces and stair ramps when integrating.
 
+## Steel detail pass v2 (2026-11-08)
+
+The human explicitly authorized staying on the shared `role1-builder` branch without fetch/switch/pull. Git remains Claude's responsibility. Only this kit, its source tools/tests and the standalone sandbox were edited. Original renders and the complete v1 layout contract are retained in `refs/before/` and `refs/contract-v1.json`.
+
+### Rebuild and bake
+
+```powershell
+& 'C:/Program Files/Blender Foundation/Blender 5.2/blender.exe' -b --factory-startup -P src/builder/tools/blender/hangar/build.py -- --bake --out public/assets/models/builder/hangar
+npx.cmd vite --port 5280 --strictPort --config src/builder/tools/blender/hangar/vite.config.mjs --configLoader native
+node src/builder/tests/hangar-models.test.mjs
+node src/builder/tools/blender/hangar/inspect.mjs
+node src/builder/tools/blender/hangar/report.mjs
+```
+
+Use `--bake` after **any geometry, UV, colour or material change**. Omitting it reuses existing atlas JPGs for quick re-export; it is safe only when geometry/UVs/materials are identical. Missing atlases always bake. For a deliberate partial bake use `--only platform_half_lod,roof_truss_lod`; untouched manifest entries are retained. Full rebuilds remain the reproducibility reference. The source JPEGs and their Poly Haven download metadata are included under `textures/`, so rebuilding needs no network or package installation. One Blender process uses Cycles CPU, four threads, eight samples, sixteen AO samples, 0.75 m AO distance. Two emission bakes per mesh produce colour with real ray-traced AO and grime, and linear R=AO/G=roughness/B=metalness. No photographic reference is sampled. UV `Atlas` packs faces; UV `Detail` keeps metre-based tiling for normal maps. JPEG normal maps are reduced to 512 square. AO darkens base colour and also feeds glTF occlusion; the duplicate contact contribution is intentional for this dark rig.
+
+### Geometry, materials and LOD
+
+W-section beams have continuous webs/flanges and chamfered flange tips. Tower bays use paired L-angle braces, gusset/bolt groups, stiffeners and column base plates. Platforms and catwalks have real open grating, toe boards and regularly spaced rails. Deep fan ribs and curved ring girders under the platforms create the vault; the collar and its small closing plates remain inside the approved clearance. Stairs have channel stringers and open treads. A separate original caged ladder is placed at the far tower edge. Standpipes are octagonal tubes. The crew arm gains channels and diagonal braces without changing sleeve travel or tip placement.
+
+The sandbox selects tower/wall/roof/platform LOD above 30 m. Access camera presets rebuild batches with full detail within 9 vertical metres of the camera when it is inside the hall (Z > -23); the distant overview keeps the height scheme. Free orbit keeps that selection until another preset or the LOD toggle is used. Each LOD is checked against the full module at 10-25% of its visible triangles. Full geometry remains available via the LOD toggle. A far-side/distance LOD selector is left to Claude's player-camera integration; this viewer uses height plus the access-camera band. Existing placement IDs, transforms, level records and colliders are checked against v1; new ladder placements are appended.
+
+Materials are named `hangar_v2_<module>_<node>`; their atlases are unique to that geometry and must **not** be collapsed into one material by name. Repeated placements share the same material and geometry. Baked metallic values: painted white/yellow/red 0.28, structural/bare steel and grating 0.60, concrete 0. Roughness varies 0.48-0.80. Shared CC0 Blue Metal Plate supplies scratches and normal detail, tinted by our grey/white/yellow/red vertex palette before baking; Hangar Concrete Floor supplies the floor wear. Actual bolts and plate edges supply the silhouette, while the normal map supplies surface detail (there is no high-poly bolt-normal transfer). This is restrained wear, not a severe rust treatment. Lamp lenses alone use `hangar_lamp` with emission strength 8 and cold-white colour; housings remain opaque painted steel. The rocket is a sandbox-only white/orange witness with longitudinal lines and thin stage seams.
+
+### Lighting rig for Claude
+
+The sandbox copies the current `src/graphics/index.js` pipeline: half-float composer, finite-value guard, identical bloom (threshold 1.35, smoothing 0.30, intensity 0.70, mipmap blur, radius 0.72), ACES_FILMIC ToneMappingEffect, SMAA HIGH, chromatic aberration (0.00055,0.00045), vignette (0.36,0.50), overlay grain 0.06. Renderer: NoToneMapping, sRGB output, logarithmic depth, no native MSAA, pixel ratio capped at 1, then multiplied by the adjustable render scale (default 0.60, matching the game approach of reducing resolution to preserve frame rate). At a 1440 x 860 viewport, this renders 864 x 516 internally. Game look is enabled by default; flat comparison bypasses the composer. Exposure starts at 1.15 and can be adjusted. HDRI is the existing Small Hangar 01, converted via PMREM, environment intensity **0.35**, matching designScene. Background/fog colour #111719, FogExp2 density 0.009. Fog is distance based, not a true height-volume simulation.
+
+Hemisphere: sky #cbd9dc, ground #484335, intensity 0.32. Four fixed SpotLights, colour #e7f0ff, distance 110 m, penumbra 0.65, decay 2; positions/targets are world metres, intensity in three.js candela:
+
+| Position | Target | Intensity | Angle (rad) |
+|---|---|---:|---:|
+| -12,73,-8 | -10,0,0 | 12500 | 0.48 |
+| 12,73,8 | 10,0,0 | 12500 | 0.48 |
+| -6,18,-12 | 0,26,0 | 3600 | 0.50 |
+| 6,54,-8 | 0,42,0 | 6500 | 0.50 |
+
+The last two isolate the rocket. No lights cast runtime shadows: baked module AO provides contact depth while keeping structure rendering to one scene pass. There is one extra DirectionalLight held at zero intensity in Game look, used at 2.3 in flat mode; the hemisphere rises to 1.5 there and spots become zero. Toggle intensities rather than adding/removing lights to keep the shader light count fixed. There are no glTF light objects. Each lamp instance is an emissive fixture, not another actual light.
+
+The performance button records five seconds of actual RAF intervals: average FPS, minimum instantaneous FPS and p95 frame time. Diagnostic overlays are not counted as structure; renderer totals include all post-processing passes. Headless browser/GPU identity is recorded in `refs/inspection.json`, and must be checked before treating results as hardware performance guarantees.
+
+### Remaining integration work for Claude
+
+- Copy the material-aware instancing and rig into the game's own scene and render loop. Do not import this standalone renderer/loop.
+- Keep module-specific atlas material names; cache normal maps by source if desired. Embedded normal maps repeat across GLBs to keep each GLB portable; external bake atlases remain for reproducibility and count toward the total budget.
+- Add far-side/player-distance LOD when integrating. Keep the existing walking/collision caveats below. New ladder geometry is decorative and adds no collider or locomotion.
+- Consolidate attribution into the team's CREDITS.md when committing; it is outside this task's allowed paths. Exact sources and licences are in `refs/LICENSES.md`.
+- Atlas colour contains AO and surface wear; the normal is a shared surface tile, not a baked high-poly bolt atlas. Rail sections remain square HSS, intentionally without individual bevels or bolt heads.
+
 ## For Claude
 
-1. Review and commit only the new allowed paths. Only a read-only Git status of these paths was used; no Git mutation was performed. The game hangar remains its existing implementation.
+1. Review and commit only the new allowed paths. Only read-only Git inspection was used; no Git mutation was performed. The game hangar remains its existing implementation.
 2. Integrate loading/instancing and light setup into the existing renderer and single game loop. Do not import the sandbox's standalone renderer or animation loop into `src/`.
 3. Move the rocket base to ML_TOP and extend the hangar camera/clipping/fog and walking boundary for the 44 × 44 × 80 m envelope. Place the seven existing engineering consoles in the reserved rectangle, facing +Z. Use only existing game event/state/station names.
 4. Synchronize platform closure with the actual ship radius, local shape and boosters; prevent closing on a person. Add appropriate access gates/interlocks and safe walking surfaces. Preserve collision and camera continuity during elevator movement; replace decorative stair envelopes with walkable ramps if the stairs should be usable.
@@ -85,63 +134,62 @@ The model test parses GLB JSON rather than trusting a triangle count printed by 
 
 <!-- GENERATED_METRICS -->
 
-| File | Triangles per GLB (all variants) | KiB |
-|---|---:|---:|
-| `kit/tower_bay.glb` | 1,200 | 5.56 |
-| `kit/tower_bay_lod.glb` | 240 | 2.26 |
-| `kit/wall_bay.glb` | 372 | 2.64 |
-| `kit/wall_bay_lod.glb` | 48 | 1.62 |
-| `kit/roof_truss.glb` | 504 | 3.55 |
-| `kit/roof_truss_lod.glb` | 72 | 1.73 |
-| `kit/stair_run.glb` | 432 | 3.26 |
-| `kit/catwalk.glb` | 612 | 3.39 |
-| `kit/standpipe.glb` | 72 | 1.73 |
-| `kit/cable_tray.glb` | 300 | 2.19 |
-| `kit/lamp.glb` | 24 | 1.56 |
-| `kit/floor_tile.glb` | 36 | 1.39 |
-| `kit/girder.glb` | 36 | 1.42 |
-| `kit/crate.glb` | 36 | 1.60 |
-| `kit/cart.glb` | 144 | 2.04 |
-| `kit/scissor_lift.glb` | 264 | 2.60 |
-| `kit/safety_stripe.glb` | 72 | 1.54 |
-| `platform_half.glb` | 3,840 | 22.85 |
-| `mobile_launcher.glb` | 1,392 | 5.45 |
-| `elevator.glb` | 2,064 | 9.25 |
-| `crew_arm.glb` | 420 | 4.12 |
-| `crane_bridge.glb` | 960 | 6.11 |
-| `high_bay_door.glb` | 924 | 4.15 |
-| `console_desk.glb` | 96 | 1.95 |
+| File | GLB triangles, all variants | KiB | Atlas / normal px |
+|---|---:|---:|---|
+| kit/tower_bay.glb | 2,552 | 720.6 | 1024 / 512 |
+| kit/tower_bay_lod.glb | 432 | 115.5 | 512 |
+| kit/wall_bay.glb | 372 | 139.5 | 512 |
+| kit/wall_bay_lod.glb | 48 | 59.5 | 512 |
+| kit/roof_truss.glb | 792 | 182.2 | 512 |
+| kit/roof_truss_lod.glb | 84 | 77.9 | 512 |
+| kit/stair_run.glb | 1,112 | 214.5 | 512 |
+| kit/catwalk.glb | 1,104 | 169.7 | 512 |
+| kit/caged_ladder.glb | 1,252 | 189.0 | 512 |
+| kit/standpipe.glb | 104 | 43.0 | 512 |
+| kit/cable_tray.glb | 300 | 101.2 | 512 |
+| kit/lamp.glb | 144 | 3.7 | none |
+| kit/floor_tile.glb | 36 | 76.6 | 512 |
+| kit/girder.glb | 60 | 59.0 | 512 |
+| kit/crate.glb | 36 | 71.4 | 512 |
+| kit/cart.glb | 144 | 111.4 | 512 |
+| kit/scissor_lift.glb | 264 | 128.6 | 512 |
+| kit/safety_stripe.glb | 72 | 55.0 | 512 |
+| platform_half.glb | 10,408 | 1125.8 | 1024 / 512 |
+| platform_half_lod.glb | 2,364 | 437.7 | 512 |
+| mobile_launcher.glb | 1,488 | 166.5 | 512 |
+| elevator.glb | 2,160 | 253.6 | 512 |
+| crew_arm.glb | 636 | 246.3 | 512 |
+| crane_bridge.glb | 1,008 | 263.4 | 512 |
+| high_bay_door.glb | 924 | 157.5 | 512 |
+| console_desk.glb | 96 | 75.1 | 512 |
+ 
+26 GLBs, 864 placements. GLBs: **5,370,040 bytes**. Entire directory with external bake atlases and layout: **10,292,431 bytes (10.29 MB)** / 20 MB. Every GLB below 60,000 triangles; no hero exemption.
 
-**24 GLBs**, 859 placements. GLBs total **96,200 bytes**. Whole exported directory including layout: **392,390 bytes (0.374 MiB)**, against 15 MiB.
+| Game look ON, height LOD | Triangles (all passes) | Total calls | Structure batches | 5 s avg FPS | Instantaneous min FPS | p95 ms |
+|---|---:|---:|---:|---:|---:|---:|
+| ground-look-up | 413,667 | 64 | 30 | 73.4 | 41.2 | 18.3 |
+| overview | 413,739 | 70 | 30 | 123.1 | 54.6 | 12.2 |
+| platform-close-up | 480,163 | 60 | 30 | 79.0 | 41.2 | 18.2 |
+| collar | 480,067 | 59 | 30 | 77.2 | 41.2 | 18.3 |
+| ceiling-vault | 512,763 | 55 | 30 | 97.2 | 54.3 | 18.1 |
+ 
+| Complete envelope | Triangles (all passes) | Total calls | Structure batches | FPS sample |
+|---|---:|---:|---:|---:|
+| Full detail | 689,987 | 67 | 27 | 101.4 |
+| Height LOD | 430,071 | 71 | 31 | 110.3 |
+ 
+Measured 2026-11-08T11:07:22.115Z, Chrome 156.0.8078.80, viewport 1440 × 860, device scale 1, render pixel ratio **0.6**. GPU: ANGLE (AMD, AMD Radeon(TM) Graphics (0x00001638) Direct3D11 vs_5_0 ps_5_0, D3D11). Renderer totals include fullscreen post-processing. No frustum discount is applied to the structure. Minimum is the slowest individual RAF interval, not a rolling one-second average.
 
-| Runtime mode, complete envelope | Triangles drawn | Total calls | Structure batches | Geometries in memory | FPS |
-|---|---:|---:|---:|---:|---:|
-| Full detail | 384,684 | 35 | 25 | 135 | 165.0 |
-| LOD above 30 m | 266,964 | 37 | 27 | 135 | 165.0 |
+Render-scale trials are in refs/scale-trial.json. Lower render scale improves frame rate at the cost of sharpness. This is not a native-resolution 60 FPS claim. Brief dips remain visible in minimum/p95 metrics.
 
-Measured 2026-11-08T09:57:14.607Z, Chrome 156.0.8078.80, headless, 1280 × 800 pixels, device scale 1. The ground inspection view measured 117.0 FPS. Total calls include the placeholder, scale witness and ropes; geometries include grey-box objects retained for the toggle. The structure uses 25–27 batch objects; frustum culling may reduce visible calls. No shadows or extra render passes are enabled.
+- hangar-test.log: PASS.
+- models-test.log: PASS.
+- builder-test.log: PASS.
+- static-check.log: PASS.
+- Sandbox console/page errors: 0. HTTP failures: 0.
+- Game HANGAR smoke test on 5280: HANGAR, 7 advancing frames, 0 browser errors.
+- Nine height/radius combinations, independent moving nodes and ground ML collision are asserted in inspect.mjs. Static tests compare original layout data, placement IDs/transforms, colliders, dimensions, Draco, budgets and LOD ratios.
 
-### Validation outcome
+Screenshots: refs/before/{ground-look-up,platforms-closed,crew-arm}.jpg; refs/shots/{ground-look-up,overview,platform-close-up,collar,ceiling-vault,elevator,crew-arm,platforms-retracted}.jpg. refs/compare-detail.png contains only our own renders.
 
-- `hangar-models.test.mjs`: PASS, including GLB budgets and highest-cost visible collar choice.
-- Existing `models.test.mjs`: PASS. Existing `builder.test.mjs`: PASS.
-- `npm run check:static`: PASS without overrides.
-- Sandbox: 0 console/page errors; 0 failed HTTP responses during the recorded inspection.
-- Game on 5280: state HANGAR, 7 advancing frames observed, 0 console/page errors. This is a boot smoke check, not a full game-loop check.
-- All 9 height/radius combinations put above-ship levels at the retracted offset. Elevator cab reaches Y 47; crew-arm tip reaches X −1.25 for M; trolley, hook and door move independently. Ground walking stops outside the ML at Z −8.33 with eye Y 1.7.
-
-### Screenshots
-
-- [ground-look-up](refs/shots/ground-look-up.jpg)
-- [platforms-closed](refs/shots/platforms-closed.jpg)
-- [platforms-retracted](refs/shots/platforms-retracted.jpg)
-- [elevator](refs/shots/elevator.jpg)
-- [crew-arm](refs/shots/crew-arm.jpg)
-- Grey-box: `refs/shots/blockout-ground.jpg`, `blockout-overview.jpg`, `blockout-platform.jpg`.
-- [Own blockout vs detail](refs/compare-massing.png); [own closed vs retracted](refs/compare-platform-motion.png).
-
-### Scope left for integration
-
-All requested asset and sandbox deliverables are supplied. This is a visual modular kit, not a certified structural or mechanical design. No game integration, sound, first-person elevator riding, stair locomotion, moving-player interlocks, or capsule door transition has been installed; those are Claude’s integration tasks. The sandbox door preview raises the whole door node, and production should telescope its panels. Read the collider caveats above before using the solid tower envelopes upstairs.
-
-Regenerate this table after rebuilding and inspecting: `node src/builder/tools/blender/hangar/report.mjs`.
+Regenerate: node src/builder/tools/blender/hangar/report.mjs

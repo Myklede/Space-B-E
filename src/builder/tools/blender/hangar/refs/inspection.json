@@ -1,32 +1,108 @@
 {
-  "date": "2026-11-08T09:57:14.607Z",
+  "date": "2026-11-08T11:07:22.115Z",
   "browser": "156.0.8078.80",
   "viewport": [
-    1280,
-    800
+    1440,
+    860
   ],
   "errors": [],
+  "views": {
+    "ground-look-up": {
+      "triangles": 413667,
+      "drawCalls": 64,
+      "geometries": 147,
+      "fps": 71.57057654075547,
+      "structuralCalls": 30,
+      "performance": {
+        "seconds": 5.00310000000298,
+        "frames": 368,
+        "average": 73.42085311839114,
+        "minimum": 41.152263374483745,
+        "p95FrameMs": 18.299999999999272
+      }
+    },
+    "overview": {
+      "triangles": 413739,
+      "drawCalls": 70,
+      "geometries": 147,
+      "fps": 116.98830116988319,
+      "structuralCalls": 30,
+      "performance": {
+        "seconds": 5.000700000002235,
+        "frames": 617,
+        "average": 123.10454908220271,
+        "minimum": 54.64480874317157,
+        "p95FrameMs": 12.200000000000728
+      }
+    },
+    "platform-close-up": {
+      "triangles": 480163,
+      "drawCalls": 60,
+      "geometries": 147,
+      "fps": 81.50283272040565,
+      "structuralCalls": 30,
+      "performance": {
+        "seconds": 5.0034000000007435,
+        "frames": 396,
+        "average": 79.00879870712878,
+        "minimum": 41.15226337448683,
+        "p95FrameMs": 18.200000000000728
+      }
+    },
+    "collar": {
+      "triangles": 480067,
+      "drawCalls": 59,
+      "geometries": 147,
+      "fps": 78.05552810987068,
+      "structuralCalls": 30,
+      "performance": {
+        "seconds": 5.006500000002234,
+        "frames": 387,
+        "average": 77.21314419105767,
+        "minimum": 41.15226337448067,
+        "p95FrameMs": 18.299999999995634
+      }
+    },
+    "ceiling-vault": {
+      "triangles": 512763,
+      "drawCalls": 55,
+      "geometries": 147,
+      "fps": 97,
+      "structuralCalls": 30,
+      "performance": {
+        "seconds": 5.009200000002981,
+        "frames": 488,
+        "average": 97.24602447092589,
+        "minimum": 54.347826086952225,
+        "p95FrameMs": 18.10000000000582
+      }
+    }
+  },
   "httpErrors": [],
+  "gpu": {
+    "renderer": "ANGLE (AMD, AMD Radeon(TM) Graphics (0x00001638) Direct3D11 vs_5_0 ps_5_0, D3D11)",
+    "pixelRatio": 0.6
+  },
   "lod": {
-    "triangles": 250560,
-    "drawCalls": 30,
-    "geometries": 133,
-    "fps": 117,
-    "structuralCalls": 26
+    "triangles": 413667,
+    "drawCalls": 64,
+    "geometries": 147,
+    "fps": 74.64152425849507,
+    "structuralCalls": 30
   },
   "completeFull": {
-    "triangles": 384684,
-    "drawCalls": 35,
-    "geometries": 135,
-    "fps": 165,
-    "structuralCalls": 25
+    "triangles": 689987,
+    "drawCalls": 67,
+    "geometries": 149,
+    "fps": 101.38157240830947,
+    "structuralCalls": 27
   },
   "completeLod": {
-    "triangles": 266964,
-    "drawCalls": 37,
-    "geometries": 135,
-    "fps": 165,
-    "structuralCalls": 27
+    "triangles": 430071,
+    "drawCalls": 71,
+    "geometries": 149,
+    "fps": 110.316040548599,
+    "structuralCalls": 31
   },
   "motion": {
     "cabY": 47,
@@ -36,9 +112,9 @@
     "doorY": 20
   },
   "walk": [
-    -1.2760819647113992e-16,
+    -1.5366868035700581e-16,
     1.7,
-    -8.333100000000004
+    -8.332399999999975
   ],
   "sandboxErrors": [],
   "game": {

@@ -8,17 +8,22 @@ sys.path.insert(0, os.path.abspath(os.path.join(os.path.dirname(__file__), '..')
 import common as C
 import bpy, bmesh
 from mathutils import Vector
+sys.path.insert(0, os.path.dirname(__file__))
+import detail
 
 OUT = C.arg('--out', 'public/assets/models/builder/hangar')
+ONLY=C.arg('--only',None)
+PREVIOUS=json.load(open(os.path.join(OUT,'layout.json'),encoding='utf8'))['modules'] if ONLY else {}
 STEEL=0x88969b; WHITE=0xd2d8d7; DARK=0x33434a; DECK=0x62747b; YELLOW=0xe4af29; RED=0xa93e32
+CURRENT=''
 def rgb(n):
     def lin(c): return c/12.92 if c <= .04045 else ((c+.055)/1.055)**2.4
     return tuple(lin(((n>>k)&255)/255) for k in (16,8,0))+(1,)
 
 class Geo:
-    def __init__(self): self.v=[]; self.f=[]; self.col=[]
+    def __init__(self): self.v=[]; self.f=[]; self.col=[]; self.surface=[]
     def solid(self, verts, faces, color):
-        i=len(self.v); self.v.extend([C.G(v) for v in verts]); self.f.extend([tuple(i+j for j in f) for f in faces]); self.col.extend([rgb(color)]*len(faces))
+        i=len(self.v); self.v.extend([C.G(v) for v in verts]); self.f.extend([tuple(i+j for j in f) for f in faces]); self.col.extend([rgb(color)]*len(faces));self.surface.extend([.6 if color in (STEEL,DECK) else .28]*len(faces))
     def box(self, size, p, col=STEEL):
         x,y,z=p; a,b,c=[n/2 for n in size]
         self.solid([(x-a,y-b,z-c),(x+a,y-b,z-c),(x+a,y+b,z-c),(x-a,y+b,z-c),(x-a,y-b,z+c),(x+a,y-b,z+c),(x+a,y+b,z+c),(x-a,y+b,z+c)],[(0,3,2,1),(4,5,6,7),(0,1,5,4),(3,7,6,2),(0,4,7,3),(1,2,6,5)],col)
@@ -29,13 +34,34 @@ class Geo:
         self.solid([tuple(p+u*s+v*t) for p in (a,b) for s,t in ((-1,-1),(1,-1),(1,1),(-1,1))],[(0,3,2,1),(4,5,6,7),(0,1,5,4),(3,7,6,2),(0,4,7,3),(1,2,6,5)],col)
     def ibeam(self,a,b,w=.3,col=STEEL,lod=False):
         if lod: return self.beam(a,b,w,col)
-        self.beam(a,b,w*.22,col,w)
-        av,bv=Vector(a),Vector(b); d=(bv-av).normalized(); u=d.cross(Vector((0,1,0)))
-        if u.length<.001: u=d.cross(Vector((0,0,1)))
-        u.normalize()
-        for s in (-1,1): self.beam(av+u*w*.46*s,bv+u*w*.46*s,w*.08,col,w)
+        # Continuous W profile: visible web, flanges and tiny chamfers at outer tips.
+        self.profile(a,b,[(-.5,-.48),(-.48,-.5),(.48,-.5),(.5,-.48),(.5,-.38),(.065,-.38),(.065,.38),(.5,.38),(.5,.48),(.48,.5),(-.48,.5),(-.5,.48),(-.5,.38),(-.065,.38),(-.065,-.38),(-.5,-.38)],w,col)
+    def profile(self,a,b,shape,w,col=STEEL):
+        a,b=Vector(a),Vector(b); d=(b-a).normalized(); u=d.cross(Vector((0,1,0)))
+        if u.length<.001:u=d.cross(Vector((0,0,1)))
+        u.normalize(); v=d.cross(u).normalized(); n=len(shape)
+        verts=[tuple(p+u*x*w+v*y*w) for p in (a,b) for x,y in shape]
+        self.solid(verts,[tuple(reversed(range(n))),tuple(range(n,2*n))]+[(i,(i+1)%n,(i+1)%n+n,i+n) for i in range(n)],col)
+    def angle(self,a,b,w=.14,col=STEEL):
+        self.profile(a,b,[(-.5,-.5),(.5,-.5),(.5,-.34),(-.34,-.34),(-.34,.5),(-.5,.5)],w,col)
+    def channel(self,a,b,w=.18,col=DARK):
+        self.profile(a,b,[(-.5,-.5),(.5,-.5),(.5,-.34),(-.34,-.34),(-.34,.34),(.5,.34),(.5,.5),(-.5,.5)],w,col)
+    def pipe(self,a,b,r=.06,col=RED,segments=8):
+        self.profile(a,b,[(math.cos(i*math.tau/segments),math.sin(i*math.tau/segments)) for i in range(segments)],r,col)
+    def gusset(self,p,side=0):
+        x,y,z=p
+        self.box((.52,.5,.035) if side==0 else (.035,.5,.52),p,DARK)
+        for dx in (-.15,.15):
+            for dy in (-.15,.15):
+                q=(x+dx,y+dy,z-.035) if side==0 else (x-.035,y+dy,z+dx)
+                self.box((.065,.065,.05) if side==0 else (.05,.065,.065),q,WHITE)
+    def grating(self,x0,x1,z0,z1,y=0,step=.18):
+        for i in range(math.ceil((z1-z0)/step)+1):
+            z=min(z1,z0+i*step);self.box((x1-x0,.065,.018),((x0+x1)/2,y-.035,z),STEEL)
+        for i in range(math.ceil((x1-x0)/.6)+1):
+            x=min(x1,x0+i*.6);self.box((.022,.035,z1-z0),(x,y-.02,(z0+z1)/2),WHITE)
     def rail(self,a,b):
-        a,b=Vector(a),Vector(b); n=max(1,math.ceil((b-a).length/1.5))
+        a,b=Vector(a),Vector(b); n=max(1,math.ceil((b-a).length/(3 if CURRENT.endswith('_lod') else 1.5)))
         for i in range(n+1):
             p=a.lerp(b,i/n); self.beam(p,p+Vector((0,1.1,0)),.045,WHITE)
         for h in (.55,1.1): self.beam(a+Vector((0,h,0)),b+Vector((0,h,0)),.04,WHITE)
@@ -43,30 +69,45 @@ class Geo:
     def mesh(self,name,parent,emissive=False):
         me=bpy.data.meshes.new('m_'+name); me.from_pydata(self.v,[],self.f); me.update()
         colors=me.color_attributes.new(name='Color',type='FLOAT_COLOR',domain='CORNER')
+        surface=me.color_attributes.new(name='Surface',type='FLOAT_COLOR',domain='CORNER')
         for p,c in zip(me.polygons,self.col):
-            for k in p.loop_indices: colors.data[k].color=c
+            # Subtle reproducible face grime; AO is ray baked separately, never faked by this tint.
+            tint=.86+.14*(.5+.5*math.sin(p.index*12.9898))
+            c=tuple(v*tint for v in c[:3])+(1,)
+            for k in p.loop_indices:
+                colors.data[k].color=c
+                surface.data[k].color=(self.surface[p.index],.65,0,1)
         bm=bmesh.new(); bm.from_mesh(me); bmesh.ops.recalc_face_normals(bm,faces=bm.faces); bmesh.ops.triangulate(bm,faces=bm.faces); bm.to_mesh(me); bm.free()
         mat=C.mat('hangar_lamp' if emissive else 'hangar_steel',(1,1,1),.35,.56,emissive=(1,.84,.57) if emissive else None)
+        mat.use_backface_culling=True
+        if emissive:
+            mat.node_tree.nodes.get('Principled BSDF').inputs['Emission Color'].default_value=(.85,.94,1,1)
+            mat.node_tree.nodes.get('Principled BSDF').inputs['Emission Strength'].default_value=8
         if not mat.node_tree.nodes.get('Vertex paint'):
             vc=mat.node_tree.nodes.new('ShaderNodeVertexColor'); vc.name='Vertex paint'; vc.layer_name='Color'; mat.node_tree.links.new(vc.outputs['Color'],mat.node_tree.nodes.get('Principled BSDF').inputs['Base Color'])
         me.materials.append(mat); ob=bpy.data.objects.new(name,me); bpy.context.collection.objects.link(ob); ob.parent=parent; return ob
 
 def start(name):
-    C.reset(); C._mats.clear(); return C.root(name)
+    global CURRENT
+    CURRENT=name; C.reset(); C._mats.clear(); return C.root(name)
 def marker(root,name,p=(0,0,0)):
     o=C.group(name,root); o.location=C.G(p); return o
 catalog={}
 def save(name,root,kit=False):
+    if ONLY and name not in ONLY.split(','):
+        catalog[name]=PREVIOUS[name];return
     file=('kit/' if kit else '')+name+'.glb'; bpy.context.view_layer.update()
-    tri,lo,hi=C.stats(root); assert tri<= (2000 if name.endswith('_lod') else 20000),(name,tri)
-    _,size=C.export(root,os.path.join(OUT,file)); assert size<=400*1024
+    for ob in root.children_recursive:
+        if ob.type=='MESH': detail.finish(ob,name+'_'+ob.name,OUT,'--bake' in sys.argv)
+    tri,lo,hi=C.stats(root); assert tri<=60000,(name,tri)
+    _,size=C.export(root,os.path.join(OUT,file)); assert size<=4*1024*1024
     catalog[name]={'file':file,'triangles':tri,'bytes':size,'bounds':{'min':lo,'max':hi}}
 
 def tower(lod=False):
     g=Geo()
     for x in (-3,3):
         for z in (-3,3):
-            g.ibeam((x,0,z),(x,6,z),.32,lod=lod)
+            g.ibeam((x,0,z),(x,6,z),.32)
             if not lod:
                 for y in (.12,5.88):
                     g.box((.6,.12,.6),(x,y,z),DARK)
@@ -76,9 +117,20 @@ def tower(lod=False):
         for z in (-3,3): g.ibeam((-3,y,z),(3,y,z),.27,lod=lod)
         for x in (-3,3): g.ibeam((x,y,-3),(x,y,3),.27,lod=lod)
     for z in (-3,3):
-        g.ibeam((-3,.25,z),(3,5.75,z),.16,lod=lod); g.ibeam((3,.25,z),(-3,5.75,z),.16,lod=lod)
+        if lod:g.beam((-3,.25,z),(3,5.75,z),.16);g.beam((3,.25,z),(-3,5.75,z),.16)
+        else:
+            for dz in (-.06,.06):
+                g.angle((-3,.25,z+dz),(3,5.75,z+dz));g.angle((3,.25,z+dz),(-3,5.75,z+dz))
+            for x in (-3,3):
+                for y in (.3,5.7):g.gusset((x,y,z))
     for x in (-3,3):
-        g.ibeam((x,.25,-3),(x,5.75,3),.16,lod=lod); g.ibeam((x,.25,3),(x,5.75,-3),.16,lod=lod)
+        if lod:g.beam((x,.25,-3),(x,5.75,3),.16);g.beam((x,.25,3),(x,5.75,-3),.16)
+        else:
+            for dx in (-.06,.06):
+                g.angle((x+dx,.25,-3),(x+dx,5.75,3));g.angle((x+dx,.25,3),(x+dx,5.75,-3))
+            for z in (-3,3):
+                for y in (.3,5.7):g.gusset((x,y,z),1)
+            for y in (1.5,3,4.5):g.box((.35,.035,.35),(x,y,-3),DARK)
     return g
 
 def wall(lod=False):
@@ -98,25 +150,29 @@ def truss(lod=False):
         for z in (-.65,.65): g.ibeam((-3,y,z),(3,y,z),.2,lod=lod)
     if lod:
         for z in (-.65,.65): g.beam((-3,0,z),(3,2,z),.1)
+        g.beam((-3,2,-.65),(3,2,.65),.07)
         return g
     for i in range(6):
         x=-3+i*(2 if lod else 1); step=2 if lod else 1
-        for z in (-.65,.65): g.beam((x,0,z),(x+step,2,z),.1); g.beam((x,2,z),(x+step,0,z),.1)
+        for z in (-.65,.65): g.angle((x,0,z),(x+step,2,z),.1); g.angle((x,2,z),(x+step,0,z),.1)
         if not lod: g.beam((x,2,-.65),(x+step,2,.65),.065)
     return g
 
 def stair():
     g=Geo()
-    for i in range(18): g.box((1.4,.09,.25),(0,(i+1)/6,-i*.25),DECK)
+    for i in range(18):
+        y=(i+1)/6;z=-i*.25
+        for dz in (-.09,0,.09):g.box((1.4,.04,.025),(0,y,z+dz),STEEL)
+        g.box((1.4,.045,.03),(0,y+.01,z+.12),YELLOW)
     for x in (-.72,.72):
-        g.beam((x,0,.2),(x,3,-4.5),.14,DARK); g.rail((x,0,.2),(x,3,-4.5))
+        g.channel((x,0,.2),(x,3,-4.5),.2); g.rail((x,0,.2),(x,3,-4.5))
     return g
 
 def catwalk():
-    g=Geo(); g.box((6,.24,6),(0,-.12,0),DECK)
+    g=Geo(); g.grating(-3,3,-3,3)
     g.rail((-2.9,0,-3),(-2.9,0,3)); g.rail((2.9,0,-3),(2.9,0,3))
     for z in (-2,0,2): g.ibeam((-3,-.45,z),(3,-.45,z),.28)
-    for z in [i*.25 for i in range(-12,13)]: g.box((5.7,.012,.025),(0,.01,z),0x9ba7aa)
+    for x in (-3,0,3):g.ibeam((x,-.32,-3),(x,-.32,3),.24)
     return g
 
 for name,fn in [('tower_bay',tower),('wall_bay',wall),('roof_truss',truss)]:
@@ -124,18 +180,28 @@ for name,fn in [('tower_bay',tower),('wall_bay',wall),('roof_truss',truss)]:
         ident=name+('_lod' if low else ''); root=start(ident); fn(low).mesh('body',root); save(ident,root,True)
 for name,fn in [('stair_run',stair),('catwalk',catwalk)]:
     root=start(name); fn().mesh('body',root); save(name,root,True)
+root=start('caged_ladder'); g=Geo()
+for x in (-.33,.33):g.channel((x,0,0),(x,6,0),.07,WHITE)
+for i in range(20):g.pipe((-.33,i*.3,0),(.33,i*.3,0),.035,STEEL)
+for y in (1.8,3.2,4.6,5.9):
+    for i in range(12):
+        a=i*math.pi/12;b=(i+1)*math.pi/12
+        g.beam((.55*math.cos(a),y,-.55*math.sin(a)),(.55*math.cos(b),y,-.55*math.sin(b)),.025,WHITE)
+for a in (0,math.pi/4,math.pi/2,3*math.pi/4,math.pi):g.beam((.55*math.cos(a),1.8,-.55*math.sin(a)),(.55*math.cos(a),6,-.55*math.sin(a)),.025,WHITE)
+g.mesh('body',root);save('caged_ladder',root,True)
 for name in ('standpipe','cable_tray','lamp','floor_tile','girder','crate','cart','scissor_lift','safety_stripe'):
     root=start(name); g=Geo()
     if name=='standpipe':
-        g.beam((0,0,0),(0,6,0),.12,RED)
+        g.pipe((0,0,0),(0,6,0),.12,RED)
         for y in (1,3,5): g.box((.26,.12,.3),(0,y,0),DARK)
-        g.beam((0,1,0),(.45,1,0),.1,RED); g.box((.07,.35,.35),(.46,1,0),RED)
+        g.pipe((0,1,0),(.45,1,0),.1,RED); g.box((.07,.35,.35),(.46,1,0),RED)
     elif name=='cable_tray':
         for z in (-.35,.35): g.box((6,.18,.04),(0,0,z),WHITE)
         for i in range(20): g.box((.04,.025,.7),(-3+i*.3,-.08,0),STEEL)
         for z in (-.2,0,.2): g.box((6,.04,.06),(0,-.03,z),DARK)
     elif name=='lamp':
-        g.box((1.8,.12,.5),(0,0,0),WHITE); g.box((1.6,.03,.35),(0,-.08,0),0xfff2cf)
+        g.box((1.8,.12,.5),(0,0,0),DARK);g.mesh('housing',root);g=Geo()
+        for x in (-.55,0,.55):g.pipe((x,-.06,0),(x,-.09,0),.18,WHITE,12)
     elif name=='floor_tile':
         g.box((5.5,.2,5.5),(0,-.1,0),0x868b88)
         for x in (-2.74,2.74): g.box((.018,.002,5.5),(x,.002,0),DARK)
@@ -159,27 +225,50 @@ for name in ('standpipe','cable_tray','lamp','floor_tile','girder','crate','cart
     g.mesh('body',root,name=='lamp'); save(name,root,True)
 
 # Positive-X half; the opposite side is rotated 180 degrees about Y, never mirrored.
-root=start('platform_half'); marker(root,'attach_slide'); g=Geo()
-g.solid([(x,y,z) for y in (-.3,0) for x,z in ((2.5,-2.5),(14,-6),(14,6),(2.5,2.5))],[(0,3,2,1),(4,5,6,7),(0,1,5,4),(1,2,6,5),(2,3,7,6),(3,0,4,7)],DECK)
-for s in (-1,1):
-    g.rail((.1,0,s*2.5),(2.5,0,s*2.5)); g.rail((2.5,0,s*2.5),(13.9,0,s*5.95))
-for z in (-5,-2.8,2.8,5): g.ibeam((2.5,-.6,z*.4),(14,-.6,z),.45)
-for x in (3,6,9,12):
-    w=2.4+3.4*(x-2.5)/11.5;g.ibeam((x,-.6,-w),(x,-.6,w),.3)
-for i in range(55):
-    z=-5.8+i*.21;begin=max(2.6,2.5+(abs(z)-2.5)*11.5/3.5)+.1
-    g.box((13.9-begin,.014,.025),((13.9+begin)/2,.01,z),0x9fabad)
-g.mesh('body',root)
-for key,r0 in C.RADIUS.items():
-    r=r0+.25; cut=Geo(); zs=sorted(set([-2.5,2.5]+[r*math.sin(-math.pi/2+i*math.pi/32) for i in range(33)]))
-    for a,b in zip(zs,zs[1:]):
-        xa=math.sqrt(max(0,r*r-a*a)) if abs(a)<r else 0; xb=math.sqrt(max(0,r*r-b*b)) if abs(b)<r else 0
-        # Closed extruded trapezoids, consistent normals repaired before export.
-        verts=[(x,y,z) for y in (-.3,0) for x,z in ((xa,a),(2.5,a),(2.5,b),(xb,b))]
-        cut.solid(verts,[(0,3,2,1),(4,5,6,7),(0,1,5,4),(1,2,6,5),(2,3,7,6),(3,0,4,7)],DECK)
-        cut.beam((xa,.04,a),(xb,.04,b),.11,YELLOW,.12)
-    cut.mesh('slot_cut__'+key,root)
-save('platform_half',root)
+def platform(lod=False):
+    root=start('platform_half_lod' if lod else 'platform_half'); marker(root,'attach_slide'); g=Geo()
+    # Open grating follows the approved taper; no slab conceals the deep beam grid.
+    for i in range(17 if lod else 65):
+        z=-5.9+i*11.8/(16 if lod else 64);begin=max(2.5,2.5+(abs(z)-2.5)*11.5/3.5)
+        g.box((14-begin,.075,.025),((14+begin)/2,-.045,z),STEEL)
+    for x in [2.5+i*(1.5 if lod else .6) for i in range(8 if lod else 20)]:
+        w=2.5+3.5*(x-2.5)/11.5;g.box((.025,.04,w*2),(x,-.025,0),WHITE)
+    for s in (-1,1):
+        g.rail((.1,0,s*2.5),(2.5,0,s*2.5)); g.rail((2.5,0,s*2.5),(13.9,0,s*5.95))
+    for z in (-5,-2.8,2.8,5): g.ibeam((2.5,-.6,z*.4),(14,-.6,z),.45,lod=lod)
+    for x in (3,6,9,12):
+        w=2.4+3.4*(x-2.5)/11.5;g.ibeam((x,-.6,-w),(x,-.6,w),.3,lod=lod)
+    # Curved underside ring girders and fan ribs create the vault when looking up.
+    for radius in (() if lod else (3.1,4.6,6.1)):
+        for i in range(20):
+            a=-1.4+i*2.8/20;b=a+2.8/20
+            g.ibeam((radius*math.cos(a),-.85,radius*math.sin(a)),(radius*math.cos(b),-.85,radius*math.sin(b)),.24,DARK)
+    for i in range(0 if lod else 11):
+        a=-1.35+i*2.7/10
+        g.ibeam((2.5,-.85,2.5*math.sin(a)),(8,-1.2,5.5*math.sin(a)),.32)
+        g.angle((2.5,-.65,2.5*math.sin(a)),(8,-1.4,5.5*math.sin(a)),.11)
+    g.mesh('body',root)
+    for key,r0 in C.RADIUS.items():
+        r=r0+.25; cut=Geo(); zs=sorted(set([-2.5,2.5]+[r*math.sin(-math.pi/2+i*math.pi/32) for i in range(33)]))
+        if lod:
+            boundary=[(math.sqrt(max(0,r*r-z*z)) if abs(z)<r else 0,z) for z in zs]+[(2.5,2.5),(2.5,-2.5)]
+            n=len(boundary);verts=[(x,y,z) for y in (-.3,0) for x,z in boundary]
+            cut.solid(verts,[tuple(reversed(range(n))),tuple(range(n,2*n))]+[(i,(i+1)%n,(i+1)%n+n,i+n) for i in range(n)],DECK)
+        for a,b in zip(zs,zs[1:]):
+            xa=math.sqrt(max(0,r*r-a*a)) if abs(a)<r else 0; xb=math.sqrt(max(0,r*r-b*b)) if abs(b)<r else 0
+            # Closed extruded trapezoids, consistent normals repaired before export.
+            verts=[(x,y,z) for y in (-.3,0) for x,z in ((xa,a),(2.5,a),(2.5,b),(xb,b))]
+            if not lod:cut.solid(verts,[(0,3,2,1),(4,5,6,7),(0,1,5,4),(1,2,6,5),(2,3,7,6),(3,0,4,7)],DECK)
+            cut.beam((xa,.04,a),(xb,.04,b),.11,YELLOW,.12)
+            if not lod:cut.beam((xa,-.18,a),(xb,-.18,b),.07,YELLOW,.35)
+        for i in range(0 if lod else 9):
+            a=-1.35+i*2.7/8;x=r*math.cos(a);z=r*math.sin(a)
+            cut.box((.26,.035,.18),(x+.15,.025,z),YELLOW)
+        cut.mesh('slot_cut__'+key,root)
+    save('platform_half_lod' if lod else 'platform_half',root)
+
+platform(False)
+platform(True)
 
 root=start('mobile_launcher'); g=Geo()
 for s in (-1,1):
@@ -214,6 +303,9 @@ g.rail((-1.2,0,-1.2),(1.2,0,-1.2)); g.box((2.4,.1,2.4),(0,2.6,0),DECK); g.mesh('
 root=start('crew_arm'); marker(root,'attach_root'); g=Geo()
 g.box((4,.16,1.5),(2,-.08,0),DECK)
 for s in (-1,1): g.rail((0,0,s*.75),(4,0,s*.75)); g.beam((0,-.5,s*.65),(4,-.2,s*.65),.14)
+for s in (-1,1):
+    g.channel((0,-.25,s*.65),(4,-.25,s*.65),.25)
+    for i in range(4):g.angle((i,-.5,s*.65),(i+1,-.1,s*.65),.09)
 g.mesh('fixed',root); ext=marker(root,'extend',(4,0,0)); g=Geo(); g.box((4,.16,1.5),(0,-.09,0),DECK)
 for s in (-1,1):
     g.rail((-2,0,s*.75),(2,0,s*.75)); g.box((1.5,2.3,.07),(1.25,1.15,s*.78),WHITE)
@@ -266,7 +358,7 @@ for z in (-18,-9,0,9,18):
 for i in range(11):
     y=11+i*6; halves=[]
     for s in (-1,1):
-        halves.append(place('platform_half',(0,y,0),0 if s==1 else 180,dynamic='platform',level=i,side=s))
+        halves.append(place('platform_half',(0,y,0),0 if s==1 else 180,dynamic='platform',level=i,side=s,lod='platform_half_lod'))
         for z in (-6,0,6): place('catwalk',(s*17,y,z))
         place('lamp',(s*8,y-.85,-4)); place('lamp',(s*8,y-.85,4)); place('cable_tray',(s*17,y-.6,0))
     layout['levels'].append({'label':f'{i+1:02d}','y':y,'halves':halves,'slideAxisLocal':[1,0,0],'closed':{'s':0,'m':0,'l':0},'retracted':4,'cutoutClearance':.25})
@@ -303,6 +395,7 @@ for x in (-15.5,15.5): collider('wall',(x,40,-22),(13,80,.3))
 for x in (-17,17): collider('tower',(x,37,0),(6,74,18))
 for s in (-1,1): collider('ml',(s*5.5,3.5,0),(5,7,16)); collider('ml',(0,3.5,s*5.5),(6,7,5))
 collider('door',(0,35,-22),(18,70,.3),dynamic='door')
+for y in range(0,30,6):place('caged_ladder',(20,y,8))
 os.makedirs(OUT,exist_ok=True)
 with open(os.path.join(OUT,'layout.json'),'w',encoding='utf8') as f: json.dump(layout,f,indent=2)
 print('[hangar] DONE',len(catalog),'models',len(layout['placements']),'placements')
