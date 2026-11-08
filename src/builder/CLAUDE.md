@@ -306,6 +306,33 @@ Người dùng muốn làm lại giao diện trang thiết kế:
   - Camera sandbox bay tự do (WASD, Q/E, chuột phải) và có góc máy sẵn cho cụm bàn máy.
   - Giữ `?v=2` và `?v=3`.
   - Prompt: `C:/Users/Thainguyen/Downloads/CODEX4-PROMPT-VAB-WRAP.md`.
+- **Codex v4 xong** (commit `87c79e4`, nhãn `hangar-v4-codex`, mở bằng `?v=4`): đủ chức năng nhưng người dùng chưa ưng:
+  - khe nhìn thẳng ra cửa (nhìn trực diện);
+  - mép sàn là 36 tấm hình nan quạt;
+  - cầu thang dồn ở góc sau, không thấy từ bàn máy;
+  - hai khối xám chắn chân tàu.
+- **v5 (người dùng chốt 2026-11-08, Claude làm cùng đội sub-agent Opus 5.5 mức high):**
+  - **Khe trống là góc phần tư trước-trái** (x < 0, z < 0): hai mép sàn thẳng vuông góc gặp nhau ở tàu, nhìn chéo vào như ảnh `vab_work_platforms_with_sls.webp`.
+  - **Mép sàn là đường cong liền mạch** ôm thân tàu ở từng tầng, có vòng vàng; khoét cong theo booster.
+  - **3 mảnh mỗi tầng:** trước-phải trượt +X, sau-phải lùi +Z, sau-trái trượt −X.
+  - **Cụm 4 bàn máy dưới đất trên đường chéo trong khe**, người ngồi quay lưng với tàu.
+    - Đứng dậy quay lại thì ngước lên thấy trọn tàu.
+    - Khoảng cách: đủ xa để thấy cả tàu, đủ gần để thấy tàu khổng lồ.
+    - Chụp thử 15, 18 và 22 m, người dùng chọn bằng mắt.
+  - Thang máy dời sang góc trước-phải.
+  - Làm hết chi tiết:
+    - cầu thang và lối đi có lan can tới tàu;
+    - cầu dẫn phi hành đoàn sát mép khe;
+    - lan can, dầm vàng, mặt dưới sàn;
+    - hộp trắng, tủ cam, ống đỏ, cột xanh;
+    - bệ đỡ đẹp nhìn chéo.
+  - Lúc ngồi: trước mặt là tường thật, tối.
+  - **Cách làm:**
+    - Claude dựng khung `sandbox/role1.hangar.v5.js` (commit `e12a966`).
+    - 4 agent làm song song, mỗi agent một mảnh, có file JSON riêng trong `public/assets/models/builder/hangar/v5/`: sàn và vòng cong (decks), lối lên tàu (access), bàn máy và camera (stage), bệ đỡ (launcher).
+    - Chạy Blender và trình duyệt qua khoá `v5lock.mjs`, mỗi lúc một cái, vì máy 14 GB.
+    - Sau đó agent kiểm tra soát lại, Claude tổng kiểm tra.
+    - Đề bài chung: `src/builder/tools/blender/hangar/V5-BRIEF.md`.
 
 ## 5. Việc tồn đọng
 
