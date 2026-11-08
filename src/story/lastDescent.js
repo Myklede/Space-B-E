@@ -125,8 +125,13 @@ export function playLastDescent({ onDone = () => {} } = {}) {
       panel.remove();
       caption.remove();
     });
-    at(sch.blackAt + sch.silenceMs, () => line.classList.add('role4-ld-show'));
-    at(sch.totalMs, onDone);
+    if (window.__demo?.active) {
+      // Pitch demo: after the black cut, no coincidence card; the memorial scroll takes over.
+      at(sch.blackAt + 1500, onDone);
+    } else {
+      at(sch.blackAt + sch.silenceMs, () => line.classList.add('role4-ld-show'));
+      at(sch.totalMs, onDone);
+    }
   })();
 
   return () => {

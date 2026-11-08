@@ -11,6 +11,8 @@ import { showTribute } from './tribute.js';
 import tributes from './tributes.json';
 import { showView } from './views.js';
 
+const inDemo = () => !!window.__demo?.active;
+
 // Camera moves per backdrop, in the view's own coordinates (the planet sits below and ahead).
 const PATHS = {
   mars: [
@@ -40,6 +42,11 @@ export function playLastDescentFlow({ onDone = () => {}, withTribute = true } = 
   const stops = [];
   stops.push(playLastDescent({
     onDone: () => {
+      const showScroll = inDemo() ? window.__demo?.showMemorialScroll : null; // set by the pitch demo (src/flight/demo)
+      if (typeof showScroll === 'function') { // pitch demo: the memorial scroll replaces the tribute page and closing card; no ending
+        stops.push(showScroll());
+        return;
+      }
       if (!withTribute) return onDone();
       const tribute = tributeFor(tributes, 'soyuz1');
       const closing = () => stops.push(showClosingCard({ onDone }));
@@ -94,7 +101,7 @@ export function showReturn() {
   (async () => {
     for (let shot of data.returnTrip) {
       if (!alive) return;
-      if (shot.choice === 'suitUp' && (await choose()) === 'skip') { doomed = true; shot = { ...shot, caption: SILENT_RETURN_CAPTION }; }
+      if (shot.choice === 'suitUp' && !inDemo() && (await choose()) === 'skip') { doomed = true; shot = { ...shot, caption: SILENT_RETURN_CAPTION }; }
       if (!alive) return;
       const view = showView(shot.planet === 'none' ? 'space' : shot.planet);
       if (shot.planet === 'none') {
@@ -105,11 +112,12 @@ export function showReturn() {
       caption.textContent = shot.caption;
       if (shot.showFinalLog) radio({ kind: 'log', ...data.logs.final });
       const path = PATHS[shot.planet];
+      const duration = inDemo() && shot.planet !== 'earth' ? Math.min(shot.duration, 3.5) : shot.duration;
       const playing = cinematic.play({
         camera: view.camera,
         cameraPath: path,
-        duration: shot.duration,
-        fades: [{ at: 0, to: 0, duration: 0.8 }, { at: Math.max(0, shot.duration - 0.8), to: 1, duration: 0.8 }],
+        duration,
+        fades: [{ at: 0, to: 0, duration: 0.8 }, { at: Math.max(0, duration - 0.8), to: 1, duration: 0.8 }],
       });
       await wait(400);
       if (alive) caption.style.opacity = '1';
