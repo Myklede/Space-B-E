@@ -73,9 +73,8 @@ function listen() {
     if (to === 'PRELAUNCH') {
       once.clear();
       clearTimeout(blackoutTimer);
-      setTimeout(() => getState() === 'PRELAUNCH' && say('go'), 2500);
+      // No radio on entering PRELAUNCH: Role 2's GO/NO-GO poll says "You are cleared for launch." itself.
     }
-    if (to === 'LAUNCH') say('liftoff');
     if (to === 'ORBIT') say('orbit');
     if (to === 'ENTRY') say('entry');
     if (to === 'ENDING' || to === 'REPORT') clearTimeout(blackoutTimer);
@@ -117,7 +116,7 @@ export default {
   enter(state) {
     if (state === 'PRELAUNCH') {
       showView('earth');
-      showPrelaunch();
+      dispose = showPrelaunch();
     } else if (state === 'RETURN') {
       clearRadio();
       dispose = showReturn();

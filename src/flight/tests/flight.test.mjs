@@ -441,11 +441,25 @@ test('launch clamps (holdDown) keep a full-thrust rocket on the pad until releas
   assert.ok(fc.liftoffT !== null && fc.altitude > 1);
 });
 
-import { cockpitStickValues } from '../cockpitControls.js';
+import { cockpitStickValues, createCockpitIndicators } from '../cockpitControls.js';
 test('cockpit stick values: W = -1 pitch, D = +1 yaw, clamped and NaN-safe', () => {
   const a = cockpitStickValues({ pitch: -1, yaw: 1 }, 0.5);
-  assert.deepEqual(a, { pitch: -1, yaw: 1, throttle: 0.5 });
-  assert.deepEqual(cockpitStickValues({ pitch: NaN, yaw: 5 }, 7), { pitch: 0, yaw: 1, throttle: 1 });
+  assert.deepEqual(a, { pitch: -1, yaw: 1, throttle: 0.5, cutoff: false, brake: false, assist: false });
+  assert.deepEqual(cockpitStickValues({ pitch: NaN, yaw: 5 }, 7), { pitch: 0, yaw: 1, throttle: 1, cutoff: false, brake: false, assist: false });
+});
+
+test('cockpit switches receive X before it is consumed, latch the guard and follow Space/F without changing physics inputs', () => {
+  const indicators = createCockpitIndicators();
+  const pilot = { cutoff: true, brake: false, pitch: -.5, yaw: .2 };
+  const before = { ...pilot };
+  const cut = indicators.update(pilot, 0, { assist: true });
+  assert.equal(cut.cutoff, true); assert.equal(cut.assist, true); assert.equal(cut.brake, false);
+  assert.deepEqual(pilot, before);
+  for (let i = 0; i < 20; i++) assert.equal(indicators.update({}, 0).cutoff, true);
+  assert.equal(indicators.update({}, .4).cutoff, false);
+  indicators.update({ cutoff: true }, 0);
+  const retro = indicators.update({ brake: true }, 0, { brakeBurn: true, assist: false });
+  assert.equal(retro.cutoff, false); assert.equal(retro.brake, true); assert.equal(retro.assist, false);
 });
 
 let fails = 0;

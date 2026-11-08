@@ -241,6 +241,151 @@ function drawTrajectory(c, w, h) {
   }
 }
 
+// ---- Steering display (cockpit.userData.setTrajectory) ---------------------------------------------------------------
+// STABLE API: flight steering depends on it. Every cockpit redesign must keep setControls and setTrajectory working with the same
+// arguments, keep this display large and readable from the default pilot view, and keep the planned line dashed and the predicted line solid.
+// Coordinates are screen units 0..1 of the plot area, x to the right and y UP; ship.heading is in radians, 0 = pointing right (+x),
+// counter-clockwise positive (pi/2 = pointing up).
+const OK_GREEN = '#4ade80';
+const finite = (v) => typeof v === 'number' && Number.isFinite(v);
+function cleanLine(points) {
+  const out = [];
+  if (Array.isArray(points)) for (const p of points) if (Array.isArray(p) && finite(p[0]) && finite(p[1])) out.push([p[0], p[1]]);
+  return out.length > 600 ? out.filter((_, i) => i % Math.ceil(out.length / 600) === 0) : out;
+}
+function normaliseTrajectory(d) {
+  const ship = d.ship && finite(d.ship.x) && finite(d.ship.y) ? { x: d.ship.x, y: d.ship.y, heading: finite(d.ship.heading) ? d.ship.heading : 0 } : null;
+  const hint = d.hint && typeof d.hint.text === 'string' ? { text: d.hint.text, level: d.hint.level === 'warn' ? 'warn' : 'ok' } : null;
+  const t = { planned: cleanLine(d.planned), predicted: cleanLine(d.predicted), ship, view: d.view === 'top' ? 'top' : 'side', hint };
+  let sig = `${t.view}|${hint ? hint.level + hint.text : ''}|${ship ? [ship.x, ship.y, ship.heading].map((v) => v.toFixed(4)).join() : ''}`;
+  for (const line of [t.planned, t.predicted]) {
+    let acc = line.length;
+    line.forEach((p, i) => { acc += (p[0] * 31 + p[1] * 17) * ((i % 7) + 1); });
+    sig += `|${acc.toFixed(5)}`;
+  }
+  t.sig = sig;
+  return t;
+}
+function drawSteering(c, w, h, t, aim = null) {
+  uiBackdrop(c, w, h, 'TRAJECTORY', t.view === 'top' ? 'TOP VIEW' : 'SIDE VIEW');
+  const left = 34, right = w - 34, top = 78, bottom = h - 110;
+  const px = (x) => left + x * (right - left), py = (y) => bottom - y * (bottom - top);
+  c.save();
+  c.beginPath(); c.rect(left, top, right - left, bottom - top); c.clip();
+  c.fillStyle = 'rgba(8,36,54,.55)'; c.fillRect(left, top, right - left, bottom - top);
+  c.strokeStyle = UI.faint; c.lineWidth = 1.5;
+  for (let k = 1; k < 8; k++) { c.beginPath(); c.moveTo(px(k / 8), top); c.lineTo(px(k / 8), bottom); c.stroke(); }
+  for (let k = 1; k < 4; k++) { c.beginPath(); c.moveTo(left, py(k / 4)); c.lineTo(right, py(k / 4)); c.stroke(); }
+  const stroke = (line) => { c.beginPath(); line.forEach((p, i) => (i ? c.lineTo(px(p[0]), py(p[1])) : c.moveTo(px(p[0]), py(p[1])))); c.stroke(); };
+  c.lineJoin = 'round'; c.lineCap = 'round';
+  if (t.planned.length > 1) { // planned: pale white dashes
+    c.setLineDash([16, 11]); c.strokeStyle = 'rgba(238,248,252,.85)'; c.lineWidth = 3.5; c.lineCap = 'butt';
+    stroke(t.planned);
+    c.setLineDash([]); c.lineCap = 'round';
+  }
+  if (t.predicted.length > 1) { // predicted: solid, thicker, bright cyan with a soft glow
+    c.strokeStyle = 'rgba(126,231,247,.28)'; c.lineWidth = 12; stroke(t.predicted);
+    c.strokeStyle = '#7ee7f7'; c.lineWidth = 5.5; stroke(t.predicted);
+  }
+  if (t.ship) { // ship icon: amber triangle pointing along the heading (y is up on screen, so the angle is negated)
+    const x = Math.min(right - 8, Math.max(left + 8, px(t.ship.x))), y = Math.min(bottom - 8, Math.max(top + 8, py(t.ship.y)));
+    c.save();
+    c.translate(x, y); c.rotate(-t.ship.heading);
+    c.beginPath(); c.moveTo(27, 0); c.lineTo(-17, -17); c.lineTo(-9, 0); c.lineTo(-17, 17); c.closePath();
+    c.fillStyle = UI.amber; c.fill();
+    c.strokeStyle = '#04100f'; c.lineWidth = 3; c.stroke();
+    c.restore();
+  }
+  c.restore();
+  c.strokeStyle = UI.dim; c.lineWidth = 2;
+  c.strokeRect(left, top, right - left, bottom - top);
+  // hint band
+  const hint = t.hint, warn = hint?.level === 'warn';
+  const col = warn ? UI.amber : OK_GREEN;
+  const bandTop = bottom + 14, bandH = h - 20 - bandTop;
+  c.fillStyle = warn ? 'rgba(251,191,36,.12)' : 'rgba(74,222,128,.10)';
+  c.fillRect(left, bandTop, right - left, bandH);
+  c.strokeStyle = hint ? col : UI.dim; c.lineWidth = 2.5;
+  c.strokeRect(left, bandTop, right - left, bandH);
+  c.textAlign = 'center'; c.textBaseline = 'middle';
+  if (hint?.text) {
+    let size = 46;
+    c.font = `700 ${size}px ${UI_FONT}`;
+    while (size > 24 && c.measureText(hint.text).width > right - left - 30) { size -= 2; c.font = `700 ${size}px ${UI_FONT}`; }
+    c.fillStyle = col;
+    c.fillText(hint.text, w / 2, bandTop + bandH / 2 + 2);
+  }
+  c.textAlign = 'left'; c.textBaseline = 'alphabetic';
+  if (aim) drawAim(c, aim, { left, right, top, bottom });
+}
+
+// ---- Aim overlay (cockpit.userData.setAim): target +, aim circle, accuracy bar, seconds left, title, LOCK READY cue --------
+const AIM_EMPTY = { planned: [], predicted: [], ship: null, view: 'side', hint: null, sig: 'empty' };
+const unit01 = (v, d) => (finite(v) ? Math.min(1, Math.max(0, v)) : d);
+function normaliseAim(d) {
+  const pt = (p, dx, dy) => ({ x: unit01(p?.x, dx), y: unit01(p?.y, dy) });
+  const a = {
+    target: pt(d.target, 0.5, 0.5), aim: pt(d.aim, 0.5, 0.5),
+    radius: finite(d.radius) ? Math.min(0.5, Math.max(0.01, d.radius)) : 0.06,
+    accuracy: unit01(d.accuracy, 0),
+    timeLeft: finite(d.timeLeft) ? Math.max(0, d.timeLeft) : null,
+    lockReady: !!d.lockReady,
+    label: typeof d.label === 'string' ? d.label.slice(0, 40) : '',
+  };
+  a.sig = [a.target.x, a.target.y, a.aim.x, a.aim.y, a.radius, a.accuracy].map((v) => v.toFixed(3)).join() +
+    `|${a.timeLeft === null ? '-' : Math.ceil(a.timeLeft)}|${a.lockReady}|${a.label}`;
+  return a;
+}
+function drawAim(c, a, { left, right, top, bottom }) {
+  const px = (x) => left + x * (right - left), py = (y) => bottom - y * (bottom - top);
+  c.save();
+  c.beginPath(); c.rect(left, top, right - left, bottom - top); c.clip();
+  c.lineCap = 'round';
+  // target: crisp white + with a dark outline so it reads over the cyan line
+  const tx = px(a.target.x), ty = py(a.target.y), arm = 26;
+  c.strokeStyle = '#04100f'; c.lineWidth = 9;
+  c.beginPath(); c.moveTo(tx - arm, ty); c.lineTo(tx + arm, ty); c.moveTo(tx, ty - arm); c.lineTo(tx, ty + arm); c.stroke();
+  c.strokeStyle = '#ffffff'; c.lineWidth = 4;
+  c.beginPath(); c.moveTo(tx - arm, ty); c.lineTo(tx + arm, ty); c.moveTo(tx, ty - arm); c.lineTo(tx, ty + arm); c.stroke();
+  // aim circle (radius in plot-width units so it stays round)
+  const ax = px(a.aim.x), ay = py(a.aim.y), r = Math.max(8, a.radius * (right - left));
+  c.strokeStyle = '#04100f'; c.lineWidth = 9;
+  c.beginPath(); c.arc(ax, ay, r, 0, Math.PI * 2); c.stroke();
+  c.strokeStyle = a.lockReady ? OK_GREEN : UI.cyan; c.lineWidth = 4.5;
+  c.beginPath(); c.arc(ax, ay, r, 0, Math.PI * 2); c.stroke();
+  c.fillStyle = c.strokeStyle; c.beginPath(); c.arc(ax, ay, 4, 0, Math.PI * 2); c.fill();
+  // bottom strip inside the plot: accuracy bar and seconds left
+  const sh = 46, sy = bottom - sh;
+  c.fillStyle = 'rgba(3,10,16,.82)'; c.fillRect(left, sy, right - left, sh);
+  c.textBaseline = 'middle'; c.textAlign = 'left';
+  c.font = `600 22px ${UI_FONT}`; c.fillStyle = UI.cyan;
+  c.fillText('ACCURACY', left + 14, sy + sh / 2);
+  const bx = left + 164, bw = right - left - 164 - 150, bh = 16;
+  c.fillStyle = UI.faint; c.fillRect(bx, sy + sh / 2 - bh / 2, bw, bh);
+  const k = a.accuracy, hue = 40 + 90 * k; // amber (40) to green (130)
+  c.fillStyle = `hsl(${hue} 90% 55%)`; c.fillRect(bx, sy + sh / 2 - bh / 2, bw * k, bh);
+  c.strokeStyle = UI.dim; c.lineWidth = 2; c.strokeRect(bx, sy + sh / 2 - bh / 2, bw, bh);
+  c.textAlign = 'right'; c.font = `700 32px ${UI_FONT}`; c.fillStyle = UI.white;
+  if (a.timeLeft !== null) c.fillText(`${Math.ceil(a.timeLeft)} s`, right - 14, sy + sh / 2 + 1);
+  // banner across the top of the plot: the title on the left; when guidance can be locked it turns green and shows the cue on the right
+  const bh2 = 42;
+  c.fillStyle = a.lockReady ? 'rgba(6,52,30,.94)' : 'rgba(3,10,16,.82)'; c.fillRect(left, top, right - left, bh2);
+  if (a.lockReady) { c.strokeStyle = OK_GREEN; c.lineWidth = 3; c.strokeRect(left + 1.5, top + 1.5, right - left - 3, bh2 - 3); }
+  c.textAlign = 'left'; c.textBaseline = 'middle';
+  let size = 22;
+  c.font = `600 ${size}px ${UI_FONT}`;
+  const room = right - left - 28 - (a.lockReady ? 390 : 0);
+  while (size > 14 && c.measureText(a.label).width > room) { size -= 2; c.font = `600 ${size}px ${UI_FONT}`; }
+  c.fillStyle = UI.cyan;
+  if (a.label) c.fillText(a.label, left + 14, top + bh2 / 2 + 1);
+  if (a.lockReady) {
+    c.textAlign = 'right'; c.font = `700 30px ${UI_FONT}`; c.fillStyle = OK_GREEN;
+    c.fillText('LOCK READY \u00b7 SPACE', right - 14, top + bh2 / 2 + 2);
+  }
+  c.restore();
+  c.textAlign = 'left'; c.textBaseline = 'alphabetic';
+}
+
 function drawBars(c, w, h) {
   const maxQ = live.maxQ ?? MAXQ_PA;
   const g = live.gForce;
@@ -299,7 +444,60 @@ export function createCockpit() {
   const t = warmCockpit();
   const group = t.group.clone(true); // shares geometry, materials and textures with the template
   const ctl = t.bind(group);
-  group.userData.setControls = ctl.setControls; // ({ pitch -1..1, yaw -1..1, throttle 0..1 }), smoothed
+  // STABLE API (flight depends on it; every cockpit redesign must keep these arguments working):
+  group.userData.setControls = ctl.setControls; // ({ pitch -1..1, yaw -1..1, throttle 0..1, cutoff, brake, assist: booleans }), smoothed; omitted keys keep their value
+  group.userData.setButton = ctl.setButton; // (id, 'off' | 'amber' | 'green' | 'red'), id with or without 'btn:'
+  group.userData.press = ctl.press; // (id), short press-in animation
+  // setTrajectory({ planned, predicted, ship, view, hint }) or null: see drawSteering above. The canvas and texture are per instance
+  // (the template's screens are shared), made on the first call, redrawn only when the data changed and at most 10 times a second.
+  let traj = null, trajSig = '', trajDirty = false, trajMesh = null, trajAt = 0;
+  let aim = null, aimSig = '';
+  const centre = group.getObjectByName('centreDisplay');
+  const syncDisplay = () => { // the steering canvas shows while there is a trajectory or an aim; otherwise the telemetry plot returns
+    const on = !!(traj || aim);
+    if (trajMesh) trajMesh.visible = on;
+    if (centre) centre.visible = !on;
+  };
+  const ensureMesh = () => {
+    if (trajMesh || !centre) return;
+    trajMesh = screen(0.6, 0.38, (c, w, h) => drawSteering(c, w, h, traj ?? AIM_EMPTY, aim), 1.2, 768);
+    trajMesh.position.copy(centre.position);
+    centre.parent.add(trajMesh);
+    trajAt = performance.now();
+  };
+  group.userData.setTrajectory = (data) => {
+    if (data == null) {
+      traj = null; trajSig = '';
+      if (aim) trajDirty = true; else trajDirty = false;
+      syncDisplay();
+      return;
+    }
+    const next = normaliseTrajectory(data);
+    const first = !trajMesh;
+    traj = next; // set before ensureMesh(): the first draw happens inside it and must already show this data
+    ensureMesh();
+    if (!first && next.sig !== trajSig) trajDirty = true;
+    trajSig = next.sig;
+    syncDisplay();
+  };
+  // setAim({ target: {x,y}, aim: {x,y}, radius, accuracy 0..1, timeLeft (s), lockReady, label }) or null. Units 0..1 of the plot area, y UP.
+  // Drawn on top of the trajectory plot (or on an empty plot when no trajectory is set); same per-instance canvas, redraw only on change, at most 10 a second.
+  group.userData.setAim = (data) => {
+    if (data == null) {
+      if (aim) trajDirty = !!traj;
+      aim = null; aimSig = '';
+      if (trajMesh && traj) trajMesh.userData.redraw(); // drop the overlay at once
+      syncDisplay();
+      return;
+    }
+    const next = normaliseAim(data);
+    const first = !trajMesh;
+    aim = next; // set before ensureMesh(), as in setTrajectory
+    ensureMesh();
+    if (!first && next.sig !== aimSig) trajDirty = true;
+    aimSig = next.sig;
+    syncDisplay();
+  };
   const blinkers = [];
   group.traverse((o) => { if (o.name === 'blinker') blinkers.push(o); });
   const cabinLight = group.getObjectByName('cabinLight'), alarmLight = group.getObjectByName('alarmLight');
@@ -310,12 +508,18 @@ export function createCockpit() {
   group.userData.onFrame = () => {
     const tm = sharedUniforms.uTime.value;
     const now = performance.now();
+    if (trajMesh && (trajMesh.visible !== !!(traj || aim) || (centre && centre.visible === !!(traj || aim)))) syncDisplay(); // flight's showModel() can re-show every mesh
     ctl.update((now - lastFrame) / 1000);
     lastFrame = now;
     if (live.version !== drawnVersion && now - drawnAt >= 250) { // at most 4 redraws a second, only when the data changed
       drawnVersion = live.version;
       drawnAt = now;
-      liveScreens.forEach((m) => m.userData.redraw());
+      liveScreens.forEach((m) => { if (!((traj || aim) && m.name === 'centreDisplay')) m.userData.redraw(); }); // the hidden telemetry plot is skipped
+    }
+    if ((traj || aim) && trajMesh && trajDirty && now - trajAt >= 100) { // steering display: at most 10 redraws a second
+      trajDirty = false;
+      trajAt = now;
+      trajMesh.userData.redraw();
     }
     blinkers.forEach((lamp, i) => { lamp.visible = Math.sin(tm * (1.3 + i * 0.37) + i) > -0.3; });
     alarmLight.intensity = alarm ? 3 * (0.5 + 0.5 * Math.sign(Math.sin(tm * 5))) : 0;
@@ -366,6 +570,7 @@ function buildCockpitTemplate() {
     [screen(0.52, 0.38, drawBars, 1.2, 768), 0.57],
   ];
   const liveScreens = screens.map(([mesh]) => mesh);
+  screens[1][0].name = 'centreDisplay'; // setTrajectory swaps this one for a per-instance steering display
   if (typeof window !== 'undefined' && new URLSearchParams(location.search).get('debug') === '1') window.__cockpitCanvases = liveScreens.map((m) => m.userData.canvas); // for tests
   for (const [mesh, x] of screens) {
     mesh.position.set(x, 0, 0.0115);
@@ -386,7 +591,7 @@ function buildCockpitTemplate() {
     interior = buildCockpitInterior({ pbr, glow, matte, trim, panel, shell, low });
   } catch (err) { // the seat and controls are decoration: never let them stop a state from starting
     console.error('[cockpit] interior failed', err);
-    interior = { group: new THREE.Group(), blinkers: [], bind: () => ({ setControls() {}, update() {} }) };
+    interior = { group: new THREE.Group(), blinkers: [], bind: () => ({ setControls() {}, setButton() { return false; }, press() { return false; }, update() {} }) };
   }
   group.add(interior.group);
   group.userData.triangles = interior.group.userData.triangles;
