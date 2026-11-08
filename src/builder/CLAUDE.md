@@ -186,6 +186,30 @@ Người dùng muốn làm lại giao diện trang thiết kế:
 - Bước 0 xong (commit `1bcb601`): chuẩn ráp nối (`src/builder/tools/blender/README.md`), thư viện `common.py`, ví dụ `examples/tank_example.py`, bộ nạp mô hình `model.builder`, mảnh trong `slot_<key>`, `hullProfile` trong dữ liệu linh kiện, test `tests/models.test.mjs`. Thử bồn mẫu: đúng 4,000 m, bán kính 1,256 m, 5.260 tam giác, 31 KB, game nạp được.
 - Pha A: Đuôi xong (31 kiểu, 26 linh kiện, 27 mô hình), Bệ phóng xong (31 bệ, 8 thiết bị mới, 17 mô hình); Mũi, Thân đang chạy. Kiểm tra lần 1 cho Đuôi và Bệ phóng đang chạy.
 - **Người dùng chốt:** tàu khổng lồ dùng giảm giá sản xuất loạt (định luật Wright, 85 %: cụm 9 động cơ ≈ 6,5 lần giá một chiếc, 33 động cơ ≈ 18 lần) và là mục tiêu về sau, vượt ngân sách đầu (commit `ef10bab`).
+- **Người dùng chốt:** đồ không vừa khoang khô nào thì game **tự thêm khoang thiết bị** (một đoạn vỏ trụ), không gắn hộp lồi ra ngoài.
+- **Dữ liệu pha B đã vào repo:**
+  - Mũi: 28 kiểu, 97 linh kiện.
+  - Thân: 29 kiểu, 75 linh kiện.
+  - Đuôi: 31 kiểu, 56 linh kiện, thêm 15 động cơ thật.
+  - Bệ phóng: 31 bệ, 36 lựa chọn thiết bị.
+  Mọi kiểu giữ lại vẫn bay được trong $5M; tàu lớn hơn là mục tiêu về sau.
+- **Mô hình Blender đã vào repo:**
+  - Mũi: 65 mô hình, 5,5 MB.
+  - Thân: 20 mô hình, 2,2 MB.
+  - Đuôi: 44 mô hình, 3,0 MB.
+  - Bệ phóng: 25 mô hình, 1,5 MB.
+  Script ở `src/builder/tools/blender/<phần>/`.
+- **Quy ước kỹ thuật AI đặt thêm** (ghi trong `tools/blender/README.md`):
+  - Mỗi mảnh trong chỉ hiện kiểu đang chọn (`slot_<key>__<optionId>`; nút trơn là lựa chọn đầu tiên).
+  - Một mảnh có thể ẩn mảnh khác (`hides`).
+  - Động cơ có bản vòi chân không riêng (`vac`) và bản nhẹ cho cụm trên 9 động cơ (`lod`).
+  - Mesh đặt tên `m_<node>`.
+  - `wrapModel` của từng phần thêm thứ mô hình không biết trước (váy trong suốt của fairing).
+  - Mô hình mặt đất dựng cho tàu mẫu 20 × 2,5 m, kéo giãn theo một trục.
+- **Kiểm tra lần 2** (soát trong game):
+  - Bệ phóng xong, đã sửa (`3bdcf11`).
+  - Thân: dữ liệu (`daaaaac`) và khoang thiết bị (`2f3e0ac`) đã sửa; màu mô hình đang làm lại.
+  - Đuôi và Mũi đang chạy.
 
 ## 5. Việc tồn đọng
 
