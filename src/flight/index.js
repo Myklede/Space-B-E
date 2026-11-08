@@ -351,12 +351,13 @@ const SMOOTH = (x) => x * x * (3 - 2 * x);
 const ZOOM_SECONDS = 0.6;
 const ZOOM_FILL = 0.75; // the display's height fills this much of the camera's vertical FOV
 const BRAKE_PULSE = 0.3; // s the ASSIST/brake switch pulses after a lock (animation only)
+const whoosh = (now) => { if (s && now - (s.whooshAt ?? -9) > 0.8) { s.whooshAt = now; audio.play('debris.whoosh'); } };
 const callout = (text, t = CALLOUT_SECONDS) => { if (s) s.callout = { text, t }; };
 
 function offerManualUi() {
   if (!s) return;
   callout('Gravity turn coming up. The stick is yours if you want it.', MANUAL.windows.ascent.offerSeconds);
-  audio.play('radio.blip');
+  audio.play('cockpit.manualOffer');
   s.pacer.event('manual_offer', s.fc.t, 0.5); // back to 1× now
 }
 
@@ -373,6 +374,7 @@ function placeDebris() {
   s.debrisAt = fc.t;
   s.pacer.event('debris', fc.t, 4); // back to 1× (the offer / window also pins it)
   audio.play('alarm.master');
+  audio.play('cockpit.manualOffer');
   dw.offer();
   if (stick().free) { stick().giveBack(); dw.take(); callout('Debris ahead. Your stick is scored now.'); }
   else callout('Debris conjunction ahead. Take the stick to dodge, or the computer burns for you.', 6);
@@ -416,7 +418,7 @@ const startManual = toggleManual;
 function finishManual(text, { lock = false } = {}) {
   if (!s) return;
   callout(text);
-  if (lock) { audio.play('cockpit.switch'); s.brakePulse = BRAKE_PULSE; }
+  if (lock) { audio.play('cockpit.lock'); s.brakePulse = BRAKE_PULSE; }
   s.zoom.target = 0;
 }
 
@@ -683,6 +685,7 @@ export default {
       if (type === 'debris_hit' || type === 'parachute' || type === 'fairing_sep') audio.play('impact.small');
       if (['maxq_warning', 'g_high', 'heat_warning', 'engine_hot'].includes(type)) audio.play('alarm.master');
       if (type === 'orbit_achieved') audio.play('radio.blip');
+      if (type === 'debris_near_miss') whoosh(fc.t);
     };
     events.emit('flight:phase', { phase: fc.phase });
 
@@ -791,9 +794,15 @@ export default {
         const r = dw.update(dtMan, { mouse: dw.active && mouseOk ? mouse : { x: 0, y: 0 }, pieces, ahead: snap.ahead, dv: snap.dv, hits: snap.hits, passed: snap.passed, total: snap.total });
         s.debrisReadout = r;
         if (dw.active) pilot = { ...auto, rcs: rcsRequest(conjunctionAxes(fc.pos, fc.vel), dw.aim, rcsLimit(fc)) };
+        // cockpit sounds: RCS puffs while the player pushes (or the computer trims/dodges), whoosh for close passes
+        const push = dw.active ? Math.hypot(dw.aim.x, dw.aim.y) : 0;
+        const cpuRcs = !dw.active && !!auto.rcs;
+        s.rcsPuffT = Math.max(0, (s.rcsPuffT ?? 0) - dtMan);
+        if ((push > 0.1 || cpuRcs || (pilot.trim && !dw.active)) && s.rcsPuffT === 0) { audio.play('rcs.puff'); s.rcsPuffT = 0.25; }
+        for (const o of fc.obstacles) if (!o.whooshed && o.minDist < 40) { o.whooshed = true; whoosh(fc.t); }
         for (const ev of r.events) {
           if (ev === 'declined') callout('Computer has it.');
-          else if (ev === 'clear' || ev === 'timeout') finishManual('Clear of the debris. Computer has it.');
+          else if (ev === 'clear' || ev === 'timeout') { finishManual('Clear of the debris. Computer has it.'); audio.play('cockpit.lock'); }
         }
       }
       if (snap.ahead === 0 && fc.t - s.debrisAt > 2) { // the whole field has passed: rate it, then the lesson
@@ -1040,7 +1049,8 @@ export default {
       if (live) {
         const R = MANUAL.rangeDeg;
         const at = (o) => ({ x: 0.5 + o.yawDeg / (2 * R), y: 0.5 + o.pitchDeg / (2 * R) });
-        activeCockpit.userData.setAim({ target: at(live.target), aim: at(live.aim), radius: MANUAL.toleranceDeg / (2 * R), accuracy: live.accuracy, timeLeft: live.timeLeft, lockReady: live.lockReady, label: live.label });
+        const nz = s.manualFrame ? offsetsFromDir(s.manualFrame, mission.fc.forward) : null;
+        activeCockpit.userData.setAim({ target: at(live.target), aim: at(live.aim), nose: nz ? at(nz) : undefined, radius: MANUAL.toleranceDeg / (2 * R), accuracy: live.accuracy, timeLeft: live.timeLeft, lockReady: live.lockReady, label: live.label });
         s.aimShown = activeCockpit;
       } else if (s.aimShown) { s.aimShown.userData.setAim?.(null); s.aimShown = null; }
     } else {
@@ -1049,7 +1059,20 @@ export default {
     // debris conjunction view: always our HTML panel (Role 3's in-display aim cannot draw many objects)
     const dLive = mission.debrisWin.active ? s.debrisReadout : null;
     if (dLive) { activeCockpit?.userData?.setAim?.(null); s.aimShown = null; }
-    s.conjPanel.update(dLive, dLive ? displayRect(cam, rig, activeCockpit) : null, s.callout?.t > 0 ? s.callout.text : null);
+    const setConj = activeCockpit?.userData?.setConjunction;
+    if (typeof setConj === 'function') {
+      s.conjPanel.update(null, null, null);
+      if (s.conjShown && s.conjShown !== activeCockpit) { s.conjShown.userData.setConjunction?.(null); s.conjShown = null; }
+      if (dLive) { // same projection as the HTML panel: x/R, y/R in -1..1 (y up) -> 0..1; radius = danger/R -> /2
+        const R = dLive.range;
+        setConj.call(activeCockpit.userData, {
+          objects: dLive.pieces.slice(0, 40).map((p) => ({ x: 0.5 + p.x / (2 * R), y: 0.5 + p.y / (2 * R), r: Math.max(0.035, p.danger / R) / 2, t: p.t })),
+          aim: { x: 0.5 + dLive.aim.x / 2, y: 0.5 + dLive.aim.y / 2 },
+          range: R, label: dLive.label, dv: dLive.dv, hits: dLive.hits, passed: dLive.passed,
+        });
+        s.conjShown = activeCockpit;
+      } else if (s.conjShown) { s.conjShown.userData.setConjunction?.(null); s.conjShown = null; }
+    } else s.conjPanel.update(dLive, dLive ? displayRect(cam, rig, activeCockpit) : null, s.callout?.t > 0 ? s.callout.text : null);
     const danger = t.collisionWarning && fc.obstacles.find((o) => o.id === t.collisionWarning.id);
     s.hud.marker('collision', danger ? project(v3(danger.pos).sub(v3(fc.pos)).normalize()) : null);
   },
@@ -1067,6 +1090,7 @@ export default {
     s.conjPanel.dispose();
     s.egress?.overlay.dispose();
     s.aimShown?.userData?.setAim?.(null);
+    s.conjShown?.userData?.setConjunction?.(null);
     s.hud.setManual(false);
     const cam = graphics.camera;
     cam.removeFromParent();
