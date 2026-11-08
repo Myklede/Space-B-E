@@ -1,4 +1,892 @@
 {
-  "_about": "Plain-language explanations for the pad card, English and Vietnamese. Keys and fields: see src/builder/explain.js.",
-  "entries": {}
+  "_about": "Plain-language explanations for the pad card, English and Vietnamese, for a 12-year-old. Keys and fields: see src/builder/explain.js. pad:<complexId>, equip:<key>, equip:<key>/<optionId>.",
+  "entries": {
+    "pad:slc40": {
+      "en": {
+        "what": "A busy launch pad at Cape Canaveral in Florida, where SpaceX flies its Falcon 9 almost every week.",
+        "why": "It has everything a normal rocket needs: a flame trench, water to cool it, clamps, lightning towers and a good weather team, for a fair price.",
+        "without": "Florida winters are mild, but a cold front can still bring a chilly morning now and then."
+      },
+      "vi": {
+        "what": "Một bệ phóng rất bận rộn ở Mũi Canaveral, Florida, nơi SpaceX phóng tên lửa Falcon 9 gần như mỗi tuần.",
+        "why": "Bệ có đủ thứ một tên lửa bình thường cần: rãnh dẫn lửa, nước làm mát, kẹp giữ, tháp chống sét và đội thời tiết giỏi, với giá vừa phải.",
+        "without": "Mùa đông ở Florida ấm áp, nhưng thỉnh thoảng một đợt không khí lạnh vẫn mang đến một buổi sáng se lạnh.",
+        "pros": [
+          "Đủ bộ thiết bị hiện đại với giá phải chăng",
+          "Mùa đông ấm áp"
+        ],
+        "cons": [
+          "Florida là nơi có nhiều sét nhất nước Mỹ (mùa đông thì ít hơn)"
+        ],
+        "facts": [
+          "55 lần phóng tên lửa Titan từ 1965 đến 2005, rồi Falcon 9 từ ngày 4 tháng 6 năm 2010.",
+          "Ngày 1 tháng 9 năm 2016: một tên lửa Falcon 9 nổ tung tại đây khi đang được nạp nhiên liệu để chạy thử (Amos-6). Bệ được xây lại và hoạt động trở lại vào tháng 12 năm 2017.",
+          "Riêng năm 2023 có 50 lần phóng. SpaceX Crew-9 (tháng 9 năm 2024) là phi hành đoàn đầu tiên bay từ bệ này."
+        ]
+      }
+    },
+    "pad:lc39a": {
+      "en": {
+        "what": "The most famous launch pad in the world: Apollo 11 left for the Moon from here, and so did most Space Shuttles.",
+        "why": "It was built for the giant Saturn V, so big, powerful rockets can lift off here at full power from the very first second.",
+        "without": "It is the most expensive pad, and every day you wait here costs the most."
+      },
+      "vi": {
+        "what": "Bệ phóng nổi tiếng nhất thế giới: Apollo 11 bay lên Mặt Trăng từ đây, và phần lớn tàu con thoi cũng vậy.",
+        "why": "Bệ được xây cho tên lửa khổng lồ Saturn V, nên những tên lửa to và mạnh có thể cất cánh ở đây hết công suất ngay từ giây đầu tiên.",
+        "without": "Đây là bệ đắt nhất, và mỗi ngày chờ ở đây cũng tốn tiền nhất.",
+        "pros": [
+          "Cho tàu lớn cất cánh hết công suất",
+          "Có đủ mọi hệ thống an toàn"
+        ],
+        "cons": [
+          "Bệ đắt nhất",
+          "Mỗi ngày chờ tốn tiền nhất"
+        ],
+        "facts": [
+          "12 trong 13 lần phóng Saturn V, trong đó có Apollo 11 (16 tháng 7 năm 1969), và 82 trong 135 chuyến bay của tàu con thoi.",
+          "Rãnh dẫn lửa dài khoảng 137 m, rộng 18 m và sâu 13 m. Saturn V đẩy lên nó 34,5 MN.",
+          "Ngày 31 tháng 5 năm 2008 (STS-124): luồng lửa của tàu con thoi giật hơn 3.500 viên gạch chịu nhiệt khỏi thành rãnh; sửa chữa tốn khoảng 2,5 triệu đô la.",
+          "Chuyến bay đầu tiên của Falcon Heavy (6 tháng 2 năm 2018) và phi hành đoàn đầu tiên của SpaceX (Demo-2, 30 tháng 5 năm 2020) đã cất cánh từ đây."
+        ]
+      }
+    },
+    "pad:slc41": {
+      "en": {
+        "what": "A 'clean' pad in Florida: the rocket is built inside a tall building nearby and rolled out on rails the day before launch.",
+        "why": "The pad itself is empty most of the time, so it is ready again quickly. NASA's Mars rovers Curiosity and Perseverance left from here.",
+        "without": "There is no tower at the pad, so nobody can reach the top of the ship once it is outside."
+      },
+      "vi": {
+        "what": "Một bệ phóng \"sạch\" ở Florida: tên lửa được lắp trong một toà nhà cao gần đó rồi chạy trên đường ray ra bệ một ngày trước khi phóng.",
+        "why": "Bệ gần như luôn trống nên dọn dẹp xong rất nhanh. Hai xe tự hành sao Hỏa Curiosity và Perseverance của NASA đã bay từ đây.",
+        "without": "Không có tháp ở bệ, nên khi tàu đã ra ngoài thì không ai với tới được phần trên của tàu.",
+        "pros": [
+          "Bệ chỉ bận vài giờ chứ không phải vài tuần",
+          "Bệ di động lớn đặt trên rãnh dẫn lửa"
+        ],
+        "cons": [
+          "Không có tháp ở bệ: chỉ với tới phần trên của tàu khi còn trong toà nhà"
+        ],
+        "facts": [
+          "Cả hai xe tự hành lớn của NASA lên sao Hỏa đều bay từ đây trên tên lửa Atlas V: Curiosity (26 tháng 11 năm 2011) và Perseverance (30 tháng 7 năm 2020).",
+          "Toà nhà lắp ráp cao 89 m (292 ft); tên lửa được chở ra trên bệ của nó khoảng một ngày trước khi phóng.",
+          "Atlas V từ ngày 21 tháng 8 năm 2002, Vulcan từ ngày 8 tháng 1 năm 2024. Chuyến Starliner có người lái đầu tiên bay từ đây ngày 5 tháng 6 năm 2024."
+        ]
+      }
+    },
+    "pad:starbase": {
+      "en": {
+        "what": "SpaceX's pad in Texas for Starship: a giant steel table on legs next to a tall tower with two huge arms.",
+        "why": "Today a water-cooled steel plate under the table sprays water into the fire, and with it this pad takes more fire than any other. The tower's arms stack the rocket and can even catch it when it comes back.",
+        "without": "On Starship's first flight there was no water under it: the engines dug a crater and threw chunks of concrete everywhere. Without the water a big ship still tears it up."
+      },
+      "vi": {
+        "what": "Bệ phóng của SpaceX ở Texas dành cho Starship: một cái bàn thép khổng lồ đứng trên chân, cạnh một tháp cao có hai cánh tay rất lớn.",
+        "why": "Ngày nay một tấm thép làm mát bằng nước dưới cái bàn phun nước vào ngọn lửa, nhờ đó bệ này chịu lửa giỏi hơn mọi bệ khác. Hai cánh tay của tháp chồng tên lửa lên và còn bắt được tên lửa khi nó bay về.",
+        "without": "Ở chuyến bay đầu tiên của Starship, dưới bàn không có nước: động cơ khoét một cái hố và hất bê tông văng khắp nơi. Không có nước thì một con tàu lớn vẫn cày nát bệ.",
+        "pros": [
+          "Có tấm thép phun nước, chịu lửa giỏi nhất trong các bệ",
+          "Tháp cao với hai cánh tay bắt tên lửa"
+        ],
+        "cons": [
+          "Không có nước thì một con tàu lớn cày nát bệ",
+          "Không chống sét, không lối thoát hiểm, bờ biển nhiều gió và hơi muối"
+        ],
+        "facts": [
+          "Ngày 20 tháng 4 năm 2023, chuyến bay đầu tiên của Starship: không có rãnh dẫn lửa và không có nước, 33 động cơ khoét một cái hố dưới bàn và hất các tảng bê tông khắp khu bệ; bụi bê tông mịn được tìm thấy xa tới khoảng 10 km.",
+          "Trước chuyến bay thứ hai (18 tháng 11 năm 2023), SpaceX đặt dưới bàn một tấm thép làm mát bằng nước, phun nước ngược lên vào ngọn lửa.",
+          "Ngày 13 tháng 10 năm 2024: hai cánh tay của tháp lần đầu bắt được tầng đẩy Super Heavy bay về. Cái bàn có hai mươi kẹp giữ."
+        ]
+      }
+    },
+    "pad:slc4e": {
+      "en": {
+        "what": "A pad on the coast of California, where rockets fly south over the ocean into orbits that pass over the North and South Poles.",
+        "why": "Lightning is very rare here, and the cold sea keeps it cool but almost never freezing.",
+        "without": "Thick sea fog is common, and its flame trench is a little smaller than the big Florida pads."
+      },
+      "vi": {
+        "what": "Một bệ phóng trên bờ biển California, nơi tên lửa bay về phía nam qua đại dương, vào những quỹ đạo đi qua cả hai cực Trái Đất.",
+        "why": "Ở đây rất hiếm khi có sét, và biển lạnh giữ cho trời mát nhưng hầu như không bao giờ đóng băng.",
+        "without": "Sương mù biển dày rất hay gặp, và rãnh dẫn lửa nhỏ hơn một chút so với các bệ lớn ở Florida.",
+        "pros": [
+          "Hầu như không có sét",
+          "Mát mẻ và không có sương giá"
+        ],
+        "cons": [
+          "Sương mù biển",
+          "Rãnh dẫn lửa nhỏ hơn các bệ ở Florida"
+        ],
+        "facts": [
+          "Atlas-Agena từ năm 1964, tên lửa Titan cho tới năm 2005 (68 lần phóng), Falcon 9 từ ngày 29 tháng 9 năm 2013.",
+          "Ngày 18 tháng 4 năm 1986: một tên lửa Titan 34D nổ ngay phía trên bệ và làm hư hại khu phóng.",
+          "Từ tháng 10 năm 2018, tầng đẩy Falcon 9 hạ cánh xuống bãi đáp ngay bên cạnh, LZ-4."
+        ]
+      }
+    },
+    "pad:gagarin": {
+      "en": {
+        "what": "The pad in Kazakhstan where the first satellite, Sputnik, and the first person in space, Yuri Gagarin, took off.",
+        "why": "The rocket hangs over a huge, deep pit, so the fire has room to go, for a low price. It is the pad of the R-7, a rocket of medium power.",
+        "without": "Winter on the steppe is bitterly cold, far below freezing. There is no water and no hold-down, so a bad engine is only found out in the air."
+      },
+      "vi": {
+        "what": "Bệ phóng ở Kazakhstan, nơi vệ tinh đầu tiên Sputnik và người đầu tiên bay vào vũ trụ, Yuri Gagarin, đã cất cánh.",
+        "why": "Tên lửa treo trên một cái hố rất to và sâu, nên lửa có chỗ để thoát, mà giá lại rẻ. Đây là bệ của tên lửa R-7, một tên lửa có sức đẩy vừa phải.",
+        "without": "Mùa đông trên thảo nguyên lạnh cắt da, thường xuống sâu dưới 0 °C. Không có nước và không có kẹp giữ, nên động cơ hỏng chỉ lộ ra khi đã bay.",
+        "pros": [
+          "Rẻ, có hố sâu cho lửa thoát",
+          "Dày dạn kinh nghiệm: phóng nhiều hơn mọi bệ khác"
+        ],
+        "cons": [
+          "Mùa đông khắc nghiệt: hầu hết các ngày đều dưới 0 °C rất sâu",
+          "Không có kẹp giữ: động cơ hỏng chỉ lộ ra khi đã bay"
+        ],
+        "facts": [
+          "Lần phóng đầu tiên ngày 15 tháng 5 năm 1957 (một tên lửa R-7); Sputnik ngày 4 tháng 10 năm 1957; Gagarin ngày 12 tháng 4 năm 1961.",
+          "520 lần phóng cho tới ngày 25 tháng 9 năm 2019 (Soyuz MS-15), nhiều hơn mọi bệ khác.",
+          "Hố dẫn lửa sâu khoảng 45 m, dài 250 m và rộng 100 m.",
+          "Ngày 26 tháng 9 năm 1983: một tên lửa Soyuz bốc cháy trên bệ này; tên lửa thoát hiểm kéo phi hành đoàn ra xa vài giây trước vụ nổ. Bệ phải ngừng hoạt động gần một năm."
+        ]
+      }
+    },
+    "pad:ela3": {
+      "en": {
+        "what": "Europe's spaceport in French Guiana, close to the equator. The James Webb Space Telescope left from here.",
+        "why": "Big flame ducts, a huge water tower and four lightning towers. It is warm all year, so no frost ever.",
+        "without": "In January it is the rainy season, so thunderstorms are common, and there is no way for a crew to get on board."
+      },
+      "vi": {
+        "what": "Sân bay vũ trụ của châu Âu ở Guyane thuộc Pháp, gần xích đạo. Kính viễn vọng James Webb đã được phóng từ đây.",
+        "why": "Có rãnh dẫn lửa lớn, tháp nước khổng lồ và bốn tháp chống sét. Trời ấm quanh năm nên không bao giờ có sương giá.",
+        "without": "Tháng Một là mùa mưa nên hay có giông sét, và không có lối nào cho phi hành đoàn lên tàu.",
+        "pros": [
+          "Rãnh dẫn lửa được làm mát tốt và một tháp nước khổng lồ",
+          "Không bao giờ có sương giá"
+        ],
+        "cons": [
+          "Mùa mưa: hay có sét",
+          "Không có lối lên tàu cho phi hành đoàn"
+        ],
+        "facts": [
+          "117 lần phóng Ariane 5 từ ngày 4 tháng 6 năm 1996 đến ngày 5 tháng 7 năm 2023, trong đó có Kính viễn vọng James Webb (25 tháng 12 năm 2021).",
+          "Lúc cất cánh, tháp nước xả khoảng 1.500 m³ nước lên bệ để hút bớt sức nóng và tiếng ồn.",
+          "Động cơ chính chạy khoảng 7 giây trên bệ trong lúc được kiểm tra; chỉ khi đó hai tên lửa đẩy nhiên liệu rắn mới được đốt."
+        ]
+      }
+    },
+    "pad:wenchang": {
+      "en": {
+        "what": "China's seaside spaceport on the tropical island of Hainan. China's first Mars mission, Tianwen-1, left from here.",
+        "why": "Rockets fly out over the sea, so falling stages never land on villages. Big platform, tower and water, in mild, dry winter weather.",
+        "without": "It is one of the dearer pads, and there is no escape route for a crew."
+      },
+      "vi": {
+        "what": "Sân bay vũ trụ ven biển của Trung Quốc trên đảo nhiệt đới Hải Nam. Sứ mệnh sao Hỏa đầu tiên của Trung Quốc, Thiên Vấn 1, đã bay từ đây.",
+        "why": "Tên lửa bay ra biển nên các tầng rơi xuống không bao giờ rơi vào làng mạc. Bệ lớn, có tháp và nước, mùa đông khô và dễ chịu.",
+        "without": "Đây là một trong những bệ đắt, và không có lối thoát hiểm cho phi hành đoàn.",
+        "pros": [
+          "Mùa đông khô và dễ chịu",
+          "Bệ lớn, có tháp và nước"
+        ],
+        "cons": [
+          "Một trong những bệ đắt",
+          "Không có lối thoát hiểm cho phi hành đoàn"
+        ],
+        "facts": [
+          "Thiên Vấn 1, sứ mệnh sao Hỏa đầu tiên của Trung Quốc gồm tàu quỹ đạo, tàu đổ bộ và xe tự hành, đã bay từ đây ngày 23 tháng 7 năm 2020.",
+          "Tên lửa phóng từ đây bay qua bờ biển trong vòng 10 km, nên các tầng rơi xuống đại dương.",
+          "Khu phóng xây xong năm 2014; nó có một cảng biển để chở tên lửa tới."
+        ]
+      }
+    },
+    "pad:tanegashima": {
+      "en": {
+        "what": "Japan's main spaceport, on a green island often called the most beautiful launch site in the world. The UAE's Hope probe left for Mars from here.",
+        "why": "The rocket is built indoors on a moving platform and brought out only half a day before launch. Winters are cool but frost-free.",
+        "without": "It is often windy, and there is no crew access."
+      },
+      "vi": {
+        "what": "Sân bay vũ trụ chính của Nhật Bản, trên một hòn đảo xanh thường được gọi là bãi phóng đẹp nhất thế giới. Tàu thăm dò Hope của UAE đã bay đi sao Hỏa từ đây.",
+        "why": "Tên lửa được lắp trong nhà trên một bệ di động và chỉ được đưa ra nửa ngày trước khi phóng. Mùa đông mát nhưng không có sương giá.",
+        "without": "Thường có gió mạnh, và không có lối lên tàu cho phi hành đoàn.",
+        "pros": [
+          "Mùa đông không có sương giá",
+          "Có bệ phóng di động và tháp chống sét"
+        ],
+        "cons": [
+          "Nhiều gió",
+          "Không có lối lên tàu cho phi hành đoàn"
+        ],
+        "facts": [
+          "Xây đầu những năm 1990 cho tên lửa H-II; H-IIA bay từ LA-Y1 cho tới ngày 28 tháng 6 năm 2025.",
+          "Tàu thăm dò Hope của UAE bay đi sao Hỏa từ đây trên tên lửa H-IIA ngày 19 tháng 7 năm 2020 (giờ UTC).",
+          "Cho tới tháng 4 năm 2011, mỗi năm chỉ được phóng trong 190 ngày, để bảo vệ nghề cá địa phương."
+        ]
+      }
+    },
+    "pad:mahia": {
+      "en": {
+        "what": "A small private launch site on a sheep farm in New Zealand, built for Rocket Lab's little Electron rocket.",
+        "why": "It is the cheapest pad, and in January it is summer there: mild and breezy.",
+        "without": "Everything is sized for a small rocket. A big ship pushes far more than it can take, so the engines must be held back and the pad gets wrecked."
+      },
+      "vi": {
+        "what": "Một bãi phóng tư nhân nhỏ trên một trang trại cừu ở New Zealand, xây cho tên lửa Electron bé nhỏ của Rocket Lab.",
+        "why": "Đây là bệ rẻ nhất, và tháng Một ở đó là mùa hè: ấm áp và có gió nhẹ.",
+        "without": "Mọi thứ được làm cho tên lửa nhỏ. Một con tàu lớn đẩy mạnh hơn nhiều so với sức chịu của bệ, nên động cơ phải bị giữ bớt lại và bệ bị phá hỏng.",
+        "pros": [
+          "Bệ rẻ nhất",
+          "Thời tiết mùa hè"
+        ],
+        "cons": [
+          "Làm cho tên lửa nhỏ: tàu lớn làm bệ quá tải",
+          "Không có nước, không có chống sét"
+        ],
+        "facts": [
+          "Bệ A mở năm 2016; Bệ B, bản sao của nó, mở vào tháng 2 năm 2022.",
+          "Được cấp phép phóng mỗi 72 giờ một lần.",
+          "Chín động cơ nhỏ của Electron đẩy chưa bằng một phần mười lực đẩy của Falcon 9."
+        ]
+      }
+    },
+    "equip:mount": {
+      "en": {
+        "what": "The thing the rocket stands on, and the path its fire takes in the first seconds after the engines light.",
+        "why": "A rocket's exhaust is hotter than lava and faster than a bullet. If it has nowhere to go, it bounces back at the engines and tears up the ground.",
+        "without": "On a weak mount a strong rocket must hold its engines back at first, flying chunks of concrete may hit an engine, and the pad needs costly repairs."
+      },
+      "vi": {
+        "what": "Thứ mà tên lửa đứng lên, và đường đi của ngọn lửa trong những giây đầu sau khi động cơ bật.",
+        "why": "Khí phụt của tên lửa nóng hơn dung nham và nhanh hơn viên đạn. Nếu không có chỗ thoát, nó dội ngược vào động cơ và cày nát mặt đất.",
+        "without": "Trên một bệ yếu, tên lửa mạnh phải giữ bớt ga lúc đầu, bê tông văng có thể đập vào động cơ, và bệ phải sửa rất tốn tiền."
+      }
+    },
+    "equip:mount/slab": {
+      "en": {
+        "what": "A plain, flat slab of concrete. The fire hits it head-on.",
+        "why": "It costs nothing, and it is fine for a very small rocket.",
+        "without": "A big rocket blasts the concrete apart and throws the pieces back at itself."
+      },
+      "vi": {
+        "what": "Một tấm bê tông phẳng bình thường. Lửa đập thẳng vào nó.",
+        "why": "Không tốn đồng nào, và đủ dùng cho một tên lửa rất nhỏ.",
+        "without": "Tên lửa lớn sẽ thổi tung bê tông và hất các mảnh vỡ ngược vào chính nó.",
+        "pros": [
+          "Miễn phí",
+          "Không phải xây gì"
+        ],
+        "cons": [
+          "Chịu được rất ít lửa",
+          "Khí nóng và mảnh vụn dội ngược vào động cơ"
+        ]
+      }
+    },
+    "equip:mount/raised": {
+      "en": {
+        "what": "A strong steel table on legs that lifts the engines several metres off the ground, so the fire spreads out before it hits.",
+        "why": "It takes more fire than a flat slab for little money, and with a water-cooled steel plate under it, it gains more from water than any other mount.",
+        "without": "There is no trench: without water, when the rocket is too strong the ground under the table is dug up and flung around."
+      },
+      "vi": {
+        "what": "Một cái bàn thép chắc chắn đứng trên chân, nâng động cơ cao vài mét khỏi mặt đất để lửa toả ra trước khi chạm đất.",
+        "why": "Chịu lửa tốt hơn tấm bê tông phẳng mà giá rẻ, và khi có tấm thép làm mát bằng nước bên dưới, nó được nước giúp nhiều hơn mọi loại bệ khác.",
+        "without": "Không có rãnh dẫn lửa: khi không có nước mà tên lửa lại quá mạnh, mặt đất dưới bàn bị khoét lên và hất tung khắp nơi.",
+        "pros": [
+          "Rẻ so với một cái bàn thép chắc chắn",
+          "Được nước giúp nhiều nhất"
+        ],
+        "cons": [
+          "Không có rãnh: khi không có nước, mặt đất bên dưới hứng trọn luồng lửa",
+          "Sửa rất tốn khi bị quá tải"
+        ]
+      }
+    },
+    "equip:mount/deflector": {
+      "en": {
+        "what": "The rocket hangs over the edge of a deep pit. A sloping steel plate at the bottom turns the fire sideways and out of one end.",
+        "why": "The pit gives the fire lots of room, so it takes a strong rocket for a modest price.",
+        "without": "One side of the pad becomes a fire zone, and the steel plate wears out and needs fixing."
+      },
+      "vi": {
+        "what": "Tên lửa treo trên mép một cái hố sâu. Một tấm thép nghiêng dưới đáy bẻ ngọn lửa sang ngang và đẩy ra một đầu hố.",
+        "why": "Cái hố cho lửa nhiều chỗ thoát, nên chịu được tên lửa mạnh mà giá vừa phải.",
+        "without": "Một phía của bệ thành vùng lửa, và tấm thép bị mòn, phải sửa.",
+        "pros": [
+          "Chịu nhiều lửa so với giá tiền",
+          "Lửa thoát ra một phía, xa khỏi tàu"
+        ],
+        "cons": [
+          "Một phía của bệ thành vùng lửa",
+          "Lớp lót tấm chắn bị mòn, phải sửa"
+        ]
+      }
+    },
+    "equip:mount/trench": {
+      "en": {
+        "what": "A long concrete ditch under the rocket. A steel wedge shaped like a roof splits the fire and sends it out of both ends.",
+        "why": "The fire and the bits it carries go far away from the rocket and the tower. Big rockets can lift off at full power.",
+        "without": "It is a big building job, and its heat-proof bricks wear out over time."
+      },
+      "vi": {
+        "what": "Một con mương bê tông dài dưới tên lửa. Một khối thép hình mái nhà chẻ đôi ngọn lửa và đẩy ra hai đầu mương.",
+        "why": "Lửa và những mảnh vụn nó cuốn theo đi thật xa khỏi tên lửa và tháp. Tên lửa lớn có thể cất cánh hết công suất.",
+        "without": "Xây rất tốn công, và gạch chịu nhiệt bị mòn dần theo thời gian.",
+        "pros": [
+          "Lửa và mảnh vụn đi thật xa khỏi tàu và tháp",
+          "Chịu được tên lửa lớn"
+        ],
+        "cons": [
+          "Một công trình bê tông lớn",
+          "Gạch và tấm thép bị mòn dần"
+        ]
+      }
+    },
+    "equip:mount/mlp": {
+      "en": {
+        "what": "A huge two-storey steel platform. The rocket is built on it indoors, then the platform is carried out and set down over a flame trench.",
+        "why": "The engines sit high above the trench, so the fire spreads even more. It takes the most fire of all, and the rocket is built out of the rain.",
+        "without": "It is the most expensive mount, and moving it to the pad is slow."
+      },
+      "vi": {
+        "what": "Một bệ thép hai tầng khổng lồ. Tên lửa được lắp trên nó ở trong nhà, rồi cả bệ được chở ra đặt lên trên rãnh dẫn lửa.",
+        "why": "Động cơ nằm cao phía trên rãnh nên lửa toả ra rộng hơn nữa. Đây là loại chịu lửa tốt nhất, và tên lửa được lắp ráp tránh mưa gió.",
+        "without": "Đây là loại đắt nhất, và chở bệ ra chỗ phóng rất chậm.",
+        "pros": [
+          "Chịu được nhiều lửa nhất",
+          "Được lắp và kiểm tra dưới mái nhà",
+          "Bệ phóng vẫn rảnh cho những lần phóng khác"
+        ],
+        "cons": [
+          "Loại đắt nhất",
+          "Chở ra bệ chậm và phải rất cẩn thận"
+        ]
+      }
+    },
+    "equip:deluge": {
+      "en": {
+        "what": "A flood of water sprayed under and around the engines the moment they light.",
+        "why": "The water turns to steam and soaks up heat, so the pad can take a stronger rocket. It also soaks up the roar, which is loud enough to shake a rocket apart.",
+        "without": "The pad takes all the heat, loose concrete flies more easily, and the noise shakes the ship's wiring and instruments."
+      },
+      "vi": {
+        "what": "Một trận nước xối xả phun dưới và quanh động cơ ngay lúc chúng bật lửa.",
+        "why": "Nước biến thành hơi và hút bớt nhiệt, nên bệ chịu được tên lửa mạnh hơn. Nước còn nuốt bớt tiếng gầm, thứ âm thanh đủ to để làm rung chuyển cả tên lửa.",
+        "without": "Bệ phải gánh toàn bộ sức nóng, bê tông dễ bị hất văng hơn, và tiếng ồn làm rung dây điện và thiết bị trên tàu."
+      }
+    },
+    "equip:deluge/none": {
+      "en": {
+        "what": "No water at all.",
+        "why": "It is free.",
+        "without": "The pad gets the full heat, and the ship gets the full roar."
+      },
+      "vi": {
+        "what": "Không có chút nước nào.",
+        "why": "Miễn phí.",
+        "without": "Bệ chịu toàn bộ sức nóng, còn tàu chịu toàn bộ tiếng gầm.",
+        "pros": [
+          "Miễn phí"
+        ],
+        "cons": [
+          "Bệ chịu toàn bộ sức nóng",
+          "Toàn bộ tiếng gầm làm rung tàu"
+        ]
+      }
+    },
+    "equip:deluge/water": {
+      "en": {
+        "what": "Pipes and nozzles spray water into the fire at liftoff, or a steel plate under the rocket sprays water straight up.",
+        "why": "The pad can take about a third more thrust, and the ship shakes much less.",
+        "without": "It helps a lot, but a water tower helps even more."
+      },
+      "vi": {
+        "what": "Ống và vòi phun nước vào ngọn lửa lúc cất cánh, hoặc một tấm thép dưới tên lửa phun nước thẳng lên trên.",
+        "why": "Bệ chịu thêm được khoảng một phần ba lực đẩy, và tàu rung ít hơn nhiều.",
+        "without": "Giúp được nhiều, nhưng một tháp nước còn giúp nhiều hơn.",
+        "pros": [
+          "Bệ chịu thêm được khoảng một phần ba lực đẩy",
+          "Tàu rung ít hơn"
+        ],
+        "cons": [
+          "Phải trả thêm phí bệ"
+        ]
+      }
+    },
+    "equip:deluge/tower": {
+      "en": {
+        "what": "A tall water tower that empties a huge tank onto the pad in under a minute. The white cloud you see at big launches is mostly this water turning to steam.",
+        "why": "The pad takes the most fire, and the ship gets the quietest ride.",
+        "without": "It is expensive, and the giant tank must be refilled after every launch."
+      },
+      "vi": {
+        "what": "Một tháp nước cao xả cả bồn nước khổng lồ xuống bệ trong chưa đầy một phút. Đám mây trắng bạn thấy ở những lần phóng lớn phần lớn là nước này biến thành hơi.",
+        "why": "Bệ chịu được nhiều lửa nhất, và tàu được chuyến đi êm nhất.",
+        "without": "Đắt, và sau mỗi lần phóng phải bơm đầy lại cái bồn khổng lồ.",
+        "pros": [
+          "Bệ chịu được nhiều lực đẩy nhất",
+          "Tàu được chuyến đi êm nhất"
+        ],
+        "cons": [
+          "Đắt",
+          "Một bồn nước khổng lồ phải bơm đầy lại sau mỗi lần phóng"
+        ]
+      }
+    },
+    "equip:clamps": {
+      "en": {
+        "what": "Strong clamps that hold the rocket down on the pad while its engines come up to full power.",
+        "why": "For a few seconds a computer checks every engine. If one is not right, the engines shut down and the rocket stays safely on the ground.",
+        "without": "With no clamps the rocket lifts off as soon as it can, and a bad engine is only discovered in the air."
+      },
+      "vi": {
+        "what": "Những cái kẹp chắc chắn ghì tên lửa xuống bệ trong lúc động cơ tăng lên hết công suất.",
+        "why": "Trong vài giây, máy tính kiểm tra từng động cơ. Nếu có cái không ổn, động cơ tắt và tên lửa vẫn an toàn trên mặt đất.",
+        "without": "Không có kẹp thì tên lửa bay lên ngay khi đủ sức, và động cơ hỏng chỉ bị phát hiện khi đã ở trên trời."
+      }
+    },
+    "equip:clamps/none": {
+      "en": {
+        "what": "Nothing holds the rocket down.",
+        "why": "It is free.",
+        "without": "There is no chance to check the engines before the rocket leaves the ground."
+      },
+      "vi": {
+        "what": "Không có gì giữ tên lửa lại.",
+        "why": "Miễn phí.",
+        "without": "Không có cơ hội kiểm tra động cơ trước khi tên lửa rời mặt đất.",
+        "pros": [
+          "Miễn phí"
+        ],
+        "cons": [
+          "Động cơ khởi động lỗi chỉ bị phát hiện khi đã bay"
+        ]
+      }
+    },
+    "equip:clamps/hold": {
+      "en": {
+        "what": "Clamps grip the bottom of the rocket for about three seconds after the engines light.",
+        "why": "They catch about half of the bad engines while the rocket is still safe on the pad. Falcon 9 does this on every launch.",
+        "without": "Some problems only show up later, in the air."
+      },
+      "vi": {
+        "what": "Kẹp giữ chặt đáy tên lửa khoảng ba giây sau khi động cơ bật.",
+        "why": "Chúng bắt được khoảng một nửa số động cơ hỏng trong lúc tên lửa còn an toàn trên bệ. Falcon 9 làm vậy ở mọi lần phóng.",
+        "without": "Có những trục trặc chỉ lộ ra sau đó, khi đã bay.",
+        "pros": [
+          "Bắt được khoảng một nửa số động cơ hỏng ngay trên mặt đất"
+        ],
+        "cons": [
+          "Phải trả thêm phí bệ",
+          "Tắt máy trên bệ vẫn có nghĩa là mất nhiều ngày kiểm tra"
+        ]
+      }
+    },
+    "equip:clamps/release": {
+      "en": {
+        "what": "Heavy arms hold the rocket for about six seconds, then let it go gently instead of with a jolt.",
+        "why": "The longer check catches most bad engines, and the gentle release is kinder to the rocket's structure. The Saturn V Moon rocket used them.",
+        "without": "They are the most expensive clamps and need a lot of work after each launch."
+      },
+      "vi": {
+        "what": "Những cánh tay nặng giữ tên lửa khoảng sáu giây, rồi thả ra từ từ thay vì giật mạnh.",
+        "why": "Kiểm tra lâu hơn nên bắt được phần lớn động cơ hỏng, và thả từ từ thì đỡ hại cho thân tên lửa. Tên lửa Saturn V lên Mặt Trăng đã dùng loại này.",
+        "without": "Đây là loại kẹp đắt nhất và cần sửa sang nhiều sau mỗi lần phóng.",
+        "pros": [
+          "Bắt được phần lớn động cơ hỏng ngay trên mặt đất",
+          "Thả ra không giật thân tàu"
+        ],
+        "cons": [
+          "Loại kẹp đắt nhất",
+          "Thép nặng phải sửa sang sau mỗi lần phóng"
+        ]
+      }
+    },
+    "equip:tower": {
+      "en": {
+        "what": "A tower or frame beside the rocket that carries hoses, cables and walkways up to it.",
+        "why": "Until the last seconds it keeps the rocket filled, powered and cooled, and lets people reach every part of it.",
+        "without": "Without one, a small problem high up on the rocket means rolling it all the way back to the hangar."
+      },
+      "vi": {
+        "what": "Một cái tháp hoặc khung đứng cạnh tên lửa, đưa ống dẫn, dây cáp và lối đi lên tới tên lửa.",
+        "why": "Cho tới những giây cuối, nó giữ cho tên lửa được nạp đầy, có điện và được làm mát, và cho người ta với tới mọi chỗ trên tên lửa.",
+        "without": "Không có tháp, một trục trặc nhỏ ở trên cao cũng buộc phải kéo tên lửa về tận nhà chứa."
+      }
+    },
+    "equip:tower/none": {
+      "en": {
+        "what": "No tower: only a small plug at the base carries fuel and power.",
+        "why": "It is free, and there is nothing near the fire to damage.",
+        "without": "Nobody can reach the upper part of the rocket on the pad."
+      },
+      "vi": {
+        "what": "Không có tháp: chỉ có một đầu cắm nhỏ ở chân tên lửa đưa nhiên liệu và điện vào.",
+        "why": "Miễn phí, và không có gì gần ngọn lửa để bị hư.",
+        "without": "Không ai với tới được phần trên của tên lửa khi nó đã ở trên bệ.",
+        "pros": [
+          "Miễn phí",
+          "Không có gì để lửa làm hư"
+        ],
+        "cons": [
+          "Không có cách nào với tới phần trên của tàu khi ở trên bệ"
+        ]
+      }
+    },
+    "equip:tower/strongback": {
+      "en": {
+        "what": "A steel frame that carries the rocket lying down to the pad, lifts it upright and holds the hoses.",
+        "why": "It is quick and cheap, and it tilts back away from the fire a few minutes before launch.",
+        "without": "Once the rocket is standing, its top is hard to reach."
+      },
+      "vi": {
+        "what": "Một khung thép chở tên lửa nằm ngang ra bệ, dựng nó đứng thẳng lên và giữ các ống dẫn.",
+        "why": "Nhanh và rẻ, và vài phút trước khi phóng nó ngả ra xa khỏi ngọn lửa.",
+        "without": "Khi tên lửa đã đứng thẳng thì rất khó với tới phần đỉnh.",
+        "pros": [
+          "Lắp đặt nhanh",
+          "Ngả ra xa khỏi ngọn lửa"
+        ],
+        "cons": [
+          "Khi tàu đã đứng thẳng thì khó với tới phần trên"
+        ]
+      }
+    },
+    "equip:tower/fixed": {
+      "en": {
+        "what": "A tall steel tower with floors and swinging arms that reach every level of the rocket.",
+        "why": "People and hoses can reach any part of the rocket until the last seconds.",
+        "without": "It stands right next to the fire, so it gets scorched when the rocket is too strong for the pad."
+      },
+      "vi": {
+        "what": "Một tháp thép cao có nhiều tầng sàn và những cánh tay xoay với tới mọi tầng của tên lửa.",
+        "why": "Người và ống dẫn với tới được bất cứ chỗ nào trên tên lửa cho tới những giây cuối.",
+        "without": "Tháp đứng ngay cạnh ngọn lửa, nên bị cháy sém khi tên lửa quá mạnh so với bệ.",
+        "pros": [
+          "Với tới mọi tầng của tàu",
+          "Nhiên liệu và điện được châm thêm cho tới lúc cất cánh"
+        ],
+        "cons": [
+          "Bị cháy sém khi bệ quá tải",
+          "Các cánh tay phải xoay ra kịp lúc"
+        ]
+      }
+    },
+    "equip:tower/catch": {
+      "en": {
+        "what": "A very tall tower with two giant arms, nicknamed 'chopsticks', that lift the rocket's parts and stack them.",
+        "why": "No crane or hangar is needed to stack the rocket, and the arms can even catch a booster flying back.",
+        "without": "It is a big, costly machine standing right beside the fire."
+      },
+      "vi": {
+        "what": "Một tháp rất cao với hai cánh tay khổng lồ, có biệt danh \"đôi đũa\", nhấc các phần của tên lửa lên và chồng chúng lại.",
+        "why": "Không cần cần cẩu hay nhà chứa để lắp tên lửa, và hai cánh tay còn bắt được tầng đẩy khi nó bay về.",
+        "without": "Đây là một cỗ máy to và đắt đứng ngay cạnh ngọn lửa.",
+        "pros": [
+          "Chồng tàu ngay trên bệ, không cần cần cẩu trong nhà chứa",
+          "Cấp nhiên liệu cho phần trên của tàu"
+        ],
+        "cons": [
+          "Đứng ngay cạnh ngọn lửa",
+          "Một cỗ máy to và đắt"
+        ]
+      }
+    },
+    "equip:tower/rss": {
+      "en": {
+        "what": "A fixed tower plus a tall building on a hinge that swings around the rocket like a door, making a clean room around it.",
+        "why": "Work on the top of the rocket is done indoors, sheltered from rain and wind.",
+        "without": "It is the most expensive tower, and swinging it away takes hours."
+      },
+      "vi": {
+        "what": "Một tháp cố định cộng thêm một toà nhà cao gắn bản lề, xoay quanh tên lửa như một cánh cửa, tạo thành phòng sạch bao quanh nó.",
+        "why": "Công việc ở phần trên tên lửa được làm trong nhà, tránh mưa gió.",
+        "without": "Đây là loại tháp đắt nhất, và xoay nó ra mất hàng giờ.",
+        "pros": [
+          "Làm việc ở phần trên của tàu trong phòng sạch, có che chắn",
+          "Che chở tàu khỏi mưa gió"
+        ],
+        "cons": [
+          "Loại tháp đắt nhất",
+          "Mất hàng giờ để xoay ra"
+        ]
+      }
+    },
+    "equip:lightning": {
+      "en": {
+        "what": "Tall masts or wires above the pad that give lightning something taller than the rocket to hit.",
+        "why": "The lightning runs into the ground far from the rocket instead of through its electronics.",
+        "without": "The rocket is the tallest metal thing around, so it becomes the lightning rod."
+      },
+      "vi": {
+        "what": "Những cột cao hoặc dây căng phía trên bệ, cho sét một thứ cao hơn tên lửa để đánh vào.",
+        "why": "Dòng sét chạy xuống đất ở xa tên lửa thay vì chạy qua các thiết bị điện tử của nó.",
+        "without": "Tên lửa là vật bằng kim loại cao nhất quanh đó, nên nó thành cột thu lôi."
+      }
+    },
+    "equip:lightning/none": {
+      "en": {
+        "what": "No lightning protection.",
+        "why": "It is free, and fine where storms are very rare.",
+        "without": "A strike near the pad can hit the rocket itself."
+      },
+      "vi": {
+        "what": "Không có gì chống sét.",
+        "why": "Miễn phí, và tạm ổn ở nơi rất hiếm khi có giông.",
+        "without": "Một tia sét gần bệ có thể đánh thẳng vào tên lửa.",
+        "pros": [
+          "Miễn phí"
+        ],
+        "cons": [
+          "Tàu thành cột thu lôi"
+        ]
+      }
+    },
+    "equip:lightning/mast": {
+      "en": {
+        "what": "One tall pointed mast with steel cables down to the ground.",
+        "why": "It stops most strikes from hitting the rocket, for very little money.",
+        "without": "A strike close by can still upset cables and electronics."
+      },
+      "vi": {
+        "what": "Một cột nhọn cao với dây cáp thép kéo xuống đất.",
+        "why": "Ngăn được phần lớn tia sét đánh vào tên lửa, với rất ít tiền.",
+        "without": "Sét đánh gần đó vẫn có thể làm nhiễu dây điện và thiết bị.",
+        "pros": [
+          "Rẻ",
+          "Ngăn phần lớn tia sét đánh thẳng vào tàu"
+        ],
+        "cons": [
+          "Sét đánh gần đó vẫn có thể làm nhiễu dây điện và thiết bị"
+        ]
+      }
+    },
+    "equip:lightning/catenary": {
+      "en": {
+        "what": "Three or four towers taller than everything else, joined by wires that hang over the rocket like a tent.",
+        "why": "The whole pad is covered, not just one spot, so almost no strike reaches the rocket.",
+        "without": "Extra towers cost extra money."
+      },
+      "vi": {
+        "what": "Ba hoặc bốn cái tháp cao hơn mọi thứ, nối với nhau bằng dây căng phủ trên tên lửa như một cái lều.",
+        "why": "Cả bệ được che chứ không chỉ một chỗ, nên hầu như không tia sét nào tới được tên lửa.",
+        "without": "Thêm tháp thì thêm tiền.",
+        "pros": [
+          "Che cả bệ chứ không chỉ cái tháp"
+        ],
+        "cons": [
+          "Phải xây thêm tháp"
+        ]
+      }
+    },
+    "equip:access": {
+      "en": {
+        "what": "How the crew gets into the capsule on the pad, and how they can run away fast if something goes wrong.",
+        "why": "A rocket full of fuel is dangerous. If it catches fire before launch, the crew needs a quick way out.",
+        "without": "Without an escape route, the capsule's own escape rocket is the only way out."
+      },
+      "vi": {
+        "what": "Cách phi hành đoàn vào khoang lái khi tàu ở trên bệ, và cách họ chạy thoát thật nhanh nếu có chuyện.",
+        "why": "Một tên lửa đầy nhiên liệu rất nguy hiểm. Nếu nó bắt lửa trước khi phóng, phi hành đoàn cần lối thoát nhanh.",
+        "without": "Không có lối thoát, tên lửa thoát hiểm trên khoang lái là đường thoát duy nhất."
+      }
+    },
+    "equip:access/none": {
+      "en": {
+        "what": "The crew rides a lift up, and the lift is pulled away before launch.",
+        "why": "It is free.",
+        "without": "If something goes wrong after that, there is no way down. In 1983 a Soyuz crew escaped a burning rocket only because their escape rocket fired."
+      },
+      "vi": {
+        "what": "Phi hành đoàn đi thang máy lên, rồi thang máy được kéo đi trước khi phóng.",
+        "why": "Miễn phí.",
+        "without": "Nếu sau đó có chuyện thì không có đường xuống. Năm 1983, một phi hành đoàn Soyuz thoát khỏi tên lửa đang cháy chỉ nhờ tên lửa thoát hiểm kịp bắn.",
+        "pros": [
+          "Miễn phí"
+        ],
+        "cons": [
+          "Không có đường xuống khỏi một con tàu gặp nạn trên bệ"
+        ]
+      }
+    },
+    "equip:access/arm": {
+      "en": {
+        "what": "A covered walkway from a tower to the hatch, with a small 'white room' where helpers get the crew in.",
+        "why": "The crew boards safely and with help, and the arm can swing back to the hatch quickly if needed.",
+        "without": "It does not take the crew away from the pad by itself."
+      },
+      "vi": {
+        "what": "Một lối đi có mái che từ tháp tới cửa khoang, với một \"phòng trắng\" nhỏ nơi người hỗ trợ giúp phi hành đoàn vào.",
+        "why": "Phi hành đoàn lên tàu an toàn, có người giúp, và cánh tay có thể xoay trở lại cửa khoang thật nhanh khi cần.",
+        "without": "Bản thân nó không đưa phi hành đoàn ra khỏi bệ.",
+        "pros": [
+          "Phi hành đoàn lên tàu có mái che và có người giúp",
+          "Có thể quay lại cửa khoang thật nhanh"
+        ],
+        "cons": [
+          "Phải trả thêm phí bệ"
+        ]
+      }
+    },
+    "equip:access/slidewire": {
+      "en": {
+        "what": "Baskets hanging on steel wires that run from the crew level down to a bunker far away.",
+        "why": "The crew jumps in, pulls a lever and slides away from the rocket in about half a minute, even with no power.",
+        "without": "One more system to test and look after."
+      },
+      "vi": {
+        "what": "Những cái giỏ treo trên dây thép chạy từ tầng phi hành đoàn xuống một hầm trú ẩn ở xa.",
+        "why": "Phi hành đoàn nhảy vào, kéo cần gạt và trượt ra xa tên lửa trong khoảng nửa phút, kể cả khi mất điện.",
+        "without": "Thêm một hệ thống phải kiểm tra và bảo dưỡng.",
+        "pros": [
+          "Một lối thoát nhanh khỏi con tàu gặp nạn",
+          "Chạy được cả khi mất điện"
+        ],
+        "cons": [
+          "Thêm một hệ thống phải kiểm tra và bảo dưỡng"
+        ]
+      }
+    },
+    "equip:propellant": {
+      "en": {
+        "what": "How the fuel and the super-cold liquid oxygen get from the storage tanks into the rocket.",
+        "why": "Liquid oxygen boils away all the time, so it must be topped up until the last minutes, or the tanks are not full at liftoff.",
+        "without": "Slow, manual loading makes every day of waiting expensive, because everything must be drained and filled again."
+      },
+      "vi": {
+        "what": "Cách nhiên liệu và ôxy lỏng siêu lạnh đi từ bồn chứa vào tên lửa.",
+        "why": "Ôxy lỏng luôn bay hơi, nên phải châm thêm cho tới những phút cuối, nếu không bồn sẽ không đầy lúc cất cánh.",
+        "without": "Nạp bằng tay chậm chạp khiến mỗi ngày chờ đều tốn kém, vì phải xả hết rồi nạp lại từ đầu."
+      }
+    },
+    "equip:propellant/manual": {
+      "en": {
+        "what": "Tanker trucks pump fuel in while workers open and close valves by hand.",
+        "why": "It is free and simple.",
+        "without": "It is slow and easy to get wrong, and waiting a day costs the most."
+      },
+      "vi": {
+        "what": "Xe bồn bơm nhiên liệu vào trong lúc công nhân mở và đóng van bằng tay.",
+        "why": "Miễn phí và đơn giản.",
+        "without": "Chậm và dễ sai sót, và chờ thêm một ngày thì tốn nhất.",
+        "pros": [
+          "Miễn phí",
+          "Đơn giản"
+        ],
+        "cons": [
+          "Chậm và dễ sai sót",
+          "Chờ thêm một ngày tốn nhất"
+        ]
+      }
+    },
+    "equip:propellant/loadgo": {
+      "en": {
+        "what": "The fuel is chilled extra cold and pumped in fast, only in the last half hour before launch.",
+        "why": "Nothing sits in the tanks for long, so a day of waiting costs little.",
+        "without": "The timeline is tight, with little time to spot a problem."
+      },
+      "vi": {
+        "what": "Nhiên liệu được làm lạnh sâu hơn bình thường và bơm vào thật nhanh, chỉ trong nửa giờ cuối trước khi phóng.",
+        "why": "Không có gì nằm lâu trong bồn, nên chờ thêm một ngày tốn rất ít.",
+        "without": "Lịch trình rất gấp, ít thời gian để phát hiện trục trặc.",
+        "pros": [
+          "Nhanh",
+          "Chờ thêm một ngày tốn rất ít"
+        ],
+        "cons": [
+          "Lịch trình gấp: ít thời gian để phát hiện trục trặc"
+        ]
+      }
+    },
+    "equip:propellant/auto": {
+      "en": {
+        "what": "Big insulated tanks beside the pad feed the rocket through pipes, and a computer keeps the tanks topped up.",
+        "why": "Precise and repeatable: the tanks are exactly full at liftoff, and waiting a day is cheaper.",
+        "without": "It costs a pad fee, and loading takes hours."
+      },
+      "vi": {
+        "what": "Những bồn chứa lớn cách nhiệt cạnh bệ nạp cho tên lửa qua đường ống, và máy tính luôn châm đầy các bồn.",
+        "why": "Chính xác và lần nào cũng như lần nào: bồn đầy đúng lúc cất cánh, và chờ thêm một ngày rẻ hơn.",
+        "without": "Phải trả thêm phí bệ, và nạp mất hàng giờ.",
+        "pros": [
+          "Chính xác, lần nào cũng như lần nào",
+          "Bồn đầy đúng lúc cất cánh"
+        ],
+        "cons": [
+          "Phải trả thêm phí bệ",
+          "Nạp mất hàng giờ"
+        ]
+      }
+    },
+    "equip:weather": {
+      "en": {
+        "what": "The team and machines that forecast the weather for launch day and watch the sky.",
+        "why": "Cold makes rubber seals stiff, strong winds high up can bend a rocket, and charged clouds can make a climbing rocket set off lightning.",
+        "without": "With a cheap watch the forecast can be several degrees wrong, so you may launch into weather you did not expect."
+      },
+      "vi": {
+        "what": "Đội ngũ và máy móc dự báo thời tiết cho ngày phóng và theo dõi bầu trời.",
+        "why": "Trời lạnh làm gioăng cao su cứng lại, gió mạnh trên cao có thể làm cong tên lửa, và mây tích điện có thể khiến tên lửa đang bay lên gây ra sét.",
+        "without": "Với trạm thời tiết rẻ, dự báo có thể sai vài độ, nên bạn có thể phóng vào kiểu thời tiết không ngờ tới."
+      }
+    },
+    "equip:weather/none": {
+      "en": {
+        "what": "Someone looks up at the sky and guesses.",
+        "why": "It is free.",
+        "without": "The forecast can be off by several degrees, and charged clouds cannot be seen from the ground."
+      },
+      "vi": {
+        "what": "Có người nhìn lên trời rồi đoán.",
+        "why": "Miễn phí.",
+        "without": "Dự báo có thể lệch vài độ, và từ dưới đất không thể nhìn thấy mây tích điện.",
+        "pros": [
+          "Miễn phí"
+        ],
+        "cons": [
+          "Dự báo có thể lệch vài độ",
+          "Không ai thấy được mây tích điện"
+        ]
+      }
+    },
+    "equip:weather/balloons": {
+      "en": {
+        "what": "Weather balloons go up before launch to measure wind and temperature at every height, and towers record the gusts.",
+        "why": "A cheap way to get a much better forecast.",
+        "without": "Balloons cannot tell whether a cloud is full of electric charge."
+      },
+      "vi": {
+        "what": "Bóng thám không được thả lên trước khi phóng để đo gió và nhiệt độ ở mọi độ cao, còn các tháp ghi lại những cơn gió giật.",
+        "why": "Một cách rẻ để có dự báo tốt hơn nhiều.",
+        "without": "Bóng thám không không cho biết đám mây có tích điện hay không.",
+        "pros": [
+          "Rẻ",
+          "Dự báo tốt hơn"
+        ],
+        "cons": [
+          "Không biết được mây có tích điện hay không"
+        ]
+      }
+    },
+    "equip:weather/radar": {
+      "en": {
+        "what": "Weather radar, plus 'field mills' that measure the electricity in the air, and an expert who sets the rules.",
+        "why": "The forecast is right to within about a degree, and the rocket never flies into a cloud that could make lightning.",
+        "without": "It costs a pad fee."
+      },
+      "vi": {
+        "what": "Ra-đa thời tiết, cộng với các \"máy đo điện trường\" đo điện trong không khí, và một chuyên gia đặt ra luật phóng.",
+        "why": "Dự báo đúng tới khoảng một độ, và tên lửa không bao giờ bay vào đám mây có thể sinh ra sét.",
+        "without": "Phải trả thêm phí bệ.",
+        "pros": [
+          "Dự báo đúng tới khoảng một độ",
+          "Phát hiện những đám mây có thể gây ra sét"
+        ],
+        "cons": [
+          "Phải trả thêm phí bệ"
+        ]
+      }
+    }
+  }
 }

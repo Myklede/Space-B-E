@@ -1,7 +1,7 @@
 {
   "name": "Cold Morning",
   "symmetry": 1,
-  "launch": { "slot": "cold" },
+  "launch": { "site": "slc40", "day": 0, "forecast": { "day": 0, "tempC": 2, "windKts": 7, "lightning": 0, "label": "January cold front: clear, still, near freezing" }, "pad": { "mount": "slab", "deluge": "none", "clamps": "none", "tower": "none", "lightning": "none", "access": "none", "propellant": "manual", "weather": "none" } },
   "parts": [
     { "id": "p1", "type": "capsule_s", "parent": null, "node": null, "angle": 0, "yFrac": 0.5, "variant": null, "group": null },
     { "id": "p2", "type": "heat_shield_m", "parent": "p1", "node": "bottom", "angle": 0, "yFrac": 0.5, "variant": null, "group": null },

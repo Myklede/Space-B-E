@@ -1,92 +1,200 @@
-// The Launch pad card of the design page (Role 1 agent "pad" owns this file; designPage.js only calls it).
-// The pad is the ground hardware under the rocket. PHASE 0: still the old views (site, window, equipment), moved here
-// unchanged from designPage.js. The pad agent replaces them: row 1 a real launch complex, row 2 its equipment.
+// The Launch pad card of the design page (Role 1, the pad section; designPage.js only calls it).
+// The pad is the ground hardware under the rocket at a real launch complex. Row 1: the complex (with its own kit and
+// climate). Row 2: the eight kinds of ground equipment, each changeable. Below them, plain facts: the heat limit, the
+// launch-day forecast and the fees. No hints: the numbers only. Clicking a complex or an option opens the big
+// explanation card (ui.openCard); a small CHOOSE button in the row makes the change.
 import { padArt } from './sections/pad/art.js';
-import { padState } from './sections.js';
-import { fmtInt, fmtMoney, fmtMoneyShort } from './format.js';
+import { padSetup, kitFee, heatLimitOf, padEffects } from './sections/pad/effects.js';
+import { weatherFor } from './weather.js';
+import { fmtKN, fmtMoney, fmtMoneyShort } from './format.js';
+import launchData from './data/launch.json';
+import './designPad.css';
+
+const pct = (x) => `${Math.round(x * 100)} %`;
+const deg = (c) => `${Number(c).toFixed(Math.abs(c) < 10 && c % 1 ? 1 : 0)} °C`;
 
 /**
  * createPadViews(ui) → { body(view), crumb(view), summary(), artKey(dims), art(dims) }
- * ui: { assembly, sections, h, item, fact, facts, para, prosCons, primary, signed, go, back, state, sound, changed, icons, openCard,
+ * ui: { assembly, sections, h, item, fact, facts, para, prosCons, primary, signed, go, back, state, sound, changed, icons, openCard, g,
  *       toggleFocus, getLast } (the design page's own helpers, so the card looks like the other three)
  */
 export function createPadViews(ui) {
-  const { assembly, sections, h, item, fact, facts, para, prosCons, primary, signed, go, back, state, sound, changed, toggleFocus, getLast } = ui;
+  const { assembly, sections, h, item, fact, facts, para, signed, go, back, state, sound, changed, getLast, icons, openCard } = ui;
   const pad = () => sections.pad;
+  const setup = () => padSetup(assembly.launch, pad());
+  /** The launch day as the last ShipSpec saw it, or computed now (before the first refresh). */
+  const now = () => {
+    const b = getLast()?.breakdown;
+    const weather = b?.weather?.complex === setup().complex?.id ? b.weather : weatherFor(assembly.launch, { pad: pad(), launchData });
+    const fx = b?.padFx && b.padFx.complex?.id === setup().complex?.id ? b.padFx : padEffects(assembly.launch, { pad: pad(), weather, thrustSL: b?.thrustSL ?? 0, g: ui.g ?? null });
+    return { weather, fx };
+  };
+  const artState = (complex, choices, tempC) => ({ site: complex, slot: { tempC }, equipment: choices });
 
+  // ---------- pictures: the pad art, rendered small ----------
+  const complexIcon = (c) => icons?.objectIcon?.(`pad:${c.id}`, () => padArt(artState(c, padSetup({ site: c.id }, pad()).choices, 10), { radius: 1.25, height: 14, icon: true }).object, { pad: 1.02 }) ?? '';
+  const equipIcon = (key, o) => icons?.objectIcon?.(`padeq:${key}:${o.id}`, () => {
+    const eqs = [{ eq: { key }, option: o }];
+    return padArt({ site: null, slot: { tempC: 10 }, equipment: eqs }, { radius: 1.25, height: 14, icon: true, only: key }).object;
+  }, { pad: 1.05 }) ?? '';
+
+  // ---------- what one option does, in numbers ----------
+  function effectLine(key, o, complex) {
+    const st = setup();
+    if (key === 'mount') return `Takes ${fmtKN(heatLimitOf({ ...st, complex, choices: swap(st.choices, 'mount', o) }) * 1000)} here`;
+    if (key === 'deluge' && o.heatF > 1) return `The pad takes ${fmtKN(heatLimitOf({ ...st, complex, choices: swap(st.choices, 'deluge', o) }) * 1000)} · ${pct(o.acousticF)} of the roar`;
+    if (key === 'deluge') return `The pad takes ${fmtKN(heatLimitOf({ ...st, complex, choices: swap(st.choices, 'deluge', o) }) * 1000)} · the full roar`;
+    if (key === 'clamps') return o.catch ? `Holds ${o.holdS} s · finds about ${pct(o.catch)} of bad engines` : 'Lets go at once';
+    if (key === 'tower') return o.id === 'none' ? 'Nothing reaches the upper ship' : `Reliability +${(o.reliability * 100).toFixed(1)} %`;
+    if (key === 'lightning') return o.strikeF < 1 ? `Stops about ${pct(1 - o.strikeF)} of strikes on the ship` : 'The ship is the tallest thing around';
+    if (key === 'access') return o.escape ? `Crew gets off the pad: about ${pct(o.escape)}` : 'The escape rocket is the only way out';
+    if (key === 'propellant') return `A day of waiting: ${fmtMoneyShort(Math.round((complex?.holdFee ?? 0) * (o.holdF ?? 1)))}`;
+    if (key === 'weather') return `Forecast good to ±${o.errorC} °C`;
+    return '';
+  }
+  const swap = (choices, key, option) => choices.map((c) => (c.eq.key === key ? { ...c, option } : c));
+  function effectFacts(key, o, complex) {
+    const st = setup();
+    const rows = [];
+    if (key === 'mount' || key === 'deluge') {
+      rows.push(fact('Heat limit at this complex', fmtKN(heatLimitOf({ ...st, complex, choices: swap(st.choices, key, o) }) * 1000)));
+      if (key === 'deluge') rows.push(fact('Roar reaching the ship', pct(o.acousticF)));
+    }
+    if (key === 'clamps') rows.push(fact('Held at full thrust', o.holdS ? `${o.holdS} s` : 'no'), fact('Bad engines found on the pad', o.catch ? `about ${pct(o.catch)}` : 'none'));
+    if (key === 'lightning') rows.push(fact('Strikes that reach the ship', pct(o.strikeF)));
+    if (key === 'access') rows.push(fact('Crew gets away from a pad emergency', o.escape ? `about ${pct(o.escape)}` : 'escape rocket only'));
+    if (key === 'propellant') rows.push(fact('A day of waiting', fmtMoney(Math.round((complex?.holdFee ?? 0) * (o.holdF ?? 1)))));
+    if (key === 'weather') rows.push(fact('Forecast good to', `±${o.errorC} °C`));
+    if (o.reliability) rows.push(fact('Reliability', signed(o.reliability * 100, (n) => `${n.toFixed(1)} %`)));
+    rows.push(fact('Fee', o.fee ? fmtMoney(o.fee) : 'free'));
+    if (complex?.kit?.[key] === o.id) rows.push(fact(`Standard at ${complex.name}`, 'yes'));
+    return facts(...rows);
+  }
+
+  /**
+   * A row of a list: clicking it opens the big explanation card (with a CHOOSE action on the card), and a small CHOOSE
+   * button beside it makes the change at once. Uses the design page's item() `onOpen` / `quick`; if that page has no
+   * quick button, adds one itself.
+   */
+  function choice({ id, isOn, card, onPick, ...rest }) {
+    const action = isOn ? undefined : { kind: 'choose', run: onPick, tool: 'choose' };
+    const open = () => { sound('ui.click'); openCard?.({ ...card, ...(action ? { action } : {}) }); };
+    const el = item({ id, on: isOn, tag: isOn ? { text: 'CHOSEN', kind: 'on' } : null, onOpen: open, onToggle: open, quick: isOn ? null : { label: 'CHOOSE', run: onPick, tool: 'choose' }, ...rest });
+    return isOn || el.querySelector('.vd-quick') ? el : withPick(el, onPick);
+  }
+  function withPick(el, onPick) {
+    el.classList.add('vp-pickable');
+    const b = h('button', 'vp-pick', 'CHOOSE');
+    b.type = 'button';
+    b.dataset.tool = 'choose';
+    b.addEventListener('click', (e) => { e.stopPropagation(); onPick(); });
+    el.append(b);
+    return el;
+  }
+  const done = () => { sound('ui.snap'); state.focus = null; changed(); };
+
+  // ---------- views ----------
   function home() {
-    const st = padState(assembly, pad());
+    const st = setup();
+    const { weather, fx } = now();
+    const c = st.complex;
     const out = [];
+    if (!c) return [para('No launch complex in the data.', 'vd-muted')];
     const where = h('div', 'vd-block');
-    where.append(h('div', 'vd-label', '1 · Where and when'));
-    where.append(item({ id: 'site', img: null, name: st.site?.name ?? 'Launch site', sub: st.site?.real ?? '', price: st.site?.fee ? fmtMoneyShort(st.site.fee) : '', onToggle: () => go({ view: 'sites' }) }));
-    where.append(item({ id: 'slot', img: null, name: st.slot ? `${st.slot.name} · ${fmtInt(st.slot.tempC)} °C` : 'Launch window', sub: st.slot?.note ?? '', price: st.slot?.fee ? fmtMoneyShort(st.slot.fee) : 'free', onToggle: () => go({ view: 'slots' }) }));
+    where.append(h('div', 'vd-label', '1 · Launch complex'));
+    where.append(item({ id: 'complex', img: complexIcon(c), name: c.name, sub: `${c.place} · ${c.rockets}`, price: fmtMoneyShort(fx.fee - (fx.feeParts?.hold ?? 0) - (fx.feeParts?.repairDue ?? 0)), onToggle: () => { sound('ui.click'); go({ view: 'complexes' }); } }));
     out.push(where);
     const eqBox = h('div', 'vd-block');
-    eqBox.append(h('div', 'vd-label', '2 · Pad equipment'));
-    for (const { eq, option } of st.equipment) eqBox.append(item({ id: `eq:${eq.key}`, img: null, name: eq.name, sub: option?.name ?? '', price: option?.fee ? fmtMoneyShort(option.fee) : 'free', onToggle: () => go({ view: 'equipment', key: eq.key }) }));
+    eqBox.append(h('div', 'vd-label', '2 · Ground equipment'));
+    for (const { eq, option } of st.choices) eqBox.append(item({ id: `eq:${eq.key}`, img: equipIcon(eq.key, option), name: eq.name, sub: option.name, price: option.fee ? fmtMoneyShort(option.fee) : 'free', onToggle: () => { sound('ui.click'); go({ view: 'equipment', key: eq.key }); } }));
     out.push(eqBox);
-    const last = getLast();
-    out.push(facts(fact('Launch fees, paid at confirm', fmtMoney(last?.breakdown.launchFee ?? 0)), fact('Pad reliability', `+${((last?.breakdown.padReliability ?? 0) * 100).toFixed(1)} %`)));
+    const day = h('div', 'vd-block');
+    day.append(h('div', 'vd-label', 'Launch day'));
+    day.append(facts(
+      fact('Forecast', `${weather.when} · ${deg(weather.forecastC)} · wind ${weather.windKts} kt`),
+      fact('Sky', `${weather.label} · lightning ${pct(weather.lightning)}`),
+      fact('Heat limit of the pad', `takes ${fmtKN(fx.heatLimitKN * 1000)}`),
+      fact('Launch fees, paid at confirm', fmtMoney(getLast()?.breakdown.launchFee ?? fx.fee)),
+      weather.fee > 0 ? fact(`Waiting so far (${weather.day} day${weather.day > 1 ? 's' : ''})`, fmtMoney(weather.fee)) : null,
+    ));
+    out.push(day);
     return out;
   }
-  function choiceItems(options, currentId, onChoose, { subOf = (o) => o.note ?? '', priceOf = (o) => (o.fee ? fmtMoneyShort(o.fee) : 'free') } = {}) {
-    return options.map((o) => {
-      const open = state.focus === o.id;
-      const extra = [];
-      if (o.tempC != null) extra.push(fact('Temperature at the pad', `${fmtInt(o.tempC)} °C`));
-      if (o.reliability) extra.push(fact('Reliability', signed(o.reliability * 100, (n) => `${n.toFixed(1)} %`), o.reliability > 0 ? 'vd-good' : 'vd-warn'));
-      if (o.fee != null) extra.push(fact('Fee', o.fee ? fmtMoney(o.fee) : 'free'));
-      if (o.real) extra.push(fact('Real-world reference', o.real));
-      return item({
-        id: o.id, img: null, name: o.name, sub: subOf(o), price: priceOf(o), on: o.id === currentId, tag: o.id === currentId ? { text: 'CHOSEN', kind: 'on' } : null,
-        expanded: open, onToggle: () => toggleFocus(o.id),
-        detail: open ? [para(o.note ?? ''), prosCons(o.pros, o.cons), facts(...extra)] : null,
-        action: open && o.id !== currentId ? primary('CHOOSE', () => { onChoose(o); sound('ui.click'); state.focus = null; changed(); }, 'choose') : null,
-      });
-    });
+
+  function complexes() {
+    const cur = setup().complex;
+    const out = [para('Real launch complexes. Each comes with its own ground equipment and its own weather; any piece can be changed afterwards.', 'vd-muted')];
+    for (const c of pad().sites) {
+      const isOn = c.id === cur?.id;
+      const limit = heatLimitOf(padSetup({ site: c.id }, pad()));
+      const w = isOn ? now().weather : weatherFor({ site: c.id, seed: assembly.launch?.seed }, { pad: pad(), launchData });
+      out.push(choice({
+        id: c.id, isOn, img: complexIcon(c), name: c.name, sub: `takes ${fmtKN(limit * 1000)} · ${deg(w.forecastC)} · ${c.place}`, price: fmtMoneyShort(kitFee(c, pad())),
+        card: { kind: 'pad', pad: { ...c, heatLimitKN: Math.round(limit) } },
+        onPick: () => { assembly.setLaunch({ site: c.id, complex: undefined, slot: undefined, forecast: undefined, day: 0, pad: {} }); done(); },
+      }));
+    }
+    return out;
   }
-  function sites() {
-    const st = padState(assembly, pad());
-    return [para('Where the ship leaves from. The site sets the weather of each launch window.', 'vd-muted'), ...choiceItems(pad().sites, st.site?.id, (o) => assembly.setLaunchSite(o.id, o.slots?.[0]?.id ?? null), { subOf: (o) => o.real ?? o.note ?? '' })];
-  }
-  function slots() {
-    const st = padState(assembly, pad());
-    return [para('The soonest window is free but may be cold.', 'vd-muted'), ...choiceItems(st.site?.slots ?? [], st.slot?.id, (o) => assembly.setLaunchSlot(o.id), { subOf: (o) => `${fmtInt(o.tempC)} °C · ${o.note ?? ''}` })];
-  }
+
   function equipment(key) {
-    const st = padState(assembly, pad());
-    const c = st.equipment.find((x) => x.eq.key === key);
+    const st = setup();
+    const c = st.choices.find((x) => x.eq.key === key);
     if (!c) { back(); return []; }
-    return [para(c.eq.role ?? '', 'vd-muted'), ...choiceItems(c.eq.options, c.option?.id, (o) => assembly.setPadOption(key, o.id))];
+    const head = h('button', 'vp-eqhead');
+    head.type = 'button';
+    const im = h('img', 'vd-item-img');
+    im.src = equipIcon(key, c.option);
+    im.alt = '';
+    im.draggable = false;
+    const txt = h('span', 'vp-eqhead-txt');
+    txt.append(h('span', 'vd-item-name', c.eq.name), h('span', 'vd-role', c.eq.role ?? ''));
+    head.append(im, txt);
+    head.addEventListener('click', () => { sound('ui.click'); openCard?.({ kind: 'equip', key }); });
+    const out = [head];
+    for (const o of c.eq.options) {
+      out.push(choice({
+        id: o.id, isOn: o.id === c.option.id, img: equipIcon(key, o), name: o.name, sub: effectLine(key, o, st.complex), price: o.fee ? fmtMoneyShort(o.fee) : 'free',
+        card: { kind: 'equip', key, option: o },
+        onPick: () => { assembly.setPadOption(key, o.id); done(); },
+      }));
+    }
+    // the numbers of the piece in use, for this ship at this complex
+    const now0 = h('div', 'vd-block');
+    now0.append(h('div', 'vd-label', `In use · ${c.option.name}`), effectFacts(key, c.option, st.complex));
+    out.push(now0);
+    return out;
   }
 
   return {
     /** The card's body for the current view ({ view: 'home' } or one of this card's own views). */
     body(v) {
-      if (v.view === 'sites') return sites();
-      if (v.view === 'slots') return slots();
+      if (v.view === 'complexes') return complexes();
       if (v.view === 'equipment') return equipment(v.key);
       return home();
     },
     /** Breadcrumb name of a view of this card. */
     crumb(v) {
-      if (v.view === 'sites') return 'Launch site';
-      if (v.view === 'slots') return 'Launch window';
+      if (v.view === 'complexes') return 'Launch complex';
       if (v.view === 'equipment') return pad().equipment?.find((e) => e.key === v.key)?.name ?? 'Equipment';
       return '';
     },
     /** The one-line summary on the closed card: { line, built, img }. */
     summary() {
-      const st = padState(assembly, pad());
-      return { line: `${st.site?.name?.split(',')[0] ?? 'No site'} · ${st.slot ? `${st.slot.name} · ${fmtInt(st.slot.tempC)} °C` : ''}`, built: true, img: null };
+      const c = setup().complex;
+      if (!c) return { line: 'No launch complex', built: false, img: null };
+      const { weather, fx } = now();
+      return { line: `${c.name} · ${deg(weather.forecastC)} · ${fmtMoneyShort(getLast()?.breakdown.launchFee ?? fx.fee)}`, built: true, img: complexIcon(c) || null };
     },
     /** A key that changes whenever the pad art must be redrawn; dims: { radius, height } of the ship. */
     artKey({ radius, height }) {
-      const st = padState(assembly, pad());
-      return `${st.site?.id}:${st.slot?.id}:${st.equipment.map((c) => c.option?.id).join(',')}:${radius.toFixed(2)}:${height.toFixed(1)}`;
+      const st = setup();
+      return `${st.complex?.id}:${st.choices.map((c) => c.option?.id).join(',')}:${now().weather.forecastC < 0 ? 'snow' : ''}:${radius.toFixed(2)}:${height.toFixed(1)}`;
     },
     /** The pad's 3D art under a ship of these dims ({ radius, height, layout }). */
-    art(dims) { return padArt(padState(assembly, pad()), dims); },
+    art(dims) {
+      const st = setup();
+      return padArt(artState(st.complex, st.choices, now().weather.forecastC), dims);
+    },
   };
 }

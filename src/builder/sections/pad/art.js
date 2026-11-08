@@ -1,11 +1,14 @@
 // 3D art for the launch pad under the vehicle in the design studio. Owned by whoever builds the pad section.
-// padArt(state, { radius, height, layout }) → { object: THREE.Object3D, top: metres } where `top` is the height the
-// vehicle stands on. state = padState() from sections.js: { site, slot, equipment: [{ eq, option }] }; layout = the
-// vehicle's layout entries (heights above the vehicle's base), used to fit the arms and clamps to the real hull.
+// padArt(state, { radius, height, layout, icon, only }) → { object: THREE.Object3D, top: metres } where `top` is the
+// height the vehicle stands on. state = { site (the launch complex), slot: { tempC } (launch-day temperature, snow
+// below 0 °C), equipment: [{ eq, option }] } (designPad.js builds it from effects.js padSetup); layout = the vehicle's
+// layout entries (heights above the vehicle's base), used to fit the arms and clamps to the real hull. `icon` leaves out
+// the ground and the far-off storage and weather gear (a card picture); `only` = an equipment key draws just that piece.
 //
 // Everything is procedural and modelled on real pads: LC-39A/B at Kennedy (flame trench, mobile launcher platform,
 // fixed and rotating service structures, water tower and rainbirds, catenary lightning towers, slidewire escape
-// baskets, cryogenic spheres), SpaceX's strongback, Saturn V hold-down arms. The pieces are merged into one mesh per
+// baskets, cryogenic spheres), SpaceX's strongback, Saturn V hold-down arms, Starbase's raised launch mount and its
+// tower with catch arms, the flame pit and support arms of Gagarin's Start. The pieces are merged into one mesh per
 // material, so the studio draws the whole pad in about a dozen draw calls every frame.
 //
 // Layout (in the pad's own frame, before it is turned): the service tower stands on +x. The pad is then turned so the
@@ -40,9 +43,12 @@ const M = {
   yellow: mat(0xe0b03a, 0.5, 0.2),
   wire: mat(0x2a2d31, 0.6, 0.5),
   rubber: mat(0x1b1c1e, 0.9, 0),
+  earth: mat(0x7d6c52, 1, 0),
+  water: new THREE.MeshStandardMaterial({ color: 0x58b4ec, roughness: 0.15, metalness: 0, transparent: true, opacity: 0.62 }), // spray, card pictures only
 };
 
 // ---------- ground: a soft disc of the site's own land ----------
+// keyed by a complex's climate.ground (or its id)
 const GROUNDS = {
   cape: { base: '#b9ad87', spots: ['#78814f', '#cdc29c', '#8e9160'] }, // sand and palmetto scrub
   vandenberg: { base: '#a8925b', spots: ['#5f6a43', '#c3ad73', '#7a7a4c'] }, // dry golden grass, chaparral
@@ -326,7 +332,7 @@ function shipModel(layout) {
 }
 
 // ---------- the pad ----------
-export function padArt(state, { radius = 1.25, height = 20, layout = null } = {}) {
+export function padArt(state, { radius = 1.25, height = 20, layout = null, icon = false, only = null } = {}) {
   const R = Math.max(0.9, radius || 1.25);
   const H = height > 0.5 ? height : 16; // an empty pad is sized for a typical ship
   const ship = shipModel(layout);
@@ -336,6 +342,13 @@ export function padArt(state, { radius = 1.25, height = 20, layout = null } = {}
     mount: pick('mount', 'slab'), tower: pick('tower', 'none'), clamps: pick('clamps', 'none'), deluge: pick('deluge', 'none'),
     lightning: pick('lightning', 'none'), access: pick('access', 'none'), propellant: pick('propellant', 'manual'), weather: pick('weather', 'none'),
   };
+  // `only`: one piece of equipment on a bare slab (a card picture); the other pieces are left out
+  if (only) for (const k of Object.keys(o)) if (k !== only && k !== 'mount') o[k] = { tower: 'none', clamps: 'none', deluge: 'none', lightning: 'none', access: 'none', propellant: 'none', weather: 'none' }[k];
+  if (only && only !== 'mount') o.mount = 'slab';
+  const near = only === 'propellant' || only === 'weather'; // far-off gear drawn close in, for its picture
+  const bare = only === 'deluge' || only === 'clamps'; // gear at the ship's base, drawn close up with no pad under it
+  const far = (d) => (near ? d * 0.22 : d);
+  const site = state?.site ?? null;
   const kit = new Kit();
 
   // sizes shared by the pieces
@@ -344,44 +357,100 @@ export function padArt(state, { radius = 1.25, height = 20, layout = null } = {}
   // tower width and its centre's distance from the ship's axis: back far enough to clear any side part reaching its way
   const towerW = 2.6, towerD = Math.max(R + 3.8, ship.clearance(FACING_DEG, towerW / 2) + towerW / 2 + 0.5);
   const mlpW = 2 * (towerD + towerW / 2 + 0.9), mlpD = Math.max(hole + 6, mlpW * 0.78);
-  const RH = Math.max(8.5, R * 5.5, o.mount === 'mlp' ? Math.hypot(mlpW / 2, mlpD / 2) + 0.8 : 0); // hardstand radius
+  // hardstand radius (a card picture keeps it tight)
+  const RH = Math.max(icon ? R * 3.4 : Math.max(8.5, R * 5.5), o.mount === 'mlp' ? Math.hypot(mlpW / 2, mlpD / 2) + 0.8 : 0);
 
-  // the site's land
-  const tex = groundTexture(state?.site?.id, (state?.slot?.tempC ?? 10) < 0);
-  const groundMat = new THREE.MeshStandardMaterial({ color: tex ? 0xffffff : 0x8a8466, map: tex, transparent: !!tex, roughness: 1, metalness: 0 });
-  groundMat.userData.flat = true;
-  disc(kit, groundMat, Math.max(26, RH + 14), 0, 0.015, 0, 64);
+  // the complex's land (no ground on a card picture)
+  if (!icon) {
+    const tex = groundTexture(site?.climate?.ground ?? site?.id, (state?.slot?.tempC ?? 10) < 0);
+    const groundMat = new THREE.MeshStandardMaterial({ color: tex ? 0xffffff : 0x8a8466, map: tex, transparent: !!tex, roughness: 1, metalness: 0 });
+    groundMat.userData.flat = true;
+    disc(kit, groundMat, Math.max(26, RH + 14), 0, 0.015, 0, 64);
+  }
 
   // ----- launch mount and flame trench -----
   let hs, top; // hardstand height, height the ship stands on
   const oct = octagon(RH);
-  if (o.mount === 'deflector') {
+  const ring = (S, t, y) => { // a square steel launch ring of outer size S and thickness t around the hole, its top at y
+    box(kit, M.steel, S, t, (S - hole) / 2, 0, y - t / 2, (S + hole) / 4);
+    box(kit, M.steel, S, t, (S - hole) / 2, 0, y - t / 2, -(S + hole) / 4);
+    box(kit, M.steel, (S - hole) / 2, t, hole, (S + hole) / 4, y - t / 2, 0);
+    box(kit, M.steel, (S - hole) / 2, t, hole, -(S + hole) / 4, y - t / 2, 0);
+  };
+  if (near) {
+    hs = 0; top = 0; // storage and weather gear on their own: no pad under them
+  } else if (bare) {
+    hs = 0; top = 0.35;
+    if (only === 'clamps') {
+      // the base of a ship standing on its launch ring: an engine bell under a tank, the clamps (if any) at its rim
+      ring(hole + 1.6, 0.35, top);
+      kit.add(CONE, M.steelDark, trs(0, top + 0.35, 0, R * 0.55, 0.7, R * 0.55));
+      post(kit, M.white, R * 0.98, 1.9, 0, top + 0.6, 0);
+    } else if (o.deluge === 'none') {
+      // no water: a scorched, cracked patch of concrete
+      box(kit, M.concreteOld, R * 3.2, 0.35, R * 3.2, 0, 0.175, 0);
+      disc(kit, M.scorch, R * 1.3, 0, 0.36, 0);
+      for (const [a, l] of [[20, 1.5], [140, 1.2], [250, 1.7]]) { const [cx, cz] = polar(a, l / 2 + 0.6); box(kit, M.trench, l, 0.02, 0.06, cx, 0.37, cz, a * DEG); }
+    }
+  } else if (o.mount === 'deflector') {
+    // Gagarin's Start: the ship hangs over the edge of a deep flame pit that opens out on one side (-x)
     hs = 1.2;
-    const mountH = 3.0, S = hole + 1.4;
+    const mountH = 3.0, S = hole + 1.4, pitW = trenchW * 1.5;
     top = hs + mountH;
     prism(kit, M.concrete, clip(oct, 1, 0, hole / 2), 0, hs);
-    prism(kit, M.concrete, clip(clip(oct, -1, 0, -hole / 2), 0, 1, trenchW / 2), 0, hs);
-    prism(kit, M.concrete, clip(clip(oct, -1, 0, -hole / 2), 0, -1, trenchW / 2), 0, hs);
-    // the open channel the deflector throws the fire into, scorched beyond the pad
-    box(kit, M.trench, RH + hole / 2, 0.12, trenchW, (hole / 2 - RH) / 2, 0.06, 0);
-    box(kit, M.scorch, 7, 0.03, trenchW * 2.2, -RH - 3.2, 0.03, 0);
+    prism(kit, M.concrete, clip(clip(oct, -1, 0, -hole / 2), 0, 1, pitW / 2), 0, hs);
+    prism(kit, M.concrete, clip(clip(oct, -1, 0, -hole / 2), 0, -1, pitW / 2), 0, hs);
+    // the pit: a dark floor running out past the pad, its earth walls sloping up and out like a quarry's
+    const pitL = RH + (icon ? 4 : 16), end = hole / 2 - pitL;
+    box(kit, M.trench, pitL, 0.1, pitW, (hole / 2 + end) / 2, 0.05, 0);
+    for (const s of [-1, 1]) box(kit, M.earth, -RH - end, 0.3, 6.5, (-RH + end) / 2, 1.05, s * (pitW / 2 + 3.0), 0, -s * 0.33);
+    if (!icon) box(kit, M.scorch, 9, 0.03, pitW * 1.6, end - 2.5, 0.03, 0);
     // a sloped steel deflector under the ship
     const run = hole + 1.6, drop = hs - 0.15;
-    box(kit, M.steelDark, Math.hypot(run, drop), 0.3, trenchW - 0.1, hole / 2 - run / 2, (hs + 0.15) / 2, 0, 0, 0, Math.atan2(drop, run));
+    box(kit, M.steelDark, Math.hypot(run, drop), 0.3, pitW - 0.1, hole / 2 - run / 2, (hs + 0.15) / 2, 0, 0, 0, Math.atan2(drop, run));
     // the steel launch ring on four concrete legs
     for (const [sx, sz] of [[1, 1], [1, -1], [-1, 1], [-1, -1]]) box(kit, M.concreteOld, 0.8, mountH - 0.5, 0.8, sx * (S / 2 - 0.4), hs + (mountH - 0.5) / 2, sz * (S / 2 - 0.4));
-    box(kit, M.steel, S, 0.5, (S - hole) / 2, 0, top - 0.25, (S + hole) / 4);
-    box(kit, M.steel, S, 0.5, (S - hole) / 2, 0, top - 0.25, -(S + hole) / 4);
-    box(kit, M.steel, (S - hole) / 2, 0.5, hole, (S + hole) / 4, top - 0.25, 0);
-    box(kit, M.steel, (S - hole) / 2, 0.5, hole, -(S + hole) / 4, top - 0.25, 0);
+    ring(S, 0.5, top);
+    // four support arms (the 'tulip'): they hold the ship by its base and swing back, with their counterweights, at liftoff
+    const gy = Math.min(3.2, Math.max(0.9, ship.lowest ? ship.lowest.y + 0.3 : 1.2));
+    const rg = empty ? R : ship.lowest ? surfaceOf(ship.lowest, 0.05) : R;
+    for (const a of [45, 135, 225, 315]) {
+      kit.push(turn(a));
+      const px = S / 2 - 0.2;
+      box(kit, M.steelDark, 0.7, 0.6, 0.7, px, top + 0.3, 0); // the pivot block on the ring
+      const tip = empty ? [px + 1.4, top + gy + 1.6, 0] : [rg + 0.08, top + gy, 0];
+      beam(kit, M.steel, [px, top + 0.6, 0], tip, 0.32);
+      box(kit, M.steelDark, 0.25, 0.7, 0.55, tip[0] + 0.1, tip[1], 0); // the grip on the ship's base
+      beam(kit, M.steel, [px, top + 0.6, 0], [px + 1.2, top - 1.6, 0], 0.28); // the counterweight lever
+      box(kit, M.concreteOld, 0.9, 0.9, 0.9, px + 1.3, top - 2.0, 0); // the counterweight
+      kit.pop();
+    }
+  } else if (o.mount === 'raised') {
+    // Starbase-style launch mount: a heavy steel table on six legs, the bare concrete (or a water-cooled steel plate) under it
+    hs = 0.45;
+    const mountH = Math.max(3.2, R * 3.4 * Math.min(1.1, 0.55 + (site?.scale ?? 1) * 0.4)), S = hole + 2.0; // sized like the complex (Starbase tall, Mahia low)
+    top = hs + mountH;
+    prism(kit, M.concrete, oct, 0, hs);
+    if (o.deluge === 'water' || o.deluge === 'tower') {
+      box(kit, M.steelDark, S + 1.0, 0.25, S + 1.0, 0, hs + 0.125, 0); // the water-cooled steel plate
+      for (let i = -2; i <= 2; i++) box(kit, M.steel, 0.12, 0.06, S + 0.6, i * (S / 5), hs + 0.28, 0);
+    } else disc(kit, M.scorch, R * 2.8, 0, hs + 0.012, 0);
+    for (let k = 0; k < 6; k++) {
+      const [lx, lz] = polar(30 + 60 * k, S / 2 + 0.1);
+      box(kit, M.steelDark, 0.95, mountH - 0.9, 0.95, lx, hs + (mountH - 0.9) / 2, lz, (30 + 60 * k) * DEG);
+      const [bx, bz] = polar(60 * k, (S / 2 + 0.1) * 0.87);
+      box(kit, M.steel, (S / 2 + 0.1) * 1.0, 0.3, 0.3, bx, hs + mountH * 0.45, bz, (60 * k + 90) * DEG); // bracing between the legs
+    }
+    ring(S, 0.9, top);
+    box(kit, M.steelDark, S + 0.2, 0.12, S + 0.2, 0, top - 0.95, 0);
   } else if (o.mount === 'trench' || o.mount === 'mlp') {
     hs = 2.8;
     prism(kit, M.concrete, clip(oct, 1, 0, trenchW / 2), 0, hs);
     prism(kit, M.concrete, clip(oct, -1, 0, trenchW / 2), 0, hs);
     // trench floor running out past the pad both ways, heat-proof brick on its walls
-    box(kit, M.trench, trenchW, 0.1, 2 * RH + 10, 0, 0.05, 0);
+    box(kit, M.trench, trenchW, 0.1, 2 * RH + (icon ? 2 : 10), 0, 0.05, 0);
     for (const s of [-1, 1]) box(kit, M.brick, 0.06, hs - 0.3, 2 * RH * 0.88, s * (trenchW / 2 - 0.03), (hs - 0.3) / 2 + 0.1, 0);
-    for (const s of [-1, 1]) box(kit, M.scorch, trenchW * 2.4, 0.03, 6, 0, 0.03, s * (RH + 5.5));
+    if (!icon) for (const s of [-1, 1]) box(kit, M.scorch, trenchW * 2.4, 0.03, 6, 0, 0.03, s * (RH + 5.5));
     // the two-way deflector: a steel roof under the ship that splits the fire along the trench
     const ridge = hs - 0.8, run = 2.8;
     for (const s of [-1, 1]) {
@@ -423,8 +492,8 @@ export function padArt(state, { radius = 1.25, height = 20, layout = null } = {}
       }
       // the crawlerway ramp it came up, two gravel lanes
       const rampL = 12;
-      box(kit, M.concreteOld, Math.hypot(rampL, hs), 0.4, 10, -RH - rampL / 2 + 0.6, hs / 2 - 0.15, 0, 0, 0, Math.atan2(hs, rampL));
-      for (const s of [-1, 1]) box(kit, M.concreteOld, 14, 0.05, 3.2, -RH - rampL - 6, 0.04, s * 2.8);
+      if (!icon) box(kit, M.concreteOld, Math.hypot(rampL, hs), 0.4, 10, -RH - rampL / 2 + 0.6, hs / 2 - 0.15, 0, 0, 0, Math.atan2(hs, rampL));
+      if (!icon) for (const s of [-1, 1]) box(kit, M.concreteOld, 14, 0.05, 3.2, -RH - rampL - 6, 0.04, s * 2.8);
     }
   } else {
     // a flat concrete slab, scorched where the engines fire straight down
@@ -439,7 +508,7 @@ export function padArt(state, { radius = 1.25, height = 20, layout = null } = {}
   const hull = (h) => (empty ? 1.25 : ship.hullAt(h)); // hull radius at h metres above the ship's base
 
   // a small umbilical mast at the base: how propellant and power get in when nothing else reaches the ship
-  if (o.tower !== 'strongback' && o.mount !== 'mlp') {
+  if (o.tower !== 'strongback' && o.mount !== 'mlp' && o.mount !== 'raised' && (!only || only === 'tower')) {
     kit.push(turn(wa(67.5)));
     box(kit, M.steelDark, 0.6, top + 1.4 - hs, 0.6, R + 1.1, hs + (top + 1.4 - hs) / 2, 0);
     box(kit, M.steelDark, 0.9, 0.3, 0.35, R + 0.55, top + 0.9, 0);
@@ -466,9 +535,10 @@ export function padArt(state, { radius = 1.25, height = 20, layout = null } = {}
 
   // ----- service tower -----
   if (o.tower === 'fixed' || o.tower === 'rss') {
-    lattice(kit, M.red, { x: towerD, w: towerW, y0: base, y1: towerTop, bay: 2.4, t: 0.18 });
-    box(kit, M.red, towerW * 2.4, 0.35, 0.4, towerD - towerW * 0.5, towerTop + 0.2, 0); // hammerhead crane
-    box(kit, M.red, 0.6, 1.2, 0.6, towerD, towerTop + 0.6, 0);
+    const tm = site?.look?.tower === 'white' ? M.white : M.red; // Saturn-era red, or a complex's own colour
+    lattice(kit, tm, { x: towerD, w: towerW, y0: base, y1: towerTop, bay: 2.4, t: 0.18 });
+    box(kit, tm, towerW * 2.4, 0.35, 0.4, towerD - towerW * 0.5, towerTop + 0.2, 0); // hammerhead crane
+    box(kit, tm, 0.6, 1.2, 0.6, towerD, towerTop + 0.6, 0);
     // swing arms at three levels, each moved onto the flank of a part and reaching that part's own hull
     const x0 = towerD - towerW / 2;
     const used = access ? [crewH] : [];
@@ -479,7 +549,7 @@ export function padArt(state, { radius = 1.25, height = 20, layout = null } = {}
       fit.arms.push([+hh.toFixed(2), +((empty ? 1.25 : ship.hullMax(hh - 0.31, hh + 0.31))).toFixed(2)]);
       box(kit, M.grey, towerW + 0.6, 0.12, towerW + 0.6, towerD, top + hh - 0.32, 0); // service floor
       if (empty) swungBack(kit, x0, towerW);
-      swingArm(kit, M.red, x0, (empty ? 1.25 : ship.hullMax(hh - 0.31, hh + 0.31)) + 0.02, top + hh);
+      swingArm(kit, tm, x0, (empty ? 1.25 : ship.hullMax(hh - 0.31, hh + 0.31)) + 0.02, top + hh);
       if (empty) kit.pop();
     }
     if (access) crew = { angle: 0, d: towerD, w: towerW };
@@ -499,6 +569,32 @@ export function padArt(state, { radius = 1.25, height = 20, layout = null } = {}
       kit.add(rail, M.steel, trs(P[0], base + 0.05, P[1], 1, 1, 1, -Math.PI / 2, 60 * DEG, 0));
       rail.dispose();
     }
+  } else if (o.tower === 'catch') {
+    // Starbase-style integration tower: a wide square lattice, a carriage with two long catch arms ('chopsticks')
+    // that pass either side of the ship near its top, and a quick-disconnect arm that feeds the upper ship
+    const W = towerW + 0.6, x0 = towerD - W / 2;
+    lattice(kit, M.steelDark, { x: towerD, w: W, y0: base, y1: towerTop + 1.2, bay: 2.6, t: 0.22 });
+    box(kit, M.steelDark, W + 0.4, 0.4, W + 0.4, towerD, towerTop + 1.4, 0);
+    post(kit, M.steel, 0.12, 3.2, towerD, towerTop + 1.6, 0, CYL8); // lightning rod and antennas on the top
+    const ch = empty ? H * 0.82 : Math.min(H * 0.86, Math.max(H * 0.6, ship.capsule ? ship.capsule.y - 0.8 : H * 0.8));
+    const yc = top + ch;
+    box(kit, M.grey, W + 0.9, 2.2, W + 0.9, towerD, yc, 0); // the carriage around the tower
+    const rArm = (empty ? 1.25 : ship.hullMax(ch - 0.6, ch + 0.6)) + 0.55;
+    const tipX = empty ? x0 - 2.5 : -R * 0.7, open = empty ? 2.6 : rArm;
+    for (const s of [-1, 1]) {
+      beam(kit, M.steel, [x0 - 0.2, yc, s * (W / 2 - 0.2)], [tipX, yc, s * open], 0.62);
+      box(kit, M.yellow, 0.5, 0.5, 0.25, tipX, yc - 0.1, s * (open - 0.35)); // catch pads
+    }
+    fit.chopsticks = [+ch.toFixed(2), +rArm.toFixed(2)];
+    // the quick-disconnect arm, lower down, reaching the hull
+    const qh = empty ? H * 0.55 : ship.armHeight(FACING_DEG, H * 0.6, [ch, ...(access ? [crewH] : [])]);
+    if (qh != null) {
+      fit.arms.push([+qh.toFixed(2), +((empty ? 1.25 : ship.hullMax(qh - 0.31, qh + 0.31))).toFixed(2)]);
+      if (empty) swungBack(kit, x0, W);
+      swingArm(kit, M.steelDark, x0, (empty ? 1.25 : ship.hullMax(qh - 0.31, qh + 0.31)) + 0.02, top + qh);
+      if (empty) kit.pop();
+    }
+    if (access) crew = { angle: 0, d: towerD, w: W };
   } else if (o.tower === 'strongback') {
     // close to the ship, but clear of the fins, legs and boosters near it
     const depth = 1.0, W = Math.max(2.0, R * 1.5);
@@ -548,7 +644,7 @@ export function padArt(state, { radius = 1.25, height = 20, layout = null } = {}
     if (empty) kit.pop();
     if (o.access === 'slidewire') {
       // steel wires from the crew level down to a bunker, escape baskets parked at the top
-      const xs = crew.d + crew.w / 2, xe = crew.d + 17;
+      const xs = crew.d + crew.w / 2, xe = crew.d + (icon ? 8 : 17);
       for (const z of [-0.8, -0.27, 0.27, 0.8]) {
         const curve = cable(kit, M.wire, [xs, accessY - 0.3, z], [xe, 0.9, z * 1.6], 0.6, 0.025);
         const p = curve.getPoint(0.05);
@@ -567,7 +663,7 @@ export function padArt(state, { radius = 1.25, height = 20, layout = null } = {}
   // ----- hold-down clamps: they grip the bottom of the lowest part above the engines -----
   if (o.clamps === 'hold' || o.clamps === 'release') {
     const big = o.clamps === 'release';
-    const gy = Math.min(4.5, Math.max(0.5, ship.lowest ? ship.lowest.y : 0.6)); // grip height above the ship's base
+    const gy = bare ? 0.6 : Math.min(4.5, Math.max(0.5, ship.lowest ? ship.lowest.y : 0.6)); // grip height above the ship's base
     const rg = ship.lowest ? surfaceOf(ship.lowest, 0.02) : R;
     const rc = rg + (big ? 0.75 : 0.5); // the column's distance from the axis
     fit.grip = [+gy.toFixed(2), +rg.toFixed(2)];
@@ -611,6 +707,13 @@ export function padArt(state, { radius = 1.25, height = 20, layout = null } = {}
     const edge = o.mount === 'deflector' ? (hole + 1.4) / 2 + 0.25 : o.mount === 'trench' ? (hole + 1.6) / 2 + 0.25 : ringR + 1.1;
     const at = (r, h) => { const [px, pz] = polar(fa, r); return [px, h, pz]; };
     pipe(kit, M.steel, at(ringR, top + 0.12), at(edge, top + 0.12), 0.1);
+    if (only === 'deluge') {
+      // its card picture shows the water on: a fan of spray rising from every nozzle
+      for (let k = 0; k < 12; k++) {
+        const [nx, nz] = polar(k * 30 + 15, ringR - 0.12);
+        kit.add(CONE, M.water, trs(nx * 0.93, top + 0.75, nz * 0.93, 0.28, 1.1, 0.28, Math.PI));
+      }
+    }
     if (o.mount !== 'mlp') {
       if (top - hs > 0.2) pipe(kit, M.steel, at(edge, top + 0.17), at(edge, hs + 0.07), 0.1);
       pipe(kit, M.steel, at(edge, hs + 0.12), at(RH * 0.85, hs + 0.12), 0.1);
@@ -625,8 +728,9 @@ export function padArt(state, { radius = 1.25, height = 20, layout = null } = {}
         post(kit, M.steel, 0.12, 1.4, bx, rbY, bz, CYL8);
         pipe(kit, M.steel, [bx, rbY + 1.35, bz], [nx, rbY + 1.6, nz], 0.1);
         post(kit, M.steelDark, 0.16, 0.25, nx, rbY + 1.5, nz, CYL8);
+        if (only === 'deluge') cable(kit, M.water, [nx, rbY + 1.6, nz], [nx * 0.2, top + 0.3, nz * 0.2], -0.7, 0.2); // a rainbird's arc of water
       }
-      const [wx, wz] = polar(80, 14);
+      const [wx, wz] = polar(80, icon ? RH + 2.5 : 14);
       const wh = Math.max(12, H * 0.75 + 4);
       for (const [dx, dz] of [[1, 1], [1, -1], [-1, 1], [-1, -1]]) beam(kit, M.grey, [wx + dx * 1.9, 0, wz + dz * 1.9], [wx + dx * 1.2, wh, wz + dz * 1.2], 0.22);
       for (let h = 3; h < wh; h += 3.5) box(kit, M.grey, 2.9 - (h / wh) * 1.2, 0.14, 2.9 - (h / wh) * 1.2, wx, h, wz);
@@ -640,45 +744,49 @@ export function padArt(state, { radius = 1.25, height = 20, layout = null } = {}
   // ----- lightning protection -----
   if (o.lightning === 'mast') {
     let mx, mz, mt;
-    if (o.tower === 'fixed' || o.tower === 'rss') { mx = towerD; mz = 0; mt = towerTop + 1.2; }
+    if (o.tower === 'fixed' || o.tower === 'rss' || o.tower === 'catch') { mx = towerD; mz = 0; mt = towerTop + (o.tower === 'catch' ? 2.4 : 1.2); }
     else {
-      [mx, mz] = polar(-30, 8.5);
+      [mx, mz] = polar(-30, icon ? RH * 0.8 : 8.5);
       mt = towerTop;
       lattice(kit, M.grey, { x: mx, z: mz, w: 1.1, y0: 0, y1: mt, bay: 2.6, t: 0.14 });
     }
     const mh = Math.max(5, H * 0.28);
     kit.add(CONE, M.white, trs(mx, mt + mh / 2, mz, 0.22, mh, 0.22));
     // the cable from the mast tip to an anchor on each side
-    const dir = o.tower === 'fixed' || o.tower === 'rss' ? [0, 1] : [-Math.sin(30 * DEG), Math.cos(30 * DEG)];
+    const dir = o.tower === 'fixed' || o.tower === 'rss' || o.tower === 'catch' ? [0, 1] : [-Math.sin(30 * DEG), Math.cos(30 * DEG)];
     for (const s of [-1, 1]) {
-      const ax = mx + s * dir[0] * 13, az = mz + s * dir[1] * 13;
+      const reach = icon ? 6 : 13, ax = mx + s * dir[0] * reach, az = mz + s * dir[1] * reach;
       cable(kit, M.wire, [mx, mt + mh - 0.3, mz], [ax, 0.5, az], 1.2, 0.03);
       box(kit, M.concreteOld, 0.9, 0.6, 0.9, ax, 0.3, az);
     }
   } else if (o.lightning === 'catenary') {
-    const Rc = Math.max(12.5, R * 7.5), hc = top + H * 1.45 + 3, mh = Math.max(5, H * 0.3);
+    const Rc = icon ? RH + 1.5 : Math.max(12.5, R * 7.5), hc = top + H * (icon ? 1.15 : 1.45) + 3, mh = Math.max(5, H * 0.3);
     const tops = [];
     for (const a of [20, 140, 260]) {
       const [cx, cz] = polar(a, Rc);
       lattice(kit, M.grey, { x: cx, z: cz, w: 1.0, y0: 0, y1: hc, bay: 3, t: 0.12, ry: a });
       kit.add(CONE, M.white, trs(cx, hc + mh / 2, cz, 0.25, mh, 0.25));
       tops.push([cx, hc + mh * 0.8, cz]);
-      const [ox, oz] = polar(a, Rc + 9);
-      cable(kit, M.wire, [cx, hc + mh * 0.8, cz], [ox, 0.5, oz], 1.0, 0.035);
-      box(kit, M.concreteOld, 0.9, 0.6, 0.9, ox, 0.3, oz);
+      if (!icon) {
+        const [ox, oz] = polar(a, Rc + 9);
+        cable(kit, M.wire, [cx, hc + mh * 0.8, cz], [ox, 0.5, oz], 1.0, 0.035);
+        box(kit, M.concreteOld, 0.9, 0.6, 0.9, ox, 0.3, oz);
+      }
     }
     for (let k = 0; k < 3; k++) cable(kit, M.wire, tops[k], tops[(k + 1) % 3], 3.0, 0.035);
   }
 
-  // ----- propellant loading -----
+  // ----- propellant loading (left out of a complex's card picture; drawn close in for its own picture) -----
+  const showFar = !icon || near;
   const feed = (x, z, r = 0.2) => {
     // a pipe along the ground from storage to the pad's edge, then up to the umbilical
+    if (near) return;
     const len = Math.hypot(x, z), ex = (x / len) * RH * 0.9, ez = (z / len) * RH * 0.9;
     pipe(kit, M.steel, [x, 0.3, z], [ex, 0.3, ez], r);
   };
-  if (o.propellant === 'manual') {
+  if (showFar && o.propellant === 'manual') {
     // a road tanker backed up to the pad, its hose run up onto the concrete
-    const rc = RH + 3.8;
+    const rc = near ? 0 : RH + 3.8;
     const [tx, tz] = polar(150, rc);
     kit.push(trs(tx, 0, tz, 1, 1, 1, 0, 150 * DEG, 0));
     box(kit, M.steelDark, 6.0, 0.35, 1.9, 0, 0.75, 0);
@@ -687,12 +795,14 @@ export function padArt(state, { radius = 1.25, height = 20, layout = null } = {}
     box(kit, M.glass, 0.05, 0.6, 1.7, 2.96, 2.05, 0);
     for (const wx of [-2.2, -1.3, 2.3]) for (const s of [-1, 1]) kit.add(CYL, M.rubber, trs(wx, 0.5, s * 0.95, 0.5, 0.35, 0.5, Math.PI / 2));
     kit.pop();
-    const [hx0, hz0] = polar(150, rc - 3.0), [ex, ez] = polar(150, RH - 0.5);
-    cable(kit, M.rubber, [hx0, 1.0, hz0], [ex, hs + 0.15, ez], 0.3, 0.08);
-  } else {
+    if (!near) {
+      const [hx0, hz0] = polar(150, rc - 3.0), [ex, ez] = polar(150, RH - 0.5);
+      cable(kit, M.rubber, [hx0, 1.0, hz0], [ex, hs + 0.15, ez], 0.3, 0.08);
+    }
+  } else if (showFar && (o.propellant === 'auto' || o.propellant === 'loadgo')) {
     // insulated storage spheres, the oxidiser (bigger) and the fuel
     for (const [a, r] of [[105, 2.4], [124, 2.0]]) {
-      const [sx, sz] = polar(a, 15.5);
+      const [sx, sz] = polar(near ? a * 3 : a, near ? 3.2 : 15.5);
       const legH = 1.5;
       for (let k = 0; k < 8; k++) { const [lx, lz] = polar(k * 45, r * 0.7); post(kit, M.grey, 0.12, legH + r * 0.6, sx + lx, 0, sz + lz, CYL8); }
       sphere(kit, M.white, r, sx, legH + r, sz);
@@ -701,7 +811,7 @@ export function padArt(state, { radius = 1.25, height = 20, layout = null } = {}
     }
     if (o.propellant === 'loadgo') {
       // the propellant chilling plant: storage bullets and a heat exchanger with its fans
-      const [cx, cz] = polar(210, 16);
+      const [cx, cz] = polar(210, near ? 6 : 16);
       kit.push(trs(cx, 0, cz, 1, 1, 1, 0, 120 * DEG, 0));
       for (const s of [-1, 1]) {
         kit.add(CYL, M.white, trs(0, 1.3, s * 1.2, 0.85, 4.2, 0.85, 0, 0, Math.PI / 2));
@@ -715,31 +825,47 @@ export function padArt(state, { radius = 1.25, height = 20, layout = null } = {}
     }
   }
 
-  // ----- weather watch -----
-  if (o.weather === 'balloons' || o.weather === 'radar') {
-    const [hx, hz] = polar(-50, 11);
+  // ----- weather watch (left out of a complex's card picture) -----
+  if (near && only === 'weather' && o.weather === 'none') {
+    // looking at the sky: a windsock on a pole is all there is
+    post(kit, M.steel, 0.08, 6, 0, 0, 0, CYL8);
+    kit.add(CONE, M.red, trs(1.1, 5.6, 0, 0.45, 2.2, 0.45, 0, 0, -Math.PI / 2 + 0.2));
+  }
+  if (showFar && (o.weather === 'balloons' || o.weather === 'radar')) {
+    const [hx, hz] = polar(-50, far(11));
     box(kit, M.white, 2.2, 1.8, 1.8, hx, 0.9, hz);
     box(kit, M.grey, 2.5, 0.15, 2.1, hx, 1.88, hz);
     // a weather balloon on its way up, and wind towers with cup anemometers
-    sphere(kit, M.white, 0.7, hx - 1.5, 15, hz + 1.0, 1.1);
-    box(kit, M.wire, 0.015, 1.6, 0.015, hx - 1.5, 13.4, hz + 1.0);
-    for (const [a, d, h] of [[-50, 12.6, 10], [30, 9.5, 8], [280, 9.5, 8]]) {
-      const [px, pz] = a === -50 ? [hx + 1.6, hz] : polar(a, d);
+    const by = near ? 7 : 15;
+    sphere(kit, M.white, 0.7, hx - 1.5, by, hz + 1.0, 1.1);
+    box(kit, M.wire, 0.015, 1.6, 0.015, hx - 1.5, by - 1.6, hz + 1.0);
+    for (const [a, d, h0] of [[-50, 12.6, 10], [30, 9.5, 8], [280, 9.5, 8]]) {
+      const h = near ? h0 * 0.55 : h0;
+      const [px, pz] = a === -50 ? [hx + 1.6, hz] : polar(a, far(d) + (near ? 2.5 : 0));
       post(kit, M.steel, 0.08, h, px, 0, pz, CYL8);
       for (const k of [0.55, 1]) { box(kit, M.steel, 1.0, 0.05, 0.05, px, h * k, pz); sphere(kit, M.steelDark, 0.09, px + 0.5, h * k + 0.08, pz); sphere(kit, M.steelDark, 0.09, px - 0.5, h * k + 0.08, pz); }
     }
   }
-  if (o.weather === 'radar') {
+  if (showFar && o.weather === 'radar') {
     // a weather radar under its dome, and field mills that measure the charge in the air
-    const [rx, rz] = polar(-35, 15);
+    const [rx, rz] = polar(-35, near ? 4.5 : 15);
     lattice(kit, M.grey, { x: rx, z: rz, w: 1.8, y0: 0, y1: 6, bay: 2, t: 0.15 });
     box(kit, M.grey, 2.4, 0.2, 2.4, rx, 6.1, rz);
     sphere(kit, M.white, 1.8, rx, 7.6, rz, 1);
     for (const a of [-100, -10, 75, 162, 220]) {
-      const [fx, fz] = polar(a, 10.5);
+      const [fx, fz] = polar(a, near ? 6 : 10.5);
       post(kit, M.steel, 0.06, 0.9, fx, 0, fz, CYL8);
       post(kit, M.steelDark, 0.28, 0.14, fx, 0.9, fz);
     }
+  }
+
+  // a card picture of a whole complex: a plain white rocket on the mount, so it reads as a launch pad
+  if (icon && !only) {
+    const rr = R * 0.92, hb = H * 0.78;
+    post(kit, M.steelDark, rr * 0.6, 1.0, 0, top, 0);
+    post(kit, M.white, rr, hb, 0, top + 1.0, 0);
+    kit.add(CONE, M.white, trs(0, top + 1.0 + hb + 1.6, 0, rr, 3.2, rr));
+    post(kit, M.steelDark, rr * 1.01, 0.3, 0, top + 1.0 + hb * 0.62, 0); // a dark band between the tanks
   }
 
   const g = new THREE.Group();
@@ -748,7 +874,8 @@ export function padArt(state, { radius = 1.25, height = 20, layout = null } = {}
   inner.rotation.y = FACING;
   kit.build(inner);
   g.add(inner);
-  g.userData.padOptions = { site: state?.site?.id ?? null, ...o };
+  g.userData.padOptions = { site: site?.id ?? null, ...o };
   g.userData.fit = fit;
+  if (icon) g.scale.setScalar(0.4); // the picture camera sees about 100 m: keep the whole complex well inside it
   return { object: g, top };
 }
