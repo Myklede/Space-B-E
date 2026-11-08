@@ -8,6 +8,7 @@ import * as THREE from 'three';
 import { events, getShip, getState } from '/src/core/index.js';
 import { assets } from './assets.js';
 import { latestLaunchSite } from './launchSite.js';
+import { preloadCockpit } from './capsuleCockpit.js';
 
 // [rocket visible, cockpit visible]. On the pad the cockpit view also shows the engine flame (1 more point light, 4 in all),
 // so that combination needs its own programs too.
@@ -96,6 +97,7 @@ function requestIdle(fn) {
 export function startWarmup(graphics) {
   events.on('state:changed', ({ to }) => {
     if (to !== 'PRELAUNCH') { dropPending(); return; }
-    requestIdle(() => { try { warm(graphics); } catch (error) { console.warn('[graphics] launch warm-up skipped:', error); } });
+    // the cockpit this ship will fly in has to be loaded before its shaders can be warmed (a capsule cabin loads on demand)
+    requestIdle(() => preloadCockpit().then(() => { try { warm(graphics); } catch (error) { console.warn('[graphics] launch warm-up skipped:', error); } }));
   });
 }
