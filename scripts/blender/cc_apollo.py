@@ -862,15 +862,7 @@ def dress_seats(ctx):
                 S.sstrut('anod', fr, (x0 * 1.05, y, zb + 0.16), (x1 * 0.99, y, zb + 0.30), 0.028, 0.028, 10)       # shock attenuator cylinder
                 S.sstrut('steel', fr, (x1 * 0.99, y, zb + 0.3), (x1, y, floor - 0.004), 0.016, 0.018, 8)
                 S.box('steel', fr, 0.1, 0.1, 0.012, x1, y, floor - 0.006, bevel=0.003)
-        # straps over the suited crew
-        for sx in (-1, 1):
-            a = (sx * 0.19, -0.26 * k); b = (sx * 0.03, -0.50 * k)
-            dx, dy = b[0] - a[0], b[1] - a[1]
-            L = math.hypot(dx, dy)
-            S.box('webbing', fr, 0.045, L, 0.006, (a[0] + b[0]) / 2, (a[1] + b[1]) / 2, -0.066 if cmd else -0.075, rz=math.atan2(-dx, dy))
-        S.box('webbing', fr, 0.44 * k, 0.05, 0.006, 0, -0.80 * k, -0.045)
-        S.box('bat', fr, 0.07, 0.06, 0.012, 0, -0.50 * k, -0.075)
-        S.box('bat', fr, 0.06, 0.05, 0.012, 0, -0.80 * k, -0.052)
+        # (the 5-point harness is animated geometry: cc_aft.harness)
         # foot restraints: plate and strap at the boots
         hip = Vector((0, -0.80 * k, 0.05 * k)); th_ = Vector((0, -0.257 * kl, -0.31 * kl))
         knee = hip + th_; ank = knee + Vector((0, -0.28 * kl, 0.23 * kl))
