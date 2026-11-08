@@ -24,7 +24,7 @@ const layout=await fetch(BASE+'layout.json').then(r=>{if(!r.ok)throw Error('layo
 const query=new URLSearchParams(location.search);
 const SHIP_SCALE=Math.max(.5,Math.min(3,Number(query.get('scale')??1.5)||1.5));
 const SHOW_LAUNCHER=query.get('launcher')==='1';
-const PARTS=SHOW_LAUNCHER?['decks','access','stage','launcher']:['decks','access','stage'];
+const PARTS=SHOW_LAUNCHER?['hall','decks','access','stage','launcher']:['hall','decks','access','stage'];
 const fragments=Object.fromEntries(await Promise.all(PARTS.map(async n=>[n,await fetch(BASE+'v5/'+n+'.json').then(r=>r.ok?r.json():{}).catch(()=>({}))])));
 for(const f of Object.values(fragments))Object.assign(layout.modules,f.modules??{});
 const hiddenPlacements=new Set(Object.values(fragments).flatMap(f=>f.hidePlacements??[]));
