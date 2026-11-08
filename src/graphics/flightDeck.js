@@ -61,6 +61,9 @@ function screenCanvas(mesh, width, height, draw) {
   const texture = new THREE.CanvasTexture(canvas);
   texture.colorSpace = THREE.SRGBColorSpace;
   texture.anisotropy = 8;
+  // The GLB exporter has already converted the UV origin for glTF; CanvasTexture's
+  // default vertical flip would turn every display page upside down on these quads.
+  texture.flipY = false;
   const material = new THREE.MeshBasicMaterial({ map: texture, toneMapped: false, side: THREE.DoubleSide });
   mesh.material = material;
   mesh.userData.canvas = canvas;
