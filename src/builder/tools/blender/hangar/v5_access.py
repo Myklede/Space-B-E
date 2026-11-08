@@ -204,7 +204,35 @@ def build(api):
         g.pipe((0, -.32, .98), (L, -.32, .98), .055, R, 8)
         for x in xs[1:]:
             g.box((.06, .3, .36), (x, -.55, -1.03), D)
+        # Root landing inside the stair tower's ship-end column (between its level landings), so the arm can stop at
+        # any height: the white-room floor sits ~1.1 m below the hatch. Top 3 cm under the arm floor (no z-fight when it
+        # coincides with a tower landing).
+        rx0, rx1, rz0, rz1 = -.9, -.05, -1.45, .75
+        g.grating(rx0, rx1, rz0, rz1, -.03)
+        for z in (rz0, rz1):
+            g.channel((rx0, -.18, z), (rx1, -.18, z), .16, D)
+        for x in (rx0, rx1):
+            g.channel((x, -.18, rz0), (x, -.18, rz1), .16, D)
+        g.rail((rx0, -.03, rz0 + .55), (rx0, -.03, rz1))
+        g.rail((rx0, -.03, rz1), (rx1, -.03, rz1))
+        g.rail((rx0 + .55, -.03, rz0), (rx1, -.03, rz0))
         g.mesh('fixed', root)
+        # Caged ladder between the two tower landings around the arm height (posed by the sandbox: y = landing below,
+        # Y scale = landing spacing / 6). Rungs face +Z, the cage hoops bulge to -Z (shaft side).
+        lad = marker(root, 'ladder'); g = G()
+        lx0, lx1, lz = -.72, -.22, -1.25
+        for x in (lx0, lx1):
+            g.channel((x, 0, lz), (x, 6, lz), .07, W)
+        for i in range(20):
+            g.pipe((lx0, .15 + i * .3, lz), (lx1, .15 + i * .3, lz), .02, S, 6)
+        cx = (lx0 + lx1) / 2
+        for y in (2.3, 3.3, 4.3, 5.3):
+            for i in range(8):
+                a = i * math.pi / 8; b = (i + 1) * math.pi / 8
+                g.beam((cx + .36 * math.cos(a), y, lz - .36 * math.sin(a)), (cx + .36 * math.cos(b), y, lz - .36 * math.sin(b)), .025, Y)
+        for a in (0, math.pi / 2, math.pi):
+            g.beam((cx + .36 * math.cos(a), 2.3, lz - .36 * math.sin(a)), (cx + .36 * math.cos(a), 6, lz - .36 * math.sin(a)), .025, Y)
+        g.mesh('ladder_body', lad)
         ext = marker(root, 'extend', (5.2, 0, 0)); g = G()
         # Telescoping sleeve walkway (rides on the fixed truss), then the white room at the tip.
         g.box((4.0, .07, 1.3), (-2.0, .045, 0), DECK)
@@ -253,12 +281,12 @@ def build(api):
     if layout_only:
         modules = json.load(open(frag_path, encoding='utf8')).get('modules', {})
     else:
-        # Far copies only need a 256 px atlas (they are > 14..22 m away); this keeps the part under its 1.2 MB budget.
+        # Far copies and the thin ladder only need a 256 px atlas; this keeps the part under its 1.2 MB budget.
         # detail_v4 itself is untouched: its finish() is wrapped for this run only.
         detail = api['detail']; finish = detail.finish
         def small_far_atlas(ob, ident, out_dir, bake):
             finish(ob, ident, out_dir, bake)
-            if '_far_' not in ident:
+            if '_far_' not in ident and not ident.endswith('_ladder_body'):
                 return
             for node in ob.active_material.node_tree.nodes:
                 im = getattr(node, 'image', None)
@@ -352,9 +380,16 @@ def write_fragment(out, modules):
         'elevator': {'position': [ex, 0, ez], 'stops': [0] + LEVELS, 'cabNode': 'pose_cab', 'doorFaces': '+Z', 'mirroredFrom': [-17, 0, -11]},
         'stairTower': {'centre': [tx, 0, tz], 'size': [2 * HX, 71, 2 * HZ], 'levelLanding': 'ship end (+X) at every level', 'groundEntry': [tx + 1.5, 0, tz - .6]},
         'frStairs': {'segment': 'fr', 'levels': list(range(10)), 'retracted': retract, 'retractSource': source},
-        'crewArm': {'root': list(ARM_ROOT), 'direction': [1, 0, 0], 'fixedLength': ARM_FIXED, 'tipLocal': ARM_TIP,
+        # Where people step from my stairs onto a deck through its slot-face rail (repeat at every level).
+        # along = distance from the ship axis along that slot face (fr: along -Z, bl: along -X).
+        'railGates': [
+            {'segment': 'fr', 'along': 13.45, 'width': 1.1, 'what': 'fr deck stair, bottom landing (levels 01..10)'},
+            {'segment': 'fr', 'along': 5.25, 'width': 0.7, 'what': 'fr deck stair, top landing onto the next level (levels 02..11)'},
+            {'segment': 'bl', 'along': round(-(TOWER_C[0] + (HX + 1.5) / 2), 3), 'width': 1.0, 'what': 'stair tower level landing (levels 01..11)'},
+        ],
+        'crewArm': {'root': list(ARM_ROOT), 'hatchOffset': 1.1, 'landings': [0, 5.5] + LEVELS, 'ladderNode': 'ladder', 'ladderLength': 6, 'direction': [1, 0, 0], 'fixedLength': ARM_FIXED, 'tipLocal': ARM_TIP,
                     'extensionRange': list(ARM_EXT), 'halfWidth': ARM_HALF, 'cabinHeight': 2.5, 'extendNode': 'extend',
-                    'note': 'tip x = root x + extend.x + tipLocal; hatch level = level nearest the capsule hatch'},
+                    'note': 'tip x = root x + extend.x + tipLocal; floor = hatch - hatchOffset (snapped to a tower landing within 0.5 m), below the capsule top; ladder between the landings around the floor'},
     }
     with open(os.path.join(out, 'access.json'), 'w', encoding='utf8') as f:
         json.dump(frag, f, indent=1)

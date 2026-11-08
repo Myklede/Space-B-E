@@ -1,7 +1,8 @@
 // v5 part "access" (owner: access agent): getting people to the ship, visibly.
 // - elevator group mirrored to the front-right corner (data only, access.json);
 // - fixed stair tower on the bl slot face and deck-riding stairs along the fr slot face (data only);
-// - telescoping crew access arm + white room on the stair tower, posed here at the level nearest the capsule hatch,
+// - telescoping crew access arm + white room on the stair tower, posed here with its floor ~1.1 m below the capsule hatch
+//   (any height: a caged ladder joins it to the stair-tower landings above and below),
 //   its tip stopping at the real hull (axial outline + radial boosters) of the current builder ship.
 // Contract: createAccess(ctx) returns {update(dt,time,platforms), poseCrew(holder,crewTargetY,params), objects[]}.
 const ML_TOP=7;
@@ -55,20 +56,45 @@ export function hatchHeight(ship){
   const cap=ship?.entries?.find(e=>e.def?.flags?.capsule);
   return cap?ML_TOP+cap.y+cap.height*.45:null;
 }
+export function capsuleTop(ship){
+  const cap=ship?.entries?.find(e=>e.def?.flags?.capsule);
+  return cap?ML_TOP+cap.y+cap.height:null;
+}
+const LANDINGS=[0,5.5,11,17,23,29,35,41,47,53,59,65,71];
+// White-room floor for a hatch at world Y: hatch centre 1.1 m above the floor (snapped onto a stair-tower landing when
+// that keeps the hatch 0.95..1.25 m above it), always >= 1.5 m below the capsule top and above the launcher deck.
+export function armFloor(hatch,capTop=null,arm=DEFAULT_ARM){
+  const landings=arm.landings??LANDINGS;
+  let f=hatch-(arm.hatchOffset??1.1);
+  const near=landings.reduce((a,b)=>Math.abs(b-f)<Math.abs(a-f)?b:a);
+  if(hatch-near>=.95&&hatch-near<=1.25)f=near;
+  if(capTop!=null)f=Math.min(f,capTop-1.5);
+  return Math.round(Math.min(68,Math.max(7.6,f))*100)/100;
+}
+// Tower landings bracketing a floor: the caged ladder runs from `below` to `above`.
+export function ladderSpan(floor,arm=DEFAULT_ARM){
+  const landings=arm.landings??LANDINGS;
+  const below=[...landings].reverse().find(l=>l<=floor+1e-6)??0,above=landings.find(l=>l>below+1e-6)??below+6;
+  return {below,above};
+}
 
 export function createAccess(ctx){
   const {layout,params,actions,fragment={}}=ctx;
   const arm={...DEFAULT_ARM,...(fragment.crewArm??{})};
   params.armFollowsShip??=true;
-  const state={y:null,extension:arm.extensionRange[0],target:arm.extensionRange[0],tipX:null,key:'',hatch:null};
+  const state={y:null,floor:null,extension:arm.extensionRange[0],target:arm.extensionRange[0],tipX:null,key:'',hatch:null,ladder:null};
   let last=performance.now(),revision;
 
   const baseArm=actions.arm;
-  // Same action the GUI button calls: pick the hatch from the real capsule (unless unticked), then the base logic picks
-  // the nearest level and sets crewTarget.
+  // Same action the GUI button calls. The arm hangs on the fixed stair tower, so it is not snapped to a deck level: the
+  // white-room floor goes ~1.1 m below the hatch (capsule hatch, or the GUI value when "follows ship" is off).
+  // The base action still runs (it keeps crewTarget, used by nothing else here, at the nearest deck level).
   actions.arm=()=>{
-    if(params.armFollowsShip&&params.realShip){const h=hatchHeight(ctx.ship());if(h!=null)params.hatchHeight=Math.round(h*10)/10;}
-    state.hatch=params.hatchHeight;baseArm?.();
+    const ship=params.realShip?ctx.ship():null;
+    if(params.armFollowsShip&&ship){const h=hatchHeight(ship);if(h!=null)params.hatchHeight=Math.round(h*10)/10;}
+    state.hatch=params.hatchHeight;
+    state.floor=armFloor(params.hatchHeight,params.armFollowsShip?capsuleTop(ship):null,arm);
+    baseArm?.();
   };
   function targetExtension(y){
     const ship=params.realShip?ctx.ship():null;
@@ -79,27 +105,31 @@ export function createAccess(ctx){
   }
   function poseCrew(holder,crewTargetY,p){
     const now=performance.now(),dt=Math.min(.1,Math.max(0,(now-last)/1000));last=now;
-    holder.position.set(arm.root[0],crewTargetY,arm.root[1]);
+    const y=state.floor??crewTargetY;
+    holder.position.set(arm.root[0],y,arm.root[1]);
+    const ladder=holder.getObjectByName(arm.ladderNode??'ladder');
+    if(ladder){const span=ladderSpan(y,arm);state.ladder=span;ladder.position.y=span.below-y;ladder.scale.y=(span.above-span.below)/(arm.ladderLength??6);}
     const extend=holder.getObjectByName(arm.extendNode??'extend');if(!extend)return;
-    // A new level: the arm arrives retracted, then telescopes out to the hull (about 1.5 s).
-    if(crewTargetY!==state.y){state.y=crewTargetY;state.extension=arm.extensionRange[0];}
-    state.target=targetExtension(crewTargetY);
+    // A new height: the arm arrives retracted, then telescopes out to the hull (about 1.5 s).
+    if(y!==state.y){state.y=y;state.extension=arm.extensionRange[0];}
+    state.target=targetExtension(y);
     state.extension+=(state.target-state.extension)*(1-Math.exp(-3*dt));
     extend.position.x=state.extension;
   }
   function update(){
     const ship=ctx.ship();
     if(params.armFollowsShip&&ship&&ship.revision!==revision){revision=ship.revision;actions.arm();}
+    if(state.floor==null)actions.arm();
   }
 
   // Camera presets for the access details.
-  actions.crewView=()=>{const y=state.y??35;ctx.look([-2.2,y+3.6,-9.4],[-4.8,y+1.1,-1],58);};
+  actions.crewView=()=>{const y=state.floor??state.y??35;ctx.look([-2.2,y+3.6,-9.4],[-4.8,y+1.1,-1],58);};
   actions.stairsView=()=>ctx.look([-3.6,5.5,-13.5],[-11.6,15.5,-1.4],58);
   actions.frStairsView=()=>ctx.look([-9.5,20.5,-18],[-.8,17.5,-9.5],58);
   actions.accessOverview=()=>ctx.look([-20.6,50,-20.6],[2,24,2],66);
   const folder=ctx.gui.addFolder('Access · stairs & crew arm');
   folder.add(params,'armFollowsShip').name('Arm follows ship hatch').onChange(()=>{state.key='';actions.arm();});
-  folder.add(actions,'arm').name('Arm to hatch level');
+  folder.add(actions,'arm').name('Arm to hatch height');
   for(const [key,label] of Object.entries({crewView:'Crew arm close-up',stairsView:'Stair tower',frStairsView:'Deck stairs (fr)',accessOverview:'High diagonal overview',elevatorView:'Elevator (front-right)'}))folder.add(actions,key).name(label);
   folder.close();
 

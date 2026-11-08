@@ -71,17 +71,17 @@
   },
   "access_crew_arm_v5": {
    "file": "v5/access_crew_arm_v5.glb",
-   "triangles": 2052,
-   "bytes": 425388,
+   "triangles": 3436,
+   "bytes": 494664,
    "bounds": {
     "min": [
-     -0.1599999964237213,
+     -0.9799999594688416,
      -3.3457703590393066,
-     -1.2100000381469727
+     -1.6225000619888306
     ],
     "max": [
      7.699999809265137,
-     2.9721689224243164,
+     6.0,
      1.0399999618530273
     ]
    }
@@ -3346,11 +3346,49 @@
   "retracted": 6.5,
   "retractSource": "decks.json segments.fr"
  },
+ "railGates": [
+  {
+   "segment": "fr",
+   "along": 13.45,
+   "width": 1.1,
+   "what": "fr deck stair, bottom landing (levels 01..10)"
+  },
+  {
+   "segment": "fr",
+   "along": 5.25,
+   "width": 0.7,
+   "what": "fr deck stair, top landing onto the next level (levels 02..11)"
+  },
+  {
+   "segment": "bl",
+   "along": 9.65,
+   "width": 1.0,
+   "what": "stair tower level landing (levels 01..11)"
+  }
+ ],
  "crewArm": {
   "root": [
    -9.2,
    -1.1
   ],
+  "hatchOffset": 1.1,
+  "landings": [
+   0,
+   5.5,
+   11,
+   17,
+   23,
+   29,
+   35,
+   41,
+   47,
+   53,
+   59,
+   65,
+   71
+  ],
+  "ladderNode": "ladder",
+  "ladderLength": 6,
   "direction": [
    1,
    0,
@@ -3365,6 +3403,6 @@
   "halfWidth": 0.9,
   "cabinHeight": 2.5,
   "extendNode": "extend",
-  "note": "tip x = root x + extend.x + tipLocal; hatch level = level nearest the capsule hatch"
+  "note": "tip x = root x + extend.x + tipLocal; floor = hatch - hatchOffset (snapped to a tower landing within 0.5 m), below the capsule top; ladder between the landings around the floor"
  }
 }
