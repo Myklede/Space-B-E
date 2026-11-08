@@ -180,6 +180,7 @@ Người dùng muốn làm lại giao diện trang thiết kế:
   - (1) Nối hình tàu của hangar sang cảnh bay qua `assets.setRocketPartArt`.
   - (2) Ghi `docs/SHARE_PROBLEMS.md` cho Role 2: cỡ tháp và bệ theo kích thước tàu.
   - (3) Bệ trong trang thiết kế giữ quy tắc tỷ lệ thật: tháp khoảng 1,1–1,3 lần chiều cao tàu, bệ đỡ khoảng 1,5–2 lần đường kính.
+  - **Cả nhóm đã đồng ý (người dùng báo 2026-11-07):** cảnh phóng dùng bệ phóng của Role 1, vì tiền bệ là một phần tiền đóng tàu của Role 1. Role 1 đăng ký `builder:launchPad` và `builder:rocketSkin` qua `assets.register`, thêm `assets.setRocketPartArt`. Role 2 đặt chúng vào cảnh LAUNCH thay tháp của họ. Đã ghi `docs/SHARE_PROBLEMS.md` và `docs/DECISIONS.md` (commit `e202086`). Phần code của Role 1 làm ngay sau khi agent vỏ và agent thẻ xong.
 
 ## 5. Việc tồn đọng
 
