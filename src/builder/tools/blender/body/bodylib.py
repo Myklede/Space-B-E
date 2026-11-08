@@ -283,7 +283,7 @@ PALETTE = {
                                  base=tex_foam_c(0xc98a4e, seed=8)),
     'foam_dark': lambda: material('foam_dark_trim', 0xa95a24, 0.0, 0.9),
     'cork': lambda: material('cork', 0xffffff, 0.0, 0.9, base=tex_speckle(0xa9825a, 0x5e432a)),
-    'tiodize': lambda: material('tiodize_copper', 0xffffff, 0.45, 0.42, base=tex_mottle(0xa8754e, 0x6e4a33, seed=12)),
+    'tiodize': lambda: material('tiodize_copper', 0xffffff, 0.45, 0.42, base=tex_mottle(0xc4916a, 0xad7c58, seed=12, contrast=0.5)),
     'soyuz': lambda: material('soyuz_grey', 0xbfc6bc, 0.15, 0.55),
     'soyuz_dark': lambda: material('soyuz_grey_dark', 0x9aa197, 0.2, 0.55),
     'grey': lambda: material('light_grey', 0xc4c8cb, 0.15, 0.5),
@@ -674,12 +674,22 @@ def wrap_on_cyl(acc, loops, r, deg_c, y_c, m, out=0.002, flipx=False):
 _GLYPHS = {}
 
 
+def stencil_font():
+    """Inter (SIL Open Font License 1.1), the font that ships in Blender's own data files: the same letters on every
+    machine, and a licence that allows shipping the letter shapes in a model."""
+    path = os.path.join(bpy.utils.system_resource('DATAFILES', path='fonts'), 'Inter.woff2')
+    if not os.path.exists(path):
+        raise FileNotFoundError(f'the stencil font is missing: {path}')
+    return bpy.data.fonts.load(path, check_existing=True)
+
+
 def glyph(ch, size):
     """The outline of one letter (Blender's built-in font) as loops of 2D points, `size` tall (cap height ~0.7 size)."""
     key = (ch, round(size, 4))
     if key in _GLYPHS:
         return _GLYPHS[key]
     cu = bpy.data.curves.new('glyph', 'FONT')
+    cu.font = stencil_font()
     cu.body = ch
     cu.size = size
     cu.resolution_u = 3

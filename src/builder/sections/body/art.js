@@ -114,12 +114,12 @@ const foamTex = () => baseTex('foam', 512, 512, (ctx, w, h) => {
 /** The Atlas V booster's Tiodize-finished aluminium: copper-brown, darkened unevenly with age and handling. */
 const tiodizeTex = () => baseTex('tiodize', 256, 256, (ctx, w, h) => {
   seed = 41;
-  ctx.fillStyle = '#a8754e';
+  ctx.fillStyle = '#c4916a';
   ctx.fillRect(0, 0, w, h);
-  for (let i = 0; i < 90; i++) {
+  for (let i = 0; i < 60; i++) { // an even copper with only faint, broad shading
     const x = rnd() * w, y = rnd() * h;
-    ctx.fillStyle = rnd() > 0.45 ? `rgba(92,58,38,${0.08 + rnd() * 0.12})` : `rgba(196,150,110,${0.06 + rnd() * 0.1})`;
-    ctx.beginPath(); ctx.ellipse(x, y, 10 + rnd() * 50, 6 + rnd() * 24, rnd() * Math.PI, 0, TAU); ctx.fill();
+    ctx.fillStyle = rnd() > 0.5 ? `rgba(150,98,64,${0.03 + rnd() * 0.05})` : `rgba(222,180,145,${0.03 + rnd() * 0.05})`;
+    ctx.beginPath(); ctx.ellipse(x, y, 30 + rnd() * 60, 14 + rnd() * 30, rnd() * Math.PI, 0, TAU); ctx.fill();
   }
 });
 const goldTex = () => baseTex('gold', 256, 256, (ctx, w, h) => {
@@ -246,27 +246,30 @@ const M = {
 // ---------- skins ----------
 const PAINT = { kerolox: 0xe4e2dc, methalox: 0xf1f0ec, hydrolox: 0xf1f0ec };
 /** Which skin a tank wears: the player's insulation and material choices win over the part's own look. */
-// The real stages that share these generic tanks look different, and the options their shapes fit say which one it is
-// (section.json): the isogrid hydrogen tanks of Delta IV and H-IIA wear a tan-brown foam, not the Shuttle tank's orange;
-// the bare isogrid kerosene tanks of the Atlas V booster have the copper-brown Tiodize finish; white-painted foam is Long
-// March 5 and Ariane 5; foam inside the tank (S-IVB) leaves a bare wall outside.
+// The tank's finish is its insulation choice (the shapes set it: orange foam for the Shuttle tank and SLS, tan foam for
+// Delta IV and H-IIA, white foam for Long March 5, the copper Tiodize of the Atlas V booster, a silver blanket, foam
+// inside the tank with a bare wall outside on the S-IVB). The wall stiffening never changes the colour: the ribs are
+// inside. With no insulation chosen, the part's own look and its material decide.
+const FINISH = { foam: 'foam', foam_white: 'foam_white', foam_tan: 'foam_tan', tiodize: 'tiodize', mli: 'blanket' };
 function skinOf(def, entry) {
   const ins = entry.options?.insulation;
-  const wall = entry.options?.wall;
-  const foam = () => (wall === 'isogrid' ? 'foam_tan' : 'foam');
-  if (ins === 'foam') return foam();
-  if (ins === 'foam_white') return 'foam_white';
-  if (ins === 'mli') return 'gold';
+  if (FINISH[ins]) return FINISH[ins];
   if (def.look?.skin === 'blanket') return 'blanket';
   const mat = def.materialFamily === 'structure' ? entry.material : null;
-  if (ins !== 'bare' && ins !== 'internal' && def.look?.skin === 'foam') return foam();
+  if (ins !== 'bare' && ins !== 'internal' && def.look?.skin === 'foam') return 'foam';
   if (mat === 'stainless') return 'steel';
   if (mat === 'carbon') return 'carbon';
   if (mat === 'titanium') return 'titanium';
   if (mat === 'al2219') return 'cream';
-  if (wall === 'isogrid' && def.fuel?.type === 'kerolox' && (def.look?.skin ?? 'paint') === 'paint') return 'tiodize';
   return def.look?.skin === 'foam' ? 'paint' : (def.look?.skin ?? 'paint');
 }
+// The finish each tank was last drawn with: an intertank or centerbody between two foam-covered or Tiodize-finished
+// tanks wears the same finish (the Shuttle tank and SLS intertanks are foam too; the Atlas V core is copper end to end).
+// A tank records its finish under its own id and under its parent's id, so the structure finds it whichever neighbour
+// (the tank it hangs from, or the tank hanging from it) the layout drew first.
+const DRAWN_FINISH = new Map(); // tank id -> finish
+const CHILD_FINISH = new Map(); // parent id -> the finish of the tank hanging from it
+const SHARED_FINISH = new Set(['foam', 'foam_white', 'tiodize']);
 function skinMaterial(skin, r, h, fuel = 'methalox') {
   const around = Math.max(2, Math.round((TAU * r) / 2.2));
   const tall = Math.max(1, Math.round(h / 2.2));
@@ -301,6 +304,8 @@ function tankArt(def, r, entry) {
   const h = def.height;
   const fuel = def.fuel?.type ?? 'methalox';
   const skin = skinOf(def, entry);
+  if (entry.id) DRAWN_FINISH.set(entry.id, skin);
+  if (entry.parentId) CHILD_FINISH.set(entry.parentId, skin);
   const look = def.look ?? {};
   let build = look.build ?? 'separate';
   if (build === 'separate' && entry.options?.bulkhead === 'common') build = 'common';
@@ -493,7 +498,11 @@ function structureArt(def, r, entry) {
   const cons = composite ? 'composite' : (entry.options?.construction ?? 'skin_stringer');
   const joints = entry.options?.joints ?? 'riveted';
   const g = new THREE.Group();
-  g.add(constructionShell(r, h, cons, joints, STRUCT_BASE[def.id] ?? 0xd9d7d1, 0, null, structureKind(def, entry.material)));
+  // between two tanks with a shared finish (foam, white foam, Tiodize) the structure wears it too
+  const fin = BETWEEN.has(def.id) ? (DRAWN_FINISH.get(entry.parentId) ?? CHILD_FINISH.get(entry.id)) : null;
+  if (fin === 'tiodize') g.add(constructionShell(r, h, cons, joints, 0xc4916a, 0, null, 'paint'));
+  else if (SHARED_FINISH.has(fin)) g.add(shell(r, h, Object.assign(skinMaterial(fin, r, h), { side: THREE.DoubleSide })));
+  else g.add(constructionShell(r, h, cons, joints, STRUCT_BASE[def.id] ?? 0xd9d7d1, 0, null, structureKind(def, entry.material)));
   const frame = M.frame();
   g.add(ring(r, 0.04, frame, 0.04), ring(r, h - 0.04, frame, 0.04));
   // an access door and an umbilical plate, as on every real intertank and interstage
@@ -663,7 +672,7 @@ export function partArt(entry) {
   const def = entry.def;
   if (!def) return null;
   const r = entry.radius ?? BASE_R * (SCALE[def.size] ?? 1);
-  const e = { options: entry.options ?? null, material: entry.material ?? null, above: entry.above ?? null, below: entry.below ?? null };
+  const e = { id: entry.id ?? null, parentId: entry.parentId ?? null, options: entry.options ?? null, material: entry.material ?? null, above: entry.above ?? null, below: entry.below ?? null };
   if (entry.attach === 'axial') {
     if (def.adapter) return adapterArt(def, e);
     if (def.fuel) return tankArt(def, r, e);
@@ -710,15 +719,15 @@ function tankPieces(def, options, r, h) {
     }
   }
   if (hasSlot(def, 'bulkhead')) add('bulkhead', common ? 'Common bulkhead' : 'Bulkheads', bh, V(0.4, 1, 0));
-  // wall stiffening: a cut-away panel of the wall with its machined ribs (isogrid, orthogrid, 45-degree waffle) or the
-  // integral stringers and ring frames
+  // wall stiffening: a cut-away panel of the wall with its machined ribs (isogrid triangles, a fine orthogrid, a coarser
+  // and deeper square waffle) or the integral stringers and ring frames
   if (hasSlot(def, 'wall')) {
     const w = opt('wall') ?? 'integral';
     const ph = Math.min(1.3, h * 0.3), py = h * 0.5;
-    const pattern = w === 'isogrid' ? isoTex('#c9ccd0', '#8f969c') : w === 'integral' ? null : orthoTex('#c9ccd0', '#8f969c');
-    const wallMat = pattern ? new THREE.MeshStandardMaterial({ color: 0xffffff, map: rep(pattern, 3, 2), bumpMap: rep(pattern, 3, 2), bumpScale: 0.02, roughness: 0.4, metalness: 0.6, side: THREE.DoubleSide }) : alu;
+    const pattern = w === 'isogrid' ? isoTex('#c9ccd0', '#8f969c') : w === 'waffle' ? orthoTex('#c9ccd0', '#6f767c') : w === 'integral' ? null : orthoTex('#c9ccd0', '#8f969c');
+    const [ru, rv] = w === 'waffle' ? [1.6, 1.1] : [3, 2];
+    const wallMat = pattern ? new THREE.MeshStandardMaterial({ color: 0xffffff, map: rep(pattern, ru, rv), bumpMap: rep(pattern, ru, rv), bumpScale: w === 'waffle' ? 0.035 : 0.02, roughness: 0.4, metalness: 0.6, side: THREE.DoubleSide }) : alu;
     const panel = mesh(new THREE.CylinderGeometry(r * 0.96, r * 0.96, ph, 16, 1, true, Math.PI + 0.5, 0.9), wallMat, 0, py, 0);
-    if (w === 'waffle') panel.material.map.rotation = Math.PI / 4;
     const wall = group(panel);
     if (w === 'integral') for (let i = 0; i <= 6; i++) wall.add(polarAt(box(0.02, ph, 0.04, M.steel()), Math.PI + 0.5 + (i / 6) * 0.9, r * 0.94, py));
     add('wall', 'Wall stiffening', wall, V(-0.7, 0, -0.7));
@@ -765,9 +774,11 @@ function tankPieces(def, options, r, h) {
   // insulation
   const ins = opt('insulation');
   const insMat = ins === 'foam' ? new THREE.MeshStandardMaterial({ color: 0xffffff, map: rep(foamTex(), 1, 1), roughness: 0.95, metalness: 0, side: THREE.DoubleSide })
+    : ins === 'foam_tan' ? new THREE.MeshStandardMaterial({ color: 0xc8935c, roughness: 0.9, metalness: 0, bumpMap: rep(foamTex(), 1, 1), bumpScale: 0.004, side: THREE.DoubleSide })
+    : ins === 'tiodize' ? new THREE.MeshStandardMaterial({ color: 0xffffff, map: rep(tiodizeTex(), 1, 1), roughness: 0.45, metalness: 0.45, side: THREE.DoubleSide })
     : ins === 'foam_white' ? new THREE.MeshStandardMaterial({ color: 0xefebe3, roughness: 0.85, metalness: 0, bumpMap: rep(foamTex(), 1, 1), bumpScale: 0.004, side: THREE.DoubleSide })
     : ins === 'internal' ? new THREE.MeshStandardMaterial({ color: 0xffffff, map: rep(orthoTex('#d8cc9a', '#8a7a52'), 3, 2), roughness: 0.85, metalness: 0, side: THREE.DoubleSide })
-    : ins === 'mli' ? new THREE.MeshStandardMaterial({ color: 0xffffff, map: rep(goldTex(), 2, 2), roughness: 0.32, metalness: 0.9, side: THREE.DoubleSide })
+    : ins === 'mli' ? new THREE.MeshStandardMaterial({ color: 0xc3c7cb, roughness: 0.38, metalness: 0.55, bumpMap: rep(goldTex(), 2, 2), bumpScale: 0.01, side: THREE.DoubleSide })
       : std(0xe6e3dc, { roughness: 0.4, metalness: 0.3, side: THREE.DoubleSide });
   const ph = Math.min(h * 0.35, Math.max(0.6, split * 0.8)), py = Math.max(ph / 2 + 0.1, split * 0.5);
   const insPiece = new THREE.Group();
@@ -894,14 +905,28 @@ export function internalsArt(def, options, dims) {
 
 /**
  * Dresses a loaded Blender model before the shared code places it (bay/partArt.js singleArt). Returns null to leave it.
- * A side model (the APS pod, the ullage motor) is built with its root on the host's wall, pointing +x; the shared
- * placement puts a side part's origin 0.45 x its width out from the wall (the drawn art is centred), so the model moves
- * back by that much and its mount sits on the wall.
+ * - A side model (the APS pod, the ullage motor) is built with its root on the host's wall, pointing +x; the shared
+ *   placement puts a side part's origin 0.45 x its width out from the wall (the drawn art is centred), so the model
+ *   moves back by that much and its mount sits on the wall.
+ * - Stage structure (skirts, the centerbody) shows its material: the painted skin turns carbon black, steel or titanium
+ *   when the part is built of it (the Delta IV centerbody is carbon by default).
  */
+const PAINTED = new Set(['white_paint', 'cream_paint', 'isogrid_white', 'orthogrid_white']);
+const MATERIAL_LOOK = { carbon: [0x2a2d31, 0.2, 0.55], stainless: [0xb4b8bb, 0.6, 0.3], titanium: [0x8f9499, 0.55, 0.42] };
 export function wrapModel(model, entry) {
-  if (entry?.attach !== 'radial' || !entry.def) return null;
-  const w = model.userData.width ?? Math.min(1.2, entry.def.height ?? 0.8);
-  const out = group(at(model, -0.45 * w, 0, 0));
-  out.userData = { ...model.userData, width: w };
-  return out;
+  const def = entry?.def;
+  if (!def) return null;
+  if (entry.attach === 'radial') {
+    const w = model.userData.width ?? Math.min(1.2, def.height ?? 0.8);
+    const out = group(at(model, -0.45 * w, 0, 0));
+    out.userData = { ...model.userData, width: w };
+    return out;
+  }
+  const look = def.internals === 'stage_structure' ? MATERIAL_LOOK[entry.material ?? def.defaultMaterial] : null;
+  if (!look) return null;
+  model.traverse((o) => {
+    if (!o.isMesh) return;
+    for (const m of [].concat(o.material)) if (PAINTED.has(m.name)) { m.color.setHex(look[0]); m.metalness = look[1]; m.roughness = look[2]; }
+  });
+  return model;
 }

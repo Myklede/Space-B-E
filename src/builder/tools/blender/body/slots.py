@@ -12,65 +12,17 @@ import math
 from bodylib import (Acc, V, M, TAU, polar, radial, tangent, lathe, cyl, sphere, capsule, torus, tube, bend, bellows,
                      box, beam, curved_panel, dome, node)
 
-# The kits after wave 4 (sections/body/internals.json + the spec's kitChanges). First option = the neutral default.
-KITS = {
-    'tank': {
-        'bulkhead': ['separate', 'common'],
-        'wall': ['integral', 'isogrid', 'orthogrid', 'waffle'],
-        'pressurisation': ['helium', 'autogenous', 'heated', 'nitrogen'],
-        'baffles': ['baffled', 'none', 'antivortex', 'pmd'],
-        'insulation': ['bare', 'foam', 'mli'],
-        'feedline': ['single', 'dual', 'tunnel', 'pogo'],
-    },
-    'tank_h2': {
-        'bulkhead': ['separate', 'common'],
-        'wall': ['integral', 'isogrid', 'orthogrid', 'waffle'],
-        'pressurisation': ['helium', 'autogenous', 'heated', 'cold_helium'],
-        'baffles': ['baffled', 'none', 'antivortex', 'pmd'],
-        'insulation': ['foam', 'bare', 'mli', 'internal', 'foam_white'],
-        'feedline': ['single', 'dual', 'tunnel', 'pogo'],
-    },
-    'tank_common': {
-        'bulkhead': ['as_built', 'honeycomb', 'thin'],
-        'pressurisation': ['helium', 'autogenous', 'heated', 'nitrogen'],
-        'baffles': ['baffled', 'none', 'antivortex', 'pmd'],
-        'insulation': ['bare', 'foam', 'mli'],
-        'feedline': ['single', 'dual', 'tunnel', 'pogo'],
-    },
-    'tank_common_h2': {
-        'bulkhead': ['as_built', 'honeycomb', 'thin'],
-        'wall': ['integral', 'isogrid', 'orthogrid', 'waffle'],
-        'pressurisation': ['helium', 'autogenous', 'heated', 'cold_helium'],
-        'baffles': ['baffled', 'none', 'antivortex', 'pmd'],
-        'insulation': ['foam', 'bare', 'mli', 'internal', 'foam_white'],
-        'feedline': ['single', 'dual', 'tunnel', 'pogo'],
-    },
-    'tank_cluster': {
-        'pressurisation': ['helium', 'autogenous', 'heated', 'nitrogen'],
-        'baffles': ['baffled', 'none', 'antivortex', 'pmd'],
-        'insulation': ['bare', 'foam', 'mli'],
-        'feedline': ['single', 'dual', 'tunnel', 'pogo'],
-    },
-    'tank_spheres': {
-        'pressurisation': ['helium', 'autogenous', 'heated', 'nitrogen'],
-        'baffles': ['baffled', 'none', 'antivortex', 'pmd'],
-        'insulation': ['bare', 'foam', 'mli'],
-        'feedline': ['single', 'dual', 'tunnel', 'pogo', 'surge'],
-    },
-    'stage_structure': {
-        'construction': ['skin_stringer', 'isogrid', 'orthogrid', 'corrugated', 'composite'],
-        'joints': ['riveted', 'fsw', 'bonded'],
-    },
-    'avionics': {
-        'computer': ['dual', 'triple'],
-        'imu': ['rlg', 'fog', 'mems', 'reused_sri'],
-        'transponder': ['single', 'dual'],
-        'navaid': ['inertial', 'gps', 'stellar'],
-        'fts': ['commanded', 'autonomous'],
-        'cooling': ['passive', 'coldplate'],
-    },
-    'truss_hotstage': {'shield': ['shield', 'none']},
-}
+# The kits, read from the data so the pieces always match its slots and options.
+def _load_kits():
+    """The kits as the game has them (sections/body/internals.json): {kit: {slot key: [option ids]}}, first = default."""
+    import json, os
+    from bodylib import REPO
+    with open(os.path.join(REPO, 'src', 'builder', 'sections', 'body', 'internals.json'), encoding='utf-8') as f:
+        data = json.load(f)
+    return {kid: {s['key']: [o['id'] for o in s.get('options', [])] for s in kit.get('slots', [])} for kid, kit in data['kits'].items()}
+
+
+KITS = _load_kits()
 
 
 class Vol:
@@ -232,25 +184,13 @@ def wall_piece(geo, opt):
             rib_seg(span * i / nu, y0, span * i / nu, y1)
         for j in range(nv + 1):
             rib_seg(0, y0 + hh * j / nv, span, y0 + hh * j / nv)
-    elif opt == 'waffle':  # pockets at 45 degrees (S-IVB tank walls)
-        s = 0.2
-        k0 = -int((span + hh) / s) - 1
-        for k in range(k0, int((span + hh) / s) + 2):
-            for sgn in (1, -1):
-                # line u - sgn*y' = k*s, clipped to the panel (y' = y - y0)
-                pts = []
-                for (u, yy) in ((0, None), (span, None), (None, 0), (None, hh)):
-                    if u is not None:
-                        yy = (u - k * s) * sgn
-                    else:
-                        u = k * s + sgn * yy
-                    if -1e-6 <= u <= span + 1e-6 and -1e-6 <= yy <= hh + 1e-6:
-                        pts.append((u, yy))
-                pts = sorted(set((round(p[0], 5), round(p[1], 5)) for p in pts))
-                if len(pts) >= 2:
-                    (ua, ya), (ub, yb) = pts[0], pts[-1]
-                    if abs(ua - ub) + abs(ya - yb) > 0.05:
-                        rib_seg(ua, y0 + ya, ub, y0 + yb, 0.026)
+    elif opt == 'waffle':  # a square grid of deep, thick ribs milled from thick plate, wider apart than orthogrid
+        s = 0.26
+        nu, nv = max(2, int(span / s)), max(2, int(hh / s))
+        for i in range(nu + 1):
+            rib_seg(span * i / nu, y0, span * i / nu, y1, 0.032)
+        for j in range(nv + 1):
+            rib_seg(0, y0 + hh * j / nv, span, y0 + hh * j / nv, 0.032)
     else:  # isogrid: ribs at 0, 60 and 120 degrees with a node every 0.24 m (Delta II, Delta IV, Atlas V)
         a = 0.26
         h_ = a * math.sqrt(3) / 2
@@ -375,6 +315,11 @@ def insulation_piece(geo, opt):
         key = 'foam_white' if opt == 'foam_white' else ('foam_et' if geo.fuel == 'hydrolox' else 'foam_tan')
         curved_panel(acc, r - 0.004, d0, d1, y0, y1, M(key), seg=10, thick=0.035, u_rep=1.5, v_scale=1.2)
         curved_panel(acc, r - 0.042, d0 + 2, d1 - 2, y0 + 0.05, y1 - 0.05, M('yellow'), seg=10, thick=0.004)  # primer
+    elif opt == 'tiodize':  # bare aluminium with the copper-tan conversion finish (Atlas V): a thin coat on the wall
+        curved_panel(acc, r - 0.006, d0, d1, y0, y1, M('tiodize'), seg=10, thick=0.004, u_rep=1, v_scale=0.7)
+    elif opt == 'foam_tan':  # the tan-brown spray-on foam of Delta IV and H-IIA
+        curved_panel(acc, r - 0.004, d0, d1, y0, y1, M('foam_tan'), seg=10, thick=0.035, u_rep=1.5, v_scale=1.2)
+        curved_panel(acc, r - 0.042, d0 + 2, d1 - 2, y0 + 0.05, y1 - 0.05, M('yellow'), seg=10, thick=0.004)
     elif opt == 'mli':
         curved_panel(acc, r - 0.004, d0, d1, y0, y1, M('mli' if geo.fuel != 'kerolox' else 'gold'), seg=10, thick=0.02, u_rep=6, v_scale=4)
     elif opt == 'internal':  # foam tiles glued inside the wall, lined with glass cloth (S-IVB)
@@ -427,14 +372,28 @@ def feed_piece(geo, opt):
         return p
 
     if len(vols) == 1:
+        # one propellant (an upper-stage tank): the sump at the bottom of the dome, the feed duct leaving it and hugging
+        # the dome out to the side, then down to the engine (one compact piece, so the card's marker sits on it)
         v = vols[0]
+        sump_r = 0.11 * R
+        cyl(acc, v.at(0) + V(0, v.bottom + 0.01, 0), v.at(0) + V(0, v.bottom + 0.3, 0), sump_r, M('alu_cut'), seg=14)
+        lathe(acc, [(sump_r * 1.7, v.bottom + 0.3), (sump_r * 0.6, v.bottom + 0.38)], M('alu'), 14, c=v.at(0))  # anti-vortex cap
         n = 2 if opt == 'dual' else 1
         for k in range(n):
-            p = outlet(v, FEED_DEG, 0.0 if n == 1 else 0.3 * v.r, lr) if k == 0 else outlet(v, FEED_DEG + 180, 0.3 * v.r, lr)
+            deg = FEED_DEG + 180 * k
+            low = (lr * 1.9 if opt == 'tunnel' else lr) + 0.02  # the duct's underside stays above the part's base
+            path = [v.at(0) + V(0, max(low, v.bottom + 0.04), 0)]
+            for f in (0.15, 0.3, 0.45, 0.58):
+                path.append(v.at(0) + polar(deg, f * v.r, max(low, dome_y(v, f * v.r) - lr - 0.03)))
+            end_p = path[-1]
+            path.append(V(end_p.x, 0.0, end_p.z))
+            tube(acc, bend(path, 0.1, n=3), lr, steel, 10)
+            _prevalve(acc, V(end_p.x, max(lr * 1.6, end_p.y * 0.45), end_p.z), lr)
+            if opt == 'tunnel':  # one propellant: the tunnel is the insulated duct round the line
+                tube(acc, bend(path, 0.1, n=3), lr * 1.9, M('glass_cloth'), 10)
         if opt == 'pogo':
-            capsule(acc, V(0.3 * R, max(lr * 3.8, v.bottom * 0.6), 0), lr * 2.2, lr * 7, M('steel'), seg=12)
-        if opt == 'tunnel':  # one propellant: the tunnel is the insulated duct round the outlet
-            cyl(acc, V(0, 0.0, 0), V(0, max(0.1, v.bottom + 0.05), 0), 0.13 * R, M('glass_cloth'), seg=14, caps=False)
+            p0 = path[-2]
+            capsule(acc, V(p0.x, max(lr * 3.8, p0.y * 0.5), p0.z) + polar(FEED_DEG + 90, 0.18, 0), lr * 2.2, lr * 7, M('steel'), seg=12)
         return acc
 
     up, lo = vols[0], vols[1]
