@@ -6,7 +6,8 @@ The round pressure hatch sits in the aft bulkhead behind the head end of the cen
 Nodes written (names survive GLTFLoader):
   door_aft            the hinged door (pivot at the hinge on the wall side, local y = hinge axis, local z = out toward the crew); runtime renames it aftHatch
   ladderTop_aft       eye in front of the open hatch looking down the passage; runtime renames it ladderTop
-  wp_couch wp_over wp_front wp_mouth wp_mid passageEnd   float-path waypoints (empties)
+  wp_couch wp_over wp_front wp_mouth wp_mid passageEnd   float-path waypoints (empties): the player's eye (commander, origin),
+                                                          straight up over the own helmet, across above the centre crew's head, into the hatch
   hs<i>_* harness<i>  per couch: buckle + cap + 2 shoulder, 2 lap and 1 crotch strap as two-segment chains (animated by cockpit.userData.harness)
 """
 import math
@@ -207,7 +208,7 @@ def build(ctx, root, mats):
 
     # ------------------------------------------------------------------------------ empties: ladderTop + float path
     lt = Part('ladderTop_aft', pos=Vector((hc.x, hc.y - 0.05, zf - 0.80)), rot=Matrix(((-1, 0, 0), (0, 1, 0), (0, 0, -1))), parent=root)   # faces +Z (looking down the passage), up = head (+Y)
-    for nm, p in (('wp_couch', (hc.x, 0.0, 0.0)), ('wp_over', (hc.x, 0.18, zf - 0.78)), ('wp_front', (hc.x, hc.y - 0.05, zf - 0.55)),
+    for nm, p in (('wp_couch', (0.0, 0.0, 0.0)), ('wp_over', (0.0, hc.y - 0.08, zf - 0.75)), ('wp_front', (hc.x, hc.y - 0.05, zf - 0.55)),
                   ('wp_mouth', (hc.x, hc.y, zf + 0.05)), ('wp_mid', (hc.x, hc.y, zf + LP * 0.55)), ('passageEnd', (hc.x, hc.y, zf + LP))):
         Part(nm, pos=Vector(p), parent=root)
     C.log(f'aft hatch centre game ({hc.x:.2f},{hc.y:.2f},{hc.z:.2f}) passage end z={zf + LP:.2f}')
