@@ -175,6 +175,14 @@ def catwalk():
     for x in (-3,0,3):g.ibeam((x,-.32,-3),(x,-.32,3),.24)
     return g
 
+if '--v5' in sys.argv:
+    # v5 parts: blender -b --factory-startup -P build.py -- --v5 <decks|access|stage> [--bake] --out public/assets/models/builder/hangar/v5
+    # Each part script owns its own GLBs and fragment JSON; it never writes layout.json.
+    import importlib
+    import detail_v4 as detail
+    importlib.import_module('v5_'+sys.argv[sys.argv.index('--v5')+1]).build(globals())
+    sys.exit(0)
+
 if '--v4' in sys.argv:
     import detail_v4 as detail
     import additions_v4
