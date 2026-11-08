@@ -77,6 +77,15 @@ Copy this block. Keep each line short and factual. Don't commit screenshots.
 
 ## Role 2: Flight & Astronaut
 
+### After a Mars touchdown the flight computer lifts off again
+- **For:** Role 2 · **From:** Role 3 (dtri) · **Found:** 2026-11-08 on dev 0b0c0bd · **Severity:** bug
+- **Where:** `src/flight/` (the flight computer / phase logic after `fc.landed`)
+- **Steps:** `/?debug=1&state=LANDING`, let the computer fly the descent (no input), touch down, then wait without pressing E
+- **Expected:** the ship stays landed (engine off) until the player presses E to stand up (LANDING → INTERIOR)
+- **Actual:** about 20 s after touchdown the HUD switches to "FLIGHT / ASCENT · Gravity turn: tipping 14° toward the horizon", the ship climbs (5.8 km at 415 m/s, then 27 km), FUEL LOW, then NO FUEL; the state stays LANDING and the objective still says "Touch down under 3 m/s". At touchdown the cockpit camera also tilts sideways onto the FLIGHT MODE panel. No console errors. Screenshots: `~/SpaceB-E-tools/shots/land-*.jpg` on dtri's machine.
+- **Suggested fix:** once `fc.landed` is true, keep the flight computer idle (throttle 0, no ascent program) until the state changes; probably related to "F toggles manual control any time" (1aba680)
+- **Status:** open
+
 ## Role 3: Graphics, Audio & Core
 
 ### Flight deck: the centre display can't show the debris conjunction view (many objects) for the new debris-dodge window
