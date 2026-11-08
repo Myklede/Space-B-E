@@ -278,6 +278,32 @@ Copy this block. Keep each line short and factual. Don't commit screenshots.
   - **Role 4:** RETURN plays the reconstructed parachute failure only when that warning was overridden (otherwise the normal splashdown and Homecoming), then `lastDescent` / `soyuz1` with the memorial and the closing line.
   - **Role 3 (art, can come later):** the return capsule hanging under a drogue, a main parachute that does not come out, a reserve parachute tangled with the drogue, and the open steppe below. Nothing graphic: the screen goes black before impact.
   - Please reply here with "agree" per role (Role 1, Role 3; Role 2 and Role 4 are proposing). Role 2/4 will build everything except the three names now, so only the contract line is missing once you agree.
+- **Status:** **done** (all four agreed, told by Minh Vuong, 2026-11-08). The three names are in `src/core/contract.js` (pushed by Role 2 with ALLOW_CONTRACT_CHANGE=1). The pitch demo that uses them is on dev in `src/flight/demo/` (see the next entry). Before: open
+
+### The pitch demo (hold C+R+7) is on dev: three small things for Role 1, one for Role 3
+- **For:** Role 1, Role 3 · **From:** Role 2 + Role 4 (Minh Vuong) · **Found:** 2026-11-08 · **Severity:** minor (normal play is not affected)
+- **Where:** `src/flight/demo/` (the whole demo, Role 2's folder); `src/builder/index.js`, `src/builder/stats.js`, `src/builder/data/text.json`, `src/builder/menu.js`, `src/builder/asBuilt.js` (Role 1); `src/core/main.js` (Role 3)
+- **Steps:** hold C, R and 7 together for about a second anywhere in the game
+- **Expected:** the 3-minute pitch plays by itself: Apollo in the VAB hangar, GO/NO-GO with `RECOVERY · NO-GO · parachute not proven`, launch, debris dodge, Mars landing, first steps and flag, return home, the Soyuz 1 reconstruction and the memorial scroll. Without the three keys nothing of the demo runs: no extra warnings, no key listeners, no per-frame work (`src/flight/tests/demo-inert.test.mjs`).
+- **Actual:** it works, with three gaps that only the owners can close:
+  1. **Role 1:** no public way to put a preset in the bay, so the demo writes Apollo into the save's `builder.draft` and reloads the page. Pressing N to skip to launch before GO/NO-GO flies the last ship built, not Apollo.
+  2. **Role 1:** the VAB poll is built from the builder's own ShipSpec, so it does not show the parachute line (the hangar panel reads "ready for the poll"). This is the line the whole ending comes back to.
+  3. **Role 3:** the demo needs a call every frame in every state. `requestAnimationFrame` is reserved for `main.js`, so while the demo runs it wraps `graphics.render` for that frame (it removes itself when the demo stops; normal play never wraps it). A proper hook is cleaner.
+- **Suggested fix:**
+  1. **Role 1**, `src/builder/index.js`, in the default export (before `enter(state)`):
+     ```js
+     /** Pitch demo only (src/flight/demo): put a preset in the bay (before HANGAR is entered) and return its ShipSpec. */
+     demoLoadPreset(id = 'apollo') {
+       const json = PRESETS[id] ?? apollo;
+       loadAssembly(json);
+       requestArt([...new Set(assembly.parts.map((p) => p.type))]);
+       return computeShipSpec(new Assembly(json, catalog), deps).spec;
+     },
+     ```
+     The demo already calls `builder.demoLoadPreset?.('apollo')` and stops reloading once it exists.
+  2. **Role 1**, `src/builder/stats.js`, after the `LOW_RELIABILITY` line: `if (globalThis.__demo?.active) warnings.push('CHUTE_UNTESTED'); // pitch demo only`, and in `src/builder/data/text.json` next to the other warnings: `"CHUTE_UNTESTED": { "console": "recovery", "text": "parachute not proven", "guidebook": null }`.
+  3. **Role 1 (cosmetic):** `lastDescent: 'The Last Descent'` in `ENDING_NAMES` (`menu.js`), `lastDescent: ['capsule']` in `LOOK` (`asBuilt.js`), and the `lastDescent` ending text in `text.json` (`en` "The Last Descent", `what.en` "The parachute had never been proven and did not open.").
+  4. **Role 3**, `src/core/main.js` (optional): either expose a per-frame hook, or call the demo's update right before `graphics.render` (Role 2 will export it from `src/flight/index.js`). Tell Role 2 which you prefer and we switch `src/flight/demo/driver.js` over and drop the wrapper.
 - **Status:** open
 
 ### Role 1 is adding part effects in flight, on Mars and in the cruise (information: all four agreed)
