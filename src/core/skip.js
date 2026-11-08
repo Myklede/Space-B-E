@@ -1,5 +1,5 @@
-// Debug only (?debug=1): Enter skips the current activity, i.e. jumps to the next game state.
-// For the mapped states this REPLACES the modules' own Enter handlers (input.js asks us first).
+// Debug only (?debug=1): N skips the current activity, i.e. jumps to the next game state.
+// For the mapped states this REPLACES the modules' own N handlers (input.js asks us first).
 import { STATES } from './contract.js';
 import { requestState, getState } from './state.js';
 import { input } from './input.js';
@@ -29,7 +29,7 @@ function toast(text) {
 /** Returns true when the key press was taken by the skip (modules must not see it). */
 export function handleSkipKey(event) {
   try {
-    if (event.code !== 'Enter' || event.repeat) return false;
+    if (event.code !== 'KeyN' || event.repeat) return false;
     if (event.shiftKey || event.ctrlKey || event.altKey || event.metaKey) return false;
     if (inEditableField()) return false;
     const next = SKIP_NEXT[getState()];
