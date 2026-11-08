@@ -20,12 +20,19 @@ import {createAccess} from './role1.hangar.access-v5.js';
 const BASE='/assets/models/builder/hangar/';
 const layout=await fetch(BASE+'layout.json').then(r=>{if(!r.ok)throw Error('layout '+r.status);return r.json();});
 // v5 fragments. Each one may add modules, placements, colliders and segments, and hide base placements or colliders.
-const PARTS=['decks','access','stage','launcher'];
+// The human's demo look: ship x1.5 (?scale=1 for real size), no mobile launcher (?launcher=1 brings it back), bank at 22 m.
+const query=new URLSearchParams(location.search);
+const SHIP_SCALE=Math.max(.5,Math.min(3,Number(query.get('scale')??1.5)||1.5));
+const SHOW_LAUNCHER=query.get('launcher')==='1';
+const PARTS=SHOW_LAUNCHER?['decks','access','stage','launcher']:['decks','access','stage'];
 const fragments=Object.fromEntries(await Promise.all(PARTS.map(async n=>[n,await fetch(BASE+'v5/'+n+'.json').then(r=>r.ok?r.json():{}).catch(()=>({}))])));
 for(const f of Object.values(fragments))Object.assign(layout.modules,f.modules??{});
 const hiddenPlacements=new Set(Object.values(fragments).flatMap(f=>f.hidePlacements??[]));
+fragments.launcher??={};
+if(!SHOW_LAUNCHER&&fragments.stage&&fragments.stage.banks?.[22])fragments.stage.bankDistance=22;
 const hiddenModules=new Set(Object.values(fragments).flatMap(f=>f.hideModules??[]));
-const colliderHidden=c=>Object.values(fragments).some(f=>(f.hideColliders??[]).some(h=>(!h.kind||h.kind===c.kind)&&(!h.region||c.center.every((v,i)=>v>=h.region.min[i]&&v<=h.region.max[i]))));
+if(!SHOW_LAUNCHER)hiddenModules.add('mobile_launcher');
+const colliderHidden=c=>(!SHOW_LAUNCHER&&c.kind==='ml')||Object.values(fragments).some(f=>(f.hideColliders??[]).some(h=>(!h.kind||h.kind===c.kind)&&(!h.region||c.center.every((v,i)=>v>=h.region.min[i]&&v<=h.region.max[i]))));
 const segmentDefs=Object.fromEntries([...layout.wrap.segments,...Object.values(fragments).flatMap(f=>f.segments??[])].map(s=>[s.id,s]));
 document.querySelector('header p').innerHTML='v5 · diagonal open quarter · smooth collars · real builder ship<br>F: fly/orbit · fly: WASD, Q/E, RMB look, Shift/Ctrl, wheel speed<br>Orbit: drag/wheel · double-click any surface to focus.';
 const basePlacements=[...layout.placements.filter(p=>p.module!=='platform_half'),...layout.wrap.placements,{id:'console_island_v4',module:layout.wrap.islandModule,position:[0,0,0],rotation:[0,0,0],scale:[1,1,1]}];
@@ -84,7 +91,17 @@ function chosen(o){for(let n=o;n;n=n.parent)if(n.name.startsWith('slot_cut__'))r
 function distantPlacement(p){
   const deck=p.dynamic==='wrapSegment',previous=lodChoices.get(p.id);
   const threshold=previous===undefined?(deck?14:22):previous?(deck?12:19):(deck?16:25);
-  return camera.position.distanceToSquared(new THREE.Vector3(...p.position))>threshold*threshold;
+  // v5: sliding decks are measured to their footprint (rotated module bounds), not to their origin on the ship axis.
+  const box=deck?footprint(p):null;
+  return (box?box.distanceToPoint(camera.position)**2:camera.position.distanceToSquared(new THREE.Vector3(...p.position)))>threshold*threshold;
+}
+const footprints=new Map();
+function footprint(p){
+  if(footprints.has(p.id))return footprints.get(p.id);
+  const b=layout.modules[p.module]?.bounds;let box=null;
+  if(b){const a=THREE.MathUtils.degToRad(p.rotation?.[1]??0),c=Math.cos(a),s=Math.sin(a);box=new THREE.Box3();
+    for(const x of [b.min[0],b.max[0]])for(const z of [b.min[2],b.max[2]])for(const y of [b.min[1],b.max[1]])box.expandByPoint(new THREE.Vector3(p.position[0]+x*c+z*s,p.position[1]+y,p.position[2]-x*s+z*c));}
+  footprints.set(p.id,box);return box;
 }
 function build(){
   buildCount++;
@@ -222,6 +239,50 @@ function walk(dt){
   for(const axis of ['x','z']){const p=camera.position.clone();p[axis]+=move[axis];const blocked=solid.some(c=>{if(c.kind==='floor')return false;const [x,y,z]=c.center,[sx,sy,sz]=c.size;return p.x+.3>x-sx/2&&p.x-.3<x+sx/2&&p.z+.3>z-sz/2&&p.z-.3<z+sz/2&&p.y>y-sy/2&&p.y-1.65<y+sy/2;});if(!blocked)camera.position[axis]=p[axis];}
   camera.position.y=1.7;
 }
+// Ship data in hall metres after scaling the art by SHIP_SCALE about its base (Y = ML_TOP). Copies, never mutates.
+function scaleShip(d,k){
+  if(k===1)return d;
+  const n=v=>typeof v==='number'?v*k:v;
+  const outline=o=>o&&{...o,y0:n(o.y0),y1:n(o.y1),centerRadius:n(o.centerRadius),radialHalf:n(o.radialHalf),tangentHalf:n(o.tangentHalf),width:n(o.width),radius:n(o.radius),
+    profile:o.profile?.map(p=>({y:p.y*k,r:p.r*k})),sections:o.sections?.map(sec=>({y:sec.y*k,segments:sec.segments.map(v=>v*k)}))};
+  return {...d,top:d.top*k,scale:k,hull:d.hull.map(h=>({...h,y0:h.y0*k,y1:h.y1*k,r0:h.r0*k,r1:h.r1*k})),
+    entries:d.entries.map(e=>({...e,y:n(e.y),height:n(e.height),radius:n(e.radius),outline:outline(e.outline)}))};
+}
+// Without the mobile launcher the ship base stays at ML_TOP, so it stands on a slim open launch mount:
+// a ring table with an exhaust hole on six slender legs, sized to the ship's footprint at its base.
+const mount=new THREE.Group();mount.name='v5_launch_mount';scene.add(mount);
+const mountSteel=new THREE.MeshStandardMaterial({color:0x6f7a7e,roughness:.55,metalness:.45});
+const mountYellow=new THREE.MeshStandardMaterial({color:0xd7a024,roughness:.6,metalness:.2});
+const mountDark=new THREE.MeshStandardMaterial({color:0x3a4448,roughness:.7,metalness:.35});
+function updateMount(data){
+  for(const c of [...mount.children]){c.geometry?.dispose();mount.remove(c);}
+  mount.visible=!SHOW_LAUNCHER;if(SHOW_LAUNCHER)return;
+  let core=0,reach=0;
+  for(const h of data.hull)if(h.y0<=1)core=Math.max(core,h.r0);
+  for(const e of data.entries){
+    if(e.attach==='radial'){const o=e.outline;if(o&&o.y0<=1.5)reach=Math.max(reach,(o.centerRadius??0)+(o.radialHalf??0));continue;}
+    for(const p of e.outline?.profile??[])if(p.y<=1)core=Math.max(core,p.r);
+  }
+  core=Math.max(core,.8);const outer=Math.max(core+1.6,reach+.6),inner=Math.max(.6,core*.55),top=layout.ML_TOP,depth=1.1;
+  const add=(geometry,material,x,y,z,ry=0)=>{const m=new THREE.Mesh(geometry,material);m.position.set(x,y,z);m.rotation.y=ry;mount.add(m);return m;};
+  // Ring table: steel annulus with a yellow edge band and an inner exhaust lip.
+  const ring=new THREE.Shape();ring.absarc(0,0,outer,0,Math.PI*2,false);const hole=new THREE.Path();hole.absarc(0,0,inner,0,Math.PI*2,true);ring.holes.push(hole);
+  const table=new THREE.ExtrudeGeometry(ring,{depth,bevelEnabled:false,curveSegments:48});table.rotateX(-Math.PI/2);add(table,mountSteel,0,top-depth,0);
+  add(new THREE.CylinderGeometry(outer+.03,outer+.03,.22,64,1,true),mountYellow,0,top-.13,0);
+  add(new THREE.CylinderGeometry(inner+.02,inner+.02,depth+.2,48,1,true),mountDark,0,top-depth/2,0);
+  // Six legs, slightly splayed, with a mid-height brace ring and ground plinths.
+  const legR=outer-.55,footR=outer+1.4;
+  for(let i=0;i<6;i++){
+    const a=i*Math.PI/3+Math.PI/6,c=Math.cos(a),s=Math.sin(a);
+    const from=new THREE.Vector3(footR*c,0,footR*s),to=new THREE.Vector3(legR*c,top-depth,legR*s),len=from.distanceTo(to);
+    const leg=new THREE.Mesh(new THREE.BoxGeometry(.7,len,.7),mountSteel);leg.position.copy(from).add(to).multiplyScalar(.5);
+    leg.quaternion.setFromUnitVectors(new THREE.Vector3(0,1,0),to.clone().sub(from).normalize());mount.add(leg);
+    add(new THREE.BoxGeometry(1.5,.35,1.5),mountYellow,footR*c,.175,footR*s,-a);
+    add(new THREE.BoxGeometry(.9,.6,.9),mountDark,legR*c,top+.3,legR*s,-a);// hold-down clamp
+  }
+  const brace=new THREE.TorusGeometry((legR+footR)/2,.16,8,64);brace.rotateX(Math.PI/2);add(brace,mountSteel,0,(top-depth)/2,0);
+  for(const m of mount.children){m.updateMatrixWorld(true);}
+}
 function refit(){
   const r=layout.radii[params.radius],h=params.height;
   const entries=params.realShip&&shipData?shipData.entries:[{attach:'axial',y:0,height:h,radius:r}];
@@ -230,7 +291,8 @@ function refit(){
 }
 try{
   const module=await import('./role1.hangar.ship.js');
-  realShip=module.createShip(data=>{shipData=data;params.height=data.top;Object.assign(params,realShip.selectedShapes);for(const c of shipGuiReal.controllers)c.updateDisplay();rig[2].target.position.y=7+data.top*.35;rig[3].position.y=Math.min(76,12+data.top*.8);rig[3].target.position.y=7+data.top*.72;refit();consoleBank?.redraw();});scene.add(realShip.object);
+  // Cross-sections are measured at the art heights that land on the deck levels once the ship is scaled.
+  realShip=module.createShip(raw=>{const data=scaleShip(raw,SHIP_SCALE);shipData=data;updateMount(data);params.height=data.top;Object.assign(params,realShip.selectedShapes);for(const c of shipGuiReal.controllers)c.updateDisplay();rig[2].target.position.y=7+data.top*.35;rig[3].position.y=Math.min(76,12+data.top*.8);rig[3].target.position.y=7+data.top*.72;refit();consoleBank?.redraw();},layout.levels.map(l=>(l.y-layout.ML_TOP)/SHIP_SCALE));realShip.object.scale.setScalar(SHIP_SCALE);scene.add(realShip.object);
   await realShip.rebuild();
   shipGuiReal.add(params,'preset',Object.keys(module.presets)).onChange(async name=>{await realShip.preset(name);makeRocket();build();});
   for(const section of ['nose','body','tail']){params[section]=realShip.selectedShapes[section];shipGuiReal.add(params,section,{'Current custom layout':'__custom__',...Object.fromEntries(module.sections[section].shapes.map(sh=>[sh.name??sh.id,sh.id]))}).onChange(async id=>{await realShip.shape(section,id);makeRocket();build();});}
