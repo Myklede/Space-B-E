@@ -56,10 +56,31 @@ export function createAutopilot(options = {}) {
   let dodgeId = null, dodgeStart = 0, dodgeDone = false;
   let slamBurns = 0; // hoverslam burns made this descent (a relight after a short stop lights at the floor)
   let slamBrake = false, slamBraked = false; // a hoverslam ship drifting fast first brakes the drift high up, then lands
+  let prevQ = null, prevQT = 0, dqdt = 0; // dynamic pressure and its rate of rise (Pa/s): the look-ahead of the burn limiter
+
+  // How much throttle the ship can take right now, from ITS OWN limits (burn limiter of every powered ascent step):
+  //  - dynamic pressure: look ahead (rate of rise x about 2 s plus the length of the frame being flown, a warped frame is long)
+  //    and fade the throttle out before the real structural limit (telemetry.maxQ, part effects included);
+  //  - g load: the throttle at which the engines give gLimit (a strong ship cannot hold full throttle, not even in the
+  //    circularise burn where there is no air; 6 g for 4 s is a blackout);
+  //  - engine heat: it only builds above 90 % throttle, so past half-hot the engine is held at 90 %.
+  function burnLimit(fc, tel) {
+    const dtFrame = prevQ === null ? 0 : fc.t - prevQT;
+    if (prevQ !== null && dtFrame > 1e-6 && dtFrame < 5) dqdt = (tel.dynamicPressure - prevQ) / dtFrame; else if (!(dtFrame === 0 && prevQ !== null)) dqdt = 0; // same instant: keep the last rate
+    prevQ = tel.dynamicPressure; prevQT = fc.t;
+    let lim = 1;
+    const qCap = Math.min(maxQLimit, 0.8 * tel.maxQ);
+    const qPred = tel.dynamicPressure + Math.max(0, dqdt) * (2 + 2 * Math.max(0, dtFrame));
+    if (qPred > 0.85 * qCap) lim = Math.min(lim, Math.max(0.15, 1 - 0.85 * (qPred - 0.85 * qCap) / (0.15 * qCap)));
+    const gFull = (tel.twr * tel.gravity) / fc.g0; // g of the engines at full throttle (drag only lowers what is felt)
+    if (gFull > 0) lim = Math.min(lim, Math.max(0.02, gLimit / gFull)); // (the engine's own throttle floor, if any, is applied by the controller)
+    if (tel.engineTemp > 0.5) lim = Math.min(lim, 0.9);
+    return lim;
+  }
 
   function set(id, n = 0) { step = id; arg = n; }
   function reset() {
-    step = 'standby'; arg = 0; burning = false; coastLatch = false; circ = false; landedOn = null; dodgeId = null; dodgeStart = 0; dodgeDone = false; slamBurns = 0; slamBrake = false; slamBraked = false;
+    step = 'standby'; arg = 0; burning = false; coastLatch = false; circ = false; landedOn = null; dodgeId = null; dodgeStart = 0; dodgeDone = false; slamBurns = 0; slamBrake = false; slamBraked = false; prevQ = null; dqdt = 0;
     input.aim = undefined; input.throttleTarget = undefined; input.brake = false; input.trim = 0;
   }
 
@@ -68,7 +89,11 @@ export function createAutopilot(options = {}) {
     if (ctx.countdown || fc.failed) { set('standby'); return input; }
     // Landed: engine off, no aim. Remember it: the ascent program is for the Earth pad only, never a liftoff from Mars.
     if (fc.landed || fc.phase === 'landed') { landedOn = fc.planetId; burning = false; input.throttleTarget = 0; set('landed'); return input; }
-    if (fc.phase === 'prelaunch' || (fc.onGround && fc.liftoffT === null)) { set('standby'); return input; }
+    if (fc.phase === 'prelaunch' || (fc.onGround && fc.liftoffT === null)) {
+      // clamps released and the engine is up: a very strong ship must not leave the pad at an instant 12 g (blackout limit)
+      if (fc.planetId === 'earth' && fc.throttle > 0 && !fc.holdDown) input.throttleTarget = burnLimit(fc, fc.telemetry);
+      set('standby'); return input;
+    }
 
     const tel = fc.telemetry;
     const guide = fc.planetId === 'earth' && landedOn !== fc.planetId ? ascentGuide(fc) : null;
@@ -89,7 +114,7 @@ export function createAutopilot(options = {}) {
         coastLatch = false; circ = true;
         const up = fc.up;
         const vh = v3(fc.vel.x - up.x * tel.verticalSpeed, fc.vel.y - up.y * tel.verticalSpeed, fc.vel.z - up.z * tel.verticalSpeed);
-        input.aim = guide.step === 'circularise' || len(vh) < 5 ? guide.direction : norm(vh); input.throttleTarget = 1; burning = true; set('circularise');
+        input.aim = guide.step === 'circularise' || len(vh) < 5 ? guide.direction : norm(vh); input.throttleTarget = burnLimit(fc, tel); burning = true; set('circularise');
         return input;
       }
       if (coastLatch && tel.apoapsis < target - RELIGHT_DROP) coastLatch = false; // drag pulled it too low: relight
@@ -102,14 +127,13 @@ export function createAutopilot(options = {}) {
       }
       burning = true;
       if (guide.step === 'climb') {
-        input.aim = guide.direction; input.throttleTarget = 1;
+        input.aim = guide.direction; input.throttleTarget = burnLimit(fc, tel);
         const asked = fc.thrustNow() * fc.throttle;
         set('climb', asked > 0 && tel.thrust < 0.98 * asked ? 1 : 0); // 1: the thrust is held back (a pad that cannot take it)
       } else { // turn, or still burning toward the overshoot margin
         input.aim = guide.step === 'turn' ? guide.direction : (tel.speed > 1 ? norm(fc.vel) : guide.direction);
-        if (tel.dynamicPressure > maxQLimit) { input.throttleTarget = 0.5; set('maxq'); }
-        else if (tel.gLoad > gLimit) { input.throttleTarget = 0.6; set('maxq'); }
-        else { input.throttleTarget = 1; set('turn', guide.pitchDeg ?? 89); }
+        input.throttleTarget = burnLimit(fc, tel);
+        if (input.throttleTarget < 0.95) set('maxq'); else set('turn', guide.pitchDeg ?? 89);
       }
       return input;
     }
