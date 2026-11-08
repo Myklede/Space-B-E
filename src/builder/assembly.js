@@ -474,6 +474,7 @@ export class Assembly {
       for (let k = 0; k < n; k++) {
         const p = { id: `p${++next}`, type: r.type, parent: host.id, node: 'radial', angle: ((r.angle ?? 0) + (360 / n) * k) % 360, yFrac: r.yFrac ?? def.attachFrac ?? 0.5, variant: null, group, material: r.material ?? null };
         if (r.origin) p.origin = r.origin;
+        if (r.options) p.options = { ...r.options }; // a shape's side parts may preset their inner choices too
         added.push(p);
       }
     }
