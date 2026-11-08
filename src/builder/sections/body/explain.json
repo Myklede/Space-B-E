@@ -1,4 +1,2732 @@
 {
-  "_about": "Plain-language explanations for the body card, English and Vietnamese. Keys and fields: see src/builder/explain.js.",
-  "entries": {}
+  "_about": "Plain-language explanations for the body card, English and Vietnamese (content agent): its parts (part:<id>), the pieces inside their kits (slot:<kit>/<slot>, option:<kit>/<slot>/<option>), its shapes (shape:body/<id>) and rows (row:body/<id>). Keys and fields: see src/builder/explain.js. Vietnamese gives the English term in brackets on first use in an entry; part names stay English, as on the cards. _todo marks a fact still to check.",
+  "entries": {
+    "part:tank_s_kerolox": {
+      "en": {
+        "what": "A small tank holding 12 t of kerosene and liquid oxygen, in two compartments. The kerosene is a very pure kind of jet fuel. The oxygen stays liquid at −183 °C.",
+        "why": "There is no air in space, so a rocket carries its own oxygen to burn its fuel. Kerosene is dense, so a lot of propellant fits in a small tank.",
+        "without": "No tank means nothing for the engines to burn. This tank feeds kerolox engines only; any other engine treats it as dead weight.",
+        "inside": "A tube with a dome at each end, split into an oxygen compartment and a kerosene compartment. As the engines drain them, gas from pressure bottles fills the space above each liquid. Rings on the walls calm the sloshing, and a pipe at the bottom of each compartment feeds the engines.",
+        "analogy": "Like a lunchbox with two compartments: two things in one box, kept apart until it is time to use them."
+      },
+      "vi": {
+        "what": "Một bồn nhiên liệu (tank) nhỏ chứa 12 tấn dầu hỏa (kerosene) và oxy lỏng, chia làm hai ngăn. Dầu hỏa ở đây là loại nhiên liệu máy bay phản lực được lọc rất tinh. Oxy được giữ ở thể lỏng ở −183 °C.",
+        "why": "Ngoài không gian không có không khí, nên tên lửa phải tự mang oxy để đốt nhiên liệu. Dầu hỏa đặc, nên bồn nhỏ vẫn chứa được nhiều nhiên liệu đẩy (propellant).",
+        "without": "Không có bồn thì động cơ không có gì để đốt. Bồn này chỉ cấp cho động cơ kerolox; động cơ loại khác coi nó là khối nặng vô dụng.",
+        "inside": "Một ống tròn có nắp vòm ở hai đầu, chia thành ngăn oxy và ngăn dầu hỏa. Khi động cơ hút cạn dần, khí từ bình nén lấp chỗ trống phía trên mỗi chất lỏng. Các vòng trên vách làm dịu sóng sánh, và một ống ở đáy mỗi ngăn cấp nhiên liệu cho động cơ.",
+        "analogy": "Giống hộp cơm hai ngăn: hai món trong một hộp, để riêng cho tới lúc dùng.",
+        "pros": [
+          "Nhiên liệu đặc: nhiều khối lượng trong bồn nhỏ",
+          "Rẻ"
+        ],
+        "cons": [
+          "Chỉ dùng cho động cơ kerolox"
+        ],
+        "real": "Tầng một Falcon 9: 411 tấn oxy lỏng và RP-1 trong bồn nhôm-lithi rộng 3,7 m; tầng đẩy Atlas V: 284 tấn",
+        "name": "Bồn kerolox S"
+      }
+    },
+    "part:tank_m_kerolox": {
+      "en": {
+        "what": "A medium tank holding 25 t of kerosene and liquid oxygen. It is the balanced choice: a good amount of propellant for its height.",
+        "why": "Kerosene is cheap, dense and easy to store, so many medium rockets are built around tanks like this.",
+        "without": "No tank means nothing for the engines to burn. This tank feeds kerolox engines only; any other engine treats it as dead weight.",
+        "inside": "Two compartments, oxygen and kerosene, each closed by a curved dome that holds the pressure. Gas fills the space above the liquids as they drain, and rings on the walls calm the sloshing. A pipe at the bottom of each compartment feeds the engines.",
+        "analogy": "Like a carton with two drinks inside and a wall between them: one package, two liquids."
+      },
+      "vi": {
+        "what": "Một bồn nhiên liệu (tank) cỡ vừa chứa 25 tấn dầu hỏa và oxy lỏng. Đây là lựa chọn cân bằng: lượng nhiên liệu khá so với chiều cao.",
+        "why": "Dầu hỏa (kerosene) rẻ, đặc và dễ bảo quản, nên nhiều tên lửa cỡ vừa được xây quanh những bồn như thế này.",
+        "without": "Không có bồn thì động cơ không có gì để đốt. Bồn này chỉ cấp cho động cơ kerolox; động cơ loại khác coi nó là khối nặng vô dụng.",
+        "inside": "Hai ngăn, oxy và dầu hỏa, mỗi ngăn đóng bằng một nắp vòm cong để chịu áp suất. Khí lấp chỗ trống phía trên chất lỏng khi chúng cạn dần, và các vòng trên vách làm dịu sóng sánh. Một ống ở đáy mỗi ngăn cấp nhiên liệu cho động cơ.",
+        "analogy": "Giống một hộp giấy đựng hai loại nước uống, có vách ngăn ở giữa: một vỏ, hai chất lỏng.",
+        "pros": [
+          "Nhiên liệu đặc: nhiều khối lượng trong bồn nhỏ",
+          "Cân bằng tốt giữa khối lượng và chiều cao"
+        ],
+        "cons": [
+          "Chỉ dùng cho động cơ kerolox"
+        ],
+        "real": "Tầng một Falcon 9: 411 tấn oxy lỏng và RP-1 trong bồn nhôm-lithi rộng 3,7 m; tầng đẩy Atlas V: 284 tấn",
+        "name": "Bồn kerolox M"
+      }
+    },
+    "part:tank_l_kerolox": {
+      "en": {
+        "what": "The biggest standard kerolox tank: 45 t of kerosene and liquid oxygen.",
+        "why": "More propellant means more Δv, the total speed change the ship can make. Dense kerosene keeps even a big tank fairly short.",
+        "without": "A smaller tank holds less propellant, so the ship has less Δv. This one is long, and a long ship is harder to keep pointing straight in the air.",
+        "inside": "The oxygen compartment is the bigger one: kerosene engines burn more than twice as much oxygen as kerosene. Gas from pressure bottles fills the space above each liquid as it drains, and rings on the walls calm the sloshing.",
+        "analogy": "Like the big fuel tank of a long-distance lorry: heavy, but it goes far between stops."
+      },
+      "vi": {
+        "what": "Bồn kerolox tiêu chuẩn lớn nhất: 45 tấn dầu hỏa (kerosene) và oxy lỏng.",
+        "why": "Nhiều nhiên liệu hơn thì Δv lớn hơn, tức tổng mức thay đổi vận tốc mà con tàu làm được. Dầu hỏa đặc nên bồn to vẫn khá ngắn.",
+        "without": "Bồn nhỏ hơn chứa ít nhiên liệu hơn, nên tàu có ít Δv hơn. Bồn này dài, mà tàu càng dài càng khó giữ thẳng hướng trong không khí.",
+        "inside": "Ngăn oxy là ngăn lớn hơn: động cơ dầu hỏa đốt lượng oxy nhiều hơn gấp đôi lượng dầu. Khí từ bình nén lấp chỗ trống phía trên mỗi chất lỏng khi nó cạn dần, và các vòng trên vách làm dịu sóng sánh.",
+        "analogy": "Giống bình xăng lớn của xe tải đường dài: nặng, nhưng đi được xa giữa hai lần đổ.",
+        "pros": [
+          "Nhiên liệu đặc: nhiều khối lượng trong bồn nhỏ",
+          "45 tấn nhiên liệu"
+        ],
+        "cons": [
+          "Chỉ dùng cho động cơ kerolox",
+          "Dài: đặt vây thấp"
+        ],
+        "real": "Tầng một Falcon 9: 411 tấn oxy lỏng và RP-1 trong bồn nhôm-lithi rộng 3,7 m; tầng đẩy Atlas V: 284 tấn",
+        "name": "Bồn kerolox L"
+      }
+    },
+    "part:tank_s_methalox": {
+      "en": {
+        "what": "A small tank holding 9.6 t of liquid methane and liquid oxygen. Methane is the main gas in natural gas for cooking; here it is chilled to a liquid at −162 °C.",
+        "why": "Methane burns cleanly and gives more push per kilogram than kerosene. It can also be made on Mars from buried ice and the carbon dioxide in the air, so the ship can refuel for the trip home.",
+        "without": "Methane is lighter than kerosene for its volume, so the same tank holds less mass. This tank feeds methalox engines only.",
+        "inside": "Liquid methane at −162 °C and liquid oxygen at −183 °C sit in two compartments with domed ends. As they drain, gas warmed by the engine or from pressure bottles fills the space above them, and rings on the walls calm the sloshing.",
+        "analogy": "Like a water bottle on a hike that you can refill at the far end of the trail."
+      },
+      "vi": {
+        "what": "Một bồn nhiên liệu (tank) nhỏ chứa 9,6 tấn metan lỏng (methane) và oxy lỏng. Metan là thành phần chính của khí đốt nấu ăn; ở đây nó được làm lạnh thành chất lỏng ở −162 °C.",
+        "why": "Metan cháy sạch và cho lực đẩy trên mỗi ki-lô-gam nhiều hơn dầu hỏa. Nó còn làm ra được ngay trên Sao Hỏa từ băng dưới đất và khí cacbonic trong không khí, nên tàu có thể nạp lại nhiên liệu để về.",
+        "without": "Metan nhẹ hơn dầu hỏa nếu so cùng thể tích, nên cùng một bồn chứa được ít khối lượng hơn. Bồn này chỉ cấp cho động cơ methalox.",
+        "inside": "Metan lỏng ở −162 °C và oxy lỏng ở −183 °C nằm trong hai ngăn có nắp vòm. Khi chúng cạn dần, khí do động cơ làm ấm hoặc khí từ bình nén lấp chỗ trống phía trên, và các vòng trên vách làm dịu sóng sánh.",
+        "analogy": "Giống chai nước mang đi leo núi mà bạn có thể đổ đầy lại ở cuối đường mòn.",
+        "pros": [
+          "Nạp lại được trên Sao Hỏa",
+          "Rẻ"
+        ],
+        "cons": [
+          "Chỉ dùng cho động cơ methalox"
+        ],
+        "real": "Tầng một New Glenn (rộng 7 m) và Starship: metan và oxy lỏng",
+        "name": "Bồn methalox S"
+      }
+    },
+    "part:tank_m_methalox": {
+      "en": {
+        "what": "A medium tank holding 20 t of liquid methane and liquid oxygen: a good balance of propellant and height.",
+        "why": "Methane burns cleanly, does not leave soot in the engine, and can be made again on Mars for the trip home.",
+        "without": "A kerosene tank of the same size holds more mass, but cannot be refilled on Mars. This tank feeds methalox engines only.",
+        "inside": "Methane engines burn about three and a half kilograms of oxygen for every kilogram of methane, so the oxygen compartment is the bigger one. Gas fills the space above each liquid as it drains, and pipes at the bottom feed the engines.",
+        "analogy": "Like a thermos flask for an icy drink: it holds a liquid far colder than any freezer, and the liquid slowly warms if you wait too long."
+      },
+      "vi": {
+        "what": "Một bồn nhiên liệu (tank) cỡ vừa chứa 20 tấn metan lỏng (methane) và oxy lỏng: cân bằng tốt giữa lượng nhiên liệu và chiều cao.",
+        "why": "Metan cháy sạch, không để lại muội trong động cơ, và có thể làm lại trên Sao Hỏa cho chuyến về.",
+        "without": "Bồn dầu hỏa cùng cỡ chứa nhiều khối lượng hơn, nhưng không nạp lại được trên Sao Hỏa. Bồn này chỉ cấp cho động cơ methalox.",
+        "inside": "Động cơ metan đốt khoảng ba ki-lô-gam rưỡi oxy cho mỗi ki-lô-gam metan, nên ngăn oxy là ngăn lớn hơn. Khí lấp chỗ trống phía trên mỗi chất lỏng khi nó cạn dần, và các ống ở đáy cấp nhiên liệu cho động cơ.",
+        "analogy": "Giống bình giữ nhiệt đựng đồ uống lạnh: nó chứa chất lỏng lạnh hơn mọi tủ đá, và chất lỏng ấm dần nếu để quá lâu.",
+        "pros": [
+          "Nạp lại được trên Sao Hỏa",
+          "Cân bằng tốt giữa khối lượng và chiều cao"
+        ],
+        "cons": [
+          "Chỉ dùng cho động cơ methalox"
+        ],
+        "real": "Tầng một New Glenn (rộng 7 m) và Starship: metan và oxy lỏng",
+        "name": "Bồn methalox M"
+      }
+    },
+    "part:tank_l_methalox": {
+      "en": {
+        "what": "The biggest standard methalox tank: 36 t of liquid methane and liquid oxygen.",
+        "why": "A big tank means a lot of Δv, and methane is the propellant you can make again on Mars.",
+        "without": "A smaller tank holds less propellant, so the ship has less Δv. This one is long, and a long ship is harder to keep pointing straight in the air.",
+        "inside": "Two big compartments with domed ends, one of liquid methane and one of liquid oxygen. Gas fills the space above each liquid as it drains, and rings calm the sloshing. The pipe from the upper compartment has to get past the lower one to reach the engines.",
+        "analogy": "Like a big fuel can you can refill when you arrive: the bigger it is, the further you get before you need to."
+      },
+      "vi": {
+        "what": "Bồn methalox tiêu chuẩn lớn nhất: 36 tấn metan lỏng (methane) và oxy lỏng.",
+        "why": "Bồn lớn nghĩa là Δv lớn, và metan là loại nhiên liệu có thể làm lại trên Sao Hỏa.",
+        "without": "Bồn nhỏ hơn chứa ít nhiên liệu hơn, nên tàu có ít Δv hơn. Bồn này dài, mà tàu càng dài càng khó giữ thẳng hướng trong không khí.",
+        "inside": "Hai ngăn lớn có nắp vòm, một ngăn metan lỏng, một ngăn oxy lỏng. Khí lấp chỗ trống phía trên mỗi chất lỏng khi nó cạn dần, và các vòng làm dịu sóng sánh. Ống của ngăn trên phải vượt qua ngăn dưới mới tới được động cơ.",
+        "analogy": "Giống can nhiên liệu lớn mà tới nơi là đổ đầy lại được: can càng to, càng đi xa trước khi phải đổ.",
+        "pros": [
+          "Nạp lại được trên Sao Hỏa",
+          "36 tấn nhiên liệu"
+        ],
+        "cons": [
+          "Chỉ dùng cho động cơ methalox",
+          "Dài: đặt vây thấp"
+        ],
+        "real": "Tầng một New Glenn (rộng 7 m) và Starship: metan và oxy lỏng",
+        "name": "Bồn methalox L"
+      }
+    },
+    "part:tank_s_hydrolox": {
+      "en": {
+        "what": "A small tank of liquid hydrogen and liquid oxygen: 4.2 t of propellant. Hydrogen is the lightest substance there is, and it stays liquid only below −253 °C.",
+        "why": "Hydrogen and oxygen give the most push per kilogram of any common rocket propellant: the best Isp in the hangar.",
+        "without": "Hydrogen is so light that a tank holds little mass for its size. It also slowly boils away during the long cruise.",
+        "inside": "An engine burns about six kilograms of oxygen for each kilogram of hydrogen. Yet the hydrogen takes up nearly three times as much room, so its compartment is the big one. A coat of foam outside stops the −253 °C hydrogen boiling away.",
+        "analogy": "Like a shopping bag with a big box of cereal and a few tins: the cereal (the hydrogen) takes up the room, the tins (the oxygen) make the weight."
+      },
+      "vi": {
+        "what": "Một bồn nhiên liệu (tank) nhỏ chứa hydro lỏng (hydrogen) và oxy lỏng: 4,2 tấn nhiên liệu đẩy. Hydro là chất nhẹ nhất trong tự nhiên, và chỉ ở thể lỏng dưới −253 °C.",
+        "why": "Hydro và oxy cho lực đẩy trên mỗi ki-lô-gam lớn nhất trong các loại nhiên liệu tên lửa thông dụng: xung lực riêng (Isp) tốt nhất trong xưởng.",
+        "without": "Hydro nhẹ tới mức bồn chứa được rất ít khối lượng so với kích thước. Nó còn bay hơi dần trong chuyến hành trình dài.",
+        "inside": "Động cơ đốt khoảng sáu ki-lô-gam oxy cho mỗi ki-lô-gam hydro. Vậy mà hydro chiếm chỗ gần gấp ba, nên ngăn hydro là ngăn lớn. Một lớp bọt cách nhiệt bên ngoài giữ cho hydro ở −253 °C không bay hơi mất.",
+        "analogy": "Giống túi đồ đi chợ có một hộp ngũ cốc to và vài lon đồ hộp: hộp ngũ cốc (hydro) chiếm chỗ, còn mấy lon (oxy) làm nên sức nặng.",
+        "pros": [
+          "Isp tốt nhất khi đi với động cơ hydrolox",
+          "Rẻ"
+        ],
+        "cons": [
+          "Mỗi bồn chứa ít khối lượng, bay hơi dần trong chuyến đi"
+        ],
+        "real": "Bồn ngoài của tàu con thoi: 735 tấn LOX và LH2 dưới lớp bọt cam; tầng lõi Delta IV: 200 tấn; Centaur III: 20,8 tấn",
+        "name": "Bồn hydrolox S"
+      }
+    },
+    "part:tank_m_hydrolox": {
+      "en": {
+        "what": "A medium tank of liquid hydrogen and liquid oxygen: 8.8 t of propellant.",
+        "why": "With a hydrolox engine, every kilogram of this propellant gives more Δv than any other in the hangar.",
+        "without": "A kerosene or methane tank of the same size holds far more mass, but gives less push per kilogram. Hydrogen boils off during the cruise.",
+        "inside": "Under the foam is a thin metal shell with two compartments. Gas fills the space above the liquids as they drain, and rings calm the sloshing. Pipes at the bottom feed the engine with liquids at −253 °C and −183 °C.",
+        "analogy": "Like a suitcase packed with a duvet and a few books: the duvet (the hydrogen) fills it, the books (the oxygen) make it heavy."
+      },
+      "vi": {
+        "what": "Một bồn nhiên liệu (tank) cỡ vừa chứa hydro lỏng (hydrogen) và oxy lỏng: 8,8 tấn nhiên liệu đẩy.",
+        "why": "Đi với động cơ hydrolox, mỗi ki-lô-gam nhiên liệu này cho Δv nhiều hơn mọi loại khác trong xưởng.",
+        "without": "Bồn dầu hỏa hay metan cùng cỡ chứa nhiều khối lượng hơn hẳn, nhưng mỗi ki-lô-gam đẩy kém hơn. Hydro bay hơi dần trong chuyến đi.",
+        "inside": "Dưới lớp bọt là một vỏ kim loại mỏng chia hai ngăn. Khí lấp chỗ trống phía trên chất lỏng khi chúng cạn dần, và các vòng làm dịu sóng sánh. Các ống ở đáy cấp cho động cơ những chất lỏng ở −253 °C và −183 °C.",
+        "analogy": "Giống chiếc vali nhét một tấm chăn bông và vài quyển sách: chăn (hydro) chiếm đầy vali, còn sách (oxy) làm nó nặng.",
+        "pros": [
+          "Isp tốt nhất khi đi với động cơ hydrolox",
+          "Cân bằng tốt giữa khối lượng và chiều cao"
+        ],
+        "cons": [
+          "Mỗi bồn chứa ít khối lượng, bay hơi dần trong chuyến đi"
+        ],
+        "real": "Bồn ngoài của tàu con thoi: 735 tấn LOX và LH2 dưới lớp bọt cam; tầng lõi Delta IV: 200 tấn; Centaur III: 20,8 tấn",
+        "name": "Bồn hydrolox M"
+      }
+    },
+    "part:tank_l_hydrolox": {
+      "en": {
+        "what": "The biggest standard hydrogen tank: 15.8 t of liquid hydrogen and liquid oxygen.",
+        "why": "It gives the best Isp in the hangar, so a hydrolox ship gets far on less propellant mass.",
+        "without": "It is long for the mass it holds, and a long ship is harder to keep pointing straight in the air. Hydrogen slowly boils off during the cruise.",
+        "inside": "A long metal shell under foam, with a big hydrogen compartment and a smaller, heavier oxygen one. Gas fills the space above each liquid as it drains, and rings on the walls calm the sloshing.",
+        "analogy": "Like a lorry loaded with pillows and a few bricks: the pillows (the hydrogen) fill the space, the bricks (the oxygen) make most of the weight."
+      },
+      "vi": {
+        "what": "Bồn hydro tiêu chuẩn lớn nhất: 15,8 tấn hydro lỏng (hydrogen) và oxy lỏng.",
+        "why": "Nó cho xung lực riêng (Isp) tốt nhất trong xưởng, nên tàu hydrolox đi được xa với ít khối lượng nhiên liệu hơn.",
+        "without": "Nó dài so với khối lượng chứa được, mà tàu càng dài càng khó giữ thẳng hướng trong không khí. Hydro bay hơi dần trong chuyến đi.",
+        "inside": "Một vỏ kim loại dài dưới lớp bọt, có ngăn hydro lớn và ngăn oxy nhỏ hơn nhưng nặng hơn. Khí lấp chỗ trống phía trên mỗi chất lỏng khi nó cạn dần, và các vòng trên vách làm dịu sóng sánh.",
+        "analogy": "Giống chiếc xe tải chở gối bông và vài viên gạch: gối (hydro) chiếm gần hết chỗ, còn gạch (oxy) làm nên phần lớn sức nặng.",
+        "pros": [
+          "Isp tốt nhất khi đi với động cơ hydrolox",
+          "16 tấn nhiên liệu"
+        ],
+        "cons": [
+          "Mỗi bồn chứa ít khối lượng, bay hơi dần trong chuyến đi",
+          "Dài: đặt vây thấp"
+        ],
+        "real": "Bồn ngoài của tàu con thoi: 735 tấn LOX và LH2 dưới lớp bọt cam; tầng lõi Delta IV: 200 tấn; Centaur III: 20,8 tấn",
+        "name": "Bồn hydrolox L"
+      }
+    },
+    "part:tank_l_kerolox_stretch": {
+      "en": {
+        "what": "The large kerolox tank made 40 % longer: 63 t of propellant. Only the straight middle part grows; the domes at each end stay the same.",
+        "why": "The domes are the heavy, expensive part of a tank. A longer barrel holds more propellant for less extra mass than a whole new tank would.",
+        "without": "Two standard tanks would need two more domes. Full, this one weighs about 67 t, so the ship's weight on the pad goes up sharply.",
+        "inside": "The same domes and fittings as the standard large tank, with a longer straight barrel between them. Inside, gas fills the space above the liquids as they drain, rings calm the sloshing, and pipes at the bottom feed the engines.",
+        "analogy": "Like adding a carriage to a train instead of buying a second train."
+      },
+      "vi": {
+        "what": "Bồn kerolox cỡ lớn được kéo dài thêm 40 %: 63 tấn nhiên liệu đẩy (propellant). Chỉ phần thân thẳng ở giữa dài ra; hai nắp vòm (dome) ở hai đầu giữ nguyên.",
+        "why": "Nắp vòm là phần nặng và đắt nhất của bồn. Kéo dài thân bồn chứa thêm nhiên liệu mà tốn ít khối lượng hơn làm hẳn một bồn mới.",
+        "without": "Dùng hai bồn tiêu chuẩn thì phải thêm hai nắp vòm. Khi đầy, bồn này nặng khoảng 67 tấn, nên sức nặng của tàu trên bệ tăng vọt.",
+        "inside": "Vẫn là các nắp vòm và phụ kiện của bồn lớn tiêu chuẩn, chỉ có thân thẳng ở giữa dài hơn. Bên trong, khí lấp chỗ trống phía trên chất lỏng khi chúng cạn dần, các vòng làm dịu sóng sánh, và các ống ở đáy cấp nhiên liệu cho động cơ.",
+        "analogy": "Giống nối thêm một toa vào đoàn tàu thay vì mua thêm cả một đoàn tàu.",
+        "pros": [
+          "63 tấn nhiên liệu",
+          "Tỉ lệ nhiên liệu trên khối lượng tốt hơn bồn L tiêu chuẩn"
+        ],
+        "cons": [
+          "Chỉ dùng cho động cơ kerolox",
+          "Dài và nặng: cần một cụm động cơ mạnh"
+        ],
+        "real": "Saturn V S-IC: riêng bồn LOX đã chứa 1.266 m³; Delta II kéo dài bồn Thor thêm 3,8 m; Falcon 9 Full Thrust kéo dài các bồn của nó",
+        "name": "Bồn kerolox L, kéo dài"
+      }
+    },
+    "part:tank_m_kerolox_stretch": {
+      "en": {
+        "what": "A long, narrow kerolox tank: 37.5 t of propellant at the medium width. It has the same domes as the standard medium tank and a longer barrel.",
+        "why": "A slim tube fits through tunnels and on railway wagons. The Soyuz core stage is about 3 m wide and many times as long.",
+        "without": "A shorter tank holds less. A long tank moves the ship's balance point, its centre of mass, as it drains.",
+        "inside": "A long, slim barrel between standard domes. In a tank this tall, the slosh rings matter, and the oxygen from the upper compartment runs a long way down its pipe to the engines.",
+        "analogy": "Like a tall, thin thermos that still fits in the side pocket of a bag."
+      },
+      "vi": {
+        "what": "Một bồn kerolox dài và hẹp: 37,5 tấn nhiên liệu đẩy ở đường kính cỡ vừa. Nó có cùng nắp vòm (dome) với bồn cỡ vừa tiêu chuẩn, chỉ có thân dài hơn.",
+        "why": "Một ống thon lọt qua đường hầm và đặt vừa toa tàu hỏa. Tầng lõi tên lửa Soyuz rộng khoảng 3 m nhưng dài gấp nhiều lần.",
+        "without": "Bồn ngắn hơn chứa ít hơn. Bồn dài làm điểm cân bằng của tàu, tức trọng tâm (centre of mass), dịch đi khi nó cạn dần.",
+        "inside": "Một thân dài, thon giữa hai nắp vòm tiêu chuẩn. Trong bồn cao như vậy, các vòng chống sóng sánh rất quan trọng, và oxy từ ngăn trên phải chảy một quãng dài trong ống mới tới động cơ.",
+        "analogy": "Giống chiếc bình giữ nhiệt cao và thon, vẫn nhét vừa túi bên hông ba lô.",
+        "pros": [
+          "37,5 tấn ở đường kính cỡ vừa",
+          "Vừa với mũi và đuôi cỡ vừa mà không cần bộ chuyển"
+        ],
+        "cons": [
+          "Chỉ dùng cho động cơ kerolox",
+          "Dài: để ý trọng tâm"
+        ],
+        "real": "Tầng một Delta II: rộng 2,44 m, dài 26,1 m, nhôm lưới tam giác (isogrid), khoảng 96 tấn nhiên liệu; tầng lõi Soyuz: 2,95 m, 90 tấn",
+        "name": "Bồn kerolox M, kéo dài"
+      }
+    },
+    "part:tank_l_hydrolox_stretch": {
+      "en": {
+        "what": "The longest hydrogen tank: 27 t of propellant for the best Isp there is. It wears orange foam, like the Space Shuttle's External Tank.",
+        "why": "A longer barrel holds more for little extra structure. It has the best propellant-to-mass ratio of the framed hydrogen tanks.",
+        "without": "It is bulky and expensive for its mass, and the hydrogen slowly boils off during the cruise.",
+        "inside": "The foam outside stops the hydrogen boiling away and keeps ice from forming on the skin. Inside, the hydrogen compartment is by far the bigger one, and the pipe from the oxygen above must get past it to reach the engines.",
+        "analogy": "Like an ice lolly in a foam sleeve: the sleeve stops it melting before you need it."
+      },
+      "vi": {
+        "what": "Bồn hydro dài nhất: 27 tấn nhiên liệu đẩy cho xung lực riêng (Isp) tốt nhất. Nó khoác lớp bọt cách nhiệt màu cam, giống bồn ngoài (External Tank) của tàu con thoi.",
+        "why": "Thân bồn dài hơn chứa thêm được nhiều mà kết cấu chỉ nặng thêm chút ít. Trong các bồn hydro có khung, nó có tỉ lệ nhiên liệu trên khối lượng tốt nhất.",
+        "without": "Nó cồng kềnh và đắt so với khối lượng chứa được, và hydro bay hơi dần trong chuyến đi.",
+        "inside": "Lớp bọt bên ngoài giữ hydro không bay hơi mất và không cho băng đóng trên vỏ. Bên trong, ngăn hydro lớn hơn hẳn, và ống dẫn oxy từ ngăn trên phải vượt qua nó mới tới được động cơ.",
+        "analogy": "Giống que kem bọc trong ống xốp: lớp xốp giữ cho kem không chảy trước lúc bạn cần.",
+        "pros": [
+          "Isp tốt nhất khi đi với động cơ hydrolox",
+          "27 tấn nhiên liệu",
+          "Tỉ lệ khối lượng tốt nhất trong các bồn hydro có khung"
+        ],
+        "cons": [
+          "Cồng kềnh và đắt so với khối lượng",
+          "Bay hơi dần trong chuyến đi"
+        ],
+        "real": "Bồn hydro trong bồn ngoài của tàu con thoi: rộng 8,4 m, dài 29,6 m, 106 tấn LH2 ở 2 bar; cả bồn rỗng nặng 26,5 tấn (bản siêu nhẹ)",
+        "name": "Bồn hydrolox L, kéo dài"
+      }
+    },
+    "part:tank_l_kerolox_common": {
+      "en": {
+        "what": "A Falcon 9-style tank: liquid oxygen on top, kerosene below, and one shared dome between them. It holds 67 t of propellant.",
+        "why": "Sharing one dome saves a dome, a metre of skin and the hollow section between two tanks, so the tank is very light for its size.",
+        "without": "Separate tanks are simpler and safer. Here one wall is all that keeps the fuel from the oxidizer: reliability 99.7 %.",
+        "inside": "The oxygen sits straight on top of the kerosene, with one curved wall between them. The oxygen reaches the engines through a pipe down the middle of the kerosene tank, and pressure gas fills the space above each liquid as it drains.",
+        "analogy": "Like a bunk bed: two beds share one frame, which saves space and wood."
+      },
+      "vi": {
+        "what": "Bồn kiểu Falcon 9: oxy lỏng ở trên, dầu hỏa ở dưới, giữa hai ngăn chỉ có một nắp vòm chung (common dome). Nó chứa 67 tấn nhiên liệu đẩy.",
+        "why": "Dùng chung một nắp vòm thì bớt được một nắp, một mét vỏ và cả khúc rỗng giữa hai bồn, nên bồn rất nhẹ so với kích thước.",
+        "without": "Hai bồn rời đơn giản và an toàn hơn. Ở đây chỉ một vách ngăn giữ nhiên liệu tách khỏi chất oxy hóa (oxidizer): độ tin cậy 99,7 %.",
+        "inside": "Oxy nằm ngay trên dầu hỏa, giữa chúng chỉ có một vách cong. Oxy xuống động cơ qua một ống chạy giữa lòng ngăn dầu hỏa, và khí nén lấp chỗ trống phía trên mỗi chất lỏng khi nó cạn dần.",
+        "analogy": "Giống giường tầng: hai giường dùng chung một khung, đỡ tốn chỗ và tốn gỗ.",
+        "pros": [
+          "67 tấn nhiên liệu",
+          "Bồn kerolox nhẹ nhất so với kích thước"
+        ],
+        "cons": [
+          "Chỉ một vách giữa nhiên liệu và chất oxy hóa: độ tin cậy 99,7 %",
+          "Làm tốn tiền hơn"
+        ],
+        "real": "Tầng một Falcon 9: rộng 3,7 m, vỏ Al-Li 2195, bồn LOX trên bồn RP-1; 411 tấn nhiên liệu (287 tấn LOX, 124 tấn RP-1), rỗng nặng 22,2 tấn",
+        "name": "Bồn kerolox L vòm chung"
+      }
+    },
+    "part:tank_l_hydrolox_common": {
+      "en": {
+        "what": "Hydrogen on top, oxygen below, with one insulated wall between them: 26 t of propellant.",
+        "why": "Liquid hydrogen is at −253 °C and liquid oxygen at −183 °C. A bare metal wall would let the hydrogen freeze the oxygen. The Saturn V's second stage used a wall of two metal skins glued to a honeycomb core.",
+        "without": "Two separate tanks are heavier. This shared wall was the hardest part of the Saturn stage to build, and a leak would mix the propellants: reliability 99.6 %.",
+        "inside": "The shared wall is a sandwich of two metal skins on a honeycomb core, which keeps the 70 °C difference between the liquids apart. Pressure gas fills the space above each liquid as it drains, and the hydrogen above reaches the engines through a pipe that runs past the oxygen tank.",
+        "analogy": "Like a double-glazed window: two panes with a gap between them stop the cold from crossing."
+      },
+      "vi": {
+        "what": "Hydro ở trên, oxy ở dưới, giữa chúng chỉ có một vách ngăn cách nhiệt (bulkhead): 26 tấn nhiên liệu đẩy.",
+        "why": "Hydro lỏng ở −253 °C, còn oxy lỏng ở −183 °C. Một vách kim loại trần sẽ để hydro làm oxy đông cứng. Tầng hai của Saturn V dùng vách gồm hai lớp kim loại dán lên một lõi tổ ong.",
+        "without": "Hai bồn rời thì nặng hơn. Vách chung này là phần khó làm nhất của tầng tên lửa Saturn, và nếu rò rỉ thì hai chất trộn vào nhau: độ tin cậy 99,6 %.",
+        "inside": "Vách chung là một lớp “bánh kẹp” gồm hai lớp kim loại trên lõi tổ ong, ngăn cách mức chênh 70 °C giữa hai chất lỏng. Khí nén lấp chỗ trống phía trên mỗi chất lỏng khi nó cạn dần, và hydro ở trên xuống động cơ qua một ống chạy vòng qua bồn oxy.",
+        "analogy": "Giống cửa kính hai lớp: hai tấm kính với khe hở ở giữa ngăn cái lạnh đi qua.",
+        "pros": [
+          "Bồn hydro có khung nhẹ nhất: 26 tấn nhiên liệu cho 3,3 tấn vỏ",
+          "Isp tốt nhất khi đi với động cơ hydrolox"
+        ],
+        "cons": [
+          "Rất đắt",
+          "Vách rò rỉ là hai chất trộn vào nhau: độ tin cậy 99,6 %"
+        ],
+        "real": "Saturn V S-II: rộng 10 m, dài 24,9 m, 443 tấn LH2 và LOX, rỗng nặng 36,2 tấn; S-IVB và Centaur dùng cùng cách bố trí",
+        "name": "Bồn hydrolox L vách chung"
+      }
+    },
+    "part:tank_l_methalox_steel": {
+      "en": {
+        "what": "A Starship-style tank of welded stainless steel rings: 56 t of methane and oxygen. Methane is on top, oxygen below, with one shared dome between them.",
+        "why": "Steel is heavy, but it gets stronger when it is very cold, shrugs off heat, is cheap, and can be welded in a tent. Reliability 99.9 %.",
+        "without": "An aluminium tank is lighter. The material of this tank cannot be changed: steel is the whole point of it.",
+        "inside": "Rings of stainless steel a few millimetres thick are welded into a tube. Domes close the ends, and one shared dome separates the methane above from the oxygen below. A pipe called a downcomer carries the methane down through the oxygen tank to the engines.",
+        "analogy": "Like a cast-iron pan next to a light aluminium one: heavier, cheaper, and almost impossible to ruin."
+      },
+      "vi": {
+        "what": "Bồn kiểu Starship làm từ các vòng thép không gỉ hàn chồng lên nhau: 56 tấn metan và oxy. Metan ở trên, oxy ở dưới, giữa chúng một nắp vòm chung (common dome).",
+        "why": "Thép nặng, nhưng càng lạnh càng bền, chịu nóng tốt, rẻ, và hàn được ngay trong lều. Độ tin cậy (reliability) 99,9 %.",
+        "without": "Bồn nhôm nhẹ hơn. Vật liệu của bồn này không đổi được: thép chính là ý tưởng của nó.",
+        "inside": "Các vòng thép không gỉ dày vài mi-li-mét được hàn thành một ống. Nắp vòm đóng hai đầu, và một nắp vòm chung ngăn metan ở trên với oxy ở dưới. Một ống gọi là ống dẫn xuống (downcomer) đưa metan xuyên qua bồn oxy tới động cơ.",
+        "analogy": "Giống chảo gang đặt cạnh chảo nhôm: nặng hơn, rẻ hơn, và gần như không thể làm hỏng.",
+        "pros": [
+          "Nhiên liệu rẻ nhất tính theo mỗi đồng tiền",
+          "Bền: độ tin cậy 99,9 %",
+          "Nạp lại được trên Sao Hỏa"
+        ],
+        "cons": [
+          "Nặng hơn nhôm",
+          "Chỉ dùng cho động cơ methalox"
+        ],
+        "real": "Super Heavy: rộng 9 m, 3.400 tấn metan và oxy, các vòng dày 3,97 mm, bồn metan nằm trên bồn oxy với một nắp vòm chung",
+        "name": "Bồn methalox L thép không gỉ"
+      }
+    },
+    "part:tank_s_kerolox_carbon": {
+      "en": {
+        "what": "A small, very light tank made of carbon fibre: 20 t of kerosene and oxygen. Rocket Lab's Electron was the first rocket to fly tanks like this.",
+        "why": "Carbon fibre is much lighter than aluminium for the same strength, so more of the rocket's mass is propellant.",
+        "without": "A metal tank is cheaper and easier to check. Carbon cracks instead of bending, and cracks can hide inside its layers: reliability 99.4 %.",
+        "inside": "Layers of carbon fibre and resin are laid on a mould and baked hard, with no metal lining inside. The two compartments share one wall, and pressure gas fills the space above each liquid as it drains.",
+        "analogy": "Like a carbon racing bicycle: very light and stiff, but a hidden crack is hard to spot."
+      },
+      "vi": {
+        "what": "Một bồn nhỏ, rất nhẹ làm bằng sợi carbon: 20 tấn dầu hỏa và oxy. Tên lửa Electron của Rocket Lab là tên lửa đầu tiên bay với bồn như thế này.",
+        "why": "Sợi carbon nhẹ hơn nhôm nhiều mà vẫn bền như nhau, nên phần lớn khối lượng tên lửa là nhiên liệu đẩy (propellant).",
+        "without": "Bồn kim loại rẻ hơn và dễ kiểm tra hơn. Sợi carbon bị nứt chứ không cong, và vết nứt có thể nấp sâu giữa các lớp: độ tin cậy 99,4 %.",
+        "inside": "Nhiều lớp sợi carbon và nhựa được đắp lên khuôn rồi nung cứng, bên trong không có lớp lót kim loại. Hai ngăn dùng chung một vách, và khí nén lấp chỗ trống phía trên mỗi chất lỏng khi nó cạn dần.",
+        "analogy": "Giống xe đạp đua bằng carbon: rất nhẹ, rất cứng, nhưng vết nứt ẩn bên trong thì khó thấy.",
+        "pros": [
+          "Bồn nhẹ nhất xưởng so với kích thước",
+          "Vừa với tàu cỡ nhỏ"
+        ],
+        "cons": [
+          "Đắt",
+          "Vết nứt ẩn: độ tin cậy 99,4 %",
+          "Chỉ dùng cho động cơ kerolox"
+        ],
+        "real": "Electron: rộng 1,2 m, cao 18 m, bồn LOX và RP-1 bằng vật liệu tổng hợp carbon không lớp lót, chung một vách; nhẹ hơn nhôm tới 40 %",
+        "name": "Bồn kerolox S sợi carbon"
+      }
+    },
+    "part:tank_m_kerolox_balloon": {
+      "en": {
+        "what": "A tank with no frame at all: stainless steel thinner than a coin, kept rigid by the gas pressure inside, like a balloon. It holds 57.5 t of kerosene and oxygen for under 2 t of tank.",
+        "why": "It is the lightest tank for its size ever flown. The Atlas rocket that carried John Glenn into orbit was built this way.",
+        "without": "Let the pressure drop and the tank crumples under its own weight. That risk gives it reliability 98.8 %.",
+        "inside": "There are no frames or stiffeners: the steel skin, thinner than a coin, is held tight by the gas pressure inside, like a blown-up balloon. One thin steel dome separates the oxygen above from the kerosene below, and nitrogen keeps the tank pressed full even when it is empty.",
+        "analogy": "Like a can of fizzy drink: easy to crush when empty and open, surprisingly strong when sealed and full."
+      },
+      "vi": {
+        "what": "Một bồn hoàn toàn không có khung: thép không gỉ mỏng hơn đồng xu, cứng lên nhờ áp suất khí bên trong, giống quả bóng bay. Nó chứa 57,5 tấn dầu hỏa và oxy mà vỏ bồn chưa tới 2 tấn.",
+        "why": "Đây là loại bồn nhẹ nhất so với kích thước từng được bay. Tên lửa Atlas đưa John Glenn lên quỹ đạo được làm theo cách này.",
+        "without": "Chỉ cần áp suất tụt là bồn bẹp dúm dưới sức nặng của chính nó. Rủi ro đó làm độ tin cậy (reliability) chỉ còn 98,8 %.",
+        "inside": "Không có khung hay thanh gia cường nào: lớp vỏ thép mỏng hơn đồng xu được áp suất khí bên trong giữ căng, như quả bóng bay đã thổi. Một nắp vòm thép mỏng ngăn oxy ở trên với dầu hỏa ở dưới, và khí nitơ giữ bồn luôn căng cả khi đã rỗng.",
+        "analogy": "Giống lon nước ngọt: rỗng và đã mở thì bóp bẹp dễ dàng, còn đóng kín và đầy thì cứng không ngờ.",
+        "pros": [
+          "Cực nhẹ: 57,5 tấn nhiên liệu mà vỏ chưa tới 2 tấn"
+        ],
+        "cons": [
+          "Phải giữ áp suất từng phút: độ tin cậy 98,8 %",
+          "Phải nâng niu nên đắt",
+          "Dài và mảnh"
+        ],
+        "real": "Atlas D: rộng 3,05 m, cần 5 psi (34 kPa) khí nitơ ngay cả khi rỗng; không tính các động cơ tầng đẩy, tầng rỗng chỉ bằng 2 % sức nặng khi đầy nhiên liệu",
+        "name": "Bồn bóng thép M (kerolox)"
+      }
+    },
+    "part:tank_m_hydrolox_balloon": {
+      "en": {
+        "what": "The Centaur recipe: a steel balloon of hydrogen over oxygen, held rigid by its own pressure. It carries hydrogen for far less structure than any framed tank.",
+        "why": "Centaur, the upper stage that sent Voyager and Cassini on their way, is built like this.",
+        "without": "It needs pressure every minute of its life: reliability 99 %. It is expensive, and the hydrogen boils off during the cruise.",
+        "inside": "Between the liquids sits a wall of two steel skins on a fibreglass honeycomb, which stops the hydrogen freezing the oxygen. The steel skin is far thinner than a coin and stays tight only because of the pressure inside.",
+        "analogy": "Like a water balloon: the skin is thin, but the pressure inside gives it its shape."
+      },
+      "vi": {
+        "what": "Công thức của Centaur: một quả bóng bằng thép chứa hydro ở trên, oxy ở dưới, cứng lên nhờ chính áp suất bên trong. Nó chở hydro với kết cấu nhẹ hơn hẳn mọi bồn có khung.",
+        "why": "Centaur, tầng trên đã đưa tàu Voyager và Cassini lên đường, được chế tạo như thế này.",
+        "without": "Nó cần được giữ áp suất từng phút trong suốt đời mình: độ tin cậy 99 %. Nó đắt, và hydro bay hơi dần trong chuyến đi.",
+        "inside": "Giữa hai chất lỏng là một vách gồm hai lớp thép trên lõi tổ ong sợi thủy tinh, ngăn hydro làm oxy đông cứng. Lớp vỏ thép mỏng hơn đồng xu rất nhiều và chỉ căng được nhờ áp suất bên trong.",
+        "analogy": "Giống quả bóng nước: vỏ mỏng, nhưng áp suất bên trong giữ cho nó có hình dạng.",
+        "pros": [
+          "Bồn hydro nhẹ nhất",
+          "Isp tốt nhất khi đi với động cơ hydrolox"
+        ],
+        "cons": [
+          "Phải luôn giữ áp suất: độ tin cậy 99 %",
+          "Đắt",
+          "Hydro bay hơi trong chuyến đi"
+        ],
+        "real": "Centaur III: rộng 3,05 m, dài 12,7 m, 20,8 tấn nhiên liệu, rỗng nặng 2,25 tấn, vách thép không gỉ dày 0,51 mm",
+        "name": "Bồn bóng thép M (hydrolox)"
+      }
+    },
+    "part:avionics_ring_m": {
+      "en": {
+        "what": "A ring of electronic boxes at the top of the stage: the flight computer, the gyroscopes that sense every turn, the radios and the batteries that run them. It is the brain that flies the rocket on the way up.",
+        "why": "A separate guidance section flies the ship more precisely and catches faults the capsule computer would miss. Reliability +3 %.",
+        "without": "Without it, the capsule's own computer flies the climb, with less precision and less backup. It is expensive, and it must stay cool and powered.",
+        "inside": "Boxes are bolted around the inside wall of the ring. The gyroscopes and accelerometers feel every turn and push. Many times a second, the computer compares them with the planned path and tells the engines how to steer, while radios send the readings to the ground.",
+        "analogy": "Like the satnav and the driver of a car, packed together into one ring."
+      },
+      "vi": {
+        "what": "Một vòng hộp điện tử trên đỉnh tầng tên lửa: máy tính bay, con quay hồi chuyển (gyroscope) cảm nhận từng cú xoay, máy vô tuyến và bộ pin nuôi chúng. Đây là bộ não lái tên lửa khi bay lên, gọi là khối điện tử dẫn đường (avionics).",
+        "why": "Một khối dẫn đường riêng lái tàu chính xác hơn và bắt được những lỗi mà máy tính trong khoang lái bỏ sót. Độ tin cậy +3 %.",
+        "without": "Không có nó, máy tính của khoang lái tự lái cả quá trình bay lên, kém chính xác hơn và ít dự phòng hơn. Nó đắt, và phải luôn được làm mát, cấp điện.",
+        "inside": "Các hộp thiết bị bắt vít quanh vách trong của vòng. Con quay hồi chuyển và gia tốc kế cảm nhận từng cú xoay, từng cú đẩy. Mỗi giây nhiều lần, máy tính so chúng với đường bay dự định và bảo động cơ lái thế nào, còn máy vô tuyến gửi số liệu về mặt đất.",
+        "analogy": "Giống thiết bị dẫn đường và người lái xe, gói chung vào một chiếc vòng.",
+        "pros": [
+          "Dẫn đường chính xác",
+          "Độ tin cậy +3 %"
+        ],
+        "cons": [
+          "Thiết bị điện tử đắt",
+          "Phải luôn được làm mát và cấp điện"
+        ],
+        "real": "Khối điện tử dẫn đường của Delta II (RIFCA)",
+        "name": "Vòng điện tử dẫn đường"
+      }
+    },
+    "part:truss_m": {
+      "en": {
+        "what": "An open frame of struts instead of a solid skin. It carries the loads between two sections with much less metal. Pressure bottles, valves and cables bolt onto it in the open.",
+        "why": "Where a stage needs no skin, struts carry the same load for less mass, and technicians can reach everything on the pad.",
+        "without": "A solid ring would be heavier. The truss has no skin, so it must sit under a fairing or interstage; on Soyuz, the stage above fires its engine through it.",
+        "inside": "Triangles of struts. A triangle cannot change shape unless a strut bends, which makes the whole frame stiff.",
+        "analogy": "Like the frame of an electricity pylon: mostly empty space, yet very strong."
+      },
+      "vi": {
+        "what": "Một khung giàn (truss) bằng thanh chống, thay cho lớp vỏ kín. Nó truyền lực giữa hai phần tàu mà tốn ít kim loại hơn nhiều. Bình khí nén, van và cáp điện bắt vít thẳng lên nó, để lộ ra ngoài.",
+        "why": "Ở chỗ không cần vỏ, các thanh chống chịu cùng một lực mà nhẹ hơn, và kỹ thuật viên với tới mọi thứ ngay trên bệ phóng.",
+        "without": "Một vòng vỏ kín sẽ nặng hơn. Khung giàn không có vỏ, nên phải nằm dưới vỏ chụp hoặc vòng nối tầng; trên tên lửa Soyuz, tầng phía trên khởi động động cơ xuyên qua nó.",
+        "inside": "Những hình tam giác ghép từ thanh chống. Tam giác không thể biến dạng trừ khi một thanh bị cong, nên cả khung rất cứng.",
+        "analogy": "Giống khung cột điện cao thế: phần lớn là khoảng trống, vậy mà rất chắc.",
+        "pros": [
+          "Nhẹ so với độ chắc",
+          "Có điểm gắn chắc cho bình cầu và thiết bị"
+        ],
+        "cons": [
+          "Không có vỏ khí động: phải nằm dưới vỏ chụp hoặc vòng nối tầng"
+        ],
+        "real": "Vành váy ngắn và khung giàn đỡ tầng hai của Delta II",
+        "name": "Vành váy ngắn và khung giàn đỡ"
+      }
+    },
+    "part:interstage_m": {
+      "en": {
+        "what": "A hollow ring of skin and stiffeners that joins two stacked sections. It shelters an engine bell during the climb and gives the cables a protected path.",
+        "why": "On a real multi-stage rocket it holds the joint where the stages separate. This ship flies as one stage, so here it is stiff structure.",
+        "without": "Without it, two sections meet with no shelter or stiffening. It is 380 kg that holds no propellant.",
+        "inside": "A thin skin wrapped around ring-shaped frames and long stiffeners, which keep the skin from buckling under the weight above. Cables run along the inside wall, and there is room in the middle for an engine bell.",
+        "analogy": "Like the covered walkway between two railway carriages."
+      },
+      "vi": {
+        "what": "Vòng nối tầng (interstage) là một vòng rỗng gồm vỏ và thanh gia cường, nối hai phần chồng lên nhau. Nó che chuông vòi phun của động cơ khi bay lên và cho cáp điện một lối đi được bảo vệ.",
+        "why": "Trên tên lửa nhiều tầng thật, đây là chỗ hai tầng tách khỏi nhau. Tàu trong game bay như một tầng duy nhất, nên ở đây nó chỉ là kết cấu cứng.",
+        "without": "Không có nó, hai phần tàu chạm nhau mà không có gì che chắn hay gia cường. Nó là 380 kg không chứa chút nhiên liệu nào.",
+        "inside": "Một lớp vỏ mỏng bọc quanh các khung hình vòng và thanh gia cường dọc, giữ cho vỏ không bị oằn dưới sức nặng phía trên. Cáp điện chạy dọc vách trong, và ở giữa còn chỗ cho chuông vòi phun của động cơ.",
+        "analogy": "Giống lối đi có mái che giữa hai toa tàu hỏa.",
+        "pros": [
+          "Mối nối cứng",
+          "Che chắn chuông vòi phun"
+        ],
+        "cons": [
+          "Khối lượng vô ích sau khi tách tầng"
+        ],
+        "real": "Vòng nối tầng của Delta II / Falcon 9",
+        "name": "Vòng nối tầng"
+      }
+    },
+    "part:centerbody_m": {
+      "en": {
+        "what": "A short, stiff section between two tanks. On Delta II it sat between the kerosene tank and the oxygen tank, and the push of the strap-on boosters came in here.",
+        "why": "It takes the boosters' thrust and the bending of flight, so neither tank wall has to. Equipment bolts to it without piercing a tank.",
+        "without": "Without it, booster loads go straight into a thin tank wall. It costs mass and height.",
+        "inside": "A short shell of stiff panels with strong fittings where the boosters push. Ring frames inside spread those loads around the shell, and boxes of equipment bolt to the inside wall.",
+        "analogy": "Like the belt of a pair of trousers: the strong band that everything else hangs from."
+      },
+      "vi": {
+        "what": "Một khúc ngắn, cứng nằm giữa hai bồn, gọi là đoạn thân giữa (centerbody). Trên Delta II nó nằm giữa bồn dầu hỏa và bồn oxy, và lực đẩy của các tên lửa đẩy phụ gắn hông dồn vào đây.",
+        "why": "Nó gánh lực đẩy của tên lửa đẩy phụ (booster) và lực uốn khi bay, để vách bồn khỏi phải gánh. Thiết bị bắt vít lên nó mà không phải khoan thủng bồn.",
+        "without": "Không có nó, lực của tên lửa đẩy phụ dồn thẳng vào vách bồn mỏng. Nó tốn thêm khối lượng và chiều cao.",
+        "inside": "Một lớp vỏ ngắn gồm các tấm cứng, có các khớp chắc ở chỗ tên lửa đẩy phụ tì vào. Các khung vòng bên trong dàn những lực ấy ra khắp vỏ, và các hộp thiết bị bắt vít vào vách trong.",
+        "analogy": "Giống thắt lưng quần: dải chắc chắn mà mọi thứ khác treo vào.",
+        "pros": [
+          "Gánh lực của tên lửa đẩy phụ",
+          "Có điểm gắn chắc mà không phải khoan thủng bồn"
+        ],
+        "cons": [
+          "Tốn khối lượng và chiều cao"
+        ],
+        "real": "Đoạn thân giữa của Delta II: giữa bồn RP-1 ở trên và bồn LOX ở dưới (Delta II đặt dầu hỏa ở trên, khác thường lệ), bên trong có khối điện tử của tầng một",
+        "name": "Đoạn thân giữa"
+      }
+    },
+    "part:wiring_tunnel": {
+      "en": {
+        "what": "A long, half-round cover on the outside of a tank. Control cables, sensor wires and pressure lines run inside it.",
+        "why": "You cannot run a cable through a tank of liquid oxygen. Protected cables keep working: reliability +1 %.",
+        "without": "Bare cables on the outside can be torn by the airflow or frozen by the tank. The tunnel adds a little drag.",
+        "inside": "Bundles of wires and thin pipes are clipped inside the cover, which is shaped to let the air slide over it.",
+        "analogy": "Like the plastic trunking that hides the cables along the wall of a room."
+      },
+      "vi": {
+        "what": "Một ống che nửa tròn, dài, chạy dọc bên ngoài bồn. Cáp điều khiển, dây cảm biến và ống dẫn khí nén chạy bên trong.",
+        "why": "Không thể luồn cáp điện qua một bồn oxy lỏng. Cáp được che chắn thì tiếp tục hoạt động: độ tin cậy (reliability) +1 %.",
+        "without": "Cáp để trần bên ngoài có thể bị gió xé hoặc bị bồn làm đông cứng. Ống che làm tăng lực cản một chút.",
+        "inside": "Các bó dây và ống nhỏ được kẹp bên trong lớp che, có dáng để không khí lướt qua.",
+        "analogy": "Giống nẹp nhựa che dây điện chạy dọc tường trong nhà.",
+        "pros": [
+          "Bảo vệ mọi sợi cáp và đường ống",
+          "Độ tin cậy +1 %"
+        ],
+        "cons": [
+          "Thêm chút lực cản"
+        ],
+        "real": "Đường hầm hệ thống của Saturn V S-IC và Delta II",
+        "name": "Đường hầm dây điện"
+      }
+    },
+    "part:helium_copv": {
+      "en": {
+        "what": "A small bottle of helium squeezed to 300 times the pressure of the air. As the engines drink the propellant, the helium flows into the tanks and fills the empty space.",
+        "why": "Without gas filling that space, a draining tank would cave in and the pump would suck bubbles. Helium is ideal: very light, it never burns, and it does not freeze even in liquid oxygen. Reliability +0.6 %.",
+        "without": "Without enough pressure gas, the tanks can sag and the engines can stall. The bottle stores a lot of energy: one failed inside a Falcon 9 on the pad in 2016.",
+        "inside": "A thin metal lining wound tightly in carbon fibre: the lightest way to hold gas at such pressure. A regulator lets the helium out at the right rate.",
+        "analogy": "Like blowing back into a juice carton as you drink, so it does not crumple."
+      },
+      "vi": {
+        "what": "Một bình heli (helium) nhỏ, nén tới áp suất gấp 300 lần không khí. Khi động cơ uống dần nhiên liệu, heli chảy vào bồn lấp chỗ trống.",
+        "why": "Không có khí lấp chỗ trống, bồn đang cạn sẽ móp vào và bơm sẽ hút phải bọt khí. Heli rất hợp: rất nhẹ, không bao giờ cháy, và không đông cứng kể cả trong oxy lỏng. Độ tin cậy +0,6 %.",
+        "without": "Thiếu khí nén, bồn có thể xẹp và động cơ có thể chết máy. Bình chứa rất nhiều năng lượng: một bình như thế đã hỏng bên trong một tên lửa Falcon 9 trên bệ phóng năm 2016.",
+        "inside": "Một lớp lót kim loại mỏng quấn chặt bằng sợi carbon: cách nhẹ nhất để giữ khí ở áp suất cao như vậy. Bộ điều áp cho heli ra với tốc độ vừa đúng.",
+        "analogy": "Giống vừa uống hộp nước trái cây vừa thổi ngược hơi vào, để hộp không bẹp.",
+        "pros": [
+          "Giữ áp suất bồn ổn định",
+          "Độ tin cậy +0,6 %"
+        ],
+        "cons": [
+          "300 bar năng lượng tích trữ ngay cạnh bồn"
+        ],
+        "real": "Bình cầu heli tầng hai của Delta II; Falcon 9 chứa heli trong các bình COPV đặt trong bồn LOX",
+        "name": "Bình cầu heli tạo áp"
+      }
+    },
+    "part:nitrogen_sphere": {
+      "en": {
+        "what": "A bottle of nitrogen gas and a few valves that let out puffs to turn the ship. Nothing burns at all.",
+        "why": "It is the simplest way to steer in space: nothing to light and almost nothing to go wrong.",
+        "without": "Without any thrusters the ship cannot turn in space. Cold gas is weak (Isp about 70 s), so it turns a heavy ship slowly and runs out sooner than a real thruster pack.",
+        "inside": "Gas at high pressure, pipes, and fast valves with small nozzles. Opening a valve lets out a jet, and the push of that jet turns the ship.",
+        "analogy": "Like letting go of a blown-up balloon, only here the puffs are short and aimed."
+      },
+      "vi": {
+        "what": "Một bình khí nitơ (nitrogen) và vài chiếc van xả từng luồng khí để xoay tàu. Không có gì cháy cả.",
+        "why": "Đây là cách lái đơn giản nhất ngoài không gian: không phải đánh lửa, gần như không có gì để hỏng.",
+        "without": "Không có động cơ đẩy nhỏ nào thì tàu không xoay được trong không gian. Khí lạnh đẩy yếu (Isp khoảng 70 s), nên xoay tàu nặng rất chậm và hết sớm hơn bộ động cơ đẩy thật.",
+        "inside": "Khí áp suất cao, đường ống, và các van đóng mở nhanh có vòi nhỏ. Mở van là một luồng khí phụt ra, và sức đẩy của luồng khí ấy xoay con tàu.",
+        "analogy": "Giống buông tay khỏi quả bóng bay đã thổi căng, chỉ khác là ở đây từng luồng khí ngắn và được ngắm hướng.",
+        "pros": [
+          "Hệ thống động cơ đẩy đơn giản nhất",
+          "Không phải đánh lửa"
+        ],
+        "cons": [
+          "Yếu: Isp khoảng 70 s",
+          "Xoay tàu nặng rất chậm"
+        ],
+        "real": "Bình cầu nitơ tầng hai của Delta II, RCS khí lạnh của Falcon 9",
+        "name": "Bình cầu nitơ khí lạnh"
+      }
+    },
+    "part:mli_blanket": {
+      "en": {
+        "what": "A blanket of 10 to 20 sheets of shiny, metal-coated plastic with nothing between them. It is the gold foil you see on spacecraft.",
+        "why": "Across empty space, heat travels only as radiation. Each shiny layer bounces most of it back, so the blanket keeps cold propellant cold and electronics warm. Reliability +0.3 %.",
+        "without": "Without it, sunlight heats one side of the ship while the shade freezes the other. It is useless in air, where heat also travels through the gas.",
+        "inside": "Very thin plastic sheets coated with aluminium, kept apart by fine netting so they barely touch.",
+        "analogy": "Like the foil blanket a marathon runner wraps up in at the finish."
+      },
+      "vi": {
+        "what": "Chăn cách nhiệt nhiều lớp (MLI) gồm 10 đến 20 tấm nhựa mỏng tráng kim loại sáng bóng, giữa chúng không có gì. Đó chính là lớp giấy vàng bạn thấy trên tàu vũ trụ.",
+        "why": "Qua khoảng chân không, nhiệt chỉ truyền bằng bức xạ. Mỗi lớp bóng hắt ngược phần lớn nhiệt trở lại, nên tấm chăn giữ nhiên liệu lạnh vẫn lạnh và thiết bị điện tử vẫn ấm. Độ tin cậy +0,3 %.",
+        "without": "Không có nó, ánh nắng nung một bên tàu còn bên khuất bóng thì đông cứng. Trong không khí nó vô dụng, vì ở đó nhiệt còn truyền qua chất khí.",
+        "inside": "Những tấm nhựa rất mỏng tráng nhôm, ngăn cách bằng lưới mịn để hầu như không chạm vào nhau.",
+        "analogy": "Giống tấm chăn giấy bạc mà vận động viên marathon quấn quanh người ở vạch đích.",
+        "pros": [
+          "Giữ nhiên liệu lạnh và thiết bị điện tử ấm",
+          "Gần như không có khối lượng"
+        ],
+        "cons": [
+          "Vô dụng trong không khí: chỉ hiệu quả trong chân không"
+        ],
+        "real": "Chăn MLI bằng Kapton/Mylar",
+        "name": "Chăn cách nhiệt nhiều lớp (MLI)"
+      }
+    },
+    "part:solar_panel": {
+      "en": {
+        "what": "A panel of solar cells that turns sunlight into 2 kW of electricity near Earth.",
+        "why": "The radios, the instruments and life support all run on electricity, and sunlight is free in space.",
+        "without": "At Mars the Sun is weaker: the same panel makes only about 43 % of its Earth power. The panel is fragile.",
+        "inside": "Each cell is a thin wafer that turns light into a small electric current. Hundreds of cells are wired together on a stiff panel, and cables carry the power to the batteries.",
+        "analogy": "Like a solar garden lamp that drinks sunlight all day."
+      },
+      "vi": {
+        "what": "Một tấm pin mặt trời (solar panel) biến ánh nắng thành 2 kW điện khi ở gần Trái Đất.",
+        "why": "Máy vô tuyến, thiết bị khoa học và hệ thống duy trì sự sống đều chạy bằng điện, mà ngoài không gian ánh nắng là miễn phí.",
+        "without": "Ở Sao Hỏa, Mặt Trời yếu hơn: cùng tấm pin đó chỉ cho khoảng 43 % lượng điện so với ở Trái Đất. Tấm pin dễ vỡ.",
+        "inside": "Mỗi tế bào là một lát mỏng biến ánh sáng thành một dòng điện nhỏ. Hàng trăm tế bào được nối với nhau trên một tấm cứng, và cáp dẫn điện về pin.",
+        "analogy": "Giống chiếc đèn sân vườn năng lượng mặt trời, cả ngày uống nắng.",
+        "pros": [
+          "2 kW ở Trái Đất"
+        ],
+        "cons": [
+          "Chỉ còn 43 % ở Sao Hỏa",
+          "Dễ vỡ"
+        ],
+        "real": "Hai tấm pin 8,3 m của Dawn (thu nhỏ)",
+        "name": "Tấm pin mặt trời"
+      }
+    },
+    "part:solar_wing_l": {
+      "en": {
+        "what": "A big folding wing of solar cells that opens out in space. It gives 5 kW near Earth and about 2 kW at Mars.",
+        "why": "That is enough to run everything on board and charge the batteries for the night.",
+        "without": "A small panel gives less than half the power. The wing must unfold, which is one more mechanism that can fail, and it is big and fragile.",
+        "inside": "The cells sit on a thin blanket that folds like an accordion for launch. In space a mast or springs pull it open, and cables carry the power to the batteries.",
+        "analogy": "Like a paper fan: packed flat for the trip, spread wide when you need it."
+      },
+      "vi": {
+        "what": "Một cánh pin mặt trời lớn, gấp gọn khi phóng và mở rộng ra ngoài không gian. Nó cho 5 kW ở gần Trái Đất và khoảng 2 kW ở Sao Hỏa.",
+        "why": "Chừng đó đủ chạy mọi thứ trên tàu và sạc pin cho ban đêm.",
+        "without": "Tấm pin nhỏ cho chưa tới một nửa lượng điện. Cánh pin phải tự mở ra, tức là thêm một cơ cấu có thể hỏng, và nó to, dễ vỡ.",
+        "inside": "Các tế bào nằm trên một tấm mỏng gấp như đàn xếp khi phóng. Ngoài không gian, một cột chống hoặc lò xo kéo nó mở ra, và cáp dẫn điện về pin.",
+        "analogy": "Giống chiếc quạt giấy: gấp phẳng khi mang đi, xòe rộng khi cần dùng.",
+        "pros": [
+          "5 kW ở Trái Đất"
+        ],
+        "cons": [
+          "Phải tự mở ra: thêm một cơ cấu",
+          "To và dễ vỡ"
+        ],
+        "real": "Cánh pin cỡ ISS / Juno",
+        "name": "Cánh pin mặt trời, cỡ lớn"
+      }
+    },
+    "part:battery": {
+      "en": {
+        "what": "A pack of rechargeable cells that stores electricity. It carries the ship through the night, and through burns when the panels face away from the Sun.",
+        "why": "Solar panels work only in sunlight. Something must keep the power on in between.",
+        "without": "Without a battery, every shadow switches the ship off. Batteries are heavy for the energy they hold.",
+        "inside": "Lithium-ion cells like the ones in a phone, many of them, with electronics that watch each cell's charge and temperature.",
+        "analogy": "Like a power bank for your phone, made big enough for a spaceship."
+      },
+      "vi": {
+        "what": "Một khối pin sạc (battery) tích trữ điện. Nó giữ điện cho tàu qua đêm, và trong những lần đốt động cơ khi tấm pin mặt trời quay lưng với Mặt Trời.",
+        "why": "Tấm pin mặt trời chỉ chạy khi có nắng. Phải có thứ giữ điện trong lúc không có nắng.",
+        "without": "Không có pin, cứ vào bóng tối là tàu tắt điện. Pin nặng so với lượng năng lượng chứa được.",
+        "inside": "Rất nhiều viên pin lithi-ion giống trong điện thoại, cùng mạch điện tử theo dõi mức sạc và nhiệt độ của từng viên.",
+        "analogy": "Giống sạc dự phòng của điện thoại, nhưng to đủ cho một con tàu vũ trụ.",
+        "pros": [
+          "Có điện suốt đêm"
+        ],
+        "cons": [
+          "Nặng so với lượng điện chứa được"
+        ],
+        "real": "Khối pin Li-ion thay thế được (ORU), 150 Wh/kg",
+        "name": "Bộ pin"
+      }
+    },
+    "part:rtg": {
+      "en": {
+        "what": "A nuclear battery. A few kilograms of plutonium-238 stay hot for decades, and that heat is turned into a small, steady flow of electricity.",
+        "why": "It works at night, through dust storms, and just as well at Mars as at Earth. Curiosity and Perseverance run on one.",
+        "without": "Without it the ship depends on sunlight. It gives only 300 W here, and it is very expensive.",
+        "inside": "Thermocouples, pairs of different metals joined together, make electricity when one side is hot and the other cold. Fins on the outside get rid of the extra heat.",
+        "analogy": "Like a hot-water bottle that stays warm for decades, with a tiny generator stuck to it."
+      },
+      "vi": {
+        "what": "Máy phát điện đồng vị phóng xạ (RTG) là một “cục pin hạt nhân”. Vài ki-lô-gam plutoni-238 nóng suốt hàng chục năm, và nhiệt ấy được biến thành một dòng điện nhỏ, đều đặn.",
+        "why": "Nó chạy cả ban đêm, cả trong bão bụi, và ở Sao Hỏa cũng khỏe như ở Trái Đất. Xe tự hành Curiosity và Perseverance chạy bằng loại này.",
+        "without": "Không có nó, tàu phải trông vào ánh nắng. Trong game nó chỉ cho 300 W, và rất đắt.",
+        "inside": "Cặp nhiệt điện, tức những cặp kim loại khác nhau hàn vào nhau, sinh ra điện khi một đầu nóng còn đầu kia lạnh. Các lá tản nhiệt bên ngoài thải bớt phần nhiệt thừa.",
+        "analogy": "Giống túi chườm nóng giữ ấm hàng chục năm, có gắn một máy phát điện tí hon.",
+        "pros": [
+          "Điện như nhau ở Sao Hỏa, ban đêm, trong bão bụi",
+          "Bộ phận đáng tin cậy nhất xưởng"
+        ],
+        "cons": [
+          "Chỉ 300 W",
+          "Rất đắt"
+        ],
+        "real": "MMRTG (Curiosity, Perseverance): 110 W điện, 45 kg",
+        "name": "Máy phát điện đồng vị phóng xạ (RTG)"
+      }
+    },
+    "part:fuel_cell": {
+      "en": {
+        "what": "A device that joins hydrogen and oxygen quietly, with no flame, to make electricity, heat and pure water. Apollo and the Space Shuttle ran on fuel cells.",
+        "why": "It gives 2.5 kW without any solar panels, and the crew can drink the water it makes.",
+        "without": "Without it, power comes from panels or batteries. Its hydrogen and oxygen run out in weeks, not months.",
+        "inside": "Hydrogen on one side and oxygen on the other meet through a layer called the electrolyte. The reaction pushes electrons around a wire, and that is the electric current.",
+        "analogy": "Like a battery that never runs flat as long as you keep feeding it."
+      },
+      "vi": {
+        "what": "Pin nhiên liệu (fuel cell) kết hợp hydro với oxy một cách êm ái, không có ngọn lửa, để tạo ra điện, nhiệt và nước tinh khiết. Tàu Apollo và tàu con thoi chạy bằng pin nhiên liệu.",
+        "why": "Nó cho 2,5 kW mà không cần tấm pin mặt trời, và phi hành đoàn uống được nước nó làm ra.",
+        "without": "Không có nó, điện phải lấy từ tấm pin mặt trời hoặc pin sạc. Hydro và oxy của nó hết sau vài tuần chứ không phải vài tháng.",
+        "inside": "Hydro ở một bên, oxy ở bên kia, gặp nhau qua một lớp gọi là chất điện phân. Phản ứng đẩy các electron chạy vòng qua dây dẫn, và đó chính là dòng điện.",
+        "analogy": "Giống cục pin không bao giờ cạn, miễn là bạn cứ cho nó ăn.",
+        "pros": [
+          "2,5 kW mà không cần tấm pin",
+          "Tạo ra nước uống"
+        ],
+        "cons": [
+          "Chất phản ứng chỉ đủ vài tuần, không phải vài tháng"
+        ],
+        "real": "Pin nhiên liệu PRSD của tàu con thoi, mỗi chiếc 7 kW",
+        "name": "Pin nhiên liệu"
+      }
+    },
+    "part:armor_plate": {
+      "en": {
+        "what": "A thick plate of layered shielding, like the panels on the ISS. A small piece of space debris hits it instead of the tank.",
+        "why": "Tiny bits of rock and old spacecraft fly many times faster than a bullet. One hit can punch through a tank wall.",
+        "without": "Without it, a debris strike lands on the bare hull. The plate weighs 400 kg and stops only one hit.",
+        "inside": "Layers of metal and tough fabric, each slowing the particle a little more.",
+        "analogy": "Like a knight's breastplate: heavy, but it stops the blow."
+      },
+      "vi": {
+        "what": "Một tấm giáp dày nhiều lớp, giống các tấm che trên Trạm Vũ trụ Quốc tế. Mảnh rác vũ trụ nhỏ đâm vào nó thay vì vào bồn.",
+        "why": "Những mẩu đá và mảnh vỡ tàu cũ bay nhanh gấp nhiều lần viên đạn. Một cú va có thể đục thủng vách bồn.",
+        "without": "Không có nó, mảnh rác đâm thẳng vào vỏ tàu trần. Tấm giáp nặng 400 kg và chỉ đỡ được một cú.",
+        "inside": "Các lớp kim loại và vải siêu bền, mỗi lớp hãm mảnh vụn chậm thêm một chút.",
+        "analogy": "Giống tấm giáp ngực của hiệp sĩ: nặng, nhưng đỡ được đòn.",
+        "pros": [
+          "Đỡ được một cú va của mảnh vụn"
+        ],
+        "cons": [
+          "400 kg"
+        ],
+        "real": "Tấm chắn mảnh vụn trên các module ISS",
+        "name": "Tấm giáp"
+      }
+    },
+    "part:whipple_shield": {
+      "en": {
+        "what": "A thin outer sheet a hand's width in front of the wall. A fast particle hits the sheet first and shatters into a spray before it reaches the wall.",
+        "why": "It gives the same protection as solid armour for about half the mass. The astronomer Fred Whipple came up with it in the 1940s.",
+        "without": "Solid armour is cheaper but heavier. Without either, a debris strike lands on the bare hull.",
+        "inside": "The thin bumper, an empty gap, then the real wall. The gap lets the spray spread out, so its force lands on a wide patch instead of one point.",
+        "analogy": "Like a snowball that breaks on a fence before it reaches you: only powder gets through."
+      },
+      "vi": {
+        "what": "Một tấm chắn Whipple (Whipple shield) mỏng đặt trước vách tàu một khoảng bằng bàn tay. Mảnh vụn bay nhanh đâm vào tấm mỏng trước và vỡ tung thành bụi trước khi tới vách.",
+        "why": "Nó bảo vệ ngang tấm giáp đặc mà chỉ nặng khoảng một nửa. Nhà thiên văn Fred Whipple nghĩ ra nó vào những năm 1940.",
+        "without": "Giáp đặc rẻ hơn nhưng nặng hơn. Không có cả hai, mảnh rác đâm thẳng vào vỏ tàu trần.",
+        "inside": "Tấm chắn mỏng, một khoảng trống, rồi tới vách thật. Khoảng trống cho đám bụi tỏa rộng ra, nên lực của nó dàn lên cả một mảng rộng thay vì dồn vào một điểm.",
+        "analogy": "Giống quả cầu tuyết vỡ tan trên hàng rào trước khi tới chỗ bạn: chỉ còn bụi tuyết lọt qua.",
+        "pros": [
+          "Đỡ được một cú va của mảnh vụn",
+          "Nhẹ bằng nửa tấm giáp"
+        ],
+        "cons": [
+          "Đắt hơn"
+        ],
+        "real": "Tấm chắn Whipple có lớp đệm nhồi trên ISS",
+        "name": "Tấm chắn Whipple"
+      }
+    },
+    "part:spectrometer": {
+      "en": {
+        "what": "An instrument that fires a laser at a rock and reads the colours of the tiny spark. Every chemical element has its own pattern of colours.",
+        "why": "It tells you what a rock is made of without touching it. That is how Perseverance tells basalt from clay.",
+        "without": "Without it you see a rock's shape and colour, but not its chemistry. It needs power.",
+        "inside": "A laser, a telescope that gathers the light of the spark, and a sensor that splits that light into its colours.",
+        "analogy": "Like a fingerprint reader for rocks."
+      },
+      "vi": {
+        "what": "Máy quang phổ (spectrometer) bắn tia laser vào đá rồi đọc màu sắc của tia lửa nhỏ bắn ra. Mỗi nguyên tố hóa học có một bộ màu riêng.",
+        "why": "Nó cho biết đá làm từ gì mà không cần chạm vào. Đó là cách xe Perseverance phân biệt đá bazan với đất sét.",
+        "without": "Không có nó, bạn thấy được hình dáng và màu của đá, nhưng không biết thành phần hóa học. Nó cần điện.",
+        "inside": "Một tia laser, một kính thiên văn gom ánh sáng của tia lửa, và một cảm biến tách ánh sáng ấy thành các màu.",
+        "analogy": "Giống máy đọc vân tay, nhưng dành cho đá.",
+        "pros": [
+          "Đọc thành phần của đá"
+        ],
+        "cons": [
+          "Cần điện"
+        ],
+        "real": "SuperCam LIBS / Hubble COS",
+        "name": "Máy quang phổ"
+      }
+    },
+    "part:ground_radar": {
+      "en": {
+        "what": "A radar that sends radio pulses into the ground and listens for the echoes. It sees layers and buried ice metres below the surface.",
+        "why": "Buried ice is water. Water and the carbon dioxide in Martian air can be turned into methane and oxygen: propellant for the trip home.",
+        "without": "Without it, ice under the surface stays hidden. It needs power.",
+        "inside": "An antenna sends pulses down and times the echo from each layer: the longer the wait, the deeper the layer.",
+        "analogy": "Like a bat finding insects by their echoes, but looking into the ground."
+      },
+      "vi": {
+        "what": "Radar xuyên đất (ground radar) gửi xung sóng vô tuyến xuống đất rồi nghe tiếng vọng. Nó thấy các lớp đất và băng chôn sâu nhiều mét dưới bề mặt.",
+        "why": "Băng chôn dưới đất là nước. Nước cùng khí cacbonic trong không khí Sao Hỏa có thể biến thành metan và oxy: nhiên liệu cho chuyến về.",
+        "without": "Không có nó, băng dưới bề mặt vẫn nằm ẩn. Nó cần điện.",
+        "inside": "Một ăng-ten bắn xung xuống và đo thời gian tiếng vọng của từng lớp: chờ càng lâu thì lớp càng sâu.",
+        "analogy": "Giống con dơi tìm côn trùng bằng tiếng vọng, nhưng nhìn xuống lòng đất.",
+        "pros": [
+          "Tìm băng dưới đất làm nhiên liệu cho chuyến về"
+        ],
+        "cons": [
+          "Cần điện"
+        ],
+        "real": "RIMFAX (Perseverance)",
+        "name": "Radar xuyên đất"
+      }
+    },
+    "part:drill": {
+      "en": {
+        "what": "A drill that cuts a core of rock the size of a finger and seals it in a tube, as Perseverance does.",
+        "why": "Only sealed samples count when you get home, because nothing from Earth has touched them.",
+        "without": "Without it, you cannot take clean samples. It is the heaviest instrument.",
+        "inside": "A hollow bit that turns and hammers, a tube that catches the core, and a cap that seals it.",
+        "analogy": "Like the corer that takes the middle out of an apple."
+      },
+      "vi": {
+        "what": "Một mũi khoan (drill) cắt ra một lõi đá cỡ ngón tay rồi niêm kín trong ống, giống xe Perseverance.",
+        "why": "Chỉ mẫu được niêm kín mới có giá trị khi về tới nhà, vì chưa có gì từ Trái Đất chạm vào chúng.",
+        "without": "Không có nó, bạn không lấy được mẫu sạch. Đây là thiết bị khoa học nặng nhất.",
+        "inside": "Một mũi khoan rỗng vừa xoay vừa đập, một ống hứng lõi đá, và một nắp niêm kín.",
+        "analogy": "Giống dụng cụ khoét lõi táo.",
+        "pros": [
+          "Mẫu niêm kín, có giá trị"
+        ],
+        "cons": [
+          "Thiết bị nặng nhất"
+        ],
+        "real": "Mũi khoan lấy lõi của Perseverance",
+        "name": "Máy khoan lấy lõi"
+      }
+    },
+    "part:camera_mast": {
+      "en": {
+        "what": "Two colour cameras that see in 3D, plus an infrared camera that sees minerals by the heat they give off.",
+        "why": "The maps the crew draws on the surface start here, and so does the choice of which rocks to study.",
+        "without": "Without it, you choose rocks blind. It needs power.",
+        "inside": "Two lenses side by side, like your eyes, measure distance; a third camera sees infrared light.",
+        "analogy": "Like your own two eyes: two views side by side tell you how far away things are."
+      },
+      "vi": {
+        "what": "Hai camera màu nhìn được không gian ba chiều, thêm một camera hồng ngoại (infrared) nhận ra khoáng chất qua nhiệt chúng tỏa ra.",
+        "why": "Bản đồ phi hành đoàn vẽ trên mặt đất bắt đầu từ đây, và việc chọn đá nào để nghiên cứu cũng vậy.",
+        "without": "Không có nó, bạn chọn đá như người bịt mắt. Nó cần điện.",
+        "inside": "Hai ống kính đặt cạnh nhau như hai mắt để đo khoảng cách; camera thứ ba nhìn ánh sáng hồng ngoại.",
+        "analogy": "Giống chính đôi mắt bạn: hai góc nhìn cạnh nhau cho biết vật ở xa hay gần.",
+        "pros": [
+          "Lập bản đồ khu vực",
+          "Thấy khoáng chất qua tia hồng ngoại"
+        ],
+        "cons": [
+          "Cần điện"
+        ],
+        "real": "Mastcam-Z / Hubble WFPC",
+        "name": "Camera khoa học"
+      }
+    },
+    "part:weather_station": {
+      "en": {
+        "what": "Small arms with sensors for wind, temperature, pressure, humidity and dust.",
+        "why": "Dust storms can hide the Sun for weeks and starve solar panels; one ended the Opportunity rover in 2018. Knowing a storm is coming is worth twenty kilograms.",
+        "without": "Without it, a dust storm arrives without warning. The arms are fragile.",
+        "inside": "Tiny sensors on short arms, held away from the ship's own heat, read the air every minute.",
+        "analogy": "Like the weather station in a school yard, made light enough to fly."
+      },
+      "vi": {
+        "what": "Trạm thời tiết (weather station) là những cần nhỏ gắn cảm biến đo gió, nhiệt độ, áp suất, độ ẩm và bụi.",
+        "why": "Bão bụi có thể che Mặt Trời hàng tuần và làm tấm pin mặt trời “chết đói”; một cơn bão như thế đã chấm dứt xe tự hành Opportunity năm 2018. Biết trước bão sắp tới thì đáng hai mươi ki-lô-gam.",
+        "without": "Không có nó, bão bụi kéo tới không báo trước. Các cần đo dễ gãy.",
+        "inside": "Những cảm biến tí hon trên cần ngắn, đặt xa hơi nóng của tàu, đọc không khí từng phút.",
+        "analogy": "Giống trạm khí tượng ở sân trường, được làm nhẹ đủ để bay.",
+        "pros": [
+          "Báo trước bão bụi",
+          "Nhẹ"
+        ],
+        "cons": [
+          "Các cần đo dễ gãy"
+        ],
+        "real": "MEDA (Perseverance)",
+        "name": "Trạm thời tiết"
+      }
+    },
+    "part:seismometer": {
+      "en": {
+        "what": "An instrument that feels marsquakes smaller than a footstep. It sits on the ground under a wind shield.",
+        "why": "Quake waves bounce off layers deep inside the planet. NASA's InSight used them to measure the size of the Martian core for the first time.",
+        "without": "Without it, the inside of the planet stays unknown. It must be set down by hand, away from the ship.",
+        "inside": "A weight hangs on springs inside a sealed case. When the ground moves, the case moves and the weight lags behind; sensors measure the difference.",
+        "analogy": "Like putting your ear to a railway line to hear a train coming."
+      },
+      "vi": {
+        "what": "Máy đo địa chấn (seismometer) cảm nhận được những trận động đất trên Sao Hỏa còn nhỏ hơn một bước chân. Nó đặt trên mặt đất, dưới một tấm che gió.",
+        "why": "Sóng địa chấn dội lại từ các lớp sâu bên trong hành tinh. Tàu InSight của NASA đã nhờ chúng mà lần đầu đo được kích thước lõi Sao Hỏa.",
+        "without": "Không có nó, lòng hành tinh vẫn là bí ẩn. Nó phải được đặt xuống bằng tay, cách xa con tàu.",
+        "inside": "Một quả nặng treo trên lò xo trong hộp kín. Khi mặt đất rung, hộp rung theo còn quả nặng chậm lại phía sau; cảm biến đo độ chênh ấy.",
+        "analogy": "Giống áp tai xuống đường ray để nghe tàu sắp tới.",
+        "pros": [
+          "Nhìn được lòng hành tinh"
+        ],
+        "cons": [
+          "Phải đặt bằng tay, cách xa tàu"
+        ],
+        "real": "SEIS (InSight)",
+        "name": "Máy đo địa chấn"
+      }
+    },
+    "part:sample_container": {
+      "en": {
+        "what": "Sealed tubes for three rock samples.",
+        "why": "The samples are what you bring home to study. Every kilogram has to be lifted off Mars by the return burn, so choose your rocks.",
+        "without": "Without containers, no samples come home. The bigger vault holds six.",
+        "inside": "Metal tubes with tight caps in a rack that holds them still through launch and landing.",
+        "analogy": "Like specimen jars in a museum: each one keeps its find clean and labelled."
+      },
+      "vi": {
+        "what": "Các ống niêm kín đựng ba mẫu đá (sample).",
+        "why": "Mẫu đá là thứ bạn mang về để nghiên cứu. Mỗi ki-lô-gam đều phải được lần đốt động cơ quay về nâng khỏi Sao Hỏa, nên hãy chọn đá cho khéo.",
+        "without": "Không có hộp chứa, không mẫu nào về được nhà. Hầm chứa lớn hơn đựng được sáu mẫu.",
+        "inside": "Các ống kim loại nắp kín, cài trên giá giữ chúng đứng yên khi phóng và khi hạ cánh.",
+        "analogy": "Giống lọ đựng mẫu vật trong bảo tàng: mỗi lọ giữ món đồ sạch sẽ và có nhãn.",
+        "pros": [
+          "Mang ba mẫu về nhà"
+        ],
+        "cons": [
+          "Mỗi kg làm hao Δv của chuyến về"
+        ],
+        "real": "Ống đựng mẫu của Perseverance",
+        "name": "Hộp đựng mẫu"
+      }
+    },
+    "part:sample_container_l": {
+      "en": {
+        "what": "A sealed vault that holds six samples and keeps them cold all the way home.",
+        "why": "Cold, sealed samples keep their chemistry as it was on Mars.",
+        "without": "The small container holds three and does not keep them cold. The vault weighs 80 kg, all of which must be lifted off Mars.",
+        "inside": "Six tubes in an insulated, sealed box with its own cooling.",
+        "analogy": "Like a cool box on a fishing trip: the catch stays fresh until you get home."
+      },
+      "vi": {
+        "what": "Một hầm chứa niêm kín đựng sáu mẫu (sample) và giữ chúng lạnh suốt đường về.",
+        "why": "Mẫu được giữ lạnh và kín thì thành phần hóa học vẫn y như lúc còn trên Sao Hỏa.",
+        "without": "Hộp nhỏ chỉ đựng ba mẫu và không giữ lạnh. Hầm chứa nặng 80 kg, và toàn bộ phải được nâng khỏi Sao Hỏa.",
+        "inside": "Sáu ống trong một hộp kín cách nhiệt, có bộ làm lạnh riêng.",
+        "analogy": "Giống thùng giữ lạnh khi đi câu cá: cá vẫn tươi cho tới lúc về nhà.",
+        "pros": [
+          "Mang sáu mẫu về nhà",
+          "Giữ mẫu lạnh"
+        ],
+        "cons": [
+          "80 kg phải nâng khỏi Sao Hỏa"
+        ],
+        "real": "Hộp mẫu bay quỹ đạo của chương trình Mars Sample Return",
+        "name": "Hầm chứa mẫu"
+      }
+    },
+    "part:seals_cheap": {
+      "en": {
+        "what": "Cheaper rubber seals for the joints of the tanks and motors. They save $100k.",
+        "why": "On a warm day they work fine.",
+        "without": "In the cold they go stiff and let hot gas leak through. Challenger was lost in 1986 when a booster seal did exactly that on a 2 °C morning, after engineers had warned against the launch. Below 5 °C they are not safe; reliability 85 %.",
+        "inside": "A ring of rubber, an O-ring, squeezed into a groove. Warm rubber springs back to fill the gap; cold rubber springs back too slowly.",
+        "analogy": "Like a rubber band from the freezer: it stays stretched instead of snapping back."
+      },
+      "vi": {
+        "what": "Gioăng cao su (seal) loại rẻ cho các mối nối của bồn và động cơ. Chúng giúp tiết kiệm 100 nghìn đô.",
+        "why": "Ngày trời ấm thì chúng vẫn chạy tốt.",
+        "without": "Khi lạnh, chúng cứng lại và để khí nóng rò qua. Tàu Challenger bị mất năm 1986 khi một gioăng của tên lửa đẩy phụ hỏng đúng như thế trong một buổi sáng 2 °C, dù các kỹ sư đã cảnh báo không nên phóng. Dưới 5 °C chúng không an toàn; độ tin cậy 85 %.",
+        "inside": "Một vòng cao su, gọi là vòng đệm chữ O (O-ring), ép vào một rãnh. Cao su ấm bật lại lấp kín khe hở; cao su lạnh bật lại quá chậm.",
+        "analogy": "Giống sợi dây thun lấy từ ngăn đá: kéo ra rồi nó cứ dãn nguyên chứ không co lại.",
+        "pros": [
+          "Tiết kiệm 100 nghìn đô"
+        ],
+        "cons": [
+          "Hỏng dưới 5 °C",
+          "Độ tin cậy 85 %"
+        ],
+        "real": "Vòng đệm chữ O ở mối nối lắp tại bãi phóng của tên lửa đẩy phụ tàu con thoi (1986)",
+        "name": "Gioăng giá rẻ (−100 nghìn đô)"
+      }
+    },
+    "part:adapter_s_m": {
+      "en": {
+        "what": "A cone of skin and stiffeners that joins a small part above to a medium part below. The design page adds it for you where two widths meet.",
+        "why": "Rockets change width where a narrow piece sits on a wide one. The adapter carries the loads smoothly across the step.",
+        "without": "Without it there would be a sharp step, where the loads crack the joint and the air piles up. It is mass that does no other work.",
+        "inside": "A cone of thin skin held in shape by ring frames at the top and bottom, with stiffeners in between. The weight from above flows down the sloping wall and spreads out to the wider ring below.",
+        "analogy": "Like a funnel: it joins a narrow opening to a wide one."
+      },
+      "vi": {
+        "what": "Bộ chuyển đường kính (adapter) là một khúc nón gồm vỏ và thanh gia cường, nối phần nhỏ ở trên với phần cỡ vừa ở dưới. Trang thiết kế tự thêm nó ở chỗ hai đường kính gặp nhau.",
+        "why": "Tên lửa đổi bề rộng ở chỗ một khúc hẹp đặt lên một khúc rộng. Bộ chuyển truyền lực êm qua bậc thềm đó.",
+        "without": "Không có nó sẽ có một bậc gãy gọn, nơi lực làm nứt mối nối và không khí dồn ứ. Nó là khối lượng không làm thêm việc gì khác.",
+        "inside": "Một khúc nón vỏ mỏng, giữ dáng nhờ khung vòng ở trên và ở dưới, giữa là các thanh gia cường. Sức nặng từ trên đi xuống theo vách nghiêng và dàn ra vòng rộng hơn ở dưới.",
+        "analogy": "Giống cái phễu: nối miệng hẹp với miệng rộng.",
+        "pros": [
+          "Mối nối gọn giữa hai đường kính"
+        ],
+        "cons": [
+          "Khối lượng không làm thêm việc gì khác"
+        ],
+        "real": "Vòng nối tầng S-IVB/S-II của Saturn V (6,6 m sang 10 m), phần đuôi thuyền 5 m của Atlas V, bộ chuyển từ tầng hai sang vỏ chụp của Falcon 9",
+        "name": "Bộ chuyển S sang M"
+      }
+    },
+    "part:adapter_m_s": {
+      "en": {
+        "what": "A cone that joins a medium part above to a small part below. The design page adds it for you where two widths meet.",
+        "why": "A wide piece on a narrow one needs a cone to pass its weight down to the smaller ring.",
+        "without": "Without it there would be a sharp step, where the loads crack the joint and the air piles up. It is mass that does no other work.",
+        "inside": "A cone of thin skin held in shape by ring frames at the top and bottom, with stiffeners in between. The weight from above flows down the sloping wall and gathers onto the narrower ring below.",
+        "analogy": "Like the neck of a bottle, upside down: wide on top, narrow below."
+      },
+      "vi": {
+        "what": "Bộ chuyển đường kính (adapter) hình nón nối phần cỡ vừa ở trên với phần nhỏ ở dưới. Trang thiết kế tự thêm nó ở chỗ hai đường kính gặp nhau.",
+        "why": "Khúc rộng đặt trên khúc hẹp cần một hình nón để dồn sức nặng xuống vòng nhỏ hơn.",
+        "without": "Không có nó sẽ có một bậc gãy gọn, nơi lực làm nứt mối nối và không khí dồn ứ. Nó là khối lượng không làm thêm việc gì khác.",
+        "inside": "Một khúc nón vỏ mỏng, giữ dáng nhờ khung vòng ở trên và ở dưới, giữa là các thanh gia cường. Sức nặng từ trên đi xuống theo vách nghiêng và dồn vào vòng hẹp hơn ở dưới.",
+        "analogy": "Giống cổ chai lộn ngược: rộng ở trên, hẹp ở dưới.",
+        "pros": [
+          "Mối nối gọn giữa hai đường kính"
+        ],
+        "cons": [
+          "Khối lượng không làm thêm việc gì khác"
+        ],
+        "real": "Vòng nối tầng S-IVB/S-II của Saturn V (6,6 m sang 10 m), phần đuôi thuyền 5 m của Atlas V, bộ chuyển từ tầng hai sang vỏ chụp của Falcon 9",
+        "name": "Bộ chuyển M sang S"
+      }
+    },
+    "part:adapter_m_l": {
+      "en": {
+        "what": "A cone that joins a medium part above to a large part below. The design page adds it for you where two widths meet.",
+        "why": "A narrower piece on a wide stage is common: a capsule on a big tank, an upper stage on a booster. The cone spreads the load out to the wide rim.",
+        "without": "Without it there would be a sharp step, where the loads crack the joint and the air piles up. It is mass that does no other work.",
+        "inside": "A cone of thin skin held in shape by ring frames at the top and bottom, with stiffeners in between. The weight from above flows down the sloping wall and spreads out to the wide ring below.",
+        "analogy": "Like a lampshade: narrow at the top, flaring out below."
+      },
+      "vi": {
+        "what": "Bộ chuyển đường kính (adapter) hình nón nối phần cỡ vừa ở trên với phần lớn ở dưới. Trang thiết kế tự thêm nó ở chỗ hai đường kính gặp nhau.",
+        "why": "Khúc hẹp đặt trên tầng rộng là chuyện thường gặp: khoang lái trên bồn lớn, tầng trên trên tầng đẩy. Hình nón dàn lực ra tới vành rộng.",
+        "without": "Không có nó sẽ có một bậc gãy gọn, nơi lực làm nứt mối nối và không khí dồn ứ. Nó là khối lượng không làm thêm việc gì khác.",
+        "inside": "Một khúc nón vỏ mỏng, giữ dáng nhờ khung vòng ở trên và ở dưới, giữa là các thanh gia cường. Sức nặng từ trên đi xuống theo vách nghiêng và dàn ra vòng rộng ở dưới.",
+        "analogy": "Giống chao đèn: hẹp ở trên, loe rộng ở dưới.",
+        "pros": [
+          "Mối nối gọn giữa hai đường kính"
+        ],
+        "cons": [
+          "Khối lượng không làm thêm việc gì khác"
+        ],
+        "real": "Vòng nối tầng S-IVB/S-II của Saturn V (6,6 m sang 10 m), phần đuôi thuyền 5 m của Atlas V, bộ chuyển từ tầng hai sang vỏ chụp của Falcon 9",
+        "name": "Bộ chuyển M sang L"
+      }
+    },
+    "part:adapter_l_m": {
+      "en": {
+        "what": "A cone that joins a large part above to a medium part below. The design page adds it for you where two widths meet.",
+        "why": "When a wide section sits on a narrower one, the cone gathers its weight down onto the smaller ring.",
+        "without": "Without it there would be a sharp step, where the loads crack the joint and the air piles up. It is mass that does no other work.",
+        "inside": "A cone of thin skin held in shape by ring frames at the top and bottom, with stiffeners in between. The weight of the wide section flows down the sloping wall and gathers onto the narrower ring below.",
+        "analogy": "Like the bowl of a wine glass meeting its stem."
+      },
+      "vi": {
+        "what": "Bộ chuyển đường kính (adapter) hình nón nối phần lớn ở trên với phần cỡ vừa ở dưới. Trang thiết kế tự thêm nó ở chỗ hai đường kính gặp nhau.",
+        "why": "Khi khúc rộng đặt trên khúc hẹp hơn, hình nón gom sức nặng của nó dồn xuống vòng nhỏ.",
+        "without": "Không có nó sẽ có một bậc gãy gọn, nơi lực làm nứt mối nối và không khí dồn ứ. Nó là khối lượng không làm thêm việc gì khác.",
+        "inside": "Một khúc nón vỏ mỏng, giữ dáng nhờ khung vòng ở trên và ở dưới, giữa là các thanh gia cường. Sức nặng của khúc rộng đi xuống theo vách nghiêng và dồn vào vòng hẹp hơn ở dưới.",
+        "analogy": "Giống phần bầu của ly rượu vang thu lại gặp chân ly.",
+        "pros": [
+          "Mối nối gọn giữa hai đường kính"
+        ],
+        "cons": [
+          "Khối lượng không làm thêm việc gì khác"
+        ],
+        "real": "Vòng nối tầng S-IVB/S-II của Saturn V (6,6 m sang 10 m), phần đuôi thuyền 5 m của Atlas V, bộ chuyển từ tầng hai sang vỏ chụp của Falcon 9",
+        "name": "Bộ chuyển L sang M"
+      }
+    },
+    "part:adapter_s_l": {
+      "en": {
+        "what": "A long cone that joins a small part above to a large part below, the biggest step in width. The design page adds it for you where two widths meet.",
+        "why": "The step from small to large is wide, so the cone is the tallest adapter, and it carries the loads out to the big rim.",
+        "without": "Without it there would be a sharp step, where the loads crack the joint and the air piles up. It is mass that does no other work.",
+        "inside": "A tall cone of thin skin with ring frames at the top and bottom and stiffeners in between, which stop the long sloping wall from buckling. The weight from above spreads out down the wall to the big ring below.",
+        "analogy": "Like a traffic cone: narrow top, wide base."
+      },
+      "vi": {
+        "what": "Bộ chuyển đường kính (adapter) hình nón dài, nối phần nhỏ ở trên với phần lớn ở dưới, bậc chênh bề rộng lớn nhất. Trang thiết kế tự thêm nó ở chỗ hai đường kính gặp nhau.",
+        "why": "Từ nhỏ lên lớn là một bước rất rộng, nên đây là bộ chuyển cao nhất, dàn lực ra tới vành lớn.",
+        "without": "Không có nó sẽ có một bậc gãy gọn, nơi lực làm nứt mối nối và không khí dồn ứ. Nó là khối lượng không làm thêm việc gì khác.",
+        "inside": "Một khúc nón cao, vỏ mỏng, có khung vòng ở trên và ở dưới cùng các thanh gia cường ở giữa, giữ cho vách nghiêng dài không bị oằn. Sức nặng từ trên dàn dần xuống theo vách tới vòng lớn ở dưới.",
+        "analogy": "Giống chiếc cọc giao thông hình nón: đỉnh nhỏ, chân rộng.",
+        "pros": [
+          "Mối nối gọn giữa hai đường kính"
+        ],
+        "cons": [
+          "Khối lượng không làm thêm việc gì khác"
+        ],
+        "real": "Vòng nối tầng S-IVB/S-II của Saturn V (6,6 m sang 10 m), phần đuôi thuyền 5 m của Atlas V, bộ chuyển từ tầng hai sang vỏ chụp của Falcon 9",
+        "name": "Bộ chuyển S sang L"
+      }
+    },
+    "part:adapter_l_s": {
+      "en": {
+        "what": "A long cone that joins a large part above to a small part below. The design page adds it for you where two widths meet.",
+        "why": "A big section on a narrow one is the widest step there is. The cone gathers the whole weight down onto the small ring.",
+        "without": "Without it there would be a sharp step, where the loads crack the joint and the air piles up. It is mass that does no other work.",
+        "inside": "A tall cone of thin skin with ring frames at the top and bottom and stiffeners in between, which stop the long sloping wall from buckling. The weight of the big section gathers down the wall onto the small ring below.",
+        "analogy": "Like an ice-cream cone: wide at the top, a point at the bottom."
+      },
+      "vi": {
+        "what": "Bộ chuyển đường kính (adapter) hình nón dài, nối phần lớn ở trên với phần nhỏ ở dưới. Trang thiết kế tự thêm nó ở chỗ hai đường kính gặp nhau.",
+        "why": "Khúc lớn đặt trên khúc hẹp là bậc chênh rộng nhất. Hình nón gom toàn bộ sức nặng dồn xuống vòng nhỏ.",
+        "without": "Không có nó sẽ có một bậc gãy gọn, nơi lực làm nứt mối nối và không khí dồn ứ. Nó là khối lượng không làm thêm việc gì khác.",
+        "inside": "Một khúc nón cao, vỏ mỏng, có khung vòng ở trên và ở dưới cùng các thanh gia cường ở giữa, giữ cho vách nghiêng dài không bị oằn. Sức nặng của khúc lớn dồn dần xuống theo vách vào vòng nhỏ ở dưới.",
+        "analogy": "Giống chiếc ốc quế: miệng rộng ở trên, nhọn ở dưới.",
+        "pros": [
+          "Mối nối gọn giữa hai đường kính"
+        ],
+        "cons": [
+          "Khối lượng không làm thêm việc gì khác"
+        ],
+        "real": "Vòng nối tầng S-IVB/S-II của Saturn V (6,6 m sang 10 m), phần đuôi thuyền 5 m của Atlas V, bộ chuyển từ tầng hai sang vỏ chụp của Falcon 9",
+        "name": "Bộ chuyển L sang S"
+      }
+    },
+    "part:intertank_l": {
+      "en": {
+        "what": "The stiff, hollow ring between two big tanks. It holds no propellant. On the Shuttle's External Tank it carried the beam that took the push of both solid boosters.",
+        "why": "It takes the boosters' push and the bending of flight, and vents, valves and cable plates bolt to it without piercing a tank.",
+        "without": "Without it, two tanks with separate domes have nothing stiff between them. It is mass and height that hold no propellant.",
+        "inside": "A hollow ring of stiffened panels with ring frames inside. A heavy beam runs across it where the boosters push, and vents, valves and cable plates are bolted through its skin.",
+        "analogy": "Like your lower back: it holds no organs, but it carries the load between your chest and your hips."
+      },
+      "vi": {
+        "what": "Đoạn nối giữa hai bồn (intertank) là một vòng rỗng, cứng, nằm giữa hai bồn lớn và không chứa nhiên liệu. Trên bồn ngoài của tàu con thoi, nó mang thanh dầm chịu cú đẩy của cả hai tên lửa đẩy phụ nhiên liệu rắn.",
+        "why": "Nó gánh lực đẩy của tên lửa đẩy phụ và lực uốn khi bay; lỗ thông hơi, van và tấm nối cáp bắt vít lên nó mà không phải khoan thủng bồn.",
+        "without": "Không có nó, hai bồn có nắp vòm riêng không có gì cứng ở giữa. Nó là khối lượng và chiều cao không chứa nhiên liệu.",
+        "inside": "Một vòng rỗng gồm các tấm vỏ có gân, bên trong là khung vòng. Một thanh dầm nặng chạy ngang qua chỗ tên lửa đẩy phụ tì vào, và lỗ thông hơi, van, tấm nối cáp được bắt xuyên qua vỏ.",
+        "analogy": "Giống phần thắt lưng của cơ thể: không chứa nội tạng, nhưng gánh sức nặng giữa ngực và hông.",
+        "pros": [
+          "Gánh lực của tên lửa đẩy phụ và lực uốn",
+          "Có điểm gắn chắc mà không phải khoan thủng bồn"
+        ],
+        "cons": [
+          "Khối lượng và chiều cao không chứa nhiên liệu"
+        ],
+        "real": "Đoạn nối giữa hai bồn của bồn ngoài tàu con thoi: rộng 8,4 m, dài 6,9 m, nhôm vỏ và thanh dọc có khung vòng, cùng thanh dầm chịu lực đẩy của tên lửa đẩy phụ (SRB)",
+        "name": "Đoạn nối giữa hai bồn L"
+      }
+    },
+    "part:interstage_l_composite": {
+      "en": {
+        "what": "Falcon 9's black band: a light, stiff ring of carbon-fibre skins on an aluminium honeycomb core. It carries folded grid fins and small nitrogen thrusters.",
+        "why": "This carbon sandwich is far lighter than a metal ring of the same stiffness.",
+        "without": "A metal interstage is cheaper but heavier. Here the construction is fixed, and damage can hide under a skin that looks fine.",
+        "inside": "Two thin carbon skins glued to a honeycomb core. The skins take the stretching and squeezing, and the core holds them apart.",
+        "analogy": "Like the wall of a cardboard box: two thin sheets with a light, wavy core between them make it stiff."
+      },
+      "vi": {
+        "what": "Dải đen trên tên lửa Falcon 9: một vòng nối tầng (interstage) nhẹ và cứng, gồm hai lớp vỏ sợi carbon trên lõi tổ ong nhôm. Nó mang các vây lưới gấp gọn và động cơ đẩy nhỏ chạy bằng nitơ.",
+        "why": "Lớp “bánh kẹp” carbon này nhẹ hơn hẳn một vòng kim loại cứng ngang nó.",
+        "without": "Vòng nối tầng bằng kim loại rẻ hơn nhưng nặng hơn. Ở đây kiểu kết cấu là cố định, và hư hỏng có thể nấp dưới một lớp vỏ trông vẫn lành.",
+        "inside": "Hai lớp vỏ carbon mỏng dán lên một lõi tổ ong. Lớp vỏ chịu kéo và nén, còn lõi giữ hai lớp tách xa nhau.",
+        "analogy": "Giống vách thùng các-tông: hai lớp giấy mỏng kẹp một lõi gợn sóng nhẹ ở giữa mà rất cứng.",
+        "pros": [
+          "Nhẹ và cứng",
+          "Có chỗ treo động cơ đẩy nhỏ và bình cầu"
+        ],
+        "cons": [
+          "Đắt",
+          "Hư hỏng có thể nấp dưới lớp vỏ còn lành"
+        ],
+        "real": "Vòng nối tầng Falcon 9: dài 4,5 m, rộng 3,7 m, hai mặt sợi carbon trên lõi tổ ong nhôm",
+        "name": "Vòng nối tầng composite L"
+      }
+    },
+    "part:avionics_iu_l": {
+      "en": {
+        "what": "A wide ring like the Saturn V's Instrument Unit: flight computer, gyro platform, radios, batteries and water-cooled plates, all around its inside wall.",
+        "why": "On Saturn V it steered all three stages, from lift-off until the burn that sent Apollo towards the Moon. Reliability +3.5 %.",
+        "without": "The smaller guidance ring is cheaper and gives +3 %. This is the heaviest and most expensive one.",
+        "inside": "Around the inside wall sit the flight computer, a platform held steady by gyroscopes that always knows which way is up, radios and batteries. Cold plates with liquid flowing through them carry away the heat of the electronics. The computer compares the platform's readings with the planned path and steers the engines.",
+        "analogy": "Like a ship's bridge, squeezed into a ring less than a metre tall."
+      },
+      "vi": {
+        "what": "Một vòng rộng giống Khoang Thiết bị (Instrument Unit) của Saturn V: máy tính bay, bệ con quay hồi chuyển, máy vô tuyến, pin và tấm làm mát bằng nước, xếp quanh vách trong.",
+        "why": "Trên Saturn V, nó lái cả ba tầng, từ lúc rời bệ cho tới lần đốt động cơ đưa Apollo về phía Mặt Trăng. Độ tin cậy +3,5 %.",
+        "without": "Vòng dẫn đường nhỏ hơn thì rẻ hơn và cho +3 %. Đây là vòng nặng và đắt nhất.",
+        "inside": "Quanh vách trong là máy tính bay, một bệ được con quay hồi chuyển giữ đứng yên nên luôn biết đâu là hướng trên, máy vô tuyến và pin. Các tấm làm mát có chất lỏng chảy bên trong mang nhiệt của thiết bị điện tử đi. Máy tính so số đo của bệ với đường bay dự định rồi lái động cơ.",
+        "analogy": "Giống buồng lái của con tàu biển, ép gọn vào một chiếc vòng cao chưa tới một mét.",
+        "pros": [
+          "Dẫn đường chính xác: độ tin cậy +3,5 %",
+          "Vừa với tàu cỡ lớn mà không cần bộ chuyển"
+        ],
+        "cons": [
+          "Vòng dẫn đường nặng và đắt nhất"
+        ],
+        "real": "Khoang Thiết bị (Instrument Unit) của Saturn V: rộng 6,6 m, cao 0,91 m, khoảng 2 tấn; máy tính LVDC và bệ quán tính ST-124-M, do IBM chế tạo",
+        "name": "Khoang Thiết bị (Instrument Unit)"
+      }
+    },
+    "part:feedline_external": {
+      "en": {
+        "what": "A big pipe that carries liquid oxygen from the upper tank, down the outside of the lower tank, to the engines.",
+        "why": "When oxygen sits above hydrogen, its pipe must get past the hydrogen tank. Outside, the pipe is easy to inspect and nothing freezes. Reliability +0.4 %.",
+        "without": "Without it, the pipe runs through the middle of the lower tank inside an insulated tunnel. Outside, it adds drag, and ice can form on it on the pad.",
+        "inside": "A pipe 43 cm wide, wider than a dinner plate, with bendy bellows joints so it can flex, held by brackets every few metres.",
+        "analogy": "Like a drainpipe running down the outside of a house."
+      },
+      "vi": {
+        "what": "Một đường ống lớn dẫn oxy lỏng từ bồn trên, chạy dọc bên ngoài bồn dưới, xuống tới động cơ. Đây là ống dẫn nhiên liệu (feed line) đi ngoài.",
+        "why": "Khi oxy nằm trên hydro, ống của nó phải vượt qua bồn hydro. Đi bên ngoài thì ống dễ kiểm tra và không có gì đông cứng. Độ tin cậy +0,4 %.",
+        "without": "Không có nó, ống phải chạy xuyên giữa lòng bồn dưới trong một đường hầm cách nhiệt. Đi bên ngoài thì tăng lực cản, và băng có thể đóng trên ống khi tàu nằm trên bệ.",
+        "inside": "Một đường ống rộng 43 cm, to hơn cả chiếc đĩa ăn cơm, có khớp xếp nếp để uốn được, giữ bằng giá đỡ cách vài mét một cái.",
+        "analogy": "Giống ống thoát nước mưa chạy dọc bên ngoài một ngôi nhà.",
+        "pros": [
+          "Đơn giản và dễ kiểm tra",
+          "Độ tin cậy +0,4 %"
+        ],
+        "cons": [
+          "Thêm lực cản",
+          "Băng có thể đóng trên ống khi nằm trên bệ"
+        ],
+        "real": "Bồn ngoài tàu con thoi: ống dẫn LOX 43 cm (17 in) chạy 21 m dọc bên ngoài bồn hydro, cạnh hai ống tái tạo áp 13 cm",
+        "name": "Ống dẫn oxy bên ngoài"
+      }
+    },
+    "part:cable_raceway": {
+      "en": {
+        "what": "A narrow box running down the whole side of a long tank. Power and data cables and small pressure lines run inside it.",
+        "why": "Every cable from the top of the stage to the engines has to get past the tanks. The raceway protects them all: reliability +1.2 %.",
+        "without": "Without it, the cables face the airflow and the cold. It adds a little drag.",
+        "inside": "Its ends slope like ramps, so the rushing air flows over it instead of tearing it off.",
+        "analogy": "Like the cable cover taped over wires on a floor so nobody trips on them."
+      },
+      "vi": {
+        "what": "Một máng cáp (cable raceway) hẹp chạy dọc suốt một bên của bồn dài. Cáp điện, cáp dữ liệu và các ống khí nén nhỏ chạy bên trong.",
+        "why": "Mọi sợi cáp từ đỉnh tầng xuống động cơ đều phải vượt qua các bồn. Máng cáp che chắn hết chúng: độ tin cậy +1,2 %.",
+        "without": "Không có nó, cáp phải hứng gió và hứng lạnh. Máng làm tăng lực cản một chút.",
+        "inside": "Hai đầu máng vát như con dốc, để luồng gió mạnh trượt qua thay vì giật bung nó ra.",
+        "analogy": "Giống nẹp che dây điện dán trên sàn nhà để không ai vấp phải.",
+        "pros": [
+          "Bảo vệ cáp suốt chiều dài một bồn dài",
+          "Độ tin cậy +1,2 %"
+        ],
+        "cons": [
+          "Thêm chút lực cản"
+        ],
+        "real": "Máng cáp bên ngoài của Falcon 9 và Starship; máng cáp của bồn ngoài tàu con thoi sau các gờ bọt",
+        "name": "Máng cáp suốt chiều dài"
+      }
+    },
+    "part:copv_rack": {
+      "en": {
+        "what": "Three carbon-wrapped bottles of helium on one rack. Together they keep big tanks pressed full from lift-off to engine cut-off.",
+        "why": "With three bottles, one leaking bottle does not end the flight. Reliability +1 %.",
+        "without": "One bottle holds less and has no spare. But three bottles at 300 bar store a lot of energy: the rack itself is 99.3 % reliable.",
+        "inside": "Each bottle is a thin metal lining wound in carbon fibre, linked to the others by pipes and valves.",
+        "analogy": "Like carrying three spare tyres instead of one: heavier, but one puncture does not stop the trip."
+      },
+      "vi": {
+        "what": "Ba bình heli (helium) quấn sợi carbon trên một giá đỡ. Cùng nhau, chúng giữ các bồn lớn luôn đủ áp suất từ lúc rời bệ tới lúc tắt động cơ.",
+        "why": "Có ba bình thì một bình rò rỉ cũng không làm hỏng chuyến bay. Độ tin cậy +1 %.",
+        "without": "Một bình chứa ít hơn và không có dự phòng. Nhưng ba bình ở 300 bar chứa rất nhiều năng lượng: bản thân giá bình chỉ tin cậy 99,3 %.",
+        "inside": "Mỗi bình là một lớp lót kim loại mỏng quấn sợi carbon, nối với các bình kia bằng ống và van.",
+        "analogy": "Giống mang theo ba lốp dự phòng thay vì một: nặng hơn, nhưng thủng một lốp chưa phải dừng chuyến đi.",
+        "pros": [
+          "Nhiều khí tạo áp, có bình dự phòng",
+          "Độ tin cậy +1 %"
+        ],
+        "cons": [
+          "Ba bình ở 300 bar: độ tin cậy 99,3 %",
+          "Đắt"
+        ],
+        "real": "Các bình COPV của Falcon 9 (đặt trong bồn LOX; vụ mất AMOS-6 năm 2016); giá bình COPV của Starship và Super Heavy",
+        "name": "Giá COPV (3 bình heli)"
+      }
+    },
+    "part:intertank_m": {
+      "en": {
+        "what": "The stiff section between two medium tanks, oxygen above and kerosene below. On the Soyuz core, the four boosters push into the core near here.",
+        "why": "The boosters' thrust for the whole rocket enters the core through this ring. Valves and cables bolt to it without piercing a tank.",
+        "without": "Without it, the booster loads have no strong place to land. It is mass and height that hold no propellant.",
+        "inside": "A short hollow ring of stiff panels and ring frames, with strong fittings where the boosters' thrust comes in. Valves, cables and the nitrogen lines are bolted to it.",
+        "analogy": "Like the shoulder straps of a backpack: the place where the weight is picked up and passed on."
+      },
+      "vi": {
+        "what": "Đoạn nối giữa hai bồn (intertank) cỡ vừa: oxy ở trên, dầu hỏa ở dưới. Trên tầng lõi Soyuz, bốn tên lửa đẩy phụ đẩy vào lõi ở gần chỗ này.",
+        "why": "Lực đẩy của các tên lửa đẩy phụ cho cả tên lửa đi vào lõi qua vòng này. Van và cáp bắt vít lên nó mà không phải khoan thủng bồn.",
+        "without": "Không có nó, lực của tên lửa đẩy phụ không có chỗ chắc để tì vào. Nó là khối lượng và chiều cao không chứa nhiên liệu.",
+        "inside": "Một vòng rỗng ngắn gồm các tấm cứng và khung vòng, có các khớp chắc ở chỗ lực đẩy của tên lửa đẩy phụ đi vào. Van, cáp điện và ống nitơ được bắt vít lên nó.",
+        "analogy": "Giống quai đeo của ba lô: chỗ nhận sức nặng rồi truyền đi.",
+        "pros": [
+          "Gánh lực của tên lửa đẩy phụ",
+          "Có điểm gắn chắc mà không phải khoan thủng bồn"
+        ],
+        "cons": [
+          "Khối lượng và chiều cao không chứa nhiên liệu"
+        ],
+        "real": "Tầng lõi Soyuz (Blok A): rộng 2,95 m; lực đẩy của tên lửa đẩy phụ đi vào lõi gần đỉnh, giữa bồn LOX và bồn dầu hỏa",
+        "name": "Đoạn nối giữa hai bồn M"
+      }
+    },
+    "slot:tank/bulkhead": {
+      "en": {
+        "what": "The wall that keeps the fuel and the oxidizer apart inside the tank."
+      },
+      "vi": {
+        "what": "Vách ngăn (bulkhead) giữ nhiên liệu và chất oxy hóa tách riêng trong bồn.",
+        "name": "Vách ngăn nhiên liệu và chất oxy hóa"
+      }
+    },
+    "option:tank/bulkhead/separate": {
+      "en": {
+        "what": "Two tanks with their own domes and a short section between them: simple and safe."
+      },
+      "vi": {
+        "what": "Hai bồn có nắp vòm riêng và một khúc ngắn ở giữa: đơn giản và an toàn.",
+        "name": "Nắp vòm riêng"
+      }
+    },
+    "option:tank/bulkhead/common": {
+      "en": {
+        "what": "One insulated wall shared by both liquids: it saves a dome and a metre of skin, but it is the hardest part of the tank to build."
+      },
+      "vi": {
+        "what": "Một vách cách nhiệt dùng chung cho cả hai chất lỏng: bớt được một nắp vòm và một mét vỏ, nhưng là phần khó làm nhất của bồn.",
+        "name": "Vách chung"
+      }
+    },
+    "slot:tank/pressurisation": {
+      "en": {
+        "what": "The gas that fills the top of each tank as the propellant drains, so the tank keeps its shape and the pump never sucks bubbles."
+      },
+      "vi": {
+        "what": "Khí tạo áp (pressurisation) lấp khoảng trống ở đỉnh mỗi bồn khi nhiên liệu cạn dần, để bồn giữ hình dạng và bơm không bao giờ hút phải bọt khí.",
+        "name": "Tạo áp"
+      }
+    },
+    "option:tank/pressurisation/helium": {
+      "en": {
+        "what": "Cold helium bottles sit inside the oxygen tank, where the gas stays dense: proven, but the bottles are a hazard."
+      },
+      "vi": {
+        "what": "Các bình heli lạnh đặt ngay trong bồn oxy, nơi khí giữ được độ đặc: đã được kiểm chứng, nhưng các bình là mối nguy.",
+        "name": "Bình heli bên trong"
+      }
+    },
+    "option:tank/pressurisation/autogenous": {
+      "en": {
+        "what": "A little of the propellant is warmed by the engine and piped back as gas: no helium at all, as on Starship and the Shuttle tank."
+      },
+      "vi": {
+        "what": "Một ít nhiên liệu được động cơ làm ấm rồi dẫn ngược về bồn dưới dạng khí: không cần chút heli nào, như trên Starship và bồn ngoài của tàu con thoi.",
+        "name": "Tự tạo áp (khí nhiên liệu nóng)"
+      }
+    },
+    "option:tank/pressurisation/heated": {
+      "en": {
+        "what": "Helium from cold bottles is warmed on the engine before it enters the tank; warm gas fills more space, so fewer bottles do the job."
+      },
+      "vi": {
+        "what": "Heli từ bình lạnh được làm ấm trên động cơ trước khi vào bồn; khí ấm chiếm nhiều chỗ hơn, nên ít bình hơn vẫn đủ việc.",
+        "name": "Heli được làm ấm"
+      }
+    },
+    "option:tank/pressurisation/nitrogen": {
+      "en": {
+        "what": "Plain nitrogen: cheap and easy to get, but seven times heavier than helium for the same space."
+      },
+      "vi": {
+        "what": "Khí nitơ thường: rẻ và dễ kiếm, nhưng nặng gấp bảy lần heli khi chiếm cùng thể tích.",
+        "name": "Khí nitơ"
+      }
+    },
+    "slot:tank/baffles": {
+      "en": {
+        "what": "Rings inside the tank that stop the propellant sloshing when the ship turns."
+      },
+      "vi": {
+        "what": "Các vòng chắn sóng (baffle) bên trong bồn ngăn nhiên liệu sóng sánh khi tàu xoay.",
+        "name": "Vòng chống sóng sánh"
+      }
+    },
+    "option:tank/baffles/baffled": {
+      "en": {
+        "what": "Rings welded inside the wall break up the waves: every crewed rocket has them."
+      },
+      "vi": {
+        "what": "Các vòng hàn vào vách trong bẻ vụn những con sóng: tên lửa chở người nào cũng có.",
+        "name": "Vòng chắn sóng"
+      }
+    },
+    "option:tank/baffles/none": {
+      "en": {
+        "what": "No rings: lighter, but in 2007 sloshing propellant sent the second Falcon 1 flight into a spin."
+      },
+      "vi": {
+        "what": "Không có vòng: nhẹ hơn, nhưng năm 2007 nhiên liệu sóng sánh đã làm chuyến bay thứ hai của Falcon 1 quay tròn mất kiểm soát.",
+        "name": "Không có vòng chắn"
+      }
+    },
+    "option:tank/baffles/antivortex": {
+      "en": {
+        "what": "Rings plus crossed vanes over each outlet, which stop the draining propellant swirling into a whirlpool that would suck gas into the pump."
+      },
+      "vi": {
+        "what": "Có vòng chắn, thêm các lá chắn chéo trên mỗi cửa xả, ngăn nhiên liệu đang chảy ra xoáy thành vòng xoáy hút khí vào bơm.",
+        "name": "Vòng chắn và lá chống xoáy"
+      }
+    },
+    "slot:tank/insulation": {
+      "en": {
+        "what": "The layer that keeps very cold propellant from warming up and boiling away."
+      },
+      "vi": {
+        "what": "Lớp cách nhiệt (insulation) giữ cho nhiên liệu siêu lạnh không ấm lên và bay hơi mất.",
+        "name": "Cách nhiệt"
+      }
+    },
+    "option:tank/insulation/bare": {
+      "en": {
+        "what": "Bare metal: fine for kerosene, but very cold liquids boil off during the hours on the pad."
+      },
+      "vi": {
+        "what": "Kim loại trần: ổn với dầu hỏa, nhưng chất lỏng siêu lạnh sẽ bay hơi trong mấy giờ nằm trên bệ.",
+        "name": "Kim loại trần"
+      }
+    },
+    "option:tank/insulation/foam": {
+      "en": {
+        "what": "Sprayed-on foam, the orange of the Shuttle tank: keeps the liquids cold for hours, but a piece of it broke off and struck Columbia."
+      },
+      "vi": {
+        "what": "Bọt cách nhiệt phun lên vỏ, màu cam như bồn của tàu con thoi: giữ chất lỏng lạnh hàng giờ, nhưng một mảng bọt đã bong ra và va vào tàu Columbia.",
+        "name": "Bọt phun"
+      }
+    },
+    "option:tank/insulation/mli": {
+      "en": {
+        "what": "Layers of gold-coloured foil for the long cruise: the only insulation that keeps working in vacuum for weeks."
+      },
+      "vi": {
+        "what": "Nhiều lớp giấy bạc màu vàng cho chuyến đi dài: loại cách nhiệt duy nhất còn hiệu quả trong chân không suốt nhiều tuần.",
+        "name": "Chăn nhiều lớp"
+      }
+    },
+    "slot:tank/feedline": {
+      "en": {
+        "what": "The pipes that carry propellant from the tank to the engines."
+      },
+      "vi": {
+        "what": "Ống dẫn nhiên liệu (feed line) đưa nhiên liệu từ bồn xuống động cơ.",
+        "name": "Ống dẫn nhiên liệu"
+      }
+    },
+    "option:tank/feedline/single": {
+      "en": {
+        "what": "One big pipe for each liquid, as on most rockets."
+      },
+      "vi": {
+        "what": "Mỗi chất lỏng một ống lớn, như phần lớn các tên lửa.",
+        "name": "Một ống dẫn"
+      }
+    },
+    "option:tank/feedline/dual": {
+      "en": {
+        "what": "Two pipes and two valves for each liquid, so one can fail."
+      },
+      "vi": {
+        "what": "Mỗi chất lỏng hai ống, hai van, nên hỏng một vẫn còn một.",
+        "name": "Ống dẫn dự phòng"
+      }
+    },
+    "option:tank/feedline/tunnel": {
+      "en": {
+        "what": "The upper tank's pipe drops straight through the middle of the lower tank in an insulated tunnel: the shortest path, but one more hole in every dome."
+      },
+      "vi": {
+        "what": "Ống của bồn trên chạy thẳng xuống xuyên giữa lòng bồn dưới trong một đường hầm cách nhiệt: đường ngắn nhất, nhưng mỗi nắp vòm phải khoét thêm một lỗ.",
+        "name": "Đường hầm xuyên bồn"
+      }
+    },
+    "slot:avionics/computer": {
+      "en": {
+        "what": "The rocket's guidance computer, and how many copies of it fly."
+      },
+      "vi": {
+        "what": "Máy tính dẫn đường (guidance computer) của tên lửa, và có bao nhiêu bản sao cùng bay.",
+        "name": "Máy tính bay"
+      }
+    },
+    "option:avionics/computer/dual": {
+      "en": {
+        "what": "Two computers, each able to fly the rocket alone."
+      },
+      "vi": {
+        "what": "Hai máy tính, chiếc nào cũng tự lái được tên lửa một mình.",
+        "name": "Hai máy song song"
+      }
+    },
+    "option:avionics/computer/triple": {
+      "en": {
+        "what": "Three computers vote on every command, so a faulty one is outvoted by the other two."
+      },
+      "vi": {
+        "what": "Ba máy tính bỏ phiếu cho từng lệnh, nên chiếc bị lỗi sẽ bị hai chiếc kia gạt đi.",
+        "name": "Ba máy bỏ phiếu"
+      }
+    },
+    "slot:avionics/imu": {
+      "en": {
+        "what": "The gyroscopes and accelerometers that feel every turn and every push."
+      },
+      "vi": {
+        "what": "Bộ đo quán tính (IMU): các con quay hồi chuyển và gia tốc kế cảm nhận từng cú xoay, từng cú đẩy.",
+        "name": "Bộ đo quán tính"
+      }
+    },
+    "option:avionics/imu/rlg": {
+      "en": {
+        "what": "Ring-laser gyros, the launcher standard. Light races both ways round a triangle of mirrors. When the rocket turns, the two beams stop matching, and that tells the computer how far it turned."
+      },
+      "vi": {
+        "what": "Con quay laser vòng (ring-laser gyro), loại chuẩn của tên lửa. Ánh sáng chạy hai chiều ngược nhau quanh một tam giác gương. Khi tên lửa xoay, hai chùm sáng lệch nhau, và độ lệch ấy cho máy tính biết đã xoay bao nhiêu.",
+        "name": "Con quay laser vòng"
+      }
+    },
+    "option:avionics/imu/fog": {
+      "en": {
+        "what": "Fibre-optic gyros: the same trick with light in a long coil of glass fibre, lighter and simpler."
+      },
+      "vi": {
+        "what": "Con quay sợi quang (fibre-optic gyro): cùng mẹo ánh sáng ấy nhưng trong một cuộn sợi thủy tinh dài, nhẹ hơn và đơn giản hơn.",
+        "name": "Con quay sợi quang"
+      }
+    },
+    "option:avionics/imu/mems": {
+      "en": {
+        "what": "Phone-style silicon chips, a hundred of them averaged: very light and cheap, but they drift more."
+      },
+      "vi": {
+        "what": "Chip silicon giống trong điện thoại, lấy trung bình của cả trăm chiếc: rất nhẹ và rẻ, nhưng trôi lệch nhiều hơn.",
+        "name": "Chip MEMS"
+      }
+    },
+    "slot:avionics/transponder": {
+      "en": {
+        "what": "The radios that report to the ground and listen for the destruct command."
+      },
+      "vi": {
+        "what": "Máy vô tuyến truyền số liệu (telemetry) về mặt đất và lắng nghe lệnh hủy.",
+        "name": "Truyền số liệu và an toàn bay"
+      }
+    },
+    "option:avionics/transponder/single": {
+      "en": {
+        "what": "One transmitter and one command receiver, as on small rockets."
+      },
+      "vi": {
+        "what": "Một máy phát và một máy thu lệnh, như các tên lửa nhỏ.",
+        "name": "Một máy phát"
+      }
+    },
+    "option:avionics/transponder/dual": {
+      "en": {
+        "what": "Two of everything, cross-wired so either set can serve the whole ring."
+      },
+      "vi": {
+        "what": "Mọi thứ đều có hai, nối chéo với nhau để bộ nào cũng phục vụ được cả vòng.",
+        "name": "Hai bộ, nối chéo"
+      }
+    },
+    "slot:avionics/navaid": {
+      "en": {
+        "what": "What corrects the gyroscopes as they slowly drift."
+      },
+      "vi": {
+        "what": "Thứ chỉnh lại con quay hồi chuyển (gyroscope) khi chúng trôi lệch dần.",
+        "name": "Hỗ trợ dẫn đường"
+      }
+    },
+    "option:avionics/navaid/inertial": {
+      "en": {
+        "what": "The gyros and accelerometers alone, as on Saturn V: they drift a little every minute and nothing corrects them."
+      },
+      "vi": {
+        "what": "Chỉ có con quay và gia tốc kế, như trên Saturn V: mỗi phút trôi lệch một chút và không có gì chỉnh lại.",
+        "name": "Chỉ dùng quán tính"
+      }
+    },
+    "option:avionics/navaid/gps": {
+      "en": {
+        "what": "A GPS receiver checks the position every second during the climb and trims the drift away."
+      },
+      "vi": {
+        "what": "Một máy thu GPS kiểm tra vị trí mỗi giây khi bay lên và cắt bỏ độ trôi.",
+        "name": "Quán tính có GPS hỗ trợ"
+      }
+    },
+    "option:avionics/navaid/stellar": {
+      "en": {
+        "what": "A small camera recognises the stars and resets the gyros; it works anywhere, including on the way to Mars."
+      },
+      "vi": {
+        "what": "Một camera nhỏ nhận ra các ngôi sao và đặt lại con quay; nó dùng được ở mọi nơi, kể cả trên đường tới Sao Hỏa.",
+        "name": "Có máy theo dõi sao hỗ trợ"
+      }
+    },
+    "slot:avionics/fts": {
+      "en": {
+        "what": "What ends the flight safely if the rocket strays off course towards people."
+      },
+      "vi": {
+        "what": "Hệ thống kết thúc chuyến bay (flight termination) an toàn nếu tên lửa đi chệch hướng về phía khu dân cư.",
+        "name": "Kết thúc chuyến bay"
+      }
+    },
+    "option:avionics/fts/commanded": {
+      "en": {
+        "what": "A safety officer on the ground watches the track and sends the destruct command: a radio link with a person deciding."
+      },
+      "vi": {
+        "what": "Một sĩ quan an toàn dưới mặt đất theo dõi đường bay và gửi lệnh hủy: cần đường liên lạc vô tuyến và một con người quyết định.",
+        "name": "Hủy theo lệnh"
+      }
+    },
+    "option:avionics/fts/autonomous": {
+      "en": {
+        "what": "The rocket's own computers check its track against the safety rules and decide for themselves: no radio link to lose."
+      },
+      "vi": {
+        "what": "Chính máy tính của tên lửa so đường bay với các quy tắc an toàn rồi tự quyết định: không có đường liên lạc nào để mất.",
+        "name": "Tự kết thúc chuyến bay (AFTS)"
+      }
+    },
+    "slot:solar/cells": {
+      "en": {
+        "what": "Which kind of solar cell covers the panel."
+      },
+      "vi": {
+        "what": "Loại tế bào quang điện (solar cell) phủ trên tấm pin.",
+        "name": "Tế bào quang điện"
+      }
+    },
+    "option:solar/cells/silicon": {
+      "en": {
+        "what": "Silicon cells: about 20 % of the sunlight becomes electricity; cheap and tough."
+      },
+      "vi": {
+        "what": "Tế bào silicon: khoảng 20 % ánh nắng thành điện; rẻ và bền.",
+        "name": "Tế bào silicon"
+      }
+    },
+    "option:solar/cells/triple": {
+      "en": {
+        "what": "Triple-junction cells: three layers, each catching a different colour of light, over 30 % efficient, as on modern spacecraft."
+      },
+      "vi": {
+        "what": "Tế bào ba lớp tiếp giáp (triple-junction): ba lớp, mỗi lớp hứng một màu ánh sáng, hiệu suất trên 30 %, như trên các tàu vũ trụ hiện đại.",
+        "name": "GaAs ba lớp tiếp giáp"
+      }
+    },
+    "slot:solar/drive": {
+      "en": {
+        "what": "Whether the panel turns to follow the Sun."
+      },
+      "vi": {
+        "what": "Tấm pin mặt trời (solar panel) có xoay theo Mặt Trời hay không.",
+        "name": "Bộ xoay tấm pin"
+      }
+    },
+    "option:solar/drive/fixed": {
+      "en": {
+        "what": "Bolted to the hull: its power depends on where the ship points."
+      },
+      "vi": {
+        "what": "Bắt cố định vào vỏ: điện nhiều hay ít tùy tàu đang chĩa về đâu.",
+        "name": "Cố định"
+      }
+    },
+    "option:solar/drive/tracking": {
+      "en": {
+        "what": "A motor and sliding electrical contacts keep the panel facing the Sun: 20 % more power, one more moving part."
+      },
+      "vi": {
+        "what": "Một động cơ và các tiếp điểm trượt giữ tấm pin luôn quay về phía Mặt Trời: thêm 20 % điện, nhưng thêm một bộ phận chuyển động.",
+        "name": "Xoay theo Mặt Trời"
+      }
+    },
+    "slot:tank_common/bulkhead": {
+      "en": {
+        "what": "The single wall shared by the two propellants."
+      },
+      "vi": {
+        "what": "Vách chung (common bulkhead) duy nhất ngăn giữa hai loại nhiên liệu.",
+        "name": "Vách chung"
+      }
+    },
+    "option:tank_common/bulkhead/as_built": {
+      "en": {
+        "what": "The shared dome the tank was designed with; its mass and price are already in the tank's numbers."
+      },
+      "vi": {
+        "what": "Nắp vòm chung đúng như thiết kế ban đầu của bồn; khối lượng và giá của nó đã tính sẵn trong số liệu của bồn.",
+        "name": "Vách chung, như thiết kế"
+      }
+    },
+    "option:tank_common/bulkhead/honeycomb": {
+      "en": {
+        "what": "Two skins glued to a thicker honeycomb core, so neither liquid warms or freezes the other; every cell of the bond is inspected."
+      },
+      "vi": {
+        "what": "Hai lớp vỏ dán lên một lõi tổ ong dày hơn, nên chất lỏng này không làm ấm hay đông cứng chất lỏng kia; từng ô của lớp keo đều được kiểm tra.",
+        "name": "Tổ ong kẹp, cách nhiệt thêm"
+      }
+    },
+    "option:tank_common/bulkhead/thin": {
+      "en": {
+        "what": "Acid baths eat away the metal wherever the loads are low: lighter, with less margin for a bad day."
+      },
+      "vi": {
+        "what": "Bể axit ăn mòn bớt kim loại ở những chỗ chịu lực nhẹ: nhẹ hơn, nhưng ít dư địa cho ngày xui.",
+        "name": "Mỏng, ăn mòn hóa học"
+      }
+    },
+    "slot:tank_common/pressurisation": {
+      "en": {
+        "what": "The gas that fills the top of each tank as the propellant drains, so the tank keeps its shape and the pump never sucks bubbles."
+      },
+      "vi": {
+        "what": "Khí tạo áp (pressurisation) lấp khoảng trống ở đỉnh mỗi bồn khi nhiên liệu cạn dần, để bồn giữ hình dạng và bơm không bao giờ hút phải bọt khí.",
+        "name": "Tạo áp"
+      }
+    },
+    "option:tank_common/pressurisation/helium": {
+      "en": {
+        "what": "Cold helium bottles sit inside the oxygen tank, where the gas stays dense: proven, but the bottles are a hazard."
+      },
+      "vi": {
+        "what": "Các bình heli lạnh đặt ngay trong bồn oxy, nơi khí giữ được độ đặc: đã được kiểm chứng, nhưng các bình là mối nguy.",
+        "name": "Bình heli bên trong"
+      }
+    },
+    "option:tank_common/pressurisation/autogenous": {
+      "en": {
+        "what": "A little of the propellant is warmed by the engine and piped back as gas: no helium at all, as on Starship and the Shuttle tank."
+      },
+      "vi": {
+        "what": "Một ít nhiên liệu được động cơ làm ấm rồi dẫn ngược về bồn dưới dạng khí: không cần chút heli nào, như trên Starship và bồn ngoài của tàu con thoi.",
+        "name": "Tự tạo áp (khí nhiên liệu nóng)"
+      }
+    },
+    "option:tank_common/pressurisation/heated": {
+      "en": {
+        "what": "Helium from cold bottles is warmed on the engine before it enters the tank; warm gas fills more space, so fewer bottles do the job."
+      },
+      "vi": {
+        "what": "Heli từ bình lạnh được làm ấm trên động cơ trước khi vào bồn; khí ấm chiếm nhiều chỗ hơn, nên ít bình hơn vẫn đủ việc.",
+        "name": "Heli được làm ấm"
+      }
+    },
+    "option:tank_common/pressurisation/nitrogen": {
+      "en": {
+        "what": "Plain nitrogen: cheap and easy to get, but seven times heavier than helium for the same space."
+      },
+      "vi": {
+        "what": "Khí nitơ thường: rẻ và dễ kiếm, nhưng nặng gấp bảy lần heli khi chiếm cùng thể tích.",
+        "name": "Khí nitơ"
+      }
+    },
+    "slot:tank_common/baffles": {
+      "en": {
+        "what": "Rings inside the tank that stop the propellant sloshing when the ship turns."
+      },
+      "vi": {
+        "what": "Các vòng chắn sóng (baffle) bên trong bồn ngăn nhiên liệu sóng sánh khi tàu xoay.",
+        "name": "Vòng chống sóng sánh"
+      }
+    },
+    "option:tank_common/baffles/baffled": {
+      "en": {
+        "what": "Rings welded inside the wall break up the waves: every crewed rocket has them."
+      },
+      "vi": {
+        "what": "Các vòng hàn vào vách trong bẻ vụn những con sóng: tên lửa chở người nào cũng có.",
+        "name": "Vòng chắn sóng"
+      }
+    },
+    "option:tank_common/baffles/none": {
+      "en": {
+        "what": "No rings: lighter, but in 2007 sloshing propellant sent the second Falcon 1 flight into a spin."
+      },
+      "vi": {
+        "what": "Không có vòng: nhẹ hơn, nhưng năm 2007 nhiên liệu sóng sánh đã làm chuyến bay thứ hai của Falcon 1 quay tròn mất kiểm soát.",
+        "name": "Không có vòng chắn"
+      }
+    },
+    "option:tank_common/baffles/antivortex": {
+      "en": {
+        "what": "Rings plus crossed vanes over each outlet, which stop the draining propellant swirling into a whirlpool that would suck gas into the pump."
+      },
+      "vi": {
+        "what": "Có vòng chắn, thêm các lá chắn chéo trên mỗi cửa xả, ngăn nhiên liệu đang chảy ra xoáy thành vòng xoáy hút khí vào bơm.",
+        "name": "Vòng chắn và lá chống xoáy"
+      }
+    },
+    "slot:tank_common/insulation": {
+      "en": {
+        "what": "The layer that keeps very cold propellant from warming up and boiling away."
+      },
+      "vi": {
+        "what": "Lớp cách nhiệt (insulation) giữ cho nhiên liệu siêu lạnh không ấm lên và bay hơi mất.",
+        "name": "Cách nhiệt"
+      }
+    },
+    "option:tank_common/insulation/bare": {
+      "en": {
+        "what": "Bare metal: fine for kerosene, but very cold liquids boil off during the hours on the pad."
+      },
+      "vi": {
+        "what": "Kim loại trần: ổn với dầu hỏa, nhưng chất lỏng siêu lạnh sẽ bay hơi trong mấy giờ nằm trên bệ.",
+        "name": "Kim loại trần"
+      }
+    },
+    "option:tank_common/insulation/foam": {
+      "en": {
+        "what": "Sprayed-on foam, the orange of the Shuttle tank: keeps the liquids cold for hours, but a piece of it broke off and struck Columbia."
+      },
+      "vi": {
+        "what": "Bọt cách nhiệt phun lên vỏ, màu cam như bồn của tàu con thoi: giữ chất lỏng lạnh hàng giờ, nhưng một mảng bọt đã bong ra và va vào tàu Columbia.",
+        "name": "Bọt phun"
+      }
+    },
+    "option:tank_common/insulation/mli": {
+      "en": {
+        "what": "Layers of gold-coloured foil for the long cruise: the only insulation that keeps working in vacuum for weeks."
+      },
+      "vi": {
+        "what": "Nhiều lớp giấy bạc màu vàng cho chuyến đi dài: loại cách nhiệt duy nhất còn hiệu quả trong chân không suốt nhiều tuần.",
+        "name": "Chăn nhiều lớp"
+      }
+    },
+    "slot:tank_common/feedline": {
+      "en": {
+        "what": "The pipes that carry propellant from the tank to the engines."
+      },
+      "vi": {
+        "what": "Ống dẫn nhiên liệu (feed line) đưa nhiên liệu từ bồn xuống động cơ.",
+        "name": "Ống dẫn nhiên liệu"
+      }
+    },
+    "option:tank_common/feedline/single": {
+      "en": {
+        "what": "One big pipe for each liquid, as on most rockets."
+      },
+      "vi": {
+        "what": "Mỗi chất lỏng một ống lớn, như phần lớn các tên lửa.",
+        "name": "Một ống dẫn"
+      }
+    },
+    "option:tank_common/feedline/dual": {
+      "en": {
+        "what": "Two pipes and two valves for each liquid, so one can fail."
+      },
+      "vi": {
+        "what": "Mỗi chất lỏng hai ống, hai van, nên hỏng một vẫn còn một.",
+        "name": "Ống dẫn dự phòng"
+      }
+    },
+    "option:tank_common/feedline/tunnel": {
+      "en": {
+        "what": "The upper tank's pipe drops straight through the middle of the lower tank in an insulated tunnel, as on Falcon 9. It is the shortest path, but it means one more hole in every dome."
+      },
+      "vi": {
+        "what": "Ống của bồn trên chạy thẳng xuống xuyên giữa lòng bồn dưới trong một đường hầm cách nhiệt, như trên Falcon 9. Đây là đường ngắn nhất, nhưng mỗi nắp vòm phải khoét thêm một lỗ.",
+        "name": "Đường hầm xuyên bồn"
+      }
+    },
+    "slot:tank_balloon/pressure": {
+      "en": {
+        "what": "What stops the thin steel crumpling whenever the tank is not full of pressure."
+      },
+      "vi": {
+        "what": "Thứ giữ cho lớp thép mỏng không bẹp dúm mỗi khi trong bồn không đủ áp suất (pressure).",
+        "name": "Giữ cho bồn cứng"
+      }
+    },
+    "option:tank_balloon/pressure/ground_watch": {
+      "en": {
+        "what": "From the factory to lift-off the tank always has gas inside, and a crew watches the gauge around the clock."
+      },
+      "vi": {
+        "what": "Từ nhà máy tới lúc rời bệ, trong bồn lúc nào cũng có khí, và một đội người trực đồng hồ áp suất suốt ngày đêm.",
+        "name": "Luôn giữ áp, có người trực"
+      }
+    },
+    "option:tank_balloon/pressure/stretch": {
+      "en": {
+        "what": "A cradle holds the empty tank stretched whenever it is moved, and two pressure regulators share the job in flight, each able to do it alone."
+      },
+      "vi": {
+        "what": "Một giá đỡ giữ bồn rỗng luôn căng mỗi khi di chuyển, và hai bộ điều áp cùng chia việc khi bay, chiếc nào cũng tự làm một mình được.",
+        "name": "Giá căng và hai bộ điều áp"
+      }
+    },
+    "option:tank_balloon/pressure/thin": {
+      "en": {
+        "what": "Roll the steel even thinner: every gram saved is safety margin lost."
+      },
+      "vi": {
+        "what": "Cán thép mỏng hơn nữa: mỗi gam bớt đi là một phần biên an toàn mất đi.",
+        "name": "Vỏ mỏng hơn"
+      }
+    },
+    "slot:tank_balloon/bulkhead": {
+      "en": {
+        "what": "The wall shared by the two propellants."
+      },
+      "vi": {
+        "what": "Vách ngăn (bulkhead) chung giữa hai loại nhiên liệu.",
+        "name": "Vách ngăn giữa"
+      }
+    },
+    "option:tank_balloon/bulkhead/as_built": {
+      "en": {
+        "what": "The wall the tank was designed with: one thin steel dome next to kerosene, two steel skins on a honeycomb next to hydrogen. It is already in the tank's numbers."
+      },
+      "vi": {
+        "what": "Vách đúng như thiết kế: một nắp vòm thép mỏng nếu là dầu hỏa, hai lớp thép trên lõi tổ ong nếu là hydro. Nó đã tính sẵn trong số liệu của bồn.",
+        "name": "Vách chung, như thiết kế"
+      }
+    },
+    "option:tank_balloon/bulkhead/honeycomb": {
+      "en": {
+        "what": "Two skins glued to a thicker honeycomb core, so neither liquid warms or freezes the other; every cell of the bond is inspected."
+      },
+      "vi": {
+        "what": "Hai lớp vỏ dán lên một lõi tổ ong dày hơn, nên chất lỏng này không làm ấm hay đông cứng chất lỏng kia; từng ô của lớp keo đều được kiểm tra.",
+        "name": "Tổ ong kẹp, cách nhiệt thêm"
+      }
+    },
+    "option:tank_balloon/bulkhead/thin": {
+      "en": {
+        "what": "Acid baths eat away the metal wherever the loads are low: lighter, with less margin for a bad day."
+      },
+      "vi": {
+        "what": "Bể axit ăn mòn bớt kim loại ở những chỗ chịu lực nhẹ: nhẹ hơn, nhưng ít dư địa cho ngày xui.",
+        "name": "Mỏng, ăn mòn hóa học"
+      }
+    },
+    "slot:tank_balloon/insulation": {
+      "en": {
+        "what": "The layer that keeps very cold propellant from warming up and boiling away."
+      },
+      "vi": {
+        "what": "Lớp cách nhiệt (insulation) giữ cho nhiên liệu siêu lạnh không ấm lên và bay hơi mất.",
+        "name": "Cách nhiệt"
+      }
+    },
+    "option:tank_balloon/insulation/bare": {
+      "en": {
+        "what": "Bare metal: fine for kerosene, but very cold liquids boil off during the hours on the pad."
+      },
+      "vi": {
+        "what": "Kim loại trần: ổn với dầu hỏa, nhưng chất lỏng siêu lạnh sẽ bay hơi trong mấy giờ nằm trên bệ.",
+        "name": "Kim loại trần"
+      }
+    },
+    "option:tank_balloon/insulation/foam": {
+      "en": {
+        "what": "Sprayed-on foam, the orange of the Shuttle tank: keeps the liquids cold for hours, but a piece of it broke off and struck Columbia."
+      },
+      "vi": {
+        "what": "Bọt cách nhiệt phun lên vỏ, màu cam như bồn của tàu con thoi: giữ chất lỏng lạnh hàng giờ, nhưng một mảng bọt đã bong ra và va vào tàu Columbia.",
+        "name": "Bọt phun"
+      }
+    },
+    "option:tank_balloon/insulation/mli": {
+      "en": {
+        "what": "Layers of gold-coloured foil for the long cruise, as on Centaur: the only insulation that keeps working in vacuum for weeks."
+      },
+      "vi": {
+        "what": "Nhiều lớp giấy bạc màu vàng cho chuyến đi dài, như trên Centaur: loại cách nhiệt duy nhất còn hiệu quả trong chân không suốt nhiều tuần.",
+        "name": "Chăn nhiều lớp"
+      }
+    },
+    "slot:tank_balloon/feedline": {
+      "en": {
+        "what": "The pipes that carry propellant from the tank to the engines."
+      },
+      "vi": {
+        "what": "Ống dẫn nhiên liệu (feed line) đưa nhiên liệu từ bồn xuống động cơ.",
+        "name": "Ống dẫn nhiên liệu"
+      }
+    },
+    "option:tank_balloon/feedline/single": {
+      "en": {
+        "what": "One big pipe for each liquid, as on most rockets."
+      },
+      "vi": {
+        "what": "Mỗi chất lỏng một ống lớn, như phần lớn các tên lửa.",
+        "name": "Một ống dẫn"
+      }
+    },
+    "option:tank_balloon/feedline/dual": {
+      "en": {
+        "what": "Two pipes and two valves for each liquid, so one can fail."
+      },
+      "vi": {
+        "what": "Mỗi chất lỏng hai ống, hai van, nên hỏng một vẫn còn một.",
+        "name": "Ống dẫn dự phòng"
+      }
+    },
+    "option:tank_balloon/feedline/tunnel": {
+      "en": {
+        "what": "The upper tank's pipe drops straight through the middle of the lower tank in an insulated tunnel: the shortest path, but one more hole in every dome."
+      },
+      "vi": {
+        "what": "Ống của bồn trên chạy thẳng xuống xuyên giữa lòng bồn dưới trong một đường hầm cách nhiệt: đường ngắn nhất, nhưng mỗi nắp vòm phải khoét thêm một lỗ.",
+        "name": "Đường hầm xuyên bồn"
+      }
+    },
+    "slot:stage_structure/construction": {
+      "en": {
+        "what": "How the shell is made stiff enough to carry everything above it."
+      },
+      "vi": {
+        "what": "Lớp vỏ được làm cứng thế nào để đỡ mọi thứ phía trên (construction).",
+        "name": "Kết cấu"
+      }
+    },
+    "option:stage_structure/construction/skin_stringer": {
+      "en": {
+        "what": "Thin aluminium skin riveted to long stiffeners and ring frames, the way aircraft are built: easy to inspect and repair."
+      },
+      "vi": {
+        "what": "Vỏ nhôm mỏng tán đinh lên các thanh gia cường dọc và khung vòng, theo kiểu đóng máy bay: dễ kiểm tra và sửa chữa.",
+        "name": "Vỏ và thanh dọc"
+      }
+    },
+    "option:stage_structure/construction/isogrid": {
+      "en": {
+        "what": "A thick plate machined into a web of triangles: equally stiff in every direction, but most of the metal ends up as chips on the floor."
+      },
+      "vi": {
+        "what": "Tấm dày được phay thành mạng lưới tam giác (isogrid): cứng đều theo mọi hướng, nhưng phần lớn kim loại thành phoi trên sàn.",
+        "name": "Lưới tam giác (isogrid)"
+      }
+    },
+    "option:stage_structure/construction/orthogrid": {
+      "en": {
+        "what": "The same idea with a square grid: simpler to machine and weld into big panels, a little less efficient."
+      },
+      "vi": {
+        "what": "Cùng ý tưởng nhưng lưới ô vuông (orthogrid): dễ phay và hàn thành tấm lớn hơn, hiệu quả kém hơn một chút.",
+        "name": "Lưới ô vuông (orthogrid)"
+      }
+    },
+    "option:stage_structure/construction/corrugated": {
+      "en": {
+        "what": "Skin pressed into ridges like a tin roof: very stiff against squashing and cheap, a little heavier and draggier."
+      },
+      "vi": {
+        "what": "Vỏ dập gợn sóng như mái tôn: rất cứng khi bị nén và rẻ, nhưng nặng hơn và cản gió hơn một chút.",
+        "name": "Vỏ gợn sóng"
+      }
+    },
+    "option:stage_structure/construction/composite": {
+      "en": {
+        "what": "Two thin skins bonded to a honeycomb core: very stiff for its weight, but a dent can hide a broken core under a skin that looks fine."
+      },
+      "vi": {
+        "what": "Hai lớp vỏ mỏng dán lên lõi tổ ong: rất cứng so với sức nặng, nhưng một vết lõm có thể giấu phần lõi đã gãy dưới lớp vỏ trông vẫn lành.",
+        "name": "Bánh kẹp tổ ong"
+      }
+    },
+    "slot:stage_structure/joints": {
+      "en": {
+        "what": "How the panels are joined to each other."
+      },
+      "vi": {
+        "what": "Các tấm vỏ nối với nhau bằng cách nào (joint).",
+        "name": "Mối nối"
+      }
+    },
+    "option:stage_structure/joints/riveted": {
+      "en": {
+        "what": "Riveted and bolted: every joint can be inspected and redone."
+      },
+      "vi": {
+        "what": "Tán đinh và bắt bu-lông: mối nối nào cũng kiểm tra và làm lại được.",
+        "name": "Tán đinh và bắt bu-lông"
+      }
+    },
+    "option:stage_structure/joints/fsw": {
+      "en": {
+        "what": "Friction-stir welded: a spinning tool stirs the two edges together without melting them, making welds nearly as strong as the plate."
+      },
+      "vi": {
+        "what": "Hàn ma sát khuấy (friction-stir welding): một đầu dao xoay khuấy hai mép vào nhau mà không làm chảy, mối hàn gần chắc bằng chính tấm kim loại.",
+        "name": "Hàn ma sát khuấy"
+      }
+    },
+    "option:stage_structure/joints/bonded": {
+      "en": {
+        "what": "Glued joints: smooth, light and cheap, but a bond that has let go looks exactly like one that holds."
+      },
+      "vi": {
+        "what": "Mối nối dán keo: phẳng, nhẹ và rẻ, nhưng chỗ keo đã bong trông y hệt chỗ còn bám chắc.",
+        "name": "Dán keo"
+      }
+    },
+    "slot:tank_h2/bulkhead": {
+      "en": {
+        "what": "The wall that keeps the hydrogen and the oxygen apart inside the tank."
+      },
+      "vi": {
+        "what": "Vách ngăn (bulkhead) giữ hydro và oxy tách riêng trong bồn.",
+        "name": "Vách ngăn nhiên liệu và chất oxy hóa"
+      }
+    },
+    "option:tank_h2/bulkhead/separate": {
+      "en": {
+        "what": "Two tanks with their own domes and a short section between them: simple and safe."
+      },
+      "vi": {
+        "what": "Hai bồn có nắp vòm riêng và một khúc ngắn ở giữa: đơn giản và an toàn.",
+        "name": "Nắp vòm riêng"
+      }
+    },
+    "option:tank_h2/bulkhead/common": {
+      "en": {
+        "what": "One insulated wall shared by both liquids: it saves a dome and a metre of skin, but it is the hardest part of the tank to build."
+      },
+      "vi": {
+        "what": "Một vách cách nhiệt dùng chung cho cả hai chất lỏng: bớt được một nắp vòm và một mét vỏ, nhưng là phần khó làm nhất của bồn.",
+        "name": "Vách chung"
+      }
+    },
+    "slot:tank_h2/pressurisation": {
+      "en": {
+        "what": "The gas that fills the top of each tank as the propellant drains, so the tank keeps its shape and the pump never sucks bubbles."
+      },
+      "vi": {
+        "what": "Khí tạo áp (pressurisation) lấp khoảng trống ở đỉnh mỗi bồn khi nhiên liệu cạn dần, để bồn giữ hình dạng và bơm không bao giờ hút phải bọt khí.",
+        "name": "Tạo áp"
+      }
+    },
+    "option:tank_h2/pressurisation/helium": {
+      "en": {
+        "what": "Cold helium bottles sit inside the oxygen tank, where the gas stays dense: proven, but the bottles are a hazard."
+      },
+      "vi": {
+        "what": "Các bình heli lạnh đặt ngay trong bồn oxy, nơi khí giữ được độ đặc: đã được kiểm chứng, nhưng các bình là mối nguy.",
+        "name": "Bình heli bên trong"
+      }
+    },
+    "option:tank_h2/pressurisation/autogenous": {
+      "en": {
+        "what": "A little hydrogen and oxygen is warmed by the engine and piped back as gas, as on the Shuttle's External Tank: no helium at all."
+      },
+      "vi": {
+        "what": "Một ít hydro và oxy được động cơ làm ấm rồi dẫn ngược về bồn dưới dạng khí, như bồn ngoài của tàu con thoi: không cần chút heli nào.",
+        "name": "Tự tạo áp (khí nhiên liệu nóng)"
+      }
+    },
+    "option:tank_h2/pressurisation/heated": {
+      "en": {
+        "what": "Helium from cold bottles is warmed on the engine before it enters the tank; warm gas fills more space, so fewer bottles do the job."
+      },
+      "vi": {
+        "what": "Heli từ bình lạnh được làm ấm trên động cơ trước khi vào bồn; khí ấm chiếm nhiều chỗ hơn, nên ít bình hơn vẫn đủ việc.",
+        "name": "Heli được làm ấm"
+      }
+    },
+    "slot:tank_h2/baffles": {
+      "en": {
+        "what": "Rings inside the tank that stop the propellant sloshing when the ship turns."
+      },
+      "vi": {
+        "what": "Các vòng chắn sóng (baffle) bên trong bồn ngăn nhiên liệu sóng sánh khi tàu xoay.",
+        "name": "Vòng chống sóng sánh"
+      }
+    },
+    "option:tank_h2/baffles/baffled": {
+      "en": {
+        "what": "Rings welded inside the wall break up the waves: every crewed rocket has them."
+      },
+      "vi": {
+        "what": "Các vòng hàn vào vách trong bẻ vụn những con sóng: tên lửa chở người nào cũng có.",
+        "name": "Vòng chắn sóng"
+      }
+    },
+    "option:tank_h2/baffles/none": {
+      "en": {
+        "what": "No rings: lighter, but in 2007 sloshing propellant sent the second Falcon 1 flight into a spin."
+      },
+      "vi": {
+        "what": "Không có vòng: nhẹ hơn, nhưng năm 2007 nhiên liệu sóng sánh đã làm chuyến bay thứ hai của Falcon 1 quay tròn mất kiểm soát.",
+        "name": "Không có vòng chắn"
+      }
+    },
+    "option:tank_h2/baffles/antivortex": {
+      "en": {
+        "what": "Rings plus crossed vanes over each outlet, which stop the draining propellant swirling into a whirlpool that would suck gas into the pump."
+      },
+      "vi": {
+        "what": "Có vòng chắn, thêm các lá chắn chéo trên mỗi cửa xả, ngăn nhiên liệu đang chảy ra xoáy thành vòng xoáy hút khí vào bơm.",
+        "name": "Vòng chắn và lá chống xoáy"
+      }
+    },
+    "slot:tank_h2/insulation": {
+      "en": {
+        "what": "The layer that keeps liquid hydrogen, at −253 °C, from boiling away."
+      },
+      "vi": {
+        "what": "Lớp cách nhiệt (insulation) giữ cho hydro lỏng ở −253 °C không bay hơi mất.",
+        "name": "Cách nhiệt"
+      }
+    },
+    "option:tank_h2/insulation/foam": {
+      "en": {
+        "what": "Orange sprayed-on foam, already in the tank's numbers: without it, hydrogen boils off in minutes and air freezes onto the skin."
+      },
+      "vi": {
+        "what": "Bọt cách nhiệt màu cam phun lên vỏ, đã tính sẵn trong số liệu của bồn: thiếu nó, hydro bay hơi trong vài phút và không khí đóng băng trên vỏ.",
+        "name": "Bọt phun, như thiết kế"
+      }
+    },
+    "option:tank_h2/insulation/bare": {
+      "en": {
+        "what": "No foam: lighter and cheaper, but the hydrogen boils away fast, ice builds up on the skin, and the engines start on warmer propellant."
+      },
+      "vi": {
+        "what": "Không có bọt: nhẹ và rẻ hơn, nhưng hydro bay hơi nhanh, băng bám dày trên vỏ, và động cơ khởi động bằng nhiên liệu ấm hơn.",
+        "name": "Kim loại trần"
+      }
+    },
+    "option:tank_h2/insulation/mli": {
+      "en": {
+        "what": "Foam for the pad and the climb, with gold foil blankets on top for the long cruise, which block the Sun's heat almost completely in vacuum."
+      },
+      "vi": {
+        "what": "Bọt cho lúc nằm trên bệ và lúc bay lên, phủ thêm chăn giấy bạc vàng cho chuyến đi dài, thứ gần như chặn hết hơi nóng Mặt Trời trong chân không.",
+        "name": "Bọt dưới chăn nhiều lớp"
+      }
+    },
+    "slot:tank_h2/feedline": {
+      "en": {
+        "what": "The pipes that carry propellant from the tank to the engines."
+      },
+      "vi": {
+        "what": "Ống dẫn nhiên liệu (feed line) đưa nhiên liệu từ bồn xuống động cơ.",
+        "name": "Ống dẫn nhiên liệu"
+      }
+    },
+    "option:tank_h2/feedline/single": {
+      "en": {
+        "what": "One big pipe for each liquid, as on most rockets."
+      },
+      "vi": {
+        "what": "Mỗi chất lỏng một ống lớn, như phần lớn các tên lửa.",
+        "name": "Một ống dẫn"
+      }
+    },
+    "option:tank_h2/feedline/dual": {
+      "en": {
+        "what": "Two pipes and two valves for each liquid, so one can fail."
+      },
+      "vi": {
+        "what": "Mỗi chất lỏng hai ống, hai van, nên hỏng một vẫn còn một.",
+        "name": "Ống dẫn dự phòng"
+      }
+    },
+    "option:tank_h2/feedline/tunnel": {
+      "en": {
+        "what": "The upper tank's pipe drops straight through the middle of the lower tank in an insulated tunnel: the shortest path, but one more hole in every dome."
+      },
+      "vi": {
+        "what": "Ống của bồn trên chạy thẳng xuống xuyên giữa lòng bồn dưới trong một đường hầm cách nhiệt: đường ngắn nhất, nhưng mỗi nắp vòm phải khoét thêm một lỗ.",
+        "name": "Đường hầm xuyên bồn"
+      }
+    },
+    "slot:tank_common_h2/bulkhead": {
+      "en": {
+        "what": "The single wall shared by the hydrogen and the oxygen."
+      },
+      "vi": {
+        "what": "Vách chung (common bulkhead) duy nhất ngăn giữa hydro và oxy.",
+        "name": "Vách chung"
+      }
+    },
+    "option:tank_common_h2/bulkhead/as_built": {
+      "en": {
+        "what": "The shared wall the tank was designed with: two metal skins glued to a honeycomb core, so the hydrogen does not freeze the oxygen. It is already in the tank's numbers."
+      },
+      "vi": {
+        "what": "Vách chung đúng như thiết kế: hai lớp kim loại dán lên lõi tổ ong, để hydro không làm oxy đông cứng. Nó đã tính sẵn trong số liệu của bồn.",
+        "name": "Vách chung, như thiết kế"
+      }
+    },
+    "option:tank_common_h2/bulkhead/honeycomb": {
+      "en": {
+        "what": "Two skins glued to a thicker honeycomb core, so neither liquid warms or freezes the other; every cell of the bond is inspected."
+      },
+      "vi": {
+        "what": "Hai lớp vỏ dán lên một lõi tổ ong dày hơn, nên chất lỏng này không làm ấm hay đông cứng chất lỏng kia; từng ô của lớp keo đều được kiểm tra.",
+        "name": "Tổ ong kẹp, cách nhiệt thêm"
+      }
+    },
+    "option:tank_common_h2/bulkhead/thin": {
+      "en": {
+        "what": "Acid baths eat away the metal wherever the loads are low: lighter, with less margin for a bad day."
+      },
+      "vi": {
+        "what": "Bể axit ăn mòn bớt kim loại ở những chỗ chịu lực nhẹ: nhẹ hơn, nhưng ít dư địa cho ngày xui.",
+        "name": "Mỏng, ăn mòn hóa học"
+      }
+    },
+    "slot:tank_common_h2/pressurisation": {
+      "en": {
+        "what": "The gas that fills the top of each tank as the propellant drains, so the tank keeps its shape and the pump never sucks bubbles."
+      },
+      "vi": {
+        "what": "Khí tạo áp (pressurisation) lấp khoảng trống ở đỉnh mỗi bồn khi nhiên liệu cạn dần, để bồn giữ hình dạng và bơm không bao giờ hút phải bọt khí.",
+        "name": "Tạo áp"
+      }
+    },
+    "option:tank_common_h2/pressurisation/helium": {
+      "en": {
+        "what": "Cold helium bottles sit inside the oxygen tank, where the gas stays dense: proven, but the bottles are a hazard."
+      },
+      "vi": {
+        "what": "Các bình heli lạnh đặt ngay trong bồn oxy, nơi khí giữ được độ đặc: đã được kiểm chứng, nhưng các bình là mối nguy.",
+        "name": "Bình heli bên trong"
+      }
+    },
+    "option:tank_common_h2/pressurisation/autogenous": {
+      "en": {
+        "what": "A little hydrogen and oxygen is warmed by the engine and piped back as gas: no helium at all."
+      },
+      "vi": {
+        "what": "Một ít hydro và oxy được động cơ làm ấm rồi dẫn ngược về bồn dưới dạng khí: không cần chút heli nào.",
+        "name": "Tự tạo áp (khí nhiên liệu nóng)"
+      }
+    },
+    "option:tank_common_h2/pressurisation/heated": {
+      "en": {
+        "what": "Helium from cold bottles is warmed on the engine before it enters the tank; warm gas fills more space, so fewer bottles do the job."
+      },
+      "vi": {
+        "what": "Heli từ bình lạnh được làm ấm trên động cơ trước khi vào bồn; khí ấm chiếm nhiều chỗ hơn, nên ít bình hơn vẫn đủ việc.",
+        "name": "Heli được làm ấm"
+      }
+    },
+    "slot:tank_common_h2/baffles": {
+      "en": {
+        "what": "Rings inside the tank that stop the propellant sloshing when the ship turns."
+      },
+      "vi": {
+        "what": "Các vòng chắn sóng (baffle) bên trong bồn ngăn nhiên liệu sóng sánh khi tàu xoay.",
+        "name": "Vòng chống sóng sánh"
+      }
+    },
+    "option:tank_common_h2/baffles/baffled": {
+      "en": {
+        "what": "Rings welded inside the wall break up the waves: every crewed rocket has them."
+      },
+      "vi": {
+        "what": "Các vòng hàn vào vách trong bẻ vụn những con sóng: tên lửa chở người nào cũng có.",
+        "name": "Vòng chắn sóng"
+      }
+    },
+    "option:tank_common_h2/baffles/none": {
+      "en": {
+        "what": "No rings: lighter, but in 2007 sloshing propellant sent the second Falcon 1 flight into a spin."
+      },
+      "vi": {
+        "what": "Không có vòng: nhẹ hơn, nhưng năm 2007 nhiên liệu sóng sánh đã làm chuyến bay thứ hai của Falcon 1 quay tròn mất kiểm soát.",
+        "name": "Không có vòng chắn"
+      }
+    },
+    "option:tank_common_h2/baffles/antivortex": {
+      "en": {
+        "what": "Rings plus crossed vanes over each outlet, which stop the draining propellant swirling into a whirlpool that would suck gas into the pump."
+      },
+      "vi": {
+        "what": "Có vòng chắn, thêm các lá chắn chéo trên mỗi cửa xả, ngăn nhiên liệu đang chảy ra xoáy thành vòng xoáy hút khí vào bơm.",
+        "name": "Vòng chắn và lá chống xoáy"
+      }
+    },
+    "slot:tank_common_h2/insulation": {
+      "en": {
+        "what": "The layer that keeps liquid hydrogen, at −253 °C, from boiling away."
+      },
+      "vi": {
+        "what": "Lớp cách nhiệt (insulation) giữ cho hydro lỏng ở −253 °C không bay hơi mất.",
+        "name": "Cách nhiệt"
+      }
+    },
+    "option:tank_common_h2/insulation/foam": {
+      "en": {
+        "what": "Orange sprayed-on foam, already in the tank's numbers: without it, hydrogen boils off in minutes and air freezes onto the skin."
+      },
+      "vi": {
+        "what": "Bọt cách nhiệt màu cam phun lên vỏ, đã tính sẵn trong số liệu của bồn: thiếu nó, hydro bay hơi trong vài phút và không khí đóng băng trên vỏ.",
+        "name": "Bọt phun, như thiết kế"
+      }
+    },
+    "option:tank_common_h2/insulation/bare": {
+      "en": {
+        "what": "No foam: lighter and cheaper, but the hydrogen boils away fast, ice builds up on the skin, and the engines start on warmer propellant."
+      },
+      "vi": {
+        "what": "Không có bọt: nhẹ và rẻ hơn, nhưng hydro bay hơi nhanh, băng bám dày trên vỏ, và động cơ khởi động bằng nhiên liệu ấm hơn.",
+        "name": "Kim loại trần"
+      }
+    },
+    "option:tank_common_h2/insulation/mli": {
+      "en": {
+        "what": "Foam for the pad and the climb, with gold foil blankets on top for the long cruise, which block the Sun's heat almost completely in vacuum."
+      },
+      "vi": {
+        "what": "Bọt cho lúc nằm trên bệ và lúc bay lên, phủ thêm chăn giấy bạc vàng cho chuyến đi dài, thứ gần như chặn hết hơi nóng Mặt Trời trong chân không.",
+        "name": "Bọt dưới chăn nhiều lớp"
+      }
+    },
+    "slot:tank_common_h2/feedline": {
+      "en": {
+        "what": "The pipes that carry propellant from the tank to the engines."
+      },
+      "vi": {
+        "what": "Ống dẫn nhiên liệu (feed line) đưa nhiên liệu từ bồn xuống động cơ.",
+        "name": "Ống dẫn nhiên liệu"
+      }
+    },
+    "option:tank_common_h2/feedline/single": {
+      "en": {
+        "what": "One big pipe for each liquid, as on most rockets."
+      },
+      "vi": {
+        "what": "Mỗi chất lỏng một ống lớn, như phần lớn các tên lửa.",
+        "name": "Một ống dẫn"
+      }
+    },
+    "option:tank_common_h2/feedline/dual": {
+      "en": {
+        "what": "Two pipes and two valves for each liquid, so one can fail."
+      },
+      "vi": {
+        "what": "Mỗi chất lỏng hai ống, hai van, nên hỏng một vẫn còn một.",
+        "name": "Ống dẫn dự phòng"
+      }
+    },
+    "option:tank_common_h2/feedline/tunnel": {
+      "en": {
+        "what": "The upper tank's pipe drops straight through the middle of the lower tank in an insulated tunnel: the shortest path, but one more hole in every dome."
+      },
+      "vi": {
+        "what": "Ống của bồn trên chạy thẳng xuống xuyên giữa lòng bồn dưới trong một đường hầm cách nhiệt: đường ngắn nhất, nhưng mỗi nắp vòm phải khoét thêm một lỗ.",
+        "name": "Đường hầm xuyên bồn"
+      }
+    },
+    "shape:body/methalox_core": {
+      "en": {
+        "what": "A big and a medium tank of methane and liquid oxygen, the big one on top, in the style of Starship.",
+        "why": "Methane can be made on Mars from ice and the air, so the ship can refuel for the trip home. A good all-rounder; the body narrows from large to medium partway down."
+      },
+      "vi": {
+        "what": "Một bồn lớn và một bồn vừa chứa metan và oxy lỏng (methalox), bồn lớn ở trên, theo kiểu Starship.",
+        "why": "Metan có thể làm ra trên Sao Hỏa từ băng và không khí, nên tàu nạp lại được nhiên liệu cho chuyến về. Một lựa chọn toàn diện; thân tàu thu hẹp từ cỡ lớn xuống cỡ vừa ở khoảng giữa."
+      }
+    },
+    "shape:body/delta_core": {
+      "en": {
+        "what": "A guidance ring on top, then a kerosene tank, a stiff centerbody and an oxygen tank, like the first stage of Delta II.",
+        "why": "Kerosene is dense and cheap, and the strong centerbody takes the push of strap-on boosters. The structure is heavy, and 90 t of propellant makes it one of the heaviest bodies on the pad."
+      },
+      "vi": {
+        "what": "Vòng điện tử dẫn đường trên cùng, rồi bồn dầu hỏa, đoạn thân giữa (centerbody) cứng, và bồn oxy, giống tầng một của Delta II.",
+        "why": "Dầu hỏa đặc và rẻ, còn đoạn thân giữa chắc chắn đỡ được cú đẩy của tên lửa đẩy phụ gắn hông. Kết cấu nặng, và 90 tấn nhiên liệu khiến nó thuộc loại thân tàu nặng nhất trên bệ."
+      }
+    },
+    "shape:body/hydrolox_core": {
+      "en": {
+        "what": "A short oxygen tank on top, the intertank, and a long hydrogen tank below, all under orange foam, like the Space Shuttle's External Tank. The big oxygen pipe runs down the outside.",
+        "why": "With a hydrogen engine it gives the best Isp, so every kilogram of propellant goes further. It is huge, tall and expensive, and holds little propellant mass for its size."
+      },
+      "vi": {
+        "what": "Bồn oxy ngắn ở trên, đoạn nối giữa hai bồn (intertank), và bồn hydro dài ở dưới, tất cả phủ bọt cam, giống bồn ngoài của tàu con thoi. Ống oxy lớn chạy dọc bên ngoài.",
+        "why": "Đi với động cơ hydro, nó cho Isp tốt nhất, nên mỗi ki-lô-gam nhiên liệu đi được xa hơn. Nó khổng lồ, cao và đắt, và chứa ít khối lượng nhiên liệu so với kích thước."
+      }
+    },
+    "shape:body/falcon9_s1": {
+      "en": {
+        "what": "A black carbon interstage on top of one long tank: liquid oxygen over kerosene with one shared dome, like the Falcon 9 first stage.",
+        "why": "67 t of propellant for very little structure. It is tall and light at the top, which moves its balance point back towards the tail."
+      },
+      "vi": {
+        "what": "Vòng nối tầng carbon màu đen đặt trên một bồn dài: oxy lỏng trên dầu hỏa, giữa chúng một nắp vòm chung (common dome), giống tầng một của Falcon 9.",
+        "why": "67 tấn nhiên liệu mà kết cấu rất nhẹ. Nó cao và nhẹ ở phần trên, nên điểm cân bằng dịch lùi về phía đuôi."
+      }
+    },
+    "shape:body/saturn_sic": {
+      "en": {
+        "what": "A long oxygen tank on top, an intertank and the kerosene tank below, with a systems tunnel down the side. This is the layout of the Saturn V's first stage, which was 10 m wide.",
+        "why": "108 t of kerosene and oxygen in robust separate tanks. Full, it is the heaviest body in the hangar."
+      },
+      "vi": {
+        "what": "Bồn oxy dài ở trên, đoạn nối giữa hai bồn, và bồn dầu hỏa ở dưới, có đường hầm cáp chạy dọc bên hông. Đây là cách bố trí tầng một của Saturn V, vốn rộng tới 10 m.",
+        "why": "108 tấn dầu hỏa và oxy trong những bồn rời chắc chắn. Khi đầy, đây là thân tàu nặng nhất trong xưởng."
+      }
+    },
+    "shape:body/saturn_sivb": {
+      "en": {
+        "what": "The Instrument Unit ring on top, then hydrogen over oxygen with one insulated common wall, like the Saturn V's third stage.",
+        "why": "The best Isp with a hydrogen engine, and the guidance ring adds 3.5 % reliability. It was built as an upper stage that takes over high up, so it holds only 26 t of propellant, and it is very expensive."
+      },
+      "vi": {
+        "what": "Vòng Khoang Thiết bị (Instrument Unit) trên cùng, rồi hydro trên oxy với một vách chung cách nhiệt, giống tầng ba của Saturn V.",
+        "why": "Isp tốt nhất khi đi với động cơ hydro, và vòng dẫn đường tăng độ tin cậy 3,5 %. Nó vốn là tầng trên, làm việc khi tàu đã lên cao, nên chỉ chứa 26 tấn nhiên liệu, và nó rất đắt."
+      }
+    },
+    "shape:body/atlas_balloon": {
+      "en": {
+        "what": "One stainless steel tube thinner than a coin, oxygen over kerosene, held rigid only by the pressure inside. The Atlas that flew John Glenn was built this way.",
+        "why": "The lightest kerosene structure: 57.5 t of propellant for under 2 t of tank. It must stay pressurised every minute, so its reliability is 98.8 %."
+      },
+      "vi": {
+        "what": "Một ống thép không gỉ mỏng hơn đồng xu, oxy trên dầu hỏa, cứng lên chỉ nhờ áp suất bên trong. Tên lửa Atlas đưa John Glenn bay được làm theo cách này.",
+        "why": "Kết cấu dầu hỏa nhẹ nhất: 57,5 tấn nhiên liệu mà vỏ bồn chưa tới 2 tấn. Nó phải giữ áp suất từng phút, nên độ tin cậy chỉ 98,8 %."
+      }
+    },
+    "shape:body/soyuz_blok_a": {
+      "en": {
+        "what": "A narrow kerosene core, like the Soyuz core stage. From the top: an open truss, the instrument ring, a long oxygen tank, the intertank where four boosters push, and the kerosene tank.",
+        "why": "The most-flown rocket layout in history, with 62.5 t of propellant at the medium width. Its structure is heavy for the propellant it holds."
+      },
+      "vi": {
+        "what": "Một tầng lõi dầu hỏa hẹp, giống tầng lõi của Soyuz. Từ trên xuống: khung giàn hở, vòng thiết bị, bồn oxy dài, đoạn nối giữa hai bồn nơi bốn tên lửa đẩy phụ tì vào, và bồn dầu hỏa.",
+        "why": "Kiểu bố trí tên lửa bay nhiều nhất trong lịch sử, với 62,5 tấn nhiên liệu ở đường kính cỡ vừa. Kết cấu của nó nặng so với lượng nhiên liệu chứa được."
+      }
+    },
+    "shape:body/starship_steel": {
+      "en": {
+        "what": "One tank of welded stainless steel rings, like Starship: methane on top and oxygen below, with one shared dome. A cable raceway and a rack of helium bottles sit on its side.",
+        "why": "The cheapest propellant per dollar, tough steel with 99.9 % reliability, and it can be refilled on Mars. Steel is heavier than aluminium."
+      },
+      "vi": {
+        "what": "Một bồn làm từ các vòng thép không gỉ hàn chồng, giống Starship: metan ở trên, oxy ở dưới, chung một nắp vòm. Bên hông có máng cáp và một giá bình heli.",
+        "why": "Nhiên liệu rẻ nhất tính trên mỗi đồng tiền, thép bền với độ tin cậy 99,9 %, và nạp lại được trên Sao Hỏa. Thép nặng hơn nhôm."
+      }
+    },
+    "shape:body/electron_carbon": {
+      "en": {
+        "what": "A small, black, all-carbon-fibre stage: one composite tank pair with a shared wall, like Rocket Lab's Electron.",
+        "why": "The lightest small stage, and it fits small noses and tails. It was built to launch small satellites, so it holds only 20 t of propellant. Carbon can hide cracks, so its reliability is 99.4 %."
+      },
+      "vi": {
+        "what": "Một tầng tên lửa nhỏ, màu đen, toàn bằng sợi carbon: một cặp bồn vật liệu tổng hợp (composite) chung một vách, giống Electron của Rocket Lab.",
+        "why": "Tầng nhỏ nhẹ nhất, và vừa với mũi và đuôi cỡ nhỏ. Nó vốn được làm để phóng vệ tinh nhỏ, nên chỉ chứa 20 tấn nhiên liệu. Sợi carbon có thể giấu vết nứt, nên độ tin cậy là 99,4 %."
+      }
+    },
+    "shape:body/centaur_balloon": {
+      "en": {
+        "what": "A stainless steel balloon tank of hydrogen over oxygen, under a guidance ring. This is Centaur, the upper stage that launched Voyager, Cassini and New Horizons.",
+        "why": "The best Isp with a hydrogen engine and the lightest hydrogen structure. It was built as an upper stage, so it holds only 20 t, and the balloon must stay pressurised: reliability 99 %."
+      },
+      "vi": {
+        "what": "Một bồn bóng thép không gỉ chứa hydro trên oxy, phía trên là vòng dẫn đường. Đây là Centaur, tầng trên đã phóng các tàu Voyager, Cassini và New Horizons.",
+        "why": "Isp tốt nhất khi đi với động cơ hydro, và là kết cấu chứa hydro nhẹ nhất. Nó vốn là tầng trên, nên chỉ chứa 20 tấn, và bồn bóng phải luôn giữ áp suất: độ tin cậy 99 %."
+      }
+    },
+    "row:body/avionics": {
+      "en": {
+        "what": "The guidance electronics: the brain that flies the rocket on the way up."
+      },
+      "vi": {
+        "what": "Khối điện tử dẫn đường (avionics): bộ não lái tên lửa khi bay lên."
+      }
+    },
+    "row:body/structure": {
+      "en": {
+        "what": "The rings and frames that join the tanks and carry the loads: interstages, intertanks and trusses."
+      },
+      "vi": {
+        "what": "Các vòng và khung nối các bồn và gánh lực (stage structure): vòng nối tầng, đoạn nối giữa hai bồn và khung giàn."
+      }
+    },
+    "row:body/tanks": {
+      "en": {
+        "what": "The propellant tanks: most of the ship's mass, and where its Δv comes from."
+      },
+      "vi": {
+        "what": "Bồn nhiên liệu (propellant tank): chiếm phần lớn khối lượng con tàu, và là nguồn gốc Δv của nó."
+      }
+    },
+    "row:body/adapters": {
+      "en": {
+        "what": "Cones that join parts of different widths. The game adds them for you."
+      },
+      "vi": {
+        "what": "Các khúc nón nối những phần có bề rộng khác nhau (adapter). Game tự thêm chúng cho bạn."
+      }
+    },
+    "row:body/plumbing": {
+      "en": {
+        "what": "The pipes, cable channels and pressure bottles that run along the outside of the tanks."
+      },
+      "vi": {
+        "what": "Ống dẫn, máng cáp và bình khí nén (plumbing) chạy dọc bên ngoài các bồn."
+      }
+    },
+    "row:body/power": {
+      "en": {
+        "what": "Where the electricity comes from: solar panels, batteries, fuel cells or a nuclear battery."
+      },
+      "vi": {
+        "what": "Nguồn điện (power): tấm pin mặt trời, pin sạc, pin nhiên liệu hoặc pin hạt nhân."
+      }
+    },
+    "row:body/science": {
+      "en": {
+        "what": "The instruments that study Mars: cameras, a drill, radar, weather and quake sensors, and sample tubes."
+      },
+      "vi": {
+        "what": "Thiết bị khoa học (science) nghiên cứu Sao Hỏa: camera, máy khoan, radar, cảm biến thời tiết và địa chấn, và ống đựng mẫu."
+      }
+    },
+    "row:body/protection": {
+      "en": {
+        "what": "Shields against space debris, and the gold insulation blankets."
+      },
+      "vi": {
+        "what": "Lớp che chắn (protection) chống rác vũ trụ, và chăn cách nhiệt màu vàng."
+      }
+    },
+    "row:body/seals": {
+      "en": {
+        "what": "The rubber seals in the joints of the tanks and motors."
+      },
+      "vi": {
+        "what": "Gioăng cao su (seal) ở các mối nối của bồn và động cơ."
+      }
+    }
+  }
 }

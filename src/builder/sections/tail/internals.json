@@ -578,7 +578,7 @@
             {
               "id": "probes",
               "name": "Contact probes",
-              "note": "Long thin rods hang below the feet. The moment one touches the ground a light comes on and the engine shuts down: \"Contact light!\"",
+              "note": "Long thin rods hang below the feet. The moment one touches the ground a light comes on and the crew shuts the engine down: \"Contact light!\"",
               "pros": [
                 "Engine cuts at the right moment",
                 "Reliability +0.3 %"
@@ -664,7 +664,7 @@
               "massD": -40,
               "costD": -10000,
               "rel": -0.006,
-              "real": "Early sounding rockets; N1 lost flights to fires in its open engine bay"
+              "real": "Early sounding rockets; N1's first two launches (1969) ended in fires among the 30 engines of its tail"
             }
           ]
         },
@@ -790,7 +790,7 @@
             {
               "id": "peroxide",
               "name": "Hydrogen peroxide steam",
-              "note": "Concentrated hydrogen peroxide flows over a silver catalyst and turns into hot steam that spins the turbine. Separate from the main propellants, so it starts easily.",
+              "note": "Concentrated hydrogen peroxide flows over a bed of solid catalyst pellets and turns into hot steam that spins the turbine. Separate from the main propellants, so it starts easily.",
               "pros": [
                 "Easy, reliable start"
               ],

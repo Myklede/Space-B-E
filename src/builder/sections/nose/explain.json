@@ -1,4 +1,1970 @@
 {
-  "_about": "Plain-language explanations for the nose card, English and Vietnamese. Keys and fields: see src/builder/explain.js.",
-  "entries": {}
+  "_about": "Plain-language explanations for the nose card, English and Vietnamese (content agent): its parts (part:<id>), the pieces inside their kits (slot:<kit>/<slot>, option:<kit>/<slot>/<option>), its shapes (shape:nose/<id>) and rows (row:nose/<id>). Keys and fields: see src/builder/explain.js. Vietnamese gives the English term in brackets on first use in an entry; part names stay English, as on the cards. _todo marks a fact still to check.",
+  "entries": {
+    "part:capsule_s": {
+      "en": {
+        "what": "The room where the crew lives and flies the ship. The Mk1 has one seat, the controls, a small window and air to breathe. The computer that steers the whole rocket sits here too.",
+        "why": "Space has no air and no pressure, and it is deadly cold in shadow and hot in sunlight. A person survives only inside a sealed room like this. Every other part of the rocket is there to carry it.",
+        "without": "With no capsule there is no crew, and the ship cannot launch. The Mk1 is the cheapest cabin, but it has only 300 W of power and no spare air.",
+        "inside": "The astronaut lies in a couch moulded to the body, inside a sealed pressure shell, facing the controls and one small window. Behind the panels, tanks feed oxygen into the cabin air, canisters soak up the carbon dioxide, and the flight computer reads the sensors many times a second.",
+        "analogy": "Like a diving bell: a small, strong room that keeps its own air while the world outside would kill you."
+      },
+      "vi": {
+        "what": "Khoang lái (capsule) là căn phòng nơi phi hành đoàn sống và lái tàu. Mk1 Capsule có một ghế, bảng điều khiển, một ô cửa sổ nhỏ và không khí để thở. Máy tính lái cả tên lửa cũng đặt ở đây.",
+        "why": "Ngoài không gian không có không khí, không có áp suất; chỗ khuất nắng thì lạnh chết người, chỗ có nắng thì nóng bỏng. Con người chỉ sống được trong một căn phòng kín như thế này. Mọi bộ phận khác của tên lửa đều có mặt để chở nó.",
+        "without": "Không có khoang lái thì không có phi hành đoàn, và tàu không được phóng. Mk1 rẻ nhất, nhưng chỉ có 300 W điện và không có không khí dự phòng.",
+        "inside": "Phi hành gia nằm trong chiếc ghế đúc theo dáng người, bên trong một vỏ kín chịu áp suất, đối diện bảng điều khiển và một ô cửa sổ nhỏ. Sau các tấm ốp, hệ thống duy trì sự sống (life support) cấp oxy vào không khí trong khoang, các hộp lọc hút khí cacbonic, còn máy tính bay đọc cảm biến nhiều lần mỗi giây.",
+        "analogy": "Giống chuông lặn: một căn phòng nhỏ, chắc chắn, tự giữ không khí của mình trong khi môi trường bên ngoài có thể giết người.",
+        "pros": [
+          "Khoang lái nhẹ nhất",
+          "Rẻ nhất"
+        ],
+        "cons": [
+          "Một ghế chật, không có không khí dự phòng",
+          "Chỉ có 300 W điện"
+        ],
+        "real": "Cỡ Mercury: khoang Mercury rộng 1,89 m ở tấm chắn nhiệt và nặng khoảng 1,3 tấn trên quỹ đạo",
+        "name": "Khoang lái Mk1"
+      }
+    },
+    "part:capsule_m": {
+      "en": {
+        "what": "A roomier cabin for the crew, with better instruments and 500 W of power. Its gentle cone is shaped like Gemini and Crew Dragon. A docking ring sits on its nose.",
+        "why": "The crew lives in it for the whole trip to Mars and back, so a little room matters. Like every crew capsule, it is shaped to turn heat shield first by itself as it falls into the air.",
+        "without": "No capsule means no crew and no launch. The Mk1 instead saves 900 kg, but you lose room, power and instruments.",
+        "inside": "A sealed pressure shell holds the crew's air: fans push it through carbon dioxide filters while tanks top up the oxygen. The flight computer reads the gyroscopes many times a second and fires the thrusters to steer. A side hatch and a tunnel in the nose let the crew in and out.",
+        "analogy": "Like a camper van next to a small car: the same job, with room to live in."
+      },
+      "vi": {
+        "what": "Một khoang lái (capsule) rộng hơn, có thiết bị tốt hơn và 500 W điện. Hình nón thoải giống tàu Gemini và Crew Dragon. Trên mũi có vòng ghép nối (docking ring).",
+        "why": "Phi hành đoàn sống trong đó suốt chuyến đi Sao Hỏa và trở về, nên rộng hơn một chút cũng đáng. Như mọi khoang lái chở người, nó có hình dạng tự xoay cho tấm chắn nhiệt hướng về phía trước khi rơi vào không khí.",
+        "without": "Không có khoang lái thì không có phi hành đoàn và không được phóng. Dùng Mk1 thì nhẹ hơn 900 kg, nhưng mất chỗ, mất điện và mất thiết bị.",
+        "inside": "Một vỏ kín chịu áp suất giữ không khí cho phi hành đoàn: quạt thổi không khí qua bộ lọc khí cacbonic, còn bình chứa bổ sung oxy, đó là hệ thống duy trì sự sống (life support). Máy tính bay đọc con quay hồi chuyển nhiều lần mỗi giây và bắn các động cơ đẩy nhỏ để lái. Một cửa bên hông và một đường hầm trên mũi cho phi hành đoàn ra vào.",
+        "analogy": "Giống xe cắm trại so với xe con: cùng một việc, nhưng có chỗ để sống.",
+        "pros": [
+          "Có chỗ để đi lại",
+          "Thiết bị tốt hơn"
+        ],
+        "cons": [
+          "Nặng hơn Mk1"
+        ],
+        "real": "Khoang cỡ Gemini (2,3 m) và Crew Dragon (khoảng 4 m): hình nón 20° phía trên tấm chắn nhiệt",
+        "name": "Khoang lái Mk2"
+      }
+    },
+    "part:capsule_l": {
+      "en": {
+        "what": "The biggest cabin: more room, 800 W of power and a spare oxygen supply built in. Its wide, blunt cone is shaped like Apollo and Orion. Its systems are the most reliable of the three.",
+        "why": "A wide cabin carries a wide heat shield, and a wide shield slows the ship more gently on the way down. The built-in oxygen counts as one spare tank.",
+        "without": "A smaller cabin saves up to 2.3 t, and every tonne saved is propellant you do not have to lift. You give up the spare oxygen and some safety.",
+        "inside": "The crew's sealed pressure shell sits inside a heat-proof outer skin, with insulation between the two. Fans push the air through carbon dioxide filters, and the built-in spare tank tops up the oxygen. The flight computers read the sensors many times a second and steer the ship.",
+        "analogy": "Like a family car with a spare wheel in the boot: heavier, but ready for a bad day."
+      },
+      "vi": {
+        "what": "Khoang lái (capsule) lớn nhất: rộng hơn, 800 W điện và có sẵn nguồn oxy dự phòng. Hình nón rộng, tù giống tàu Apollo và Orion. Các hệ thống của nó đáng tin cậy nhất trong ba loại.",
+        "why": "Khoang rộng thì mang được tấm chắn nhiệt (heat shield) rộng, mà tấm chắn rộng thì hãm tàu nhẹ nhàng hơn khi hạ xuống. Oxy có sẵn được tính như một bình dự phòng.",
+        "without": "Khoang nhỏ hơn nhẹ hơn tới 2,3 tấn, mà mỗi tấn bớt đi là một tấn nhiên liệu không phải nâng. Đổi lại, bạn mất oxy dự phòng và một phần an toàn.",
+        "inside": "Vỏ kín chịu áp suất của phi hành đoàn nằm trong một lớp vỏ ngoài chịu nhiệt, giữa hai lớp là vật liệu cách nhiệt. Quạt thổi không khí qua bộ lọc khí cacbonic, và bình oxy dự phòng có sẵn bổ sung oxy, đó là hệ thống duy trì sự sống (life support). Các máy tính bay đọc cảm biến nhiều lần mỗi giây và lái con tàu.",
+        "analogy": "Giống chiếc xe gia đình có bánh dự phòng trong cốp: nặng hơn, nhưng sẵn sàng cho ngày xui.",
+        "pros": [
+          "Có sẵn oxy dự phòng",
+          "Hệ thống đáng tin cậy nhất"
+        ],
+        "cons": [
+          "Nặng và đắt"
+        ],
+        "real": "Khoang chỉ huy Apollo (rộng 3,9 m, 5,56 tấn, lớp Mylar bạc phủ ngoài vật liệu cháy mòn) / Orion (5,0 m)",
+        "name": "Khoang lái Mk3"
+      }
+    },
+    "part:nose_pointed_s": {
+      "en": {
+        "what": "A slim, pointed cover for the top of a small ship. It parts the air smoothly in the first minutes of flight.",
+        "why": "Most of the air a rocket pushes through is low down, in the first two minutes. A pointed nose moves it aside with the least effort, which saves propellant.",
+        "without": "A flat top would shove much more air and waste propellant. On a wide body this small nose looks odd.",
+        "inside": "A thin shell of composite skin on a light honeycomb core, made in two halves joined along a seam. Blankets inside soak up the roar of liftoff. On a real flight the seam lets go once the air is thin, and pushers swing the halves away.",
+        "analogy": "Like the pointed front of a bullet train: it slices the air instead of shoving it."
+      },
+      "vi": {
+        "what": "Một chiếc mũi nhọn, thon cho đỉnh của con tàu nhỏ. Nó rẽ không khí êm ái trong những phút bay đầu tiên.",
+        "why": "Phần lớn lượng không khí mà tên lửa phải xuyên qua nằm ở tầng thấp, trong hai phút đầu. Mũi nhọn đẩy nó sang hai bên mà tốn ít sức nhất, nên tiết kiệm nhiên liệu đẩy (propellant).",
+        "without": "Đỉnh phẳng sẽ ủi vào nhiều không khí hơn hẳn và phí nhiên liệu. Đặt mũi nhỏ này lên thân rộng thì trông lệch.",
+        "inside": "Một lớp vỏ mỏng bằng vật liệu tổng hợp (composite) trên lõi tổ ong nhẹ, gồm hai nửa ghép dọc một đường nối. Chăn tiêu âm bên trong hút bớt tiếng gầm lúc rời bệ. Trong chuyến bay thật, khi không khí đã loãng, đường nối nhả ra và bộ đẩy xoay hai nửa văng đi.",
+        "analogy": "Giống đầu tàu cao tốc: nó xẻ không khí thay vì ủi vào.",
+        "pros": [
+          "Lực cản nhỏ nhất",
+          "Nhẹ"
+        ],
+        "cons": [
+          "Nhỏ: trông lệch trên thân rộng"
+        ],
+        "real": "Vỏ chụp cỡ Electron / Pegasus",
+        "name": "Mũi nhọn, cỡ nhỏ"
+      }
+    },
+    "part:nose_pointed_m": {
+      "en": {
+        "what": "A sharp nose cover: a tube that curves smoothly into a point. A narrowing skirt at its base fits down onto the capsule.",
+        "why": "A pointed nose has the least drag in the thick air low down. Less drag saves propellant and keeps the push of the air on the ship low.",
+        "without": "A blunt nose costs a little more propellant on the climb. The tip of this one is the fragile part.",
+        "inside": "Two curved halves of composite skin on a honeycomb core, joined along a seam down the side. Blankets inside soak up the roar of liftoff. On a real flight the seam lets go once the air is thin, and pushers swing the halves away.",
+        "analogy": "Like the tip of a pencil: it goes in easily because it opens the way little by little."
+      },
+      "vi": {
+        "what": "Một chiếc mũi nhọn: phần ống tròn cong dần thành một đầu nhọn. Dưới chân có một vành thu nhỏ để chụp xuống khoang lái.",
+        "why": "Ở tầng khí dày phía dưới, mũi nhọn có lực cản (drag) nhỏ nhất. Lực cản nhỏ thì tiết kiệm nhiên liệu và không khí ép lên tàu cũng nhẹ hơn.",
+        "without": "Mũi tù tốn thêm chút nhiên liệu khi bay lên. Chỗ yếu của chiếc mũi này là cái đầu nhọn dễ hỏng.",
+        "inside": "Hai nửa vỏ cong bằng vật liệu tổng hợp (composite) trên lõi tổ ong, ghép dọc một đường nối bên hông. Chăn tiêu âm bên trong hút bớt tiếng gầm lúc rời bệ. Trong chuyến bay thật, khi không khí đã loãng, đường nối nhả ra và bộ đẩy xoay hai nửa văng đi.",
+        "analogy": "Giống đầu bút chì: nó đâm vào dễ vì mở đường từng chút một.",
+        "pros": [
+          "Lực cản thấp",
+          "Tiết kiệm nhiên liệu khi bay lên"
+        ],
+        "cons": [
+          "Đầu nhọn dễ hỏng"
+        ],
+        "real": "Vỏ chụp composite 2,9 m của Delta II",
+        "name": "Mũi nhọn"
+      }
+    },
+    "part:nose_pointed_l": {
+      "en": {
+        "what": "A big pointed nose for the widest bodies. It is wider, so it meets more air, but its smooth curve still cuts through cleanly.",
+        "why": "A wide body needs a wide nose. Otherwise the air slams into the flat edge at the top of the body.",
+        "without": "A smaller nose on a wide body leaves a step where the air piles up. This one is heavier and meets more air than the medium nose.",
+        "inside": "Two big curved halves of composite skin on a honeycomb core, stiff enough to keep their shape in the rushing air. Blankets inside soak up the roar of liftoff. On a real flight the seam lets go once the air is thin, and pushers swing the halves away.",
+        "analogy": "Like the bow of a big ship: wide, but shaped to part the water."
+      },
+      "vi": {
+        "what": "Chiếc mũi nhọn cỡ lớn cho những thân tàu rộng nhất. Nó rộng hơn nên gặp nhiều không khí hơn, nhưng đường cong êm vẫn xẻ gió gọn gàng.",
+        "why": "Thân rộng cần mũi rộng. Nếu không, không khí sẽ đập thẳng vào mép phẳng trên đỉnh thân tàu.",
+        "without": "Mũi nhỏ trên thân rộng để lại một bậc thềm, không khí dồn ứ ở đó. Chiếc này nặng hơn và gặp nhiều gió hơn mũi cỡ vừa.",
+        "inside": "Hai nửa vỏ cong cỡ lớn bằng vật liệu tổng hợp (composite) trên lõi tổ ong, đủ cứng để giữ dáng trong luồng gió mạnh. Chăn tiêu âm bên trong hút bớt tiếng gầm lúc rời bệ. Trong chuyến bay thật, khi không khí đã loãng, đường nối nhả ra và bộ đẩy xoay hai nửa văng đi.",
+        "analogy": "Giống mũi một con tàu lớn: rộng, nhưng được tạo dáng để rẽ nước.",
+        "pros": [
+          "Dáng gọn cho thân rộng"
+        ],
+        "cons": [
+          "Nặng hơn",
+          "Mặt đón gió lớn hơn"
+        ],
+        "real": "Vỏ chụp 5,2 m của Falcon 9 (thu nhỏ)",
+        "name": "Mũi nhọn, cỡ lớn"
+      }
+    },
+    "part:nose_blunt_m": {
+      "en": {
+        "what": "A rounded nose cover. It is cheaper to build and tougher than a pointed one, but it pushes more air out of the way.",
+        "why": "Not every ship needs the lowest drag. A blunt nose takes knocks better and costs $15k less than the pointed cone.",
+        "without": "The pointed cone saves a little propellant on the climb but has a fragile tip.",
+        "inside": "A thicker shell of metal panels with a rounded tip, made in two halves. The round tip spreads the push of the air over a wide patch, which is why it takes knocks well. Blankets inside soak up the roar of liftoff.",
+        "analogy": "Like a round-nosed bus next to a sports car: slower through the air, harder to dent."
+      },
+      "vi": {
+        "what": "Một chiếc mũi tròn. Nó rẻ hơn, chắc hơn mũi nhọn, nhưng phải đẩy nhiều không khí hơn.",
+        "why": "Không phải tàu nào cũng cần lực cản (drag) thấp nhất. Mũi tù chịu va đập tốt hơn và rẻ hơn mũi nhọn 15 nghìn đô.",
+        "without": "Mũi nhọn tiết kiệm chút nhiên liệu khi bay lên, nhưng đầu nhọn dễ hỏng.",
+        "inside": "Một lớp vỏ dày hơn bằng các tấm kim loại, đầu tròn, gồm hai nửa. Đầu tròn dàn sức ép của không khí ra một mảng rộng, vì thế nó chịu va đập tốt. Chăn tiêu âm bên trong hút bớt tiếng gầm lúc rời bệ.",
+        "analogy": "Giống chiếc xe buýt mũi tròn bên cạnh xe đua: đi trong gió chậm hơn, nhưng khó móp hơn.",
+        "pros": [
+          "Rẻ",
+          "Chắc"
+        ],
+        "cons": [
+          "Lực cản lớn hơn"
+        ],
+        "real": "Vỏ chụp kiểu Soyuz",
+        "name": "Mũi tù"
+      }
+    },
+    "part:nose_hammerhead_m": {
+      "en": {
+        "what": "A nose cover wider than the rocket under it, like the head of a hammerhead shark. A bulky load fits inside. Its skin can take one hit from a piece of debris.",
+        "why": "Some cargo is wider than the rocket. Making only the nose wider is cheaper than making the whole rocket wider.",
+        "without": "Without it, a wide load does not fit. With it, you pay in drag, and the wide top pulls the point where the air pushes forward, which makes the ship less steady.",
+        "inside": "A wide shell of carbon skins on honeycomb sits on a narrowing skirt that steps down to the rocket below. Its thick skin is what stops a piece of debris. Blankets inside soak up the roar of liftoff, and a seam lets the halves come apart.",
+        "analogy": "Like an open umbrella on a thin pole: plenty of room on top, but the wind catches it."
+      },
+      "vi": {
+        "what": "Chiếc mũi rộng hơn cả thân tên lửa bên dưới, giống đầu cá mập búa. Hàng cồng kềnh vẫn vừa bên trong. Lớp vỏ của nó đỡ được một cú va của mảnh vụn.",
+        "why": "Có những món hàng rộng hơn tên lửa. Chỉ làm rộng phần mũi thì rẻ hơn làm rộng cả tên lửa.",
+        "without": "Không có nó, hàng rộng không vừa. Có nó thì lực cản (drag) tăng, và phần đầu rộng kéo điểm gió đẩy lên phía trước, làm tàu kém vững hơn.",
+        "inside": "Một lớp vỏ rộng bằng sợi carbon trên lõi tổ ong, đặt trên một vành váy thu hẹp dần xuống thân tên lửa. Lớp vỏ dày chính là thứ chặn mảnh vụn. Chăn tiêu âm bên trong hút bớt tiếng gầm lúc rời bệ, và một đường nối cho hai nửa tách ra.",
+        "analogy": "Giống chiếc ô mở trên một cây cán mảnh: bên trên rộng rãi, nhưng dễ bị gió lật.",
+        "pros": [
+          "Chứa được tải trọng cồng kềnh",
+          "Che chắn phần đỉnh khỏi một cú va"
+        ],
+        "cons": [
+          "Lực cản lớn hơn",
+          "Kéo tâm áp lên phía trước"
+        ],
+        "real": "Vỏ chụp 5 m của Atlas V, vỏ chụp “đầu búa” 3 m của Delta II",
+        "name": "Vỏ chụp đầu búa"
+      }
+    },
+    "part:paf_m": {
+      "en": {
+        "what": "A short cone that fixes the payload to the stage below. A ring of bolts holds its top and a clamp band holds its bottom. Push-off springs let the payload go cleanly.",
+        "why": "The payload must stay fixed through the shaking of launch, then come off without a bump. Every launcher has a standard fitting, so a payload built for one rocket fits another.",
+        "without": "The payload would need a custom mount. In this game nothing separates, so the fitting is 130 kg that rides all the way to Mars.",
+        "inside": "A stiff metal cone carries the weight of everything above it down into the stage. A steel band around its base holds the joint until small explosive bolts cut it.",
+        "analogy": "Like the click-in base of a child's car seat: a standard fitting that holds tight, then lets go with one release."
+      },
+      "vi": {
+        "what": "Một khúc nón ngắn gắn tải trọng (payload) vào tầng bên dưới. Đỉnh được giữ bằng một vòng bu-lông, chân giữ bằng một đai kẹp. Các lò xo đẩy giúp tải trọng tách ra gọn gàng.",
+        "why": "Tải trọng phải đứng yên qua những cơn rung khi phóng, rồi tách ra mà không bị va. Tên lửa nào cũng có khớp nối chuẩn, nên hàng làm cho tên lửa này lắp được lên tên lửa khác.",
+        "without": "Không có nó, tải trọng cần một giá gắn riêng. Trong game này không có gì tách ra, nên khớp nối là 130 kg đi theo tới tận Sao Hỏa.",
+        "inside": "Một khúc nón kim loại cứng truyền sức nặng của mọi thứ phía trên xuống tầng dưới. Một đai thép quanh chân giữ mối nối cho tới khi các bu-lông nổ nhỏ cắt nó ra.",
+        "analogy": "Giống đế ghế ô tô trẻ em loại bấm khóa: khớp chuẩn, giữ chặt, rồi nhả ra chỉ bằng một nút.",
+        "pros": [
+          "Khớp nối tiêu chuẩn",
+          "Tách gọn"
+        ],
+        "cons": [
+          "Khối lượng vô dụng sau khi tách"
+        ],
+        "real": "Khớp gắn tải trọng 6915 của Delta II",
+        "name": "Khớp gắn tải trọng"
+      }
+    },
+    "part:spin_table_clamp": {
+      "en": {
+        "what": "A turntable under the kick motor and payload. It spins them up to about 50 turns a minute before they fly free. A clamp band holds everything until small explosive bolts cut it.",
+        "why": "A small solid motor has no steering. Spinning makes it hold its direction, so it keeps pointing the same way while it burns. Reliability +0.5 %.",
+        "without": "An unspun solid motor drifts off line as it burns. The price: the payload must survive the spin, and something must stop it afterwards.",
+        "inside": "Small solid spin rockets on the edge of the table fire for a moment and spin it on its bearing. After the burn, a yo-yo despin stops the spin: two weights on cables unwind and carry the spin away.",
+        "analogy": "Like a spinning top: while it spins fast, it stays upright."
+      },
+      "vi": {
+        "what": "Một bàn xoay đặt dưới động cơ đẩy cuối (kick motor) và tải trọng. Nó quay chúng tới khoảng 50 vòng một phút trước khi thả ra. Một đai kẹp giữ mọi thứ cho tới khi các bu-lông nổ nhỏ cắt nó.",
+        "why": "Động cơ nhiên liệu rắn cỡ nhỏ không có bộ lái. Khi quay, nó giữ được hướng, nên cứ chĩa một hướng suốt lúc cháy. Độ tin cậy (reliability) +0,5 %.",
+        "without": "Động cơ rắn không được quay sẽ lệch dần khỏi hướng khi cháy. Cái giá: tải trọng phải chịu được việc bị quay, và sau đó phải có thứ hãm nó lại.",
+        "inside": "Các tên lửa rắn nhỏ ở mép bàn cháy trong chốc lát và quay bàn trên ổ bi. Sau khi cháy xong, bộ hãm yo-yo (yo-yo despin) dừng vòng quay: hai quả nặng trên dây cáp tung ra và mang vòng quay đi.",
+        "analogy": "Giống con quay: khi còn quay nhanh, nó đứng vững không đổ.",
+        "pros": [
+          "Cháy ổn định mà không cần dẫn đường",
+          "Nhả ra đáng tin cậy"
+        ],
+        "cons": [
+          "Tải trọng phải chịu được việc bị quay",
+          "Sau đó cần bộ hãm yo-yo"
+        ],
+        "real": "Bàn xoay và đai kẹp 3712 của Delta II",
+        "name": "Bàn xoay và đai kẹp"
+      }
+    },
+    "part:kick_motor_s": {
+      "en": {
+        "what": "A small solid rocket motor stacked under the payload. About 2 t of solid propellant sit in a titanium ball, and it pushes with 66 kN for 87 seconds. It gives the ship one last strong push.",
+        "why": "Solid propellant packs tightly and needs no pumps, pipes or tanks. That makes a kick motor a lot of push in a small, reliable package.",
+        "without": "Without it you lose two tonnes of propellant. With it you accept slow exhaust (Isp 286 s), and once lit it cannot be stopped.",
+        "inside": "A titanium ball filled with a rubbery solid propellant, with a hole cast through the middle. Once lit, the walls of that hole burn outward, and the hot gas rushes out of the short nozzle. The shape of the hole sets how hard it pushes over time.",
+        "analogy": "Like a firework rocket: light it and it burns to the end, with no switch to turn it off."
+      },
+      "vi": {
+        "what": "Một động cơ tên lửa nhiên liệu rắn (solid motor) nhỏ đặt dưới tải trọng. Khoảng 2 tấn thuốc phóng rắn nằm trong một quả cầu titan, đẩy 66 kN trong 87 giây. Nó cho con tàu cú đẩy mạnh cuối cùng.",
+        "why": "Thuốc phóng rắn nén chặt, không cần bơm, ống hay bồn. Vì vậy động cơ đẩy cuối là cả một lực đẩy lớn gói trong món nhỏ và đáng tin cậy.",
+        "without": "Không có nó, bạn mất hai tấn nhiên liệu. Có nó, bạn chấp nhận luồng khí phụt chậm (Isp 286 s), và một khi đã châm thì không tắt được.",
+        "inside": "Một quả cầu titan nhồi thuốc phóng rắn dẻo như cao su, giữa có một lỗ rỗng được đúc sẵn. Khi đã châm, vách của lỗ cháy lan dần ra ngoài, và khí nóng phụt qua vòi phun ngắn. Hình dạng của lỗ quyết định lực đẩy mạnh yếu theo thời gian.",
+        "analogy": "Giống quả pháo thăng thiên: châm rồi thì cháy tới hết, không có công tắc để tắt.",
+        "pros": [
+          "Hai tấn nhiên liệu trong một khối nhỏ",
+          "Rất đáng tin cậy"
+        ],
+        "cons": [
+          "Isp 286 s: kém mọi động cơ nhiên liệu lỏng",
+          "Châm một lần, không tắt được"
+        ],
+        "real": "Star 48B: 66 kN, 286 s, 2.011 kg thuốc phóng, rỗng nặng 126 kg",
+        "name": "Động cơ đẩy cuối, cỡ nhỏ"
+      }
+    },
+    "part:kick_motor_m": {
+      "en": {
+        "what": "A bigger kick motor: 3.3 t of solid propellant, pushing with 107 kN for 120 seconds.",
+        "why": "Its case is only about 6 % of its mass, so almost all of it is propellant. No part in the hangar is closer to pure propellant.",
+        "without": "Its exhaust is slow (Isp 290 s), so a liquid engine gets more out of every kilogram. And it burns only once.",
+        "inside": "A bigger round case packed with rubbery solid propellant around a hollow core. Once lit, the core's walls burn outward until the propellant is gone, and the gas leaves through one short nozzle.",
+        "analogy": "Like a juice carton that is almost all juice: the packaging weighs very little."
+      },
+      "vi": {
+        "what": "Động cơ đẩy cuối (kick motor) cỡ lớn hơn: 3,3 tấn thuốc phóng rắn, đẩy 107 kN trong 120 giây.",
+        "why": "Vỏ của nó chỉ chiếm khoảng 6 % khối lượng, gần như tất cả là thuốc phóng (propellant). Không món nào trong xưởng gần với “toàn nhiên liệu” hơn nó.",
+        "without": "Luồng khí phụt của nó chậm (Isp 290 s), nên động cơ nhiên liệu lỏng khai thác được nhiều hơn từ mỗi ki-lô-gam. Và nó chỉ cháy được một lần.",
+        "inside": "Một vỏ tròn lớn hơn nhồi thuốc phóng rắn dẻo quanh một lõi rỗng. Khi đã châm, vách lõi cháy lan dần ra ngoài cho tới khi hết thuốc phóng, và khí thoát ra qua một vòi phun ngắn.",
+        "analogy": "Giống hộp nước trái cây gần như toàn là nước: vỏ hộp nặng chẳng đáng kể.",
+        "pros": [
+          "Tỉ lệ nhiên liệu trên khối lượng tốt nhất xưởng",
+          "Rất đáng tin cậy"
+        ],
+        "cons": [
+          "Isp 290 s",
+          "Châm một lần, không tắt được"
+        ],
+        "real": "Cỡ Star 63F / Castor 30",
+        "name": "Động cơ đẩy cuối, cỡ vừa"
+      }
+    },
+    "part:heat_shield_m": {
+      "en": {
+        "what": "A thick dish on the bottom of the capsule. When the ship plunges into air at several kilometres a second, it takes the heat. Its surface chars and wears away on purpose, carrying the heat with it.",
+        "why": "Air squeezed in front of a fast capsule becomes a glowing, burning-hot gas. On the way back from the Moon, Apollo's shield faced about 2,760 °C. Without a shield the capsule would burn up.",
+        "without": "No heat shield means the capsule cannot survive entry at Mars or back at Earth. Ceramic tiles weigh half as much, but crack if struck.",
+        "inside": "A thick layer of ablator is bonded to a strong backing plate. As hot air hits it, the surface turns to char and gas. The gas pushes the hottest air away, and the char flakes off with the heat, so the backing stays cool.",
+        "analogy": "Like sweat on a hot day: as it dries, it carries heat away from your skin."
+      },
+      "vi": {
+        "what": "Một chiếc đĩa dày dưới đáy khoang lái. Khi tàu lao vào bầu khí quyển với tốc độ vài ki-lô-mét mỗi giây, nó hứng hết sức nóng. Bề mặt của nó cố ý cháy thành than và mòn dần, mang nhiệt đi theo.",
+        "why": "Không khí bị nén phía trước khoang lái đang lao nhanh trở thành khí nóng rực. Khi Apollo trở về từ Mặt Trăng, tấm chắn nhiệt (heat shield) của nó phải chịu khoảng 2.760 °C. Không có tấm chắn, khoang lái sẽ cháy rụi.",
+        "without": "Không có tấm chắn nhiệt thì khoang lái không sống sót khi vào khí quyển Sao Hỏa hay Trái Đất. Tấm gạch gốm (ceramic tiles) nhẹ bằng một nửa, nhưng nứt nếu bị va.",
+        "inside": "Một lớp vật liệu cháy mòn (ablator) dày được dán lên tấm đế chắc chắn. Khi khí nóng đập vào, bề mặt hóa thành than và khí. Khí đẩy lớp không khí nóng nhất ra xa, than bong đi mang theo nhiệt, nên tấm đế vẫn mát.",
+        "analogy": "Giống mồ hôi ngày nóng: khi khô đi, nó mang nhiệt ra khỏi da bạn.",
+        "pros": [
+          "Đáng tin cậy",
+          "Chịu được mọi kiểu vào khí quyển"
+        ],
+        "cons": [
+          "Nặng"
+        ],
+        "real": "Avcoat của Apollo, PICA-X (Dragon)",
+        "name": "Tấm chắn nhiệt cháy mòn"
+      }
+    },
+    "part:heat_shield_l": {
+      "en": {
+        "what": "A wide ablative heat shield for a large capsule. More width means more air to push against, so the ship slows down higher up and more gently.",
+        "why": "The air pressure at the surface of Mars is less than 1 % of Earth's. A wide shield is how you get enough braking out of so little air.",
+        "without": "A smaller shield lets the ship fall faster, so the engines must do more of the braking. This one is the heaviest shield.",
+        "inside": "A wide dish of ablator bonded to a strong backing plate. The surface chars and gives off gas that pushes the hottest air away, and the char flakes off with the heat. The width spreads the braking over a big area, so each square metre heats less.",
+        "analogy": "Like opening a big umbrella in the wind: the wider it is, the harder the air pushes back."
+      },
+      "vi": {
+        "what": "Tấm chắn nhiệt (heat shield) cháy mòn cỡ lớn cho khoang lái lớn. Rộng hơn nghĩa là có nhiều không khí để tì vào hơn, nên tàu chậm lại từ trên cao và nhẹ nhàng hơn.",
+        "why": "Áp suất không khí trên mặt đất Sao Hỏa chưa bằng 1 % của Trái Đất. Tấm chắn rộng là cách lấy đủ lực hãm từ chút không khí ít ỏi ấy.",
+        "without": "Tấm chắn nhỏ hơn làm tàu rơi nhanh hơn, nên động cơ phải hãm nhiều hơn. Đây là tấm chắn nặng nhất.",
+        "inside": "Một đĩa rộng bằng vật liệu cháy mòn (ablator) dán lên tấm đế chắc chắn. Bề mặt cháy thành than và thoát khí đẩy lớp không khí nóng nhất ra xa, còn than bong đi mang theo nhiệt. Bề rộng dàn lực hãm ra một diện tích lớn, nên mỗi mét vuông nóng ít hơn.",
+        "analogy": "Giống bung một chiếc ô thật to trong gió: ô càng rộng, không khí đẩy lại càng mạnh.",
+        "pros": [
+          "Lực cản lớn hơn trong khí loãng",
+          "Đáng tin cậy"
+        ],
+        "cons": [
+          "Tấm chắn nặng nhất"
+        ],
+        "real": "Vỏ khí động 4,5 m của Mars Science Laboratory",
+        "name": "Tấm chắn nhiệt cháy mòn, cỡ lớn"
+      }
+    },
+    "part:heat_tiles_m": {
+      "en": {
+        "what": "Ceramic tiles glued to the bottom of the capsule. They do not burn away like an ablator; they stay in place and block the heat. They weigh half as much as an ablative shield.",
+        "why": "Less mass in the shield leaves more mass for propellant.",
+        "without": "They are brittle. On the Shuttle, foam and ice falling off during launch chipped tiles on many flights. Columbia was lost in 2003 after launch foam punched a hole in the carbon panels on the front edge of one wing. Here a strike on the way up leaves a cracked tile for entry: reliability 90 %.",
+        "inside": "Each tile is mostly trapped air between fine silica fibres, so heat crosses it very slowly. A tile glowing red-hot from an oven can be held by its edges moments later. The tiles are glued to felt pads on the metal, with small gaps so the metal can stretch and shrink.",
+        "analogy": "Like a polystyrene cool box: light, full of trapped air, and it keeps the heat out, but it cracks if you drop it."
+      },
+      "vi": {
+        "what": "Các tấm gạch gốm (ceramic tiles) dán dưới đáy khoang lái. Chúng không cháy mòn như lớp vật liệu cháy mòn (ablator); chúng nằm yên và chặn nhiệt lại. Chúng nặng bằng một nửa tấm chắn cháy mòn.",
+        "why": "Tấm chắn nhẹ hơn thì còn nhiều khối lượng hơn cho nhiên liệu.",
+        "without": "Chúng giòn. Trên tàu con thoi (Shuttle), bọt cách nhiệt và băng rơi ra lúc phóng đã làm mẻ gạch trong nhiều chuyến bay. Tàu Columbia bị mất năm 2003 sau khi một mảng bọt đục thủng các tấm carbon ở mép trước một bên cánh. Trong game, một cú va khi bay lên sẽ để lại một viên gạch nứt cho lúc vào khí quyển: độ tin cậy 90 %.",
+        "inside": "Mỗi viên gạch phần lớn là không khí bị nhốt giữa những sợi silica mịn, nên nhiệt đi qua rất chậm. Một viên gạch vừa lấy ra từ lò, còn nóng đỏ, chỉ lát sau đã cầm được ở mép. Gạch được dán lên các tấm nỉ trên lớp kim loại, chừa khe nhỏ để kim loại co giãn.",
+        "analogy": "Giống thùng xốp đựng đá: nhẹ, đầy không khí bị nhốt, giữ nóng không lọt vào, nhưng rơi là nứt.",
+        "pros": [
+          "Nhẹ bằng một nửa"
+        ],
+        "cons": [
+          "Mẻ nếu bị va khi bay lên (bọt cách nhiệt từng làm mẻ gạch tàu con thoi trong nhiều chuyến bay)",
+          "Độ tin cậy thấp hơn"
+        ],
+        "real": "Gạch silica HRSI của tàu con thoi",
+        "name": "Gạch gốm chịu nhiệt"
+      }
+    },
+    "part:heat_shield_hiad": {
+      "en": {
+        "what": "A heat shield packed small for launch and inflated into a wide cone before entry. Stacked rings of woven fabric fill with gas, under a heat-proof ceramic cloth.",
+        "why": "It gives the biggest braking area for the least mass: about twice the area of a solid shield. Thin Martian air needs exactly that.",
+        "without": "A solid shield that wide would never fit on the rocket. But this one has come back from orbit only once, in NASA's LOFTID test in 2022, so its reliability is 95 %.",
+        "inside": "A stack of rings like a pile of inner tubes, made of strong woven fabric and filled with gas from a small tank. Straps tie the rings into a cone, and a flexible cloth of heat-resistant ceramic fibres covers the front.",
+        "analogy": "Like a pool float: it travels flat in a bag, then air turns it into a big, firm shape."
+      },
+      "vi": {
+        "what": "Tấm chắn nhiệt (heat shield) được gấp gọn khi phóng và bơm phồng thành hình nón rộng trước khi vào khí quyển. Các vòng vải dệt xếp chồng được bơm đầy khí, phủ bên ngoài một lớp vải gốm chịu nhiệt.",
+        "why": "Nó cho diện tích hãm lớn nhất với khối lượng nhỏ nhất: rộng gần gấp đôi tấm chắn cứng. Không khí loãng của Sao Hỏa cần đúng điều đó.",
+        "without": "Một tấm chắn cứng rộng chừng ấy không bao giờ vừa trên tên lửa. Nhưng loại này mới trở về từ quỹ đạo đúng một lần, trong thử nghiệm LOFTID của NASA năm 2022, nên độ tin cậy chỉ 95 %.",
+        "inside": "Một chồng vòng giống chồng săm xe, làm bằng vải dệt siêu bền và được bơm khí từ một bình nhỏ. Dây đai buộc các vòng thành hình nón, và một tấm vải mềm bằng sợi gốm chịu nhiệt phủ mặt trước.",
+        "analogy": "Giống phao bơi: khi mang đi thì gấp phẳng trong túi, bơm hơi vào là thành một khối to, chắc.",
+        "pros": [
+          "Diện tích cản gấp đôi",
+          "Nhẹ hơn vật liệu cháy mòn"
+        ],
+        "cons": [
+          "Mới trở về từ quỹ đạo một lần (LOFTID 2022)",
+          "Độ tin cậy 95 %"
+        ],
+        "real": "LOFTID / HIAD của NASA (2022)",
+        "name": "Tấm chắn nhiệt bơm hơi"
+      }
+    },
+    "part:parachute": {
+      "en": {
+        "what": "A tough parachute that opens while the ship is still faster than sound. On Mars it opens at about 1.7 times the speed of sound.",
+        "why": "Martian air is so thin that the heat shield alone cannot slow the ship enough. The chute takes away a lot of speed before the engines light for the last few kilometres.",
+        "without": "Without a chute the engines must burn more propellant to land. It cannot land the ship on Mars alone; neither could Perseverance's 21.5 m chute.",
+        "inside": "The canopy is packed tight in a bag under a lid. A small mortar fires the pack out into the air, the lines pay out, and the cloth fills; dozens of lines spread the pull evenly onto the ship.",
+        "analogy": "Like putting your hand out of a car window and spreading your fingers: suddenly the air grabs much harder."
+      },
+      "vi": {
+        "what": "Một chiếc dù (parachute) bền, mở ra khi tàu còn bay nhanh hơn tốc độ âm thanh. Trên Sao Hỏa nó mở ở khoảng 1,7 lần tốc độ âm thanh.",
+        "why": "Không khí Sao Hỏa loãng tới mức chỉ tấm chắn nhiệt thì không hãm tàu đủ chậm. Dù lấy đi rất nhiều tốc độ trước khi động cơ khởi động cho vài ki-lô-mét cuối.",
+        "without": "Không có dù, động cơ phải đốt thêm nhiên liệu để hạ cánh. Một mình nó không đưa tàu xuống Sao Hỏa được; chiếc dù 21,5 m của Perseverance cũng không làm được.",
+        "inside": "Tán dù được gấp chặt trong một túi dưới nắp. Một ống phóng nhỏ bắn cả túi ra ngoài không khí, dây dù tuột ra, và tán vải căng phồng; hàng chục sợi dây dàn đều lực kéo lên con tàu.",
+        "analogy": "Giống thò tay ra cửa sổ ô tô rồi xòe ngón tay: không khí bỗng níu mạnh hơn hẳn.",
+        "pros": [
+          "Hãm bớt tốc độ trước khi đốt động cơ"
+        ],
+        "cons": [
+          "Một mình không hạ cánh được trên Sao Hỏa"
+        ],
+        "real": "Dù đĩa-khe-dải 21,5 m của Perseverance, mở ở Mach 1,7 (từ Viking tới Perseverance)",
+        "name": "Dù siêu thanh"
+      }
+    },
+    "part:drogue_chute": {
+      "en": {
+        "what": "A small, strong parachute that opens first, high up and fast. It stops the capsule tumbling, then pulls out the main chutes.",
+        "why": "A big main chute would tear if it opened at high speed. The drogue slows and steadies the ship so the mains can open safely.",
+        "without": "Alone it slows the ship only a little. Without it, the main chutes open in faster, rougher air.",
+        "inside": "A small mortar fires the drogue out into the fast air. Its cloth and lines are made to take a hard opening, and once it has steadied the capsule, it pulls the main chutes out of their bags.",
+        "analogy": "Like the tail of a kite: small, but it keeps the whole thing pointing the right way."
+      },
+      "vi": {
+        "what": "Một chiếc dù nhỏ, chắc, mở đầu tiên khi tàu còn ở cao và đang nhanh. Nó giữ khoang lái thôi lộn nhào, rồi kéo các dù chính bung ra.",
+        "why": "Dù chính lớn sẽ rách nếu mở ở tốc độ cao. Dù mồi (drogue) hãm bớt và giữ tàu ổn định để dù chính mở an toàn.",
+        "without": "Một mình nó chỉ hãm tàu được chút ít. Không có nó, dù chính phải mở trong luồng khí nhanh và xóc hơn.",
+        "inside": "Một ống phóng nhỏ bắn dù mồi (drogue) ra luồng khí còn rất nhanh. Vải và dây của nó được làm để chịu cú bung mạnh, và khi đã giữ khoang lái ổn định, nó kéo các dù chính ra khỏi túi.",
+        "analogy": "Giống đuôi diều: nhỏ thôi, nhưng giữ cả con diều hướng đúng chiều.",
+        "pros": [
+          "Mở sớm và ở trên cao",
+          "Giữ tàu ổn định"
+        ],
+        "cons": [
+          "Một mình thì lực cản ít"
+        ],
+        "real": "Dù mồi của Orion / Apollo",
+        "name": "Dù mồi"
+      }
+    },
+    "part:splash_floats": {
+      "en": {
+        "what": "Bags that fill with air after the capsule lands in the sea. They turn the capsule right way up and keep it there until the recovery ship arrives.",
+        "why": "A capsule can float upside down, with the crew hanging in their straps. Apollo carried three such bags on its nose.",
+        "without": "A capsule that tips over stays upside down. The floats matter only at the very end of the trip home.",
+        "inside": "Small pumps fill the bags in a few minutes, and their lift rolls the capsule upright.",
+        "analogy": "Like armbands on a child in a pool: they keep the head above water."
+      },
+      "vi": {
+        "what": "Những túi khí phồng lên sau khi khoang lái rơi xuống biển. Chúng lật khoang lái về đúng chiều và giữ nguyên như vậy cho tới khi tàu cứu hộ đến.",
+        "why": "Khoang lái có thể nổi lộn ngược, phi hành đoàn treo lơ lửng trong dây đai. Tàu Apollo mang ba túi như thế trên mũi.",
+        "without": "Khoang lái đã lật thì cứ nằm lộn ngược. Phao chỉ có ích ở đoạn cuối cùng của chuyến về nhà.",
+        "inside": "Các máy bơm nhỏ thổi đầy túi trong vài phút, sức nổi của túi lật khoang lái đứng thẳng lên.",
+        "analogy": "Giống phao tay của trẻ em ở hồ bơi: giữ đầu luôn nhô trên mặt nước.",
+        "pros": [
+          "Giữ khoang lái đứng thẳng trên biển"
+        ],
+        "cons": [
+          "Chỉ có ích ở chuyến về"
+        ],
+        "real": "Túi khí lật thẳng của Apollo",
+        "name": "Phao nổi"
+      }
+    },
+    "part:antenna_low": {
+      "en": {
+        "what": "A simple stick antenna that sends and hears radio in every direction. It never needs to point at Earth. It is slow: enough for voice, ship data and small files.",
+        "why": "Without radio, Mission Control cannot hear the crew, and nothing you find can be sent home.",
+        "without": "With no antenna at all, the ship is on its own and your science stays on board. A dish is far faster but must be pointed.",
+        "inside": "A metal rod sized to the radio wave. It spreads its power evenly all around, so only a tiny part reaches Earth. That is why it is slow.",
+        "analogy": "Like a bare light bulb: it lights every direction a little."
+      },
+      "vi": {
+        "what": "Một chiếc ăng-ten (antenna) dạng que, phát và thu sóng vô tuyến theo mọi hướng. Nó không bao giờ cần chĩa về Trái Đất. Nó chậm: đủ cho giọng nói, dữ liệu của tàu và tệp nhỏ.",
+        "why": "Không có liên lạc vô tuyến, trung tâm điều khiển không nghe được phi hành đoàn, và những gì bạn tìm thấy không gửi về được.",
+        "without": "Không có ăng-ten nào thì con tàu đơn độc, dữ liệu khoa học nằm lại trên tàu. Ăng-ten chảo nhanh hơn nhiều nhưng phải chĩa đúng hướng.",
+        "inside": "Một thanh kim loại có độ dài hợp với bước sóng. Nó tỏa năng lượng đều ra xung quanh, nên chỉ một phần rất nhỏ tới được Trái Đất. Vì vậy nó chậm.",
+        "analogy": "Giống bóng đèn trần: soi mọi hướng một chút.",
+        "pros": [
+          "Hoạt động theo mọi hướng",
+          "Rẻ"
+        ],
+        "cons": [
+          "Truyền dữ liệu chậm"
+        ],
+        "real": "Ăng-ten độ lợi thấp băng S, phát mọi hướng",
+        "name": "Ăng-ten độ lợi thấp"
+      }
+    },
+    "part:antenna_medium": {
+      "en": {
+        "what": "A horn-shaped antenna that sends its signal out in a wide cone. It needs only rough pointing. It sends data many times faster than the stick antenna.",
+        "why": "It keeps working while the ship turns, when a dish would lose Earth.",
+        "without": "The stick antenna is slower. The dish is faster but needs exact pointing.",
+        "inside": "The flared metal horn guides the radio waves out in one general direction instead of all around.",
+        "analogy": "Like cupping your hands around your mouth to shout: the sound goes further one way."
+      },
+      "vi": {
+        "what": "Một chiếc ăng-ten (antenna) hình loa kèn, phát tín hiệu thành một hình nón rộng. Nó chỉ cần chĩa đại khái. Nó gửi dữ liệu nhanh gấp nhiều lần ăng-ten que.",
+        "why": "Nó vẫn hoạt động khi tàu đang xoay, lúc mà ăng-ten chảo sẽ mất dấu Trái Đất.",
+        "without": "Ăng-ten que chậm hơn. Ăng-ten chảo nhanh hơn nhưng phải chĩa thật chính xác.",
+        "inside": "Chiếc loa kim loại loe miệng dẫn sóng vô tuyến đi về một hướng chung, thay vì tỏa ra khắp xung quanh.",
+        "analogy": "Giống khum hai tay quanh miệng để gọi: tiếng đi xa hơn về một phía.",
+        "pros": [
+          "Nhanh hơn ăng-ten phát mọi hướng",
+          "Chỉ cần chĩa đại khái"
+        ],
+        "cons": [
+          "Chậm hơn ăng-ten chảo nhiều"
+        ],
+        "real": "Ăng-ten độ lợi trung bình của Mars Odyssey",
+        "name": "Ăng-ten loa độ lợi trung bình"
+      }
+    },
+    "part:antenna_high": {
+      "en": {
+        "what": "A dish antenna that focuses the radio signal into a narrow beam. Pointed at Earth, it sends data hundreds of times faster than a stick antenna.",
+        "why": "Pictures, maps and science data are big files. The results of the mission go home through this dish.",
+        "without": "Without a dish, big files trickle home slowly. With one, the ship must point it exactly, or the beam misses Earth.",
+        "inside": "The curved dish bounces the radio waves from a small feed into one straight beam, the way a mirror shapes light.",
+        "analogy": "Like a torch next to a bare bulb: all the light goes one way, so it reaches much further."
+      },
+      "vi": {
+        "what": "Ăng-ten chảo (dish antenna) dồn tín hiệu vô tuyến thành một chùm hẹp. Khi chĩa đúng về Trái Đất, nó gửi dữ liệu nhanh gấp hàng trăm lần ăng-ten que.",
+        "why": "Ảnh, bản đồ và dữ liệu khoa học là những tệp lớn. Thành quả của chuyến đi về nhà qua chiếc chảo này.",
+        "without": "Không có chảo, tệp lớn về nhà nhỏ giọt. Có chảo thì tàu phải chĩa thật chính xác, lệch là chùm sóng trượt khỏi Trái Đất.",
+        "inside": "Lòng chảo cong phản xạ sóng vô tuyến từ một đầu phát nhỏ thành một chùm thẳng, giống gương định hình ánh sáng.",
+        "analogy": "Giống đèn pin so với bóng đèn trần: mọi tia sáng dồn về một hướng nên chiếu xa hơn nhiều.",
+        "pros": [
+          "Gửi dữ liệu nhanh"
+        ],
+        "cons": [
+          "Phải chĩa đúng về Trái Đất"
+        ],
+        "real": "Ăng-ten chảo 3,7 m của Voyager (thu nhỏ)",
+        "name": "Ăng-ten chảo độ lợi cao"
+      }
+    },
+    "part:relay_sat": {
+      "en": {
+        "what": "A small satellite carried on the side of the ship and released into orbit around Mars. It has its own dish and solar panels. It passes data from the surface on to Earth.",
+        "why": "Mars turns, so Earth sets below the horizon for hours each day. Today's Mars rovers send most of their data through orbiters overhead.",
+        "without": "Without a relay, the crew can send data only while Earth is in the sky. It costs 240 kg and $380k.",
+        "inside": "A small box with a radio for the surface, a dish for Earth, solar panels and a battery.",
+        "analogy": "Like a friend on a hilltop who passes your message on when you cannot see the person you are calling."
+      },
+      "vi": {
+        "what": "Một vệ tinh nhỏ gắn bên hông tàu, được thả vào quỹ đạo quanh Sao Hỏa. Nó có chảo ăng-ten và tấm pin mặt trời riêng. Nó chuyển tiếp dữ liệu từ mặt đất về Trái Đất.",
+        "why": "Sao Hỏa tự quay, nên mỗi ngày Trái Đất lặn khuất chân trời hàng giờ. Các xe tự hành trên Sao Hỏa ngày nay gửi phần lớn dữ liệu qua những vệ tinh bay trên đầu.",
+        "without": "Không có vệ tinh chuyển tiếp (relay), phi hành đoàn chỉ gửi được dữ liệu khi Trái Đất còn trên bầu trời. Nó nặng 240 kg và giá 380 nghìn đô.",
+        "inside": "Một hộp nhỏ có máy vô tuyến để nói chuyện với mặt đất, chảo ăng-ten hướng về Trái Đất, tấm pin mặt trời và bộ pin.",
+        "analogy": "Giống một người bạn đứng trên đồi chuyển lời giúp khi bạn không nhìn thấy người mình đang gọi.",
+        "pros": [
+          "Gửi dữ liệu nhanh từ mặt đất, bất kể giờ nào",
+          "Có nguồn điện và chảo ăng-ten riêng"
+        ],
+        "cons": [
+          "240 kg",
+          "Đắt"
+        ],
+        "real": "Vệ tinh nhỏ MarCO, khung vệ tinh cỡ LADEE",
+        "name": "Vệ tinh nhỏ chuyển tiếp"
+      }
+    },
+    "part:rcs_pack": {
+      "en": {
+        "what": "A cluster of tiny thrusters that fire in short puffs to turn the ship. They roll, pitch and yaw it where there is no air for fins to grip.",
+        "why": "The ship must point exactly before every burn and before entry. In space only thrusters or spinning wheels can turn it.",
+        "without": "Without a way to turn in space, the ship cannot aim its engine or its heat shield. Every puff uses a little propellant.",
+        "inside": "Fast valves let out bursts of propellant through little nozzles facing different ways. Firing opposite pairs turns the ship without pushing it off course.",
+        "analogy": "Like paddling forward on one side of a canoe and backward on the other to spin it on the spot."
+      },
+      "vi": {
+        "what": "Một cụm động cơ đẩy tí hon phụt từng nhát ngắn để xoay tàu. Hệ thống điều khiển tư thế (RCS) này làm tàu lăn, chúc ngóc và quay trái phải ở nơi không có không khí cho vây bám vào.",
+        "why": "Tàu phải chĩa thật đúng hướng trước mỗi lần đốt động cơ và trước khi vào khí quyển. Ngoài không gian chỉ có động cơ đẩy nhỏ hoặc bánh xe quay mới xoay được nó.",
+        "without": "Không có cách xoay trong không gian, tàu không ngắm được động cơ hay tấm chắn nhiệt. Mỗi nhát phụt tốn một chút nhiên liệu.",
+        "inside": "Các van đóng mở nhanh xả từng luồng nhiên liệu qua những vòi nhỏ quay về các hướng khác nhau. Bắn từng cặp đối diện thì tàu xoay mà không bị đẩy lệch đường bay.",
+        "analogy": "Giống chèo xuồng: một bên chèo tới, một bên chèo lùi để xoay tại chỗ.",
+        "pros": [
+          "Xoay tàu trong chân không",
+          "Cần cho lúc vào khí quyển"
+        ],
+        "cons": [
+          "Tốn nhiên liệu"
+        ],
+        "real": "Khối RCS phía trước của tàu con thoi",
+        "name": "Cụm động cơ đẩy RCS"
+      }
+    },
+    "part:star_tracker": {
+      "en": {
+        "what": "A small camera that photographs the stars. It matches the pattern against a map of thousands of stars and works out exactly which way the ship points.",
+        "why": "Gyroscopes drift a little every hour. The star tracker corrects them, so burns and the dish are aimed precisely. Reliability +0.5 %.",
+        "without": "Without one, the ship guesses its direction from its last known heading, and the error grows. It is blinded if it looks at the Sun.",
+        "inside": "A lens, a light sensor and a small computer that holds a star catalogue. A long hood shades the lens from sunlight.",
+        "analogy": "Like sailors finding their way by the stars before GPS existed."
+      },
+      "vi": {
+        "what": "Máy theo dõi sao (star tracker) là một camera nhỏ chụp bầu trời sao. Nó so hình các ngôi sao với bản đồ hàng nghìn ngôi sao và tính chính xác tàu đang chĩa về hướng nào.",
+        "why": "Con quay hồi chuyển (gyroscope) trôi lệch một chút mỗi giờ. Máy theo dõi sao chỉnh lại, nên lần đốt động cơ và chảo ăng-ten được ngắm chuẩn. Độ tin cậy +0,5 %.",
+        "without": "Không có nó, tàu đoán hướng của mình dựa trên hướng biết được lần cuối, và sai số cứ lớn dần. Nó bị lóa nếu nhìn vào Mặt Trời.",
+        "inside": "Một ống kính, một cảm biến ánh sáng và một máy tính nhỏ chứa danh mục sao. Một ống che nắng dài che cho ống kính.",
+        "analogy": "Giống các thủy thủ ngày xưa tìm đường bằng sao trời trước khi có GPS.",
+        "pros": [
+          "Ngắm chính xác cho lần đốt động cơ và chảo ăng-ten",
+          "Tí hon"
+        ],
+        "cons": [
+          "Bị Mặt Trời làm lóa"
+        ],
+        "real": "Máy theo dõi sao Ball CT-2020",
+        "name": "Máy theo dõi sao"
+      }
+    },
+    "part:reaction_wheel": {
+      "en": {
+        "what": "A heavy wheel inside the ship that an electric motor spins. Speed it up one way and the ship slowly turns the other way. No propellant is used.",
+        "why": "Small, gentle turns, such as keeping the dish on Earth, cost only electricity.",
+        "without": "Without it, every small turn costs thruster propellant. It is too slow for big, quick turns such as before a landing.",
+        "inside": "A motor, a flywheel and bearings sealed in a case. Power from the panels keeps it running.",
+        "analogy": "Like sitting on an office chair holding a bicycle wheel: spin the wheel up one way and the chair turns the other way."
+      },
+      "vi": {
+        "what": "Bánh xe phản lực (reaction wheel) là một bánh đà nặng trong tàu, được động cơ điện quay. Cho nó quay nhanh lên theo một chiều thì con tàu từ từ xoay theo chiều ngược lại. Không tốn nhiên liệu.",
+        "why": "Những cú xoay nhỏ, nhẹ, như giữ chảo ăng-ten luôn hướng về Trái Đất, chỉ tốn điện.",
+        "without": "Không có nó, mỗi cú xoay nhỏ đều tốn nhiên liệu của động cơ đẩy nhỏ. Nó quá chậm cho những cú xoay lớn và nhanh, như trước lúc hạ cánh.",
+        "inside": "Một động cơ điện, một bánh đà và ổ bi kín trong hộp. Điện từ tấm pin mặt trời giữ cho nó chạy.",
+        "analogy": "Giống ngồi trên ghế xoay văn phòng, tay cầm một bánh xe đạp: quay cho bánh xe chạy nhanh theo một chiều, chiếc ghế sẽ xoay theo chiều ngược lại.",
+        "pros": [
+          "Xoay tàu không tốn nhiên liệu"
+        ],
+        "cons": [
+          "Chậm"
+        ],
+        "real": "Bánh xe phản lực của Dawn / Kepler",
+        "name": "Bánh xe phản lực"
+      }
+    },
+    "part:o2_bottle": {
+      "en": {
+        "what": "A high-pressure bottle of oxygen for refilling a spacesuit. One bottle is one refill between walks outside.",
+        "why": "A person breathes about 0.84 kg of oxygen a day. A spacesuit carries only a few hours' worth, so it is refilled at the ship.",
+        "without": "With no spare oxygen, the crew can go outside fewer times. Each bottle adds 80 kg.",
+        "inside": "A strong tank with rounded ends holds oxygen squeezed very tight. A valve and a regulator let it out slowly at a safe pressure.",
+        "analogy": "Like a scuba tank: a lot of air squeezed into a small, strong bottle."
+      },
+      "vi": {
+        "what": "Một bình oxy (oxygen) áp suất cao để nạp lại cho bộ đồ du hành. Mỗi bình là một lần nạp giữa hai chuyến ra ngoài.",
+        "why": "Mỗi người thở khoảng 0,84 kg oxy một ngày. Bộ đồ du hành chỉ mang đủ cho vài giờ, nên phải nạp lại ở tàu.",
+        "without": "Không có oxy dự phòng, phi hành đoàn ra ngoài được ít lần hơn. Mỗi bình nặng thêm 80 kg.",
+        "inside": "Một bình chắc, hai đầu tròn, chứa oxy bị nén rất chặt. Một van và bộ điều áp cho oxy ra từ từ ở áp suất an toàn.",
+        "analogy": "Giống bình lặn biển: rất nhiều không khí nén vào một chiếc bình nhỏ và chắc.",
+        "pros": [
+          "Thêm một lần ra ngoài (EVA)"
+        ],
+        "cons": [
+          "Thêm khối lượng"
+        ],
+        "real": "Bình PRSD của tàu con thoi / bình NORS của ISS",
+        "name": "Bình O₂ dự phòng"
+      }
+    },
+    "part:o2_tank_l": {
+      "en": {
+        "what": "One larger tank that holds two spacesuit refills of oxygen.",
+        "why": "One valve and one mount serve both refills, so it is a little lighter than two separate bottles.",
+        "without": "Two small bottles do the same job for 10 kg more.",
+        "inside": "The same strong, round-ended tank and regulator as the small bottle, only longer.",
+        "analogy": "Like buying one big bottle of juice instead of two small ones: less packaging for the same amount."
+      },
+      "vi": {
+        "what": "Một bình lớn chứa đủ oxy (oxygen) cho hai lần nạp bộ đồ du hành.",
+        "why": "Một van và một giá gắn phục vụ cả hai lần nạp, nên nó nhẹ hơn chút ít so với hai bình rời.",
+        "without": "Hai bình nhỏ làm cùng việc đó nhưng nặng hơn 10 kg.",
+        "inside": "Vẫn là chiếc bình chắc hai đầu tròn và bộ điều áp như bình nhỏ, chỉ dài hơn.",
+        "analogy": "Giống mua một chai nước trái cây lớn thay vì hai chai nhỏ: ít vỏ chai hơn cho cùng lượng nước.",
+        "pros": [
+          "Hai lần ra ngoài (EVA)",
+          "Nhẹ hơn hai bình rời"
+        ],
+        "cons": [
+          "Thêm khối lượng"
+        ],
+        "real": "Bình O₂ của khoang dịch vụ Apollo",
+        "name": "Bình oxy đôi"
+      }
+    },
+    "part:co2_scrubber": {
+      "en": {
+        "what": "A machine that takes carbon dioxide out of the cabin air. People breathe it out with every breath.",
+        "why": "In a closed cabin, carbon dioxide builds up within days. First it causes headaches, then confusion, then worse. This scrubber keeps the air clean for months.",
+        "without": "Without any scrubber, the crew would be poisoned by their own breath within days. Cheap LiOH canisters work too, but run out after weeks.",
+        "inside": "Fans push air through beds of special pellets that grab carbon dioxide. Heat and vacuum later drive it out again, so the pellets can be reused. That needs power.",
+        "analogy": "Like a coffee filter you can rinse out and use again."
+      },
+      "vi": {
+        "what": "Máy lọc CO₂ (scrubber) lấy khí cacbonic ra khỏi không khí trong khoang. Con người thở ra khí này trong mỗi hơi thở.",
+        "why": "Trong khoang kín, khí cacbonic tích tụ chỉ sau vài ngày. Đầu tiên là đau đầu, rồi lú lẫn, rồi tệ hơn nữa. Máy lọc này giữ không khí sạch suốt nhiều tháng.",
+        "without": "Không có bộ lọc nào, phi hành đoàn sẽ bị chính hơi thở của mình đầu độc trong vài ngày. Hộp LiOH rẻ cũng dùng được, nhưng hết sau vài tuần.",
+        "inside": "Quạt thổi không khí qua những lớp hạt đặc biệt giữ lại khí cacbonic. Sau đó nhiệt và chân không đuổi khí ấy ra, nên các hạt dùng lại được. Việc này cần điện.",
+        "analogy": "Giống phin lọc cà phê rửa sạch rồi dùng lại được.",
+        "pros": [
+          "Không khí thở được suốt nhiều tháng"
+        ],
+        "cons": [
+          "Cần điện"
+        ],
+        "real": "CDRA của ISS",
+        "name": "Máy lọc CO₂"
+      }
+    },
+    "part:radiation_shelter": {
+      "en": {
+        "what": "A small closed corner of the ship whose walls are tanks of water. The crew hides in it during a solar storm.",
+        "why": "Between Earth and Mars there is no magnetic field to shield the crew. A big solar storm can give a dangerous dose of radiation within hours, and water stops many of the fast particles.",
+        "without": "Without a shelter, a big solar storm could make the crew very ill. It costs 600 kg.",
+        "inside": "Water is full of hydrogen atoms, which are good at slowing fast particles. The crew squeezes in for hours or days until the storm passes.",
+        "analogy": "Like a storm cellar under a house in tornado country."
+      },
+      "vi": {
+        "what": "Một góc nhỏ, kín trong tàu, có vách là những bồn nước. Phi hành đoàn trốn vào đó khi có bão Mặt Trời.",
+        "why": "Giữa Trái Đất và Sao Hỏa không có từ trường che chắn cho phi hành đoàn. Một cơn bão Mặt Trời lớn có thể gây liều phóng xạ (radiation) nguy hiểm chỉ trong vài giờ, mà nước chặn được nhiều hạt bay nhanh.",
+        "without": "Không có hầm trú, một cơn bão Mặt Trời lớn có thể làm phi hành đoàn bị bệnh nặng. Nó nặng 600 kg.",
+        "inside": "Nước chứa rất nhiều nguyên tử hydro, loại nguyên tử hãm các hạt bay nhanh rất tốt. Phi hành đoàn chen vào đó vài giờ hoặc vài ngày cho tới khi bão qua.",
+        "analogy": "Giống hầm trú bão dưới nhà ở những vùng hay có lốc xoáy.",
+        "pros": [
+          "Sống sót qua bão Mặt Trời"
+        ],
+        "cons": [
+          "600 kg"
+        ],
+        "real": "Ý tưởng hầm trú bão của Orion",
+        "name": "Hầm trú phóng xạ"
+      }
+    },
+    "part:water_recycler": {
+      "en": {
+        "what": "A machine that cleans used water, even sweat and urine, back into drinking water. It recovers about 98 % of it, like the one on the ISS.",
+        "why": "A person needs a few litres of water a day. Carrying all of it for a trip of many months would weigh tonnes.",
+        "without": "Without it, a long trip needs tonnes more water on board. It uses power, and it can break down.",
+        "inside": "Filters, a still that boils the water at low pressure, and chemical beds that remove what is left.",
+        "analogy": "Like a tiny copy of Earth's water cycle, rain to rivers to clouds, fitted in a cupboard."
+      },
+      "vi": {
+        "what": "Máy tái chế nước biến nước đã dùng, kể cả mồ hôi và nước tiểu, trở lại thành nước uống. Nó thu hồi khoảng 98 % lượng nước, giống máy trên Trạm Vũ trụ Quốc tế (ISS).",
+        "why": "Mỗi người cần vài lít nước một ngày. Mang theo toàn bộ cho chuyến đi nhiều tháng thì nặng hàng tấn.",
+        "without": "Không có nó, chuyến đi dài cần chở thêm hàng tấn nước. Nó tốn điện và có thể hỏng.",
+        "inside": "Bộ lọc, một nồi chưng cất đun sôi nước ở áp suất thấp, và các lớp hóa chất khử nốt phần còn lại.",
+        "analogy": "Giống một vòng tuần hoàn nước của Trái Đất thu nhỏ, mưa xuống sông lên mây, nằm gọn trong một chiếc tủ.",
+        "pros": [
+          "Thu hồi 98 % lượng nước"
+        ],
+        "cons": [
+          "Thêm khối lượng, tốn điện"
+        ],
+        "real": "Hệ thống thu hồi nước của ISS",
+        "name": "Máy tái chế nước"
+      }
+    },
+    "part:radiator": {
+      "en": {
+        "what": "A flat panel that gets rid of heat by glowing it away into space as invisible infrared light.",
+        "why": "People and electronics make heat. In space there is no air to carry it away, so without a radiator the cabin slowly overheats.",
+        "without": "Without one, the electronics and the crew slowly cook. The panel is thin and easy to damage.",
+        "inside": "A liquid flows through pipes from the cabin to the panel, gives up its heat there, and comes back cool.",
+        "analogy": "Space is like the inside of a thermos: heat cannot get out unless you give it a way."
+      },
+      "vi": {
+        "what": "Tấm tản nhiệt (radiator) là một tấm phẳng thải nhiệt ra không gian dưới dạng ánh sáng hồng ngoại mà mắt không thấy.",
+        "why": "Con người và thiết bị điện tử đều tỏa nhiệt. Ngoài không gian không có không khí mang nhiệt đi, nên thiếu tấm tản nhiệt thì khoang tàu nóng dần lên.",
+        "without": "Không có nó, thiết bị điện tử và phi hành đoàn sẽ bị nóng dần như bị nấu. Tấm này mỏng và dễ hỏng.",
+        "inside": "Một chất lỏng chảy trong ống từ khoang ra tấm, nhả nhiệt ở đó rồi quay về đã nguội.",
+        "analogy": "Không gian giống lòng một chiếc phích (thermos): nhiệt không thoát ra được nếu bạn không mở đường cho nó.",
+        "pros": [
+          "Giữ thiết bị điện tử mát"
+        ],
+        "cons": [
+          "Tấm mỏng dễ hỏng"
+        ],
+        "real": "Tấm tản nhiệt trên cửa khoang hàng của tàu con thoi",
+        "name": "Tấm tản nhiệt"
+      }
+    },
+    "part:les_tower_mercury": {
+      "en": {
+        "what": "A red steel tower on top of the capsule with a solid rocket at its tip. If the rocket below fails, it fires for about one second and pulls the capsule clear. Then the capsule's parachutes take over.",
+        "why": "Launch is the most dangerous part of any flight. This tower gives the crew a way out, even from the pad. Ship reliability up to +2 %.",
+        "without": "Without an escape system, a booster failure kills the crew. In this game nothing is thrown away, so its 350 kg ride all the way to Mars.",
+        "inside": "A solid motor full of fast-burning propellant sits at the top of a steel truss. When it fires, the gas leaves through three nozzles tilted outward, so the flame misses the capsule, and the pull lifts the capsule off the rocket. A small motor above it throws the tower away on a good flight.",
+        "analogy": "Like an ejection seat for the whole cabin."
+      },
+      "vi": {
+        "what": "Tháp thoát hiểm (escape tower) là một khung thép đỏ trên đỉnh khoang lái, đầu tháp có một tên lửa nhiên liệu rắn. Nếu tên lửa bên dưới gặp sự cố, nó cháy khoảng một giây và kéo khoang lái ra xa. Sau đó dù của khoang lái lo phần còn lại.",
+        "why": "Lúc phóng là đoạn nguy hiểm nhất của mọi chuyến bay. Tháp này cho phi hành đoàn một lối thoát, kể cả khi còn trên bệ. Độ tin cậy của tàu tăng tới +2 %.",
+        "without": "Không có hệ thống thoát hiểm, tên lửa đẩy hỏng là phi hành đoàn mất mạng. Trong game không có gì bị vứt bỏ, nên 350 kg của tháp đi theo tới tận Sao Hỏa.",
+        "inside": "Một động cơ rắn đầy thuốc phóng cháy nhanh nằm trên đỉnh khung giàn thép. Khi nó cháy, khí thoát qua ba vòi phun chĩa xiên ra ngoài để lửa không táp vào khoang lái, và lực kéo nhấc khoang lái khỏi tên lửa. Một động cơ nhỏ phía trên vứt tháp đi khi chuyến bay suôn sẻ.",
+        "analogy": "Giống ghế phóng thoát hiểm, nhưng cho cả khoang lái.",
+        "pros": [
+          "Cứu phi hành đoàn khi nổ trên bệ hoặc lúc mới bay",
+          "Độ tin cậy của tàu tăng tới +2 % (phần thưởng toàn tàu tối đa 6 %)",
+          "Mũi nhọn của tháp làm không khí trôi êm qua khoang lái tù"
+        ],
+        "cons": [
+          "350 kg chở theo suốt chặng đường",
+          "Vừa cỡ khoang lái nhỏ",
+          "Chỉ tính một lần nếu có cả động cơ thoát hiểm gắn vách: chọn một hệ thống thoát hiểm thôi"
+        ],
+        "real": "Hệ thống thoát hiểm Mercury: động cơ Grand Central 1-KS-52000, 52.000 lbf (231 kN) trong khoảng 1 s qua ba vòi phun xiên; 1.015 lb (460 kg), gồm cả 236 lb vật dằn",
+        "name": "Tháp thoát hiểm kiểu Mercury"
+      }
+    },
+    "part:les_tower_apollo": {
+      "en": {
+        "what": "A titanium tower with a big solid motor that can pull a five-tonne command module clear of a failing rocket. Its four nozzles point outward so the flame misses the capsule. Two small fins near the top flip the capsule heat-shield first.",
+        "why": "It covers the first minutes of the climb, from the pad until the air is thin; it was thrown away soon after the second stage lit. Apollo never needed it, but carried one on every flight. Ship reliability up to +3 %.",
+        "without": "Without it, a failure early in the climb has no way out. It weighs 1 t, and here it rides to Mars.",
+        "inside": "Inside the tower's top is a long solid motor with four nozzles tilted outward. Above it sit a small motor that throws the tower away on a good flight and a pitch motor that steers the escape to one side. Near the tip are two folded fins called canards, and the Q-ball probe that senses the airflow.",
+        "analogy": "Like a tow truck that is always hooked to your car, ready to drag it away from a fire."
+      },
+      "vi": {
+        "what": "Tháp thoát hiểm (escape tower) bằng titan với một động cơ rắn lớn, đủ sức kéo khoang chỉ huy nặng năm tấn ra khỏi tên lửa đang gặp nạn. Bốn vòi phun chĩa xiên ra ngoài để lửa không táp vào khoang lái. Hai cánh nhỏ gần đỉnh lật khoang lái cho tấm chắn nhiệt quay về phía trước.",
+        "why": "Nó bảo vệ những phút đầu tiên khi bay lên, từ bệ phóng cho tới khi không khí đã loãng; tháp bị vứt bỏ ngay sau khi tầng hai khởi động. Apollo chưa bao giờ phải dùng tới, nhưng chuyến nào cũng mang theo. Độ tin cậy của tàu tăng tới +3 %.",
+        "without": "Không có nó, sự cố sớm khi bay lên sẽ không có lối thoát. Nó nặng 1 tấn, và trong game nó đi theo tới Sao Hỏa.",
+        "inside": "Trong phần đầu tháp là một động cơ rắn dài với bốn vòi phun chĩa xiên ra ngoài. Phía trên có một động cơ nhỏ để vứt tháp khi chuyến bay suôn sẻ, và một động cơ chúc ngóc lái khối thoát hiểm lệch sang một bên. Gần chóp là hai cánh gập gọi là canard, và đầu dò Q-ball cảm nhận luồng gió.",
+        "analogy": "Giống chiếc xe cứu hộ luôn móc sẵn vào xe bạn, sẵn sàng kéo nó khỏi đám cháy.",
+        "pros": [
+          "Cứu phi hành đoàn từ bệ phóng tới độ cao lớn",
+          "Độ tin cậy của tàu tăng tới +3 % (phần thưởng toàn tàu tối đa 6 %)"
+        ],
+        "cons": [
+          "1 tấn chở theo suốt chặng đường",
+          "Cần một nắp chụp hoặc mũi khoang lái chắc để đứng lên",
+          "Chỉ tính một lần nếu có cả động cơ thoát hiểm gắn vách: chọn một hệ thống thoát hiểm thôi"
+        ],
+        "real": "Hệ thống thoát hiểm Apollo (LES): dài 33 ft (10 m), khoảng 8.000 lb (3,6 tấn); động cơ thoát hiểm khoảng 147.000 lbf (654 kN) trong 3,2 s; động cơ tách tháp 31.500 lbf; động cơ chỉnh chúc ngóc 2.420 lbf; khung giàn titan 10 ft",
+        "name": "Tháp thoát hiểm kiểu Apollo"
+      }
+    },
+    "part:las_soyuz": {
+      "en": {
+        "what": "A cover over the top of the ship with an escape tower on its nose. In an emergency the whole front end flies away with the crew inside. Four grid fins fold out to keep it flying straight.",
+        "why": "It is the only escape system that has saved a crew from a pad explosion: Soyuz T-10a in 1983. Small motors on the fairing also saved Soyuz MS-10 in 2018. Ship reliability up to +3 %.",
+        "without": "Without it, a fire on the pad has no way out. It weighs 1.4 t, and its big side high up catches the wind, which makes the ship less steady.",
+        "inside": "The tower is a solid motor with a ring of nozzles, bolted to the top of the fairing. In an abort it pulls the fairing and the modules inside it away, grid fins swing open to keep it straight, and the capsule drops out under its parachute.",
+        "analogy": "Like a lifeboat with its own engine, built around the cabin."
+      },
+      "vi": {
+        "what": "Một lớp vỏ chụp (fairing) trùm đỉnh tàu, trên mũi có tháp thoát hiểm. Khi khẩn cấp, cả phần đầu tàu bay đi cùng phi hành đoàn bên trong. Bốn vây lưới (grid fin) bật ra giữ nó bay thẳng.",
+        "why": "Đây là hệ thống thoát hiểm duy nhất từng cứu phi hành đoàn khỏi một vụ nổ trên bệ: Soyuz T-10a năm 1983. Các động cơ nhỏ gắn trên vỏ chụp cũng đã cứu Soyuz MS-10 năm 2018. Độ tin cậy của tàu tăng tới +3 %.",
+        "without": "Không có nó, đám cháy trên bệ phóng không có lối thoát. Nó nặng 1,4 tấn, và mặt hông lớn ở trên cao hứng gió, làm tàu kém vững hơn.",
+        "inside": "Tháp là một động cơ rắn có một vòng vòi phun, bắt vít trên đỉnh vỏ chụp. Khi thoát hiểm, nó kéo vỏ chụp cùng các khoang bên trong đi, vây lưới bật ra giữ nó bay thẳng, rồi khoang lái rơi ra và hạ xuống bằng dù.",
+        "analogy": "Giống chiếc xuồng cứu sinh có máy riêng, đóng bao quanh cabin.",
+        "pros": [
+          "Hệ thống thoát hiểm duy nhất từng cứu phi hành đoàn khỏi vụ nổ trên bệ",
+          "Độ tin cậy của tàu tăng tới +3 % (phần thưởng toàn tàu tối đa 6 %)",
+          "Mũi vỏ chụp trơn: ít lực cản"
+        ],
+        "cons": [
+          "1,4 tấn chở theo suốt chặng đường",
+          "Mặt hông lớn ở trên cao: cần vây tốt",
+          "Chỉ tính một lần nếu có cả động cơ thoát hiểm gắn vách: chọn một hệ thống thoát hiểm thôi"
+        ],
+        "real": "SAS của Soyuz: khối thoát hiểm 7.635 kg, lực đẩy tới 76 tấn (745 kN) từ khoảng 4 tấn thuốc phóng rắn, bốn cánh ổn định gập; Soyuz T-10a (1983), MS-10 (2018)",
+        "name": "Tháp thoát hiểm và vỏ chụp kiểu Soyuz"
+      }
+    },
+    "part:las_orion": {
+      "en": {
+        "what": "The strongest escape system ever built. A solid motor on a cap over the capsule pushes with about 1.8 MN. Its gas turns back and leaves through four nozzles near the top, far from the capsule.",
+        "why": "It can pull the crew away and steer itself, from the pad to the edge of space. It was tested on the pad in 2010 and at the hardest moment of the climb in 2019. Ship reliability up to +3.5 %.",
+        "without": "Without it there is no way out of a launch failure. It is the most expensive escape system, and here it weighs 1.25 t.",
+        "inside": "The abort motor's gas flows up the motor and turns back out through four nozzles near the top, so the flame starts far from the capsule. Above it, a ring of eight valves on a gas generator steers the whole stack, and a jettison motor pulls the tower away on a normal flight.",
+        "analogy": "Like a rescue helicopter that snatches the capsule and flies it away under its own control."
+      },
+      "vi": {
+        "what": "Hệ thống thoát hiểm mạnh nhất từng được chế tạo. Một động cơ rắn đặt trên nắp chụp khoang lái, đẩy khoảng 1,8 MN. Khí của nó quay ngược lại và thoát ra qua bốn vòi phun gần đỉnh, cách xa khoang lái.",
+        "why": "Nó kéo phi hành đoàn ra xa và tự lái được, từ bệ phóng tới rìa không gian. Nó đã được thử trên bệ năm 2010 và ở thời điểm khắc nghiệt nhất của quá trình bay lên năm 2019. Độ tin cậy của tàu tăng tới +3,5 %.",
+        "without": "Không có nó, phóng hỏng là không có lối thoát. Đây là hệ thống thoát hiểm đắt nhất, và trong game nặng 1,25 tấn.",
+        "inside": "Khí của động cơ thoát hiểm chạy ngược lên trong động cơ rồi quay đầu thoát ra qua bốn vòi phun gần đỉnh, nên lửa bắt đầu ở xa khoang lái. Phía trên, một vòng tám van trên bình tạo khí lái cả khối, và một động cơ tách tháp kéo tháp đi khi chuyến bay bình thường.",
+        "analogy": "Giống trực thăng cứu hộ chộp lấy khoang lái và tự bay đi.",
+        "pros": [
+          "Lực đẩy mạnh nhất trong các hệ thống thoát hiểm",
+          "Tự lái sau khi thoát hiểm",
+          "Độ tin cậy của tàu tăng tới +3,5 % (phần thưởng toàn tàu tối đa 6 %)"
+        ],
+        "cons": [
+          "1,25 tấn chở theo suốt chặng đường",
+          "Hệ thống thoát hiểm đắt nhất",
+          "Chỉ tính một lần nếu có cả động cơ thoát hiểm gắn vách: chọn một hệ thống thoát hiểm thôi"
+        ],
+        "real": "LAS của Orion: động cơ thoát hiểm khoảng 400.000 lbf (1,8 MN), động cơ điều khiển tư thế cho lực lái tới 7.000 lbf, động cơ tách tháp trên 40.000 lbf; Pad Abort-1 (2010), Ascent Abort-2 (2019)",
+        "name": "Hệ thống thoát hiểm kiểu Orion"
+      }
+    },
+    "part:bpc_apollo": {
+      "en": {
+        "what": "A shell of fibreglass and cork that covers the capsule's nose during the climb. The escape tower stands on it. The game draws only its top collar.",
+        "why": "Air rushing past at high speed heats the skin, and the escape motor's flame is hot. The cover keeps both off the windows and the hatch. Reliability +0.3 %.",
+        "without": "Without it, a tower has a weaker base and the windows can be scorched. It is 150 kg that does nothing after the climb.",
+        "inside": "Layers of fibreglass and honeycomb give it shape. Cork on the outside chars slowly and blocks the heat.",
+        "analogy": "Like an oven glove over the capsule's head."
+      },
+      "vi": {
+        "what": "Một lớp vỏ sợi thủy tinh và bần (cork) trùm mũi khoang lái khi bay lên. Tháp thoát hiểm đứng trên đó. Game chỉ vẽ phần cổ trên cùng của nó.",
+        "why": "Không khí lướt qua ở tốc độ cao làm vỏ nóng lên, lửa của động cơ thoát hiểm cũng rất nóng. Lớp vỏ này che cả hai khỏi cửa sổ và cửa ra vào. Độ tin cậy +0,3 %.",
+        "without": "Không có nó, tháp có chân đế yếu hơn và cửa sổ có thể bị cháy sém. Nó là 150 kg không làm gì sau khi bay lên xong.",
+        "inside": "Các lớp sợi thủy tinh và tổ ong tạo dáng cho nó. Lớp bần bên ngoài cháy thành than từ từ và chặn nhiệt lại.",
+        "analogy": "Giống chiếc găng tay lò nướng chụp lên đầu khoang lái.",
+        "pros": [
+          "Cửa sổ và cửa ra vào sạch sẽ: độ tin cậy +0,3 %",
+          "Chân đế chắc cho tháp"
+        ],
+        "cons": [
+          "Khối lượng vô dụng sau khi bay lên"
+        ],
+        "real": "Vỏ bảo vệ khi bay lên của Apollo: khoảng 700 lb (318 kg) sợi thủy tinh, tổ ong và bần bọc toàn bộ khoang chỉ huy",
+        "name": "Vỏ bảo vệ khi bay lên"
+      }
+    },
+    "part:nosecap_dragon": {
+      "en": {
+        "what": "A dome over the capsule's nose that swings open on a hinge once in space. It covers the docking port during the climb and closes again before re-entry.",
+        "why": "The docking port and its soft ring would catch the air on the way up and the heat on the way home. The cap protects them and lowers the drag.",
+        "without": "A bare capsule nose has more drag, and the docking port is open to the air. The hinge must close before re-entry.",
+        "inside": "A light shell on a hinge arm, swung by a motor, with latches that lock it shut.",
+        "analogy": "Like the cap of a pen: on while you carry it, off while you use it."
+      },
+      "vi": {
+        "what": "Một chiếc nắp vòm trên mũi khoang lái, mở ra bằng bản lề khi đã vào không gian. Nó che cổng ghép nối (docking port) khi bay lên và đóng lại trước khi trở về khí quyển.",
+        "why": "Cổng ghép nối và vòng đệm mềm của nó sẽ hứng gió khi bay lên và hứng nóng khi trở về. Nắp này bảo vệ chúng và giảm lực cản (drag).",
+        "without": "Mũi khoang lái để trần có lực cản lớn hơn, và cổng ghép nối phơi ra ngoài gió. Bản lề phải đóng lại được trước khi vào khí quyển.",
+        "inside": "Một lớp vỏ nhẹ trên cánh tay bản lề, được động cơ xoay, có chốt khóa giữ chặt khi đóng.",
+        "analogy": "Giống nắp bút: đậy khi mang đi, mở khi dùng.",
+        "pros": [
+          "Ít lực cản hơn mũi khoang lái để trần",
+          "Bảo vệ cổng ghép nối"
+        ],
+        "cons": [
+          "Bản lề phải đóng lại trước khi trở về khí quyển"
+        ],
+        "real": "Nắp mũi có bản lề của Crew Dragon (Cargo Dragon 1 vứt nắp mũi sau khi phóng)",
+        "name": "Nắp mũi có bản lề"
+      }
+    },
+    "part:nose_gemini_rr": {
+      "en": {
+        "what": "A narrow nose on top of the capsule that holds the parachutes, the thrusters used during re-entry and a radar for finding other spacecraft. Gemini flew with this instead of a fairing or a tower.",
+        "why": "It packs a drogue and a 25.6 m main parachute into the capsule's own nose, so the ship needs no separate chute.",
+        "without": "Without it you carry your chutes elsewhere. With it the nose is blunt, so it has more drag than a fairing, and there is no escape tower: Gemini crews had ejection seats.",
+        "inside": "From the top down: the radar, the drogue and pilot chutes, then the main parachute packed in its bag, with steering thrusters around the base. After entry the drogue comes out first, and then the main chute is pulled out of the nose.",
+        "analogy": "Like a backpack with the parachute already built in."
+      },
+      "vi": {
+        "what": "Một chiếc mũi hẹp trên đỉnh khoang lái, chứa dù, các động cơ đẩy nhỏ dùng khi trở về khí quyển, và một radar để tìm tàu vũ trụ khác. Tàu Gemini bay với phần mũi này thay cho vỏ chụp (fairing) hay tháp thoát hiểm.",
+        "why": "Nó xếp gọn một dù mồi và một dù chính 25,6 m ngay trong mũi khoang lái, nên tàu không cần dù rời.",
+        "without": "Không có nó, bạn phải gắn dù ở chỗ khác. Có nó thì mũi tù, nên lực cản lớn hơn vỏ chụp, và không có tháp thoát hiểm: phi hành đoàn Gemini dùng ghế phóng.",
+        "inside": "Từ trên xuống: radar, dù mồi và dù dẫn, rồi tới dù chính gấp trong túi, quanh chân là các động cơ đẩy nhỏ để lái. Sau khi vào khí quyển, dù mồi bung ra trước, rồi dù chính được kéo ra khỏi phần mũi.",
+        "analogy": "Giống chiếc ba lô có sẵn dù bên trong.",
+        "pros": [
+          "Có sẵn dù chính",
+          "Không phải chở vỏ chụp"
+        ],
+        "cons": [
+          "Mũi tù: lực cản lớn hơn vỏ chụp",
+          "Không có tháp thoát hiểm"
+        ],
+        "real": "Khoang hội ngộ và thu hồi của Gemini: dù chính kiểu ringsail 84 ft (25,6 m), dù mồi và dù dẫn, radar hội ngộ",
+        "name": "Phần mũi thu hồi"
+      }
+    },
+    "part:nose_vonkarman_m": {
+      "en": {
+        "what": "A nose whose curve, worked out with mathematics, gives the least drag for its length and width. It has a slightly rounder tip and a slimmer shoulder than a plain pointed nose.",
+        "why": "The engineer Theodore von Kármán found this shape. Less drag means less propellant spent pushing air aside.",
+        "without": "A plain pointed nose has a little more drag. This curve bends two ways at once, so it costs more to make.",
+        "inside": "Its panels are laid up on a mould that curves two ways at once, then baked hard, which is what makes it cost more. Blankets inside soak up the roar of liftoff, and a seam down the side lets the halves come apart.",
+        "analogy": "Like a racing cyclist's helmet: a curve shaped with care so the air slips past."
+      },
+      "vi": {
+        "what": "Một chiếc mũi có đường cong được tính bằng toán học, cho lực cản (drag) nhỏ nhất ứng với chiều dài và bề rộng của nó. So với mũi nhọn thường, đầu của nó tròn hơn một chút và phần vai thon hơn.",
+        "why": "Kỹ sư Theodore von Kármán đã tìm ra hình dạng này. Lực cản nhỏ hơn thì tốn ít nhiên liệu hơn để rẽ không khí.",
+        "without": "Mũi nhọn thường có lực cản lớn hơn một chút. Đường cong này uốn theo hai chiều cùng lúc, nên làm tốn tiền hơn.",
+        "inside": "Các tấm vỏ được đắp lên một khuôn cong theo hai chiều cùng lúc rồi nung cứng, chính điều này làm nó đắt hơn. Chăn tiêu âm bên trong hút bớt tiếng gầm lúc rời bệ, và một đường nối dọc bên hông cho hai nửa tách ra.",
+        "analogy": "Giống mũ bảo hiểm của vận động viên đua xe đạp: một đường cong được tính kỹ để không khí lướt qua.",
+        "pros": [
+          "Lực cản nhỏ nhất trong các mũi cỡ vừa",
+          "Tiết kiệm nhiên liệu khi bay lên"
+        ],
+        "cons": [
+          "Đường cong hai chiều: làm tốn tiền hơn"
+        ],
+        "real": "Dãy Haack với C = 0 (LD-Haack, ogive von Kármán): mũi có lực cản nhỏ nhất ứng với một chiều dài và đường kính cho trước",
+        "name": "Mũi von Kármán"
+      }
+    },
+    "part:nose_biconic_m": {
+      "en": {
+        "what": "A nose made of two straight cones: a slender one at the bottom and a blunter one on top.",
+        "why": "Every panel can be rolled from a flat sheet, so it is the cheapest nose to build. The blunt tip handles heat well.",
+        "without": "A curved nose has a little less drag. The bend between the two cones adds some.",
+        "inside": "Two cones rolled from flat sheets and riveted together where they meet. Blankets inside soak up the roar of liftoff, and a seam down the side lets the halves come apart.",
+        "analogy": "Like a paper party hat sitting on a taller paper cone: easy to make from flat paper."
+      },
+      "vi": {
+        "what": "Một chiếc mũi gồm hai hình nón thẳng: một nón thon ở dưới và một nón tù hơn ở trên.",
+        "why": "Mọi tấm vỏ đều cuộn được từ tấm phẳng, nên đây là loại mũi rẻ nhất để làm. Đỉnh tù chịu nhiệt tốt.",
+        "without": "Mũi cong có lực cản (drag) nhỏ hơn một chút. Chỗ gãy khúc giữa hai nón làm lực cản tăng thêm.",
+        "inside": "Hai hình nón cuộn từ tấm phẳng, tán đinh vào nhau ở chỗ gặp nhau. Chăn tiêu âm bên trong hút bớt tiếng gầm lúc rời bệ, và một đường nối dọc bên hông cho hai nửa tách ra.",
+        "analogy": "Giống chiếc mũ giấy sinh nhật đặt trên một chiếc nón giấy cao hơn: làm dễ từ giấy phẳng.",
+        "pros": [
+          "Loại mũi rẻ nhất để làm",
+          "Đầu tù chịu nhiệt tốt"
+        ],
+        "cons": [
+          "Lực cản lớn hơn mũi ogive"
+        ],
+        "real": "Mũi nón chồng nón trên các vỏ chụp đời đầu và tên lửa thám không; các nghiên cứu đưa người lên Sao Hỏa của NASA từng xem xét vỏ vào khí quyển hai nón",
+        "name": "Mũi hai nón"
+      }
+    },
+    "part:fairing_composite_l": {
+      "en": {
+        "what": "A big nose cover made of two halves of carbon fibre over an aluminium honeycomb core. A tapering skirt at the bottom narrows to fit whatever is below. Its skin can take one hit from debris.",
+        "why": "It shelters a big payload from wind and heat during the climb, and it is light for its size.",
+        "without": "Without a fairing, whatever is on top meets the air directly. This one is expensive, and its large side high on the ship catches the wind, which makes the ship less steady.",
+        "inside": "Each half is a sandwich: carbon-fibre skins glued to an aluminium honeycomb core. A rail runs down the seam where the halves meet, and gas pushers or a cutting cord split them apart. Blankets inside soften the noise of liftoff.",
+        "analogy": "Like the plastic egg around a toy surprise: two halves that protect what is inside, then pop apart."
+      },
+      "vi": {
+        "what": "Một vỏ chụp mũi (fairing) lớn gồm hai nửa sợi carbon bọc ngoài lõi tổ ong nhôm. Một vành thu hẹp ở dưới khớp với bất cứ thứ gì bên dưới. Lớp vỏ của nó đỡ được một cú va của mảnh vụn.",
+        "why": "Nó che chắn tải trọng lớn khỏi gió và nhiệt khi bay lên, và nhẹ so với kích thước.",
+        "without": "Không có vỏ chụp, thứ ở trên cùng phải đón gió trực tiếp. Chiếc này đắt, và mặt hông lớn ở trên cao hứng gió, làm tàu kém vững hơn.",
+        "inside": "Mỗi nửa là một lớp “bánh kẹp”: vỏ sợi carbon dán lên lõi tổ ong nhôm. Một thanh ray chạy dọc đường nối hai nửa, và pít-tông khí hoặc dây cắt bằng thuốc nổ tách chúng ra. Chăn tiêu âm bên trong làm dịu tiếng ồn lúc rời bệ.",
+        "analogy": "Giống quả trứng nhựa bọc đồ chơi: hai nửa bảo vệ thứ bên trong, rồi bật mở ra.",
+        "pros": [
+          "Chứa được tải trọng cồng kềnh",
+          "Che chắn phần đỉnh khỏi một cú va",
+          "Nhẹ so với kích thước"
+        ],
+        "cons": [
+          "Mặt hông lớn ở trên cao của tàu",
+          "Đắt"
+        ],
+        "real": "Vỏ chụp Falcon 9: rộng 5,2 m, cao 13,1 m, sợi carbon trên tổ ong nhôm; vỏ chụp 5 m của Atlas V, dài 20,7 tới 26,5 m",
+        "name": "Vỏ chụp composite, cỡ 5 m"
+      }
+    },
+    "part:heat_shield_s": {
+      "en": {
+        "what": "A small ablative heat shield for the one-seat capsule. Like Mercury's, it is built from layers of fibreglass and resin that char away slowly.",
+        "why": "It is light and dependable, and it fits the small capsule.",
+        "without": "A small shield means a small braking area: 45 m² against 80 for the medium shield. In thin Martian air the ship falls faster, and the engines must brake harder.",
+        "inside": "Layers of fibreglass soaked in resin, built up on a strong backing plate. As hot air hits it, the resin chars and gives off gas, and the char wears away with the heat, so the capsule behind it stays cool.",
+        "analogy": "Like a small umbrella: it keeps you dry, but it catches less wind."
+      },
+      "vi": {
+        "what": "Tấm chắn nhiệt (heat shield) cháy mòn cỡ nhỏ cho khoang lái một chỗ. Giống của tàu Mercury, nó làm từ nhiều lớp sợi thủy tinh và nhựa, cháy thành than từ từ.",
+        "why": "Nó nhẹ, đáng tin cậy và vừa với khoang lái nhỏ.",
+        "without": "Tấm chắn nhỏ thì diện tích hãm nhỏ: 45 m² so với 80 m² của tấm cỡ vừa. Trong không khí loãng của Sao Hỏa, tàu rơi nhanh hơn và động cơ phải hãm mạnh hơn.",
+        "inside": "Nhiều lớp sợi thủy tinh tẩm nhựa đắp trên một tấm đế chắc chắn. Khi khí nóng đập vào, nhựa cháy thành than và thoát khí, than mòn dần mang nhiệt đi, nên khoang lái phía sau vẫn mát.",
+        "analogy": "Giống chiếc ô nhỏ: vẫn che mưa được, nhưng hứng ít gió hơn.",
+        "pros": [
+          "Nhẹ",
+          "Đáng tin cậy"
+        ],
+        "cons": [
+          "Diện tích cản khi vào khí quyển 45 m², so với 80 m² của tấm cỡ vừa: động cơ phải hãm mạnh hơn ở Sao Hỏa"
+        ],
+        "real": "Tấm chắn nhiệt bay quỹ đạo của Mercury: rộng 1,89 m, vật liệu cháy mòn từ sợi thủy tinh và nhựa phenolic",
+        "name": "Tấm chắn nhiệt cháy mòn, cỡ nhỏ"
+      }
+    },
+    "part:crew_trunk_m": {
+      "en": {
+        "what": "A hollow section under the capsule. Solar cells cover one side of its skin and radiators the other. It joins the capsule to the stage below.",
+        "why": "It gives 1.5 kW of solar power and a place to clamp more equipment. Crew Dragon flies with one.",
+        "without": "Without it, power must come from somewhere else. It weighs 650 kg and adds side area high on the ship.",
+        "inside": "It holds no air: it is a stiff shell with cables, solar cells and radiator pipes. On Dragon, small fins on it keep the capsule flying straight during an abort.",
+        "analogy": "Like a trailer behind a camper van, carrying the solar panels and the spare gear."
+      },
+      "vi": {
+        "what": "Một khúc rỗng nằm dưới khoang lái. Một mặt vỏ phủ pin mặt trời, mặt kia là tấm tản nhiệt. Nó nối khoang lái với tầng bên dưới.",
+        "why": "Nó cho 1,5 kW điện mặt trời và một chỗ để gắn thêm thiết bị. Tàu Crew Dragon bay với một khoang như thế (trunk).",
+        "without": "Không có nó, điện phải lấy từ nơi khác. Nó nặng 650 kg và thêm mặt hông ở trên cao của tàu.",
+        "inside": "Bên trong không có không khí: đó là một lớp vỏ cứng chứa cáp điện, pin mặt trời và ống dẫn của tấm tản nhiệt. Trên tàu Dragon, những vây nhỏ trên nó giữ khoang lái bay thẳng khi thoát hiểm.",
+        "analogy": "Giống chiếc rơ-moóc kéo sau xe cắm trại, chở tấm pin mặt trời và đồ dự phòng.",
+        "pros": [
+          "1,5 kW điện mặt trời",
+          "Có chỗ gắn thêm thiết bị"
+        ],
+        "cons": [
+          "650 kg",
+          "Thêm mặt hông ở trên cao của tàu"
+        ],
+        "real": "Khoang phía sau (trunk) của Crew Dragon: pin mặt trời gắn trên vỏ, tấm tản nhiệt và vây dùng khi thoát hiểm; bị vứt bỏ trước khi trở về khí quyển",
+        "name": "Khoang phía sau không điều áp"
+      }
+    },
+    "part:chute_cluster_3": {
+      "en": {
+        "what": "Three big main parachutes that open together. If one fails, the other two still land the ship safely.",
+        "why": "Crewed capsules always hang under several chutes. On Apollo 15 one main collapsed, and the capsule landed safely on the other two.",
+        "without": "With one chute, a single failure is fatal. This pack weighs 210 kg and opens lower and slower than the supersonic chute.",
+        "inside": "Three canopies are packed side by side in separate bags, and pilot chutes pull them out together. At first a reefing line holds each one partly closed. Small cutters then release it, which keeps the jerk gentle.",
+        "analogy": "Like carrying three umbrellas in a storm: if the wind breaks one, you still stay dry."
+      },
+      "vi": {
+        "what": "Ba dù chính (main parachute) lớn mở cùng lúc. Nếu một chiếc hỏng, hai chiếc còn lại vẫn đưa tàu xuống an toàn.",
+        "why": "Khoang lái chở người luôn treo dưới nhiều dù. Trên chuyến Apollo 15, một dù chính bị xẹp, và khoang lái vẫn hạ xuống an toàn bằng hai chiếc còn lại.",
+        "without": "Chỉ có một dù thì một lần hỏng là chết người. Cụm dù này nặng 210 kg, mở thấp hơn và chậm hơn dù siêu thanh.",
+        "inside": "Ba tán dù được gấp cạnh nhau trong ba túi riêng, và các dù dẫn kéo cả ba ra cùng lúc. Lúc đầu, một sợi dây thắt (reefing line) giữ mỗi tán khép bớt. Sau đó các dao cắt nhỏ thả nó ra, nhờ vậy cú giật nhẹ hơn.",
+        "analogy": "Giống mang theo ba chiếc ô trong cơn bão: gió làm gãy một chiếc thì bạn vẫn khô.",
+        "pros": [
+          "Lực cản gấp đôi một dù siêu thanh",
+          "Hạ cánh được chỉ với hai trong ba dù"
+        ],
+        "cons": [
+          "210 kg",
+          "Mở thấp hơn và chậm hơn dù siêu thanh"
+        ],
+        "real": "Apollo: 3 × dù ringsail 83,5 ft (25,5 m); Orion: 3 × 116 ft (35 m); Crew Dragon: 4 dù chính",
+        "name": "Cụm dù chính"
+      }
+    },
+    "part:abort_pusher_pod": {
+      "en": {
+        "what": "A pod with two powerful engines built into the capsule wall. In an emergency they light within a fraction of a second and push the capsule away from the rocket. A set is four pods.",
+        "why": "Nothing is thrown away on a good flight, and the same propellant can be used for steering. Crew Dragon flies eight SuperDraco engines this way. Ship reliability up to +2.5 % for the set.",
+        "without": "Without an escape system, a launch failure has no way out. Pods and a tower together are no safer than the better of the two: the bonus counts once.",
+        "inside": "Each pod holds two engines whose chambers are printed in one piece of metal. Two liquids that burst into flame on contact feed them through fast valves, so they reach full thrust in a fraction of a second.",
+        "analogy": "Like a jet pack built into the cabin walls."
+      },
+      "vi": {
+        "what": "Một khối chứa hai động cơ mạnh gắn liền vào vách khoang lái. Khi khẩn cấp, chúng khởi động trong chưa tới một giây và đẩy khoang lái ra khỏi tên lửa. Một bộ gồm bốn khối.",
+        "why": "Khi chuyến bay suôn sẻ, không có gì bị vứt đi, và cùng nguồn nhiên liệu ấy còn dùng để lái. Tàu Crew Dragon mang tám động cơ SuperDraco theo cách này. Cả bộ tăng độ tin cậy của tàu tới +2,5 %.",
+        "without": "Không có hệ thống thoát hiểm, phóng hỏng là không có lối thoát. Gắn cả bộ động cơ đẩy thoát hiểm lẫn tháp thì cũng không an toàn hơn loại tốt hơn trong hai: phần thưởng chỉ tính một lần.",
+        "inside": "Mỗi khối chứa hai động cơ có buồng đốt được in liền một khối kim loại. Hai chất lỏng tự bốc cháy khi gặp nhau được cấp qua các van đóng mở nhanh, nên động cơ đạt hết lực đẩy chỉ trong chưa tới một giây.",
+        "analogy": "Giống ba lô phản lực gắn sẵn vào vách khoang.",
+        "pros": [
+          "Không có gì phải vứt bỏ",
+          "Hoạt động từ bệ phóng tới quỹ đạo",
+          "Cả bộ tăng độ tin cậy của tàu tới +2,5 % (phần thưởng toàn tàu tối đa 6 %)"
+        ],
+        "cons": [
+          "Mỗi khối 130 kg, một bộ có bốn khối",
+          "Nhiên liệu tự cháy (hypergolic) độc",
+          "Chỉ tính một lần nếu có cả tháp thoát hiểm: chọn một hệ thống thoát hiểm thôi"
+        ],
+        "real": "SuperDraco: 71 kN (16.000 lbf), buồng đốt Inconel in 3D, 8 chiếc trên mỗi Crew Dragon trong 4 khối; Starliner: 4 động cơ thoát hiểm RS-88, mỗi chiếc 40.000 lbf (180 kN)",
+        "name": "Khối động cơ thoát hiểm"
+      }
+    },
+    "part:lioh_canisters": {
+      "en": {
+        "what": "Cartridges of lithium hydroxide that soak up the carbon dioxide the crew breathes out. A fan blows the cabin air through them.",
+        "why": "They are cheap and simple, and they need no power.",
+        "without": "They get used up: a cartridge lasts about twelve hours, so a supply lasts weeks, not months. Apollo 13's crew had to tape square cartridges into round sockets to stay alive.",
+        "inside": "The lithium hydroxide reacts with the carbon dioxide and becomes lithium carbonate and water. A full cartridge cannot be reused.",
+        "analogy": "Like a paper towel: it soaks up a spill once, then goes in the bin."
+      },
+      "vi": {
+        "what": "Những hộp lithi hydroxit (LiOH) hút khí cacbonic mà phi hành đoàn thở ra. Quạt thổi không khí trong khoang qua chúng.",
+        "why": "Chúng rẻ, đơn giản và không cần điện.",
+        "without": "Chúng dùng xong là hết: mỗi hộp dùng được khoảng mười hai giờ, nên cả kho chỉ đủ vài tuần chứ không phải vài tháng. Phi hành đoàn Apollo 13 đã phải dán băng keo để lắp hộp vuông vào khe tròn mà sống sót.",
+        "inside": "Lithi hydroxit phản ứng với khí cacbonic, biến thành lithi cacbonat và nước. Hộp đã đầy thì không dùng lại được.",
+        "analogy": "Giống tờ giấy lau bếp: thấm vết đổ một lần rồi bỏ vào thùng rác.",
+        "pros": [
+          "Rẻ và đơn giản",
+          "Không cần điện"
+        ],
+        "cons": [
+          "Dùng là hết: đủ cho vài tuần, không phải vài tháng"
+        ],
+        "real": "Hộp LiOH của khoang chỉ huy Apollo (hình vuông; của tàu đổ bộ Mặt Trăng thì tròn); vẫn là thiết bị dự phòng trên ISS",
+        "name": "Hộp lọc LiOH"
+      }
+    },
+    "slot:capsule/computer": {
+      "en": {
+        "what": "The computer that flies the ship, and how many copies of it there are. If the only computer fails, the crew must fly by hand."
+      },
+      "vi": {
+        "what": "Máy tính bay (flight computer) lái con tàu, và có bao nhiêu bản sao của nó. Nếu chiếc máy tính duy nhất hỏng, phi hành đoàn phải lái bằng tay.",
+        "name": "Máy tính bay"
+      }
+    },
+    "option:capsule/computer/single": {
+      "en": {
+        "what": "One computer: cheap and light, with no backup."
+      },
+      "vi": {
+        "what": "Một máy tính duy nhất: rẻ và nhẹ, không có dự phòng.",
+        "name": "Một máy tính"
+      }
+    },
+    "option:capsule/computer/triple": {
+      "en": {
+        "what": "Three computers check each other and vote on every command, so one can fail without anyone noticing."
+      },
+      "vi": {
+        "what": "Ba máy tính kiểm tra lẫn nhau và bỏ phiếu cho từng lệnh, nên một chiếc hỏng cũng không ai nhận ra.",
+        "name": "Ba máy tính bỏ phiếu"
+      }
+    },
+    "option:capsule/computer/quad": {
+      "en": {
+        "what": "Four identical computers plus a fifth running different software, as on the Space Shuttle, so even a bug they all share cannot stop the ship."
+      },
+      "vi": {
+        "what": "Bốn máy tính giống hệt nhau cộng một máy thứ năm chạy phần mềm khác, như trên tàu con thoi, để ngay cả một lỗi phần mềm chung của cả bốn cũng không làm tàu tê liệt.",
+        "name": "Bốn máy cộng một dự phòng"
+      }
+    },
+    "slot:capsule/lifeSupport": {
+      "en": {
+        "what": "How the cabin gets fresh air and water: used once from stores, or cleaned and used again."
+      },
+      "vi": {
+        "what": "Hệ thống duy trì sự sống (life support) cấp không khí và nước sạch cho khoang: dùng một lần từ kho dự trữ, hay làm sạch rồi dùng lại.",
+        "name": "Hệ thống duy trì sự sống"
+      }
+    },
+    "option:capsule/lifeSupport/open": {
+      "en": {
+        "what": "Oxygen from tanks, carbon dioxide into canisters, water from bags: simple, and it lasts only as long as the stores."
+      },
+      "vi": {
+        "what": "Oxy lấy từ bình, khí cacbonic hút vào hộp lọc, nước lấy từ túi: đơn giản, và chỉ dùng được tới khi kho cạn.",
+        "name": "Vòng hở"
+      }
+    },
+    "option:capsule/lifeSupport/regenerative": {
+      "en": {
+        "what": "Water is split to make oxygen, and carbon dioxide is cleaned out and recycled, as on the ISS: heavier, but it runs for months."
+      },
+      "vi": {
+        "what": "Nước được tách ra để lấy oxy, khí cacbonic được lọc và tái chế, như trên Trạm Vũ trụ Quốc tế: nặng hơn, nhưng chạy được nhiều tháng.",
+        "name": "Vòng tái sinh"
+      }
+    },
+    "slot:capsule/couches": {
+      "en": {
+        "what": "The seats the crew lie in through launch and landing, when the forces are strongest."
+      },
+      "vi": {
+        "what": "Ghế (couch) phi hành đoàn nằm khi phóng và khi hạ cánh, lúc lực tác động mạnh nhất.",
+        "name": "Ghế phi hành đoàn"
+      }
+    },
+    "option:capsule/couches/fixed": {
+      "en": {
+        "what": "Padded seats bolted to the floor: light, but the crew feels a hard landing in full."
+      },
+      "vi": {
+        "what": "Ghế có đệm bắt chặt vào sàn: nhẹ, nhưng phi hành đoàn chịu trọn cú hạ cánh mạnh.",
+        "name": "Ghế cố định"
+      }
+    },
+    "option:capsule/couches/shock": {
+      "en": {
+        "what": "Seats hung on struts that crush to soak up a hard landing, like Apollo's and Orion's."
+      },
+      "vi": {
+        "what": "Ghế treo trên các thanh chống có thể bẹp lại để đỡ cú hạ cánh mạnh, giống ghế của Apollo và Orion.",
+        "name": "Ghế giảm chấn"
+      }
+    },
+    "option:capsule/couches/ejection": {
+      "en": {
+        "what": "Each seat is a small rocket that throws its astronaut clear and opens a parachute: an escape with no tower, but only when low and slow."
+      },
+      "vi": {
+        "what": "Mỗi ghế là một tên lửa nhỏ, phóng phi hành gia ra ngoài rồi bung dù: một lối thoát không cần tháp, nhưng chỉ dùng được khi còn thấp và chậm.",
+        "name": "Ghế phóng thoát hiểm"
+      }
+    },
+    "slot:capsule/windows": {
+      "en": {
+        "what": "How much of the cabin wall is glass."
+      },
+      "vi": {
+        "what": "Bao nhiêu phần vách khoang lái là cửa sổ (window) kính.",
+        "name": "Cửa sổ"
+      }
+    },
+    "option:capsule/windows/small": {
+      "en": {
+        "what": "Two small panes of fused silica glass: the strongest wall, with little view."
+      },
+      "vi": {
+        "what": "Hai ô kính nhỏ bằng thạch anh nung chảy: vách chắc nhất, nhưng nhìn được ít.",
+        "name": "Ô cửa nhỏ"
+      }
+    },
+    "option:capsule/windows/panoramic": {
+      "en": {
+        "what": "Big triple-pane windows: the view of a lifetime, and a heavier, weaker wall."
+      },
+      "vi": {
+        "what": "Cửa sổ lớn ba lớp kính: khung cảnh đáng nhớ suốt đời, đổi lại vách nặng hơn và yếu hơn.",
+        "name": "Cửa sổ toàn cảnh"
+      }
+    },
+    "slot:capsule/hatch": {
+      "en": {
+        "what": "The door, and which way it opens."
+      },
+      "vi": {
+        "what": "Cửa ra vào (hatch), và nó mở về phía nào.",
+        "name": "Cửa ra vào"
+      }
+    },
+    "option:capsule/hatch/outward": {
+      "en": {
+        "what": "Opens outward in seconds, even against the cabin pressure: the rule since the Apollo 1 fire in 1967."
+      },
+      "vi": {
+        "what": "Mở ra ngoài trong vài giây, kể cả khi áp suất trong khoang đang ép vào: đây là quy tắc từ sau vụ cháy Apollo 1 năm 1967.",
+        "name": "Mở ra ngoài, nhả nhanh"
+      }
+    },
+    "option:capsule/hatch/inward": {
+      "en": {
+        "what": "Cabin pressure pushes it tighter shut, so it cannot be opened in a hurry: the Apollo 1 crew died behind one."
+      },
+      "vi": {
+        "what": "Áp suất trong khoang ép nó đóng chặt hơn, nên không mở vội được: phi hành đoàn Apollo 1 đã thiệt mạng sau một cánh cửa như thế.",
+        "name": "Cửa nút mở vào trong"
+      }
+    },
+    "slot:fairing/split": {
+      "en": {
+        "what": "How the nose cover comes apart once the air is thin."
+      },
+      "vi": {
+        "what": "Vỏ chụp mũi (fairing) tách ra thế nào khi không khí đã loãng.",
+        "name": "Cách tách"
+      }
+    },
+    "option:fairing/split/bisector": {
+      "en": {
+        "what": "It splits down the middle into two halves that swing away on hinges."
+      },
+      "vi": {
+        "what": "Nó tách đôi ở giữa thành hai nửa, xoay ra ngoài trên bản lề.",
+        "name": "Hai nửa"
+      }
+    },
+    "option:fairing/split/trisector": {
+      "en": {
+        "what": "Three lighter petals, each with its own pushers: 5 % lighter, with more mechanisms to fail."
+      },
+      "vi": {
+        "what": "Ba cánh nhẹ hơn, mỗi cánh có bộ đẩy riêng: nhẹ hơn 5 %, nhưng thêm nhiều cơ cấu có thể hỏng.",
+        "name": "Ba cánh"
+      }
+    },
+    "slot:fairing/acoustic": {
+      "en": {
+        "what": "Padding against the roar of liftoff, which can shake equipment apart."
+      },
+      "vi": {
+        "what": "Lớp đệm tiêu âm (acoustic blanket) chống tiếng gầm lúc rời bệ, thứ có thể rung rời thiết bị.",
+        "name": "Chăn tiêu âm"
+      }
+    },
+    "option:fairing/acoustic/none": {
+      "en": {
+        "what": "Bare skin: the lightest, but at liftoff the inside is about 140 decibels, as loud as standing near a jet engine."
+      },
+      "vi": {
+        "what": "Vỏ trần: nhẹ nhất, nhưng lúc rời bệ bên trong ồn khoảng 140 đề-xi-ben, to như đứng gần động cơ phản lực.",
+        "name": "Không có"
+      }
+    },
+    "option:fairing/acoustic/blankets": {
+      "en": {
+        "what": "Foam and fibre panels cut the noise by 10 decibels, leaving a tenth of the sound energy."
+      },
+      "vi": {
+        "what": "Tấm xốp và sợi giảm tiếng ồn 10 đề-xi-ben, tức năng lượng âm thanh chỉ còn một phần mười.",
+        "name": "Chăn tiêu âm"
+      }
+    },
+    "slot:fairing/pushers": {
+      "en": {
+        "what": "What throws the pieces of the cover clear."
+      },
+      "vi": {
+        "what": "Thứ đẩy các mảnh vỏ chụp văng ra xa.",
+        "name": "Cơ cấu nhả"
+      }
+    },
+    "option:fairing/pushers/pyro": {
+      "en": {
+        "what": "Explosive bolts and a cutting cord: proven, but the sudden bang shakes the payload."
+      },
+      "vi": {
+        "what": "Bu-lông nổ và dây cắt bằng thuốc nổ (pyrotechnic): đã được kiểm chứng, nhưng tiếng nổ đột ngột làm rung tải trọng.",
+        "name": "Thuốc nổ"
+      }
+    },
+    "option:fairing/pushers/pneumatic": {
+      "en": {
+        "what": "Gas pistons push the halves away gently, as on Falcon 9."
+      },
+      "vi": {
+        "what": "Pít-tông khí đẩy hai nửa ra nhẹ nhàng, như trên Falcon 9.",
+        "name": "Pít-tông khí"
+      }
+    },
+    "slot:shield/thickness": {
+      "en": {
+        "what": "How thick the heat-blocking layer is."
+      },
+      "vi": {
+        "what": "Lớp chặn nhiệt của tấm chắn nhiệt (heat shield) dày bao nhiêu.",
+        "name": "Độ dày lớp chắn nhiệt"
+      }
+    },
+    "option:shield/thickness/standard": {
+      "en": {
+        "what": "Sized for one entry, with a safety margin."
+      },
+      "vi": {
+        "what": "Đủ cho một lần vào khí quyển, có chừa biên an toàn.",
+        "name": "Tiêu chuẩn"
+      }
+    },
+    "option:shield/thickness/thick": {
+      "en": {
+        "what": "A quarter more material for a steep or very fast entry: safer and heavier."
+      },
+      "vi": {
+        "what": "Thêm một phần tư vật liệu cho lần vào khí quyển dốc hoặc rất nhanh: an toàn hơn và nặng hơn.",
+        "name": "Dày"
+      }
+    },
+    "slot:shield/gaps": {
+      "en": {
+        "what": "How the blocks of the shield are joined."
+      },
+      "vi": {
+        "what": "Các khối của tấm chắn nhiệt (heat shield) được ghép với nhau thế nào.",
+        "name": "Đường nối"
+      }
+    },
+    "option:shield/gaps/filler": {
+      "en": {
+        "what": "Blocks with a soft filler between them: standard, but a filler that sticks out can stir up the hot flow."
+      },
+      "vi": {
+        "what": "Các khối có chất trám mềm ở giữa: kiểu tiêu chuẩn, nhưng chất trám nhô ra có thể khuấy động luồng khí nóng.",
+        "name": "Chất trám khe"
+      }
+    },
+    "option:shield/gaps/monolithic": {
+      "en": {
+        "what": "The whole shield made as one piece: no seams, but harder to make and more expensive."
+      },
+      "vi": {
+        "what": "Cả tấm chắn làm thành một khối: không có đường nối, nhưng khó làm và đắt hơn.",
+        "name": "Một khối"
+      }
+    },
+    "slot:chute/canopy": {
+      "en": {
+        "what": "The shape of the parachute cloth, which decides how fast it can open and how hard it pulls."
+      },
+      "vi": {
+        "what": "Hình dạng tán dù (canopy), quyết định dù mở được ở tốc độ nào và níu mạnh tới đâu.",
+        "name": "Tán dù"
+      }
+    },
+    "option:chute/canopy/dgb": {
+      "en": {
+        "what": "Disk-gap-band, the Mars standard: a disk, a gap, then a band of cloth, so it opens faster than sound without tearing."
+      },
+      "vi": {
+        "what": "Kiểu đĩa-khe-dải (disk-gap-band), chuẩn cho Sao Hỏa: một đĩa vải, một khe hở, rồi một dải vải, nên mở được khi còn nhanh hơn âm thanh mà không rách.",
+        "name": "Đĩa-khe-dải"
+      }
+    },
+    "option:chute/canopy/ringsail": {
+      "en": {
+        "what": "Rings of sailcloth with slots between them: 15 % more drag, but it must open lower and slower."
+      },
+      "vi": {
+        "what": "Các vòng vải buồm có khe hở ở giữa: lực cản nhiều hơn 15 %, nhưng phải mở ở thấp hơn và chậm hơn.",
+        "name": "Vòng buồm (ringsail)"
+      }
+    },
+    "option:chute/canopy/ribbon": {
+      "en": {
+        "what": "Bands of tape with gaps let air leak through, so it survives opening at high speed, with 20 % less drag."
+      },
+      "vi": {
+        "what": "Những dải băng vải có khe hở cho không khí lọt qua, nên chịu được cú mở ở tốc độ cao, đổi lại lực cản ít hơn 20 %.",
+        "name": "Dải băng hình nón"
+      }
+    },
+    "slot:chute/reefing": {
+      "en": {
+        "what": "Whether the parachute opens all at once or in steps."
+      },
+      "vi": {
+        "what": "Dù mở bung một lần hay mở từng nấc (reefing).",
+        "name": "Mở từng nấc"
+      }
+    },
+    "option:chute/reefing/none": {
+      "en": {
+        "what": "Full open: one hard jerk that can tear a weak chute."
+      },
+      "vi": {
+        "what": "Mở hết một lần: một cú giật mạnh có thể xé rách dù yếu.",
+        "name": "Mở hết một lần"
+      }
+    },
+    "option:chute/reefing/staged": {
+      "en": {
+        "what": "A cord holds the canopy partly closed, then small cutters release it in steps, halving the hardest pull."
+      },
+      "vi": {
+        "what": "Một sợi dây giữ tán dù khép bớt, rồi các dao cắt nhỏ thả nó ra từng nấc, giảm một nửa cú giật mạnh nhất.",
+        "name": "Mở theo nấc"
+      }
+    },
+    "slot:ablative_shield/thickness": {
+      "en": {
+        "what": "How much material there is to burn away before the heat reaches the capsule."
+      },
+      "vi": {
+        "what": "Có bao nhiêu vật liệu để cháy mòn trước khi sức nóng chạm tới khoang lái.",
+        "name": "Độ dày lớp cháy mòn"
+      }
+    },
+    "option:ablative_shield/thickness/standard": {
+      "en": {
+        "what": "Sized for one entry, with a safety margin."
+      },
+      "vi": {
+        "what": "Đủ cho một lần vào khí quyển, có chừa biên an toàn.",
+        "name": "Tiêu chuẩn"
+      }
+    },
+    "option:ablative_shield/thickness/thick": {
+      "en": {
+        "what": "A quarter more ablator for a steep or very fast entry, such as Stardust's at 12.9 km/s: safer and heavier."
+      },
+      "vi": {
+        "what": "Thêm một phần tư vật liệu cháy mòn (ablator) cho lần vào khí quyển dốc hoặc rất nhanh, như tàu Stardust ở 12,9 km/s: an toàn hơn và nặng hơn.",
+        "name": "Dày"
+      }
+    },
+    "slot:ablative_shield/gaps": {
+      "en": {
+        "what": "How the blocks of the shield are joined."
+      },
+      "vi": {
+        "what": "Các khối của tấm chắn nhiệt (heat shield) được ghép với nhau thế nào.",
+        "name": "Đường nối"
+      }
+    },
+    "option:ablative_shield/gaps/filler": {
+      "en": {
+        "what": "Blocks with a soft filler between them, as on Orion since Artemis I: standard, but a filler that sticks out can stir up the hot flow."
+      },
+      "vi": {
+        "what": "Các khối có chất trám mềm ở giữa, như Orion từ chuyến Artemis I: kiểu tiêu chuẩn, nhưng chất trám nhô ra có thể khuấy động luồng khí nóng.",
+        "name": "Chất trám khe"
+      }
+    },
+    "option:ablative_shield/gaps/monolithic": {
+      "en": {
+        "what": "The whole shield cast as one piece, as on Apollo: no seams, but harder to make and more expensive."
+      },
+      "vi": {
+        "what": "Cả tấm chắn đúc thành một khối, như trên Apollo: không có đường nối, nhưng khó làm và đắt hơn.",
+        "name": "Một khối"
+      }
+    },
+    "slot:ablative_shield/ablator": {
+      "en": {
+        "what": "The material that chars and carries the heat away."
+      },
+      "vi": {
+        "what": "Vật liệu cháy mòn (ablator), thứ cháy thành than và mang nhiệt đi.",
+        "name": "Vật liệu cháy mòn"
+      }
+    },
+    "option:ablative_shield/ablator/avcoat": {
+      "en": {
+        "what": "Silica fibres in epoxy, filled by hand into every cell of a honeycomb, as on Apollo and Orion: proven on the return from the Moon, slow to make."
+      },
+      "vi": {
+        "what": "Sợi silica trong nhựa epoxy, được bơm bằng tay vào từng ô của lõi tổ ong, như trên Apollo và Orion: đã được kiểm chứng khi trở về từ Mặt Trăng, nhưng làm rất lâu.",
+        "name": "Avcoat trong tổ ong"
+      }
+    },
+    "option:ablative_shield/ablator/pica": {
+      "en": {
+        "what": "A light, foam-like block of carbon soaked in resin, the best for the fastest entries: 18 % lighter, but brittle and more expensive."
+      },
+      "vi": {
+        "what": "Một khối carbon nhẹ như xốp, tẩm nhựa, tốt nhất cho những lần vào khí quyển nhanh nhất: nhẹ hơn 18 %, nhưng giòn và đắt hơn.",
+        "name": "PICA (vật liệu cháy mòn carbon)"
+      }
+    },
+    "option:ablative_shield/ablator/sla": {
+      "en": {
+        "what": "Cork and silica in a honeycomb, as on Viking and the Mars rovers: light and cheap, fine for Mars, too weak for the fast return to Earth."
+      },
+      "vi": {
+        "what": "Bần và silica trong lõi tổ ong, như trên tàu Viking và các xe tự hành Sao Hỏa: nhẹ và rẻ, đủ dùng ở Sao Hỏa, nhưng quá yếu cho chuyến về Trái Đất tốc độ cao.",
+        "name": "SLA-561V (bần và silica)"
+      }
+    },
+    "slot:escape_tower/motor": {
+      "en": {
+        "what": "The solid motor that pulls the capsule away, and where its flame goes."
+      },
+      "vi": {
+        "what": "Động cơ thoát hiểm (escape motor) nhiên liệu rắn kéo khoang lái ra xa, và lửa của nó phụt về đâu.",
+        "name": "Động cơ thoát hiểm"
+      }
+    },
+    "option:escape_tower/motor/canted": {
+      "en": {
+        "what": "Nozzles at the base of the motor tilt outward so the flame misses the capsule, as on Mercury and Apollo; the tower must be tall."
+      },
+      "vi": {
+        "what": "Vòi phun ở chân động cơ chĩa xiên ra ngoài để lửa không táp vào khoang lái, như Mercury và Apollo; vì thế tháp phải cao.",
+        "name": "Vòi phun xiên ở chân"
+      }
+    },
+    "option:escape_tower/motor/ring": {
+      "en": {
+        "what": "A ring of many small nozzles spreads the push; one can burn through and the others still carry the cabin, as on Soyuz."
+      },
+      "vi": {
+        "what": "Một vòng nhiều vòi phun nhỏ chia đều lực đẩy; một vòi có cháy thủng thì các vòi còn lại vẫn kéo được khoang, như trên Soyuz.",
+        "name": "Vòng vòi phun nhỏ"
+      }
+    },
+    "option:escape_tower/motor/reverse": {
+      "en": {
+        "what": "The gas flows up the motor and turns back out near the top, as on Orion: a shorter tower, with the flame starting far from the capsule."
+      },
+      "vi": {
+        "what": "Khí chạy ngược lên trong động cơ rồi quay đầu thoát ra gần đỉnh, như trên Orion: tháp ngắn hơn, và lửa bắt đầu ở xa khoang lái.",
+        "name": "Động cơ dòng ngược"
+      }
+    },
+    "slot:escape_tower/jettison": {
+      "en": {
+        "what": "How the tower leaves on a good flight, once the air is thin."
+      },
+      "vi": {
+        "what": "Tháp rời đi (jettison) thế nào khi chuyến bay suôn sẻ và không khí đã loãng.",
+        "name": "Vứt tháp"
+      }
+    },
+    "option:escape_tower/jettison/separate": {
+      "en": {
+        "what": "A small motor near the top pulls the tower away a couple of minutes after launch."
+      },
+      "vi": {
+        "what": "Một động cơ nhỏ gần đỉnh kéo tháp đi sau khi phóng chừng hai phút.",
+        "name": "Động cơ vứt tháp riêng"
+      }
+    },
+    "option:escape_tower/jettison/backup": {
+      "en": {
+        "what": "If the jettison motor fails to light, the escape motor fires instead, so the tower always goes."
+      },
+      "vi": {
+        "what": "Nếu động cơ tách tháp không cháy, động cơ thoát hiểm sẽ cháy thay, nên tháp lần nào cũng rời đi.",
+        "name": "Động cơ vứt tháp có dự phòng"
+      }
+    },
+    "option:escape_tower/jettison/shared": {
+      "en": {
+        "what": "The escape motor also throws the tower away: lighter and cheaper, but one failure keeps the tower on."
+      },
+      "vi": {
+        "what": "Chính động cơ thoát hiểm kiêm luôn việc vứt tháp: nhẹ và rẻ hơn, nhưng chỉ một lần hỏng là tháp kẹt lại trên tàu.",
+        "name": "Một động cơ làm cả hai"
+      }
+    },
+    "slot:escape_tower/steering": {
+      "en": {
+        "what": "What keeps the escaping capsule pointing the right way."
+      },
+      "vi": {
+        "what": "Thứ giữ khoang lái đang thoát hiểm hướng đúng chiều.",
+        "name": "Lái sau khi thoát hiểm"
+      }
+    },
+    "option:escape_tower/steering/ballast": {
+      "en": {
+        "what": "A heavy lump in the nose keeps the stack flying straight like a dart; the capsule must turn itself round afterwards."
+      },
+      "vi": {
+        "what": "Một cục nặng (ballast) ở mũi giữ cả khối bay thẳng như phi tiêu; sau đó khoang lái phải tự quay lại.",
+        "name": "Vật dằn ở mũi"
+      }
+    },
+    "option:escape_tower/steering/canards": {
+      "en": {
+        "what": "Two small fins pop open 11 seconds after an abort and flip the capsule heat-shield first before the tower leaves, as on Apollo."
+      },
+      "vi": {
+        "what": "Hai cánh nhỏ bật ra 11 giây sau khi thoát hiểm, lật khoang lái cho tấm chắn nhiệt quay về phía trước rồi tháp mới rời đi, như trên Apollo.",
+        "name": "Cánh canard bật ra"
+      }
+    },
+    "option:escape_tower/steering/acm": {
+      "en": {
+        "what": "A solid gas generator with eight valves around the tower steers the whole escaping stack, even right off the pad, as on Orion."
+      },
+      "vi": {
+        "what": "Một bình tạo khí nhiên liệu rắn với tám van quanh tháp lái cả khối đang thoát hiểm, kể cả ngay trên bệ phóng, như trên Orion.",
+        "name": "Động cơ điều khiển tư thế"
+      }
+    },
+    "slot:abort_pod/chamber": {
+      "en": {
+        "what": "How the two engines in the pod are made."
+      },
+      "vi": {
+        "what": "Buồng đốt (chamber) của hai động cơ trong khối được chế tạo thế nào.",
+        "name": "Buồng đốt"
+      }
+    },
+    "option:abort_pod/chamber/printed": {
+      "en": {
+        "what": "Each chamber is 3D-printed in one piece of nickel superalloy, cooling channels and all: light and quick to make, but hidden pores are hard to find."
+      },
+      "vi": {
+        "what": "Mỗi buồng đốt được in 3D thành một khối hợp kim niken chịu nhiệt, liền cả rãnh làm mát: nhẹ và làm nhanh, nhưng lỗ rỗ ẩn bên trong khó phát hiện.",
+        "name": "Inconel in 3D"
+      }
+    },
+    "option:abort_pod/chamber/machined": {
+      "en": {
+        "what": "Machined from solid forgings and welded: heavier, but every wall and weld can be inspected."
+      },
+      "vi": {
+        "what": "Phay từ phôi rèn đặc rồi hàn lại: nặng hơn, nhưng vách và mối hàn nào cũng kiểm tra được.",
+        "name": "Rèn và phay"
+      }
+    },
+    "slot:abort_pod/propellant": {
+      "en": {
+        "what": "Where the abort engines get their propellant."
+      },
+      "vi": {
+        "what": "Động cơ thoát hiểm lấy nhiên liệu đẩy (propellant) từ đâu.",
+        "name": "Nhiên liệu"
+      }
+    },
+    "option:abort_pod/propellant/shared": {
+      "en": {
+        "what": "From the same tanks as the steering thrusters: no extra tanks, and an unused abort leaves propellant for manoeuvres, but a leaking thruster could drain it."
+      },
+      "vi": {
+        "what": "Dùng chung bồn với các động cơ đẩy nhỏ để lái: không thêm bồn, phần nhiên liệu thoát hiểm không dùng tới còn để điều khiển tàu, nhưng một động cơ đẩy rò rỉ có thể làm cạn nó.",
+        "name": "Dùng chung với động cơ đẩy nhỏ"
+      }
+    },
+    "option:abort_pod/propellant/dedicated": {
+      "en": {
+        "what": "The pod keeps its own small tanks and valves, so nothing else can drain them."
+      },
+      "vi": {
+        "what": "Khối có bồn nhỏ và van riêng, nên không thứ gì khác làm cạn được.",
+        "name": "Bồn và van riêng"
+      }
+    },
+    "shape:nose/mercury": {
+      "en": {
+        "what": "A one-seat capsule under a red escape tower, as on the first American crewed flights (Mercury, 1961–63).",
+        "why": "Light and cheap. The tower can yank the capsule clear if the rocket fails and adds up to 2 % to the ship's reliability. The small heat shield brakes less at Mars, so the engines work harder."
+      },
+      "vi": {
+        "what": "Khoang lái một chỗ dưới tháp thoát hiểm (escape tower) màu đỏ, như các chuyến bay có người đầu tiên của Mỹ (Mercury, 1961–1963).",
+        "why": "Nhẹ và rẻ. Tháp có thể giật khoang lái ra xa nếu tên lửa hỏng, và tăng độ tin cậy của tàu tới 2 %. Tấm chắn nhiệt nhỏ hãm ít hơn ở Sao Hỏa, nên động cơ phải làm việc nhiều hơn."
+      }
+    },
+    "shape:nose/gemini": {
+      "en": {
+        "what": "A capsule whose own narrow nose holds the main parachute and a radar for finding other spacecraft. There is no fairing and no tower (Gemini on Titan II, 1965–66).",
+        "why": "It brings its own main chute and carries no tower. The price is a blunt nose with more drag, and no escape system unless you pick ejection seats inside the cabin."
+      },
+      "vi": {
+        "what": "Một khoang lái (capsule) có phần mũi hẹp riêng chứa dù chính và một radar để tìm tàu vũ trụ khác. Không có vỏ chụp, không có tháp (Gemini trên Titan II, 1965–1966).",
+        "why": "Nó mang sẵn dù chính và không phải chở tháp. Cái giá là mũi tù nên lực cản lớn hơn, và không có hệ thống thoát hiểm trừ khi bạn chọn ghế phóng trong khoang."
+      }
+    },
+    "shape:nose/apollo": {
+      "en": {
+        "what": "A big command module under an escape tower, with a cover over its nose during the climb, as on Apollo (1968–75). Three main chutes and two drogues bring it home.",
+        "why": "The tower adds up to 3 % reliability, the cabin lands safely on two of its three mains, and the big shield makes a gentle entry. It is heavy and tall: its mass costs Δv, and the tall nose moves the point where the air pushes forward."
+      },
+      "vi": {
+        "what": "Khoang chỉ huy lớn dưới tháp thoát hiểm, mũi được trùm một lớp vỏ khi bay lên, như Apollo (1968–1975). Ba dù chính (main parachute) và hai dù mồi đưa nó về nhà.",
+        "why": "Tháp tăng độ tin cậy tới 3 %, khoang lái hạ xuống an toàn chỉ với hai trong ba dù chính, và tấm chắn lớn cho lần vào khí quyển nhẹ nhàng. Nó nặng và cao: khối lượng làm hao Δv, còn chiếc mũi cao kéo điểm gió đẩy lên phía trước."
+      }
+    },
+    "shape:nose/soyuz": {
+      "en": {
+        "what": "A capsule inside a fairing with the escape tower on top, as on Soyuz since 1967. In an abort, the whole front end flies away with the crew.",
+        "why": "This is the escape system that saved the Soyuz T-10a crew from a pad explosion. It adds up to 3 % reliability and gives a smooth, low-drag nose, but it is heavy and tall."
+      },
+      "vi": {
+        "what": "Khoang lái nằm trong vỏ chụp (fairing), trên đỉnh có tháp thoát hiểm, như Soyuz từ năm 1967. Khi thoát hiểm, cả phần đầu tàu bay đi cùng phi hành đoàn.",
+        "why": "Đây là hệ thống thoát hiểm đã cứu phi hành đoàn Soyuz T-10a khỏi vụ nổ trên bệ phóng. Nó tăng độ tin cậy tới 3 % và cho chiếc mũi trơn, ít lực cản, nhưng nặng và cao."
+      }
+    },
+    "shape:nose/big_cabin": {
+      "en": {
+        "what": "A large cabin with its own spare oxygen under the strongest abort tower ever built, as on Orion (Artemis, since 2022).",
+        "why": "Room, spare oxygen, up to 3.5 % more reliability and a gentle entry. It is the heaviest and most expensive nose: its mass costs Δv, and its height moves the point where the air pushes forward."
+      },
+      "vi": {
+        "what": "Khoang lái lớn có sẵn oxy dự phòng, nằm dưới tháp thoát hiểm (abort tower) mạnh nhất từng được chế tạo, như Orion (chương trình Artemis, từ 2022).",
+        "why": "Rộng rãi, có oxy dự phòng, tăng độ tin cậy tới 3,5 % và vào khí quyển nhẹ nhàng. Đây là chiếc mũi nặng và đắt nhất: khối lượng làm hao Δv, còn chiều cao kéo điểm gió đẩy lên phía trước."
+      }
+    },
+    "shape:nose/crew_dragon": {
+      "en": {
+        "what": "A capsule with abort engines in its walls, a hinged cap over the docking port and a trunk with solar cells underneath, as on Crew Dragon (since 2020).",
+        "why": "Nothing is thrown away, the trunk gives solar power, and the abort pods add up to 2.5 % reliability. It is heavy, and the abort engines burn toxic propellant."
+      },
+      "vi": {
+        "what": "Khoang lái có động cơ thoát hiểm gắn trong vách, nắp bản lề che cổng ghép nối, và khoang chở hàng phía sau (trunk) phủ pin mặt trời ở dưới, như Crew Dragon (từ 2020).",
+        "why": "Không có gì bị vứt bỏ, khoang phía sau cho điện mặt trời, và các khối động cơ thoát hiểm tăng độ tin cậy tới 2,5 %. Nó nặng, và động cơ thoát hiểm đốt loại nhiên liệu độc."
+      }
+    },
+    "shape:nose/fairing_capsule": {
+      "en": {
+        "what": "A capsule enclosed in a sharp, pointed shroud with no escape tower, like Vostok on the R-7, which carried Gagarin.",
+        "why": "Low drag and light. With no tower, a launch failure has no way out, and the shroud is mass you carry all the way to Mars."
+      },
+      "vi": {
+        "what": "Khoang lái nằm gọn trong một vỏ chụp (fairing) nhọn, không có tháp thoát hiểm, giống tàu Vostok trên tên lửa R-7 đã đưa Gagarin lên.",
+        "why": "Ít lực cản và nhẹ. Không có tháp thì phóng hỏng là không có lối thoát, và lớp vỏ chụp là khối lượng phải chở theo tới tận Sao Hỏa."
+      }
+    },
+    "shape:nose/bare_capsule": {
+      "en": {
+        "what": "The capsule flies as its own nose: no fairing, no tower, no trunk.",
+        "why": "The lightest and cheapest crew nose. You pay with more drag on the climb and no escape system."
+      },
+      "vi": {
+        "what": "Khoang lái (capsule) tự làm mũi tàu: không vỏ chụp, không tháp, không khoang phía sau.",
+        "why": "Chiếc mũi chở người nhẹ nhất và rẻ nhất. Đổi lại, lực cản khi bay lên lớn hơn và không có hệ thống thoát hiểm."
+      }
+    },
+    "shape:nose/dawn_stack": {
+      "en": {
+        "what": "A fairing over the capsule, as on the Delta II that launched the Dawn probe in 2007. Below the capsule sit a payload fitting, a small solid kick motor and a spin table.",
+        "why": "The kick motor adds two tonnes of propellant, and spinning keeps it pointed with no guidance. But a solid motor has low Isp and burns only once, there is no escape tower, and the tall nose moves the point where the air pushes forward."
+      },
+      "vi": {
+        "what": "Vỏ chụp trùm khoang lái, như tên lửa Delta II đã phóng tàu thăm dò Dawn năm 2007. Dưới khoang lái là khớp gắn tải trọng, một động cơ đẩy cuối (kick motor) nhiên liệu rắn và một bàn xoay.",
+        "why": "Động cơ đẩy cuối thêm hai tấn nhiên liệu, và nhờ được quay nên giữ hướng mà không cần dẫn đường. Nhưng động cơ rắn có Isp thấp và chỉ cháy một lần, không có tháp thoát hiểm, và chiếc mũi cao kéo điểm gió đẩy lên phía trước."
+      }
+    },
+    "row:nose/escape": {
+      "en": {
+        "what": "The escape tower on top: a solid rocket that pulls the crew clear if the launch goes wrong."
+      },
+      "vi": {
+        "what": "Tháp thoát hiểm (escape tower) trên đỉnh: một tên lửa rắn kéo phi hành đoàn ra xa nếu lúc phóng gặp sự cố."
+      }
+    },
+    "row:nose/fairing": {
+      "en": {
+        "what": "The cover over the very top of the ship, which parts the air on the way up."
+      },
+      "vi": {
+        "what": "Vỏ chụp mũi (fairing) trùm đỉnh tàu, rẽ không khí khi bay lên."
+      }
+    },
+    "row:nose/capsule": {
+      "en": {
+        "what": "The cabin where the crew lives and flies the ship."
+      },
+      "vi": {
+        "what": "Khoang lái (capsule), nơi phi hành đoàn sống và lái tàu."
+      }
+    },
+    "row:nose/shield": {
+      "en": {
+        "what": "The heat shield under the capsule, which takes the heat of entry."
+      },
+      "vi": {
+        "what": "Tấm chắn nhiệt (heat shield) dưới khoang lái, chịu sức nóng khi vào khí quyển."
+      }
+    },
+    "row:nose/payload": {
+      "en": {
+        "what": "What sits between the capsule and the body: a trunk, a payload fitting or a small kick motor."
+      },
+      "vi": {
+        "what": "Những gì nằm giữa khoang lái và thân tàu: khoang phía sau (trunk), khớp gắn tải trọng hoặc động cơ đẩy cuối (kick motor) nhỏ."
+      }
+    },
+    "row:nose/abort": {
+      "en": {
+        "what": "Escape engines built into the capsule wall, instead of a tower on top."
+      },
+      "vi": {
+        "what": "Động cơ thoát hiểm (abort engine) gắn vào vách khoang lái, thay cho tháp trên đỉnh."
+      }
+    },
+    "row:nose/recovery": {
+      "en": {
+        "what": "Parachutes for landing, and floats for the splashdown at home."
+      },
+      "vi": {
+        "what": "Dù để hạ cánh, và phao cho lúc rơi xuống biển khi về nhà (recovery)."
+      }
+    },
+    "row:nose/comms": {
+      "en": {
+        "what": "Antennas for talking to Earth and sending your discoveries home."
+      },
+      "vi": {
+        "what": "Ăng-ten (antenna) để liên lạc với Trái Đất và gửi phát hiện của bạn về nhà."
+      }
+    },
+    "row:nose/crew": {
+      "en": {
+        "what": "What keeps the crew alive: spare oxygen, air cleaning, water, cooling and a shelter from solar storms."
+      },
+      "vi": {
+        "what": "Những thứ giữ phi hành đoàn sống sót (life support): oxy dự phòng, lọc không khí, nước, tản nhiệt và hầm trú bão Mặt Trời."
+      }
+    },
+    "row:nose/attitude": {
+      "en": {
+        "what": "What turns and points the ship in space, where fins are useless."
+      },
+      "vi": {
+        "what": "Những thứ xoay và định hướng tàu (attitude control) ngoài không gian, nơi vây vô dụng."
+      }
+    }
+  }
 }
