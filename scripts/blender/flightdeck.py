@@ -1480,15 +1480,21 @@ def build_walls():
         z0, z1, y0, y1 = SIDE_WIN
         wa0, wa1 = sorted((az(z0), az(z1)))
         win = rrect(wa0, wa1, y0, y1, 0.05, 3)
-        strip = [(az(-0.25), -0.02), (az(0.15), -0.28), (az(0.40), -0.28), (az(0.40), 0.0), (az(-0.25), 0.0)]
-        cells = auto_cells(strip, 0.22, 0.14, 0.015, 0.02, seed=3 + side)
-        cells += auto_cells([(az(0.48), -0.25), (az(0.95), -0.25), (az(0.95), 0.55), (az(0.48), 0.55)], 0.26, 0.2, 0.03, 0.02, seed=7 + side)
+        strip = [(az(-0.25), -0.02), (az(0.15), -0.28), (az(0.15), 0.0), (az(-0.25), 0.0)]   # forward of the seat backs only
+        cells = auto_cells(strip, 0.22, 0.14, 0.015, 0.02, seed=3 + side)    # nothing aft of the seats: plain wall there
         # a band of breaker panels forward of the window, on the facet side of the wall, above the console
         with fr:
             items = snap_items(cells, 'wall')
             b.acc.add('clay', slab_geo(outline, [win] + [hole_of(it) for it in items], 0.06))
             place_panels(b, items)
             b.box('glass', wa1 - wa0 + 0.02, y1 - y0 + 0.02, 0.003, (wa0 + wa1) / 2, (y0 + y1) / 2, -0.04, bevel=0)
+            b.cyl('steel', 0.012, 0.50, az(0.70), -0.45, 0.05, axis='y', n=10)                 # grab bar on the plain aft wall
+            for by_ in (-0.66, -0.24):
+                b.cyl('steel', 0.009, 0.05, az(0.70), by_, 0.025, axis='z', n=8)
+            if side < 0:
+                b.rbox('fabric2', 0.30, 0.26, 0.09, az(0.45), -0.55, 0.045, 0.02, segs=2)      # strapped stowage bag
+                for dz in (-0.07, 0.07):
+                    b.box('seatframe', 0.03, 0.28, 0.094, az(0.45) + dz, -0.55, 0.047, bevel=0.003)
 
 def build_ceiling():
     b = O('ceiling')
