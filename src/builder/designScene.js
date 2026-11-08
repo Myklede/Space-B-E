@@ -199,7 +199,7 @@ export function createDesignScene() {
     for (const e of layout) {
       const art = partArt(e);
       art.traverse((o) => { if (o.isMesh) { o.castShadow = true; o.receiveShadow = true; } });
-      if (wantsNasaArt(e.type) && !art.userData.nasa && !art.userData.cluster) missingArt.push(e.type);
+      if (wantsNasaArt(e.type) && !art.userData.nasa) missingArt.push(e.type); // clustered engines too (wantsNasaArt is false once loaded)
       let holder = art;
       if (e.attach === 'radial') holder = mountRadial(art, e, layout);
       else art.position.y = e.y;
