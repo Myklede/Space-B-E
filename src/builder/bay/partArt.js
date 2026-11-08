@@ -124,7 +124,8 @@ export function partArt(entry) {
   // a big cluster (Super Heavy's 33) draws the engine's low-detail model when it has one (model.lod)
   const lod = (c.count ?? 1) > 9 ? nasaPartArt(`${entry.type}#lod`) : null;
   for (const [fx, fz] of spots) {
-    const one = lod ? lod.clone(true) : singleArt(entry);
+    const lodCopy = lod ? lod.clone(true) : null;
+    const one = lodCopy ? (SECTION_ART[entry.def?.section]?.wrapModel?.(lodCopy, entry) ?? lodCopy) : singleArt(entry); // the section sizes it like the full model
     one.scale.multiplyScalar(s);
     one.position.set(fx * r, entry.height * (1 - s), fz * r);
     g.add(one);
