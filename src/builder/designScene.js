@@ -218,6 +218,13 @@ export function createDesignScene() {
     hiddenClosed = new Set([...hullInfo.insideIds, ...hullInfo.coveredIds]);
     holders = new Map();
     for (const e of layout) if (e.inside && e.bayPart && ['part', 'dry', 'cabin', 'skirt'].includes(e.bay)) holders.set(e.bayPart, new Set([...(holders.get(e.bayPart) ?? []), e.def.section]));
+    // a cover that hangs over the part below it (model.encloses: Orion's abort-system fairing over the crew module) turns
+    // see-through with that part's card open, like a wall with equipment inside
+    for (const e of layout) {
+      const enc = e.def.model?.encloses;
+      const below = enc && layout.find((x) => x.id === e.parentId && x.type === enc) || (enc && layout.find((x) => x.parentId === e.id && x.type === enc));
+      if (below) holders.set(e.id, new Set([...(holders.get(e.id) ?? []), below.def.section]));
+    }
     if (selected && !parts.has(selected)) selected = null;
     explodedFor = null;
     rebuildPieces();

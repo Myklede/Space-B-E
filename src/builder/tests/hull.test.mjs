@@ -243,7 +243,7 @@ check(maxMass < 1000, `heaviest default skin ${maxMass.toFixed(0)} kg (${maxMass
   const fairing = hull.segments.find((s) => s.kind === 'fairing');
   const byType = (t) => lay.find((e) => e.type === t);
   const covered = new Set(hull.coveredIds);
-  check(!!fairing && fairing.section === 'nose' && Math.abs(fairing.y1 - byType('nose_pointed_m').y) < EPS && Math.abs(fairing.y0 - byType('spin_table_clamp').y) < EPS, 'Dawn nose: one payload fairing from the nose cone down past the spin table');
+  check(!!fairing && fairing.section === 'nose' && Math.abs(fairing.y1 - byType('nose_biconic_m').y) < EPS && Math.abs(fairing.y0 - byType('spin_table_clamp').y) < EPS, 'Dawn nose: one payload fairing from the nose cone down past the spin table');
   check(['capsule_m', 'heat_shield_m', 'paf_m', 'kick_motor_s', 'spin_table_clamp'].every((t) => covered.has(byType(t).id)), 'Dawn nose: capsule, heat shield, payload adapter, kick motor and spin table ride inside it');
   check(lay.filter((e) => e.def.section === 'nose' && e.attach === 'radial').every((e) => e.inside), 'Dawn nose: everything clamped to the capsule rides inside the fairing, antennas included');
   check(H.hullHasSkin(lay, 'nose') && !H.hullHasSkin([], 'nose'), 'hullHasSkin: the Dawn nose has skin, an empty stand has none');

@@ -2199,13 +2199,13 @@
     },
     "shape:nose/fairing_capsule": {
       "en": {
-        "what": "The nose of Vostok, the ship that carried Yuri Gagarin in 1961: a steel ball for one under a pointed shroud, on a double-cone instrument module.",
+        "what": "The nose of Vostok, the ship that carried Yuri Gagarin in 1961: a metal sphere for one under a pointed shroud, on a double-cone instrument module.",
         "why": "The ball is its own heat shield and is stable at any angle, so the nose is light and simple. There is no escape tower: only the ejection seat, and the fall home is steep and hard."
       },
       "vi": {
-        "what": "Phần mũi của Vostok, con tàu đã chở Yuri Gagarin năm 1961: một quả cầu thép cho một người dưới vỏ chụp nhọn, đặt trên khoang thiết bị hình nón đôi.",
+        "what": "Phần mũi của Vostok, con tàu đã chở Yuri Gagarin năm 1961: một quả cầu kim loại cho một người dưới vỏ chụp nhọn, đặt trên khoang thiết bị hình nón đôi.",
         "why": "Quả cầu tự là tấm chắn nhiệt và ổn định ở mọi góc, nên phần mũi nhẹ và đơn giản. Không có tháp thoát hiểm: chỉ có ghế phóng, và lần rơi về thì dốc và mạnh.",
-        "name": "Quả cầu thép dưới vỏ chụp"
+        "name": "Quả cầu kim loại dưới vỏ chụp"
       }
     },
     "shape:nose/bare_capsule": {
@@ -3233,7 +3233,7 @@
     },
     "part:capsule_vostok": {
       "en": {
-        "what": "A steel ball 2.25 m across for one person, coated all over with a layer that chars away in the heat. It is the cabin and the heat shield in one.",
+        "what": "A metal sphere 2.3 m across for one person, coated all over with a layer that chars away in the heat. It is the cabin and the heat shield in one.",
         "why": "A ball has no wrong way round, so it needs no steering on the way home. Its heavy side sits low, so it always settles the same way as it falls.",
         "without": "Without a capsule there is no crew and no launch. Compared with a cone, the ball cannot glide: it drops steeply and the crew feels about 8 to 9 g.",
         "inside": "A sealed metal sphere with a seat on rails, a control panel, two small windows and a periscope-like sight at the feet. The outside is covered in ablator, thickest on the side that faces the air.",
@@ -3241,7 +3241,7 @@
       },
       "vi": {
         "name": "Quả cầu Vostok",
-        "what": "Một quả cầu thép rộng 2,25 m cho một người, được phủ kín bằng một lớp vật liệu cháy thành than khi gặp nóng (ablator). Nó vừa là khoang lái vừa là tấm chắn nhiệt.",
+        "what": "Một quả cầu kim loại rộng 2,3 m cho một người, được phủ kín bằng một lớp vật liệu cháy thành than khi gặp nóng (ablator). Nó vừa là khoang lái vừa là tấm chắn nhiệt.",
         "why": "Quả cầu không có mặt nào là \"sai\", nên không cần lái lúc trở về. Phần nặng nằm ở dưới, nên lúc rơi nó luôn tự xoay về cùng một hướng.",
         "without": "Không có khoang lái thì không có phi hành đoàn và không được phóng. So với hình nón, quả cầu không lượn được: nó rơi dốc và phi hành gia chịu khoảng 8 đến 9 g.",
         "inside": "Một quả cầu kim loại kín, bên trong có ghế trượt trên ray, bảng điều khiển, hai cửa sổ nhỏ và một ống ngắm ở dưới chân. Bên ngoài phủ ablator, dày nhất ở mặt hứng gió.",

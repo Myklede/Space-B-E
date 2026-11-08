@@ -19,8 +19,8 @@
   (tiles, `fragileShield`). They are listed in the capsule row (first matching row).
 - Cargo craft (progress, cygnus, htv, atv) keep the generic Mk1 capsule: their hold rides on its nose like Soyuz's orbital
   module. Each shape says the real craft carried no crew (lead decision, review pass 1).
-- Two shapes are pinned by hull.test: dawn_stack keeps `nose_pointed_m`, and big_cabin keeps `las_orion` as a tower (no
-  fairing on an S-IVB).
+- hull.test pins two shapes: dawn_stack flies the aluminium 9.5-ft Delta II fairing (`nose_biconic_m`, review pass 2;
+  the test checks its fairing reaches the spin table), and big_cabin keeps `las_orion` as a tower (no fairing on an S-IVB).
 - Part data carries its own `hullProfile` (hull.js reads it before data/hull.json). Modules under a fairing are `inner`;
   exposed service modules are `shell` (their wall is the skin).
 
@@ -58,84 +58,75 @@ over an M Atlas (lead); dawn_stack stays M (Delta II is 2.44 m, a kept shape).
 Escape-tower trusses are drawn at about 0.55 of their scaled length (motors keep their proportions); nothing else is
 shortened. The longest real noses make ships of 28–32 m on the bodies that can lift them (accepted by the lead).
 
-## Budget (review pass 1): cheapest flying ship per shape
+## Budget (review pass 2): cheapest flying ship per shape
 
-Search (the reviewer's `search-hull.mjs` settings): the Reliable preset with its equipment, every body shape × every tail
-shape × no or two `srb_s` × no extra tank / `tank_l_kerolox` / `tank_m_methalox` / `tank_l_methalox` × no or four `fin_l` ×
-with or without `gimbal_ring`; flies = Δv ≥ 5,400 m/s and no LOW_DV, LOW_TWR, UNSTABLE, LOW_RELIABILITY. "Over $5M" marks the
-new shapes that only fly when money allows (allowed by the lead for new crewed shapes).
+Search: the reviewer's `review-nose/pass2/search-repo.mjs` on the repo data as it stands (with the shared-code changes of
+review pass 2: landing legs survive tail switches, a shape keeps crew equipment that does a different job). The Reliable
+preset with its equipment, every body shape × every tail shape × no or two `srb_s` × no extra tank / `tank_l_kerolox` /
+`tank_m_methalox` / `tank_l_methalox` × no or four `fin_l` × with or without `gimbal_ring`; flies = Δv ≥ 5,400 m/s and no
+LOW_DV, LOW_TWR, UNSTABLE, LOW_RELIABILITY.
 
-| Shape | Ship + fees | Δv (m/s) | Height (m) | Wet (t) | Body + tail + extras | Other warnings |
-|---|---|---|---|---|---|---|
-| mercury (kept) | $3.23M | 5517 | 20.9 | 74 | titan_ii + single_engine |  |
-| fairing_capsule (kept) | $3.49M | 5547 | 23.2 | 80 | vulcan_booster + single_engine |  |
-| voskhod | $3.49M | 5600 | 23.9 | 80 | vulcan_booster + single_engine | NO_SHELTER |
-| gemini (kept) | $3.58M | 5409 | 19.8 | 69 | atlas_balloon + single_engine |  |
-| apollo (kept) | $4.98M | 5434 | 30.2 | 146 | titan_ii + single_engine + 2srb_s + tank_l_kerolox |  |
-| soyuz_7k | $4.65M | 5533 | 31.3 | 145 | titan_ii + single_engine + 2srb_s + tank_l_kerolox |  |
-| soyuz (kept) | $4.79M | 5523 | 31.3 | 145 | titan_ii + single_engine + 2srb_s + tank_l_kerolox |  |
-| shenzhou | $4.63M | 5403 | 30.4 | 137 | pslv_ps2 + single_engine + 2srb_s + tank_l_kerolox |  |
-| big_cabin (kept) | $4.88M | 5410 | 28.2 | 146 | titan_ii + single_engine + 2srb_s + tank_l_kerolox |  |
-| crew_dragon (kept) | $4.76M | 5474 | 23.2 | 137 | pslv_ps2 + single_engine + 2srb_s + tank_l_kerolox |  |
-| starliner | $4.99M | 5435 | 22.5 | 146 | titan_ii + single_engine + 2srb_s + tank_l_kerolox |  |
-| gaganyaan | $4.36M | 5516 | 27.1 | 136 | pslv_ps2 + single_engine + 2srb_s + tank_l_kerolox |  |
-| new_shepard | $3.07M | 5486 | 16.1 | 74 | titan_ii + single_engine | NO_HEAT_SHIELD |
-| mengzhou | $4.48M | 5434 | 26.1 | 137 | pslv_ps2 + single_engine + 2srb_s + tank_l_kerolox |  |
-| starship | $3.95M | 5485 | 23.8 | 137 | pslv_ps2 + single_engine + 2srb_s + tank_l_kerolox |  |
-| bare_capsule (kept) | $3.40M | 5428 | 18.0 | 70 | methalox_core + single_engine |  |
-| cargo_dragon | $3.68M | 5536 | 19.7 | 80 | vulcan_booster + single_engine |  |
-| progress | $4.30M | 5532 | 27.6 | 136 | pslv_ps2 + single_engine + 2srb_s + tank_l_kerolox |  |
-| cygnus | $4.62M | 5422 | 29.7 | 137 | pslv_ps2 + single_engine + 2srb_s + tank_l_kerolox + 4fin_l |  |
-| htv | $4.80M | 5554 | 28.7 | 145 | titan_ii + single_engine + 2srb_s + tank_l_kerolox + 4fin_l |  |
-| atv | $4.73M | 5579 | 28.8 | 145 | titan_ii + single_engine + 2srb_s + tank_l_kerolox + 4fin_l |  |
-| dream_chaser | $4.77M | 5541 | 29.3 | 145 | titan_ii + single_engine + 2srb_s + tank_l_kerolox + 4fin_l |  |
-| dawn_stack (kept) | $4.14M | 5509 | 24.5 | 82 | vulcan_booster + single_engine |  |
-| mars_rover | $4.70M | 5514 | 26.6 | 145 | titan_ii + single_engine + 2srb_s + tank_l_kerolox |  |
-| new_glenn | $4.54M | 5525 | 27.3 | 145 | titan_ii + single_engine + 2srb_s + tank_l_kerolox |  |
-| hope | $3.29M | 5415 | 19.7 | 75 | titan_ii + single_engine |  |
-| mom | $3.27M | 5425 | 19.4 | 75 | titan_ii + single_engine |  |
-| electron | $3.12M | 5497 | 18.6 | 74 | titan_ii + single_engine |  |
+| Shape | Ship + fees | Δv (m/s) | Height (m) | Body + tail + extras (other warnings) |
+|---|---|---|---|---|
+| mercury (kept) | $3.16M | 5469 | 20.9 | titan_ii + single_engine |
+| fairing_capsule (kept) | $3.49M | 5547 | 23.2 | vulcan_booster + single_engine |
+| voskhod | $4.17M | 5497 | 26.9 | pslv_ps2 + single_engine + 2srb_s + tank_l_kerolox |
+| gemini (kept) | $3.58M | 5409 | 19.8 | atlas_balloon + single_engine |
+| apollo (kept) | $4.91M | 5409 | 30.2 | titan_ii + single_engine + 2srb_s + tank_l_kerolox |
+| soyuz_7k | $4.66M | 5494 | 31.3 | titan_ii + single_engine + 2srb_s + tank_l_kerolox |
+| soyuz (kept) | $4.80M | 5484 | 31.3 | titan_ii + single_engine + 2srb_s + tank_l_kerolox |
+| shenzhou | $4.67M | 5556 | 31.0 | titan_ii + single_engine + 2srb_s + tank_l_kerolox |
+| big_cabin (kept) | $4.87M | 5403 | 28.2 | titan_ii + single_engine + 2srb_s + tank_l_kerolox |
+| crew_dragon (kept) | $4.70M | 5444 | 23.2 | pslv_ps2 + single_engine + 2srb_s + tank_l_kerolox |
+| starliner | $4.92M | 5409 | 22.5 | titan_ii + single_engine + 2srb_s + tank_l_kerolox |
+| gaganyaan | $4.38M | 5471 | 27.1 | pslv_ps2 + single_engine + 2srb_s + tank_l_kerolox |
+| new_shepard | $3.00M | 5438 | 16.1 | titan_ii + single_engine (NO_HEAT_SHIELD) |
+| mengzhou | $4.44M | 5401 | 26.1 | pslv_ps2 + single_engine + 2srb_s + tank_l_kerolox |
+| starship | $3.89M | 5455 | 23.8 | pslv_ps2 + single_engine + 2srb_s + tank_l_kerolox |
+| bare_capsule (kept) | $3.40M | 5428 | 18.0 | methalox_core + single_engine |
+| cargo_dragon | $3.69M | 5536 | 19.7 | vulcan_booster + single_engine |
+| progress | $4.24M | 5501 | 27.6 | pslv_ps2 + single_engine + 2srb_s + tank_l_kerolox |
+| cygnus | $4.65M | 5578 | 30.3 | titan_ii + single_engine + 2srb_s + tank_l_kerolox + 4fin_l |
+| htv | $4.75M | 5524 | 28.7 | titan_ii + single_engine + 2srb_s + tank_l_kerolox + 4fin_l |
+| atv | $4.68M | 5548 | 28.8 | titan_ii + single_engine + 2srb_s + tank_l_kerolox + 4fin_l |
+| dream_chaser | $4.72M | 5511 | 29.3 | titan_ii + single_engine + 2srb_s + tank_l_kerolox + 4fin_l |
+| dawn_stack (kept) | $4.20M | 5493 | 24.5 | vulcan_booster + single_engine |
+| mars_rover | $4.65M | 5484 | 26.6 | titan_ii + single_engine + 2srb_s + tank_l_kerolox |
+| new_glenn | $4.51M | 5495 | 27.3 | titan_ii + single_engine + 2srb_s + tank_l_kerolox |
+| hope | $3.42M | 5487 | 20.3 | atlas_balloon + single_engine |
+| mom | $3.40M | 5498 | 20.0 | atlas_balloon + single_engine |
+| electron | $3.07M | 5449 | 18.6 | titan_ii + single_engine |
 
-All 28 fly within $5M on at least one combination; none needs more. The kept shapes fit as before (Apollo $4.98M, Orion $4.88M, Crew Dragon $4.76M at their cheapest).
+All 28 fly within $5M on at least one combination. Every kept shape fits.
+
+### Orion (big_cabin), review pass 2
+
+With the crew equipment the Reliable preset keeps, Orion needed $4.91M at Δv 5,376 (LOW_DV) at its cheapest. Changes:
+- `capsule_orion` 4,300 → 4,100 kg: the real crew module (about 9.3 t at liftoff, Artemis I) scaled by the nose factor
+  0.671² is about 4.2 t, so 4.1 t stays within about 2 % of the real ratio. The service module was not trimmed: at 520 kg it
+  is already far lighter than the real ESM's share.
+- The shape no longer fits the shock-absorbing couches (`couches: shock`, +40 kg): Orion's real seats do absorb landing
+  loads, and the player can fit them. The reverse-flow escape motor (visible on the model) stays.
+- Result: $4.87M at Δv 5,403 (titan_ii + single_engine + 2 srb_s + tank_l_kerolox). Other trims that also fly: a 4,150 kg
+  capsule without the reverse motor ($4.81M, Δv 5,401).
 
 ### Real hardware options on the shapes (after the models, commit 834291e)
 
-The ship shows a slot's first option when a shape sets none, so the shapes now set the real ones (stack items
-`{ type, options }` in section.json), as the modeller listed:
+The ship shows a slot's first option when a shape sets none, so the shapes set the real ones (stack items
+`{ type, options }` in section.json):
 - `las_soyuz` motor ring, steering grid fins (soyuz, soyuz_7k); `las_shenzhou` steering grid fins; `las_gaganyaan` motor
   staged, steering grid fins; `las_orion` motor reverse-flow.
 - Fairings: pneumatic pushers on Falcon 9 (`fairing_composite_l`, cygnus), Electron (`nose_pointed_s`) and New Glenn
   (`fairing_newglenn`); acoustic blankets on the large fairings (`fairing_composite_l`, `fairing_newglenn`, `nose_pointed_l`
   on atv and dream_chaser, `nose_hammerhead_m` on mars_rover, `fairing_h2b`, `fairing_cz5`).
 - `vostok_instrument_module` engine main (fairing_capsule, voskhod); `soyuz_service_module` power solar wings (soyuz,
-  progress). Both are the neutral first options, written out so the shapes say what they carry.
+  progress): the neutral first options, written out so the shapes say what they carry.
 
-Left off because they would push a kept shape over $5M (same search as above):
-- `les_tower_apollo` steering canards (+40 kg, +$45k): apollo would need $5.03M at its cheapest. The real Apollo tower had
-  canards; the player can fit them.
-- `las_orion` steering ACM (+90 kg, +$120k): big_cabin with the reverse-flow motor and the ACM needs $5.27M; with the ACM
-  alone, $5.00M at Δv 5,400, on both limits. The motor alone fits ($4.98M). The real Orion LAS has its ACM; the player can
-  fit it.
+Left off because they would push a kept shape over $5M:
+- `les_tower_apollo` steering canards (+40 kg, +$45k) on apollo. The real Apollo tower had canards; the player can fit them.
+- `las_orion` steering ACM (+90 kg, +$120k) and `capsule_orion` shock couches on big_cabin (see above).
 - New Glenn's fairing separation system is not confirmed by a source read (TODO verify); the pneumatic choice follows the
   modeller's reference.
-
-Kept shapes with these options (cheapest flying combination):
-
-| Kept shape | Ship + fees | Δv (m/s) | Height (m) | Body + tail + extras |
-|---|---|---|---|---|
-| mercury | $3.23M | 5517 | 20.9 | titan_ii + single_engine |
-| fairing_capsule | $3.49M | 5547 | 23.2 | vulcan_booster + single_engine |
-| gemini | $3.58M | 5409 | 19.8 | atlas_balloon + single_engine |
-| apollo (no canards) | $4.98M | 5434 | 30.2 | titan_ii + single_engine + 2 srb_s + tank_l_kerolox |
-| soyuz | $4.87M | 5511 | 31.3 | titan_ii + single_engine + 2 srb_s + tank_l_kerolox |
-| big_cabin (reverse motor, no ACM) | $4.98M | 5402 | 28.2 | titan_ii + single_engine + 2 srb_s + tank_l_kerolox |
-| crew_dragon | $4.76M | 5474 | 23.2 | pslv_ps2 + single_engine + 2 srb_s + tank_l_kerolox |
-| bare_capsule | $3.40M | 5428 | 18.0 | methalox_core + single_engine |
-| dawn_stack | $4.14M | 5509 | 24.5 | vulcan_booster + single_engine |
-
-New shapes with options, cheapest: shenzhou $4.74M, gaganyaan $4.44M, soyuz_7k $4.73M, cygnus $4.66M, htv $4.82M, atv
-$4.75M, dream_chaser $4.79M, mars_rover $4.72M, mengzhou $4.50M, new_glenn $4.58M, electron $3.14M, progress $4.30M,
-voskhod $3.48M: all still within $5M.
 
 ## Blender models (the plan the nose modeller worked from)
 
@@ -147,7 +138,7 @@ the part's own GLB (no shared library). The section stays under 12 MB.
 
 | Slug | Part | Size, height (m) | Priority | Inner slots worth modelling |
 |---|---|---|---|---|
-| capsule_vostok | capsule_vostok | M, 2.25 | 1 | couches (ejection seat), hatch, windows |
+| capsule_vostok | capsule_vostok | M, 2.25 (real 2.3 m sphere × 0.977) | 1 | couches (ejection seat), hatch, windows |
 | capsule_mercury | capsule_mercury | S, 2.92 | 1 | couches (contour), hatch, windows |
 | capsule_gemini | capsule_gemini | S, 1.84 | 1 | couches (two ejection seats), hatch |
 | capsule_apollo | capsule_apollo | L, 2.80 | 1 | couches (struts), hatch (Smithsonian CC0 hatch, decimated), docking (probe) |

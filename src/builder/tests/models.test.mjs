@@ -77,7 +77,8 @@ for (const def of modelled) {
   const m = measure(file);
   ok(m.tris <= MAX_TRIS, `${def.id}: ${m.tris} triangles (≤ ${MAX_TRIS})`);
   if (def.attach === 'axial') {
-    ok(m.min[1] >= -0.02 * def.height - 0.02 || def.engine, `${def.id}: nothing below its base (min y ${m.min[1].toFixed(3)})`);
+    // model.below: a cover that really hangs down over the part under it (Orion's abort-system fairing over the crew module)
+    ok(m.min[1] >= -0.02 * def.height - 0.02 - (Number(def.model.below) || 0) || def.engine, `${def.id}: nothing below its base${def.model.below ? ` beyond its declared ${def.model.below} m` : ''} (min y ${m.min[1].toFixed(3)})`);
     ok(Math.abs(m.max[1] - def.height) <= 0.02 * def.height + 0.02, `${def.id}: top at ${m.max[1].toFixed(3)} m for a ${def.height} m part`);
     const r = Math.max(m.max[0], -m.min[0], m.max[2], -m.min[2]);
     const R = RADIUS[def.size] ?? 1.25;

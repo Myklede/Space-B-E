@@ -235,12 +235,14 @@ function heatShieldArt(def, R) {
   const d = h * 0.24; // how far the dish bulges below the rim
   const mat = new THREE.MeshStandardMaterial({ color: tiles ? 0x34373c : CHAR, roughness: tiles ? 0.7 : 0.93, metalness: 0.05, bumpMap: tiles ? tileBump(14, 4) : hexBump(8, 3), bumpScale: tiles ? 0.006 : 0.012 });
   const g = new THREE.Group();
-  g.add(lathe([[0, 0], [R * 0.45, d * 0.15], [R * 0.75, d * 0.42], [R * 0.92, d * 0.75], [R, d], [R * 1.03, d + h * 0.08], [R * 1.035, h * 0.55], [R * 1.02, h * 0.9], [R * 0.98, h], [0, h]], mat, 72));
-  g.add(ring(R * 0.99, h - 0.015, 0.018, metal(0x8f969c, 0.4, 0.8)));
+  // no wider than the stack radius: the shield is as wide as the capsule's shoulder, so no lip shows at the joint and it
+  // stays inside a see-through payload shroud
+  g.add(lathe([[0, 0], [R * 0.45, d * 0.15], [R * 0.75, d * 0.42], [R * 0.92, d * 0.75], [R * 0.995, d], [R, d + h * 0.08], [R, h * 0.55], [R * 0.99, h * 0.9], [R * 0.975, h], [0, h]], mat, 72));
+  g.add(ring(R * 0.97, h - 0.015, 0.012, metal(0x8f969c, 0.4, 0.8)));
   // compression pads round the edge, where the capsule sat on the stage below (Apollo)
   for (const az of [30, 150, 270]) {
-    const pad = box(0.05, h * 0.3, 0.16, std(0x9a8f7e, { roughness: 0.8, metalness: 0.1 }));
-    const p = group(at(pad, R * 1.04, h * 0.45, 0));
+    const pad = box(0.03, h * 0.3, 0.16, std(0x9a8f7e, { roughness: 0.8, metalness: 0.1 }));
+    const p = group(at(pad, R * 0.995, h * 0.45, 0));
     p.rotation.y = az * DEG;
     g.add(p);
   }
@@ -827,10 +829,13 @@ export function wrapModel(model, entry) {
   const R = entry.radius ?? 1.25;
   if (def.flags?.capsule && entry.id) capsuleHosts.set(entry.id, { y: entry.y ?? 0, height: entry.height ?? def.height, radius: R, type: def.id });
   if (entry.attach === 'radial') {
-    // a side part on a capsule (a SuperDraco pod) is pulled in and tilted onto the cone, like the drawn side parts
+    // a side part's model has its origin on the host's wall, +x out (tools/blender/README.md), while the shared mount
+    // (bay/hullArt.js mountRadial) moves drawn art out by 0.45 x its width: a width of 0 keeps the model on the wall.
+    // On a capsule it is then pulled in and tilted onto the real cone, like the drawn side parts (a SuperDraco pod).
+    model.userData.width = 0;
     const seat = entry.inside ? null : seatFor(entry);
     if (entry.parentId) { if (seat) seatCache.set(`${def.id}:${entry.radius}`, seat); else seatCache.delete(`${def.id}:${entry.radius}`); }
-    return seat ? seated(model, seat, model.userData.width ?? 0.6) : null;
+    return seat ? seated(model, seat, 0) : null;
   }
   if (entry.above && entry.attach === 'axial') {
     if (FAIRING_KIND[def.id]) return fairingArt(def, R, entry);
@@ -838,9 +843,17 @@ export function wrapModel(model, entry) {
     if (def.id === 'nose_gemini_rr') return geminiNoseArt(def, entry);
   }
   const shroud = model.getObjectByName('form_shroud'), neck = model.getObjectByName('form_neck');
-  if (shroud && neck) { shroud.visible = !!entry.shrouded; neck.visible = !entry.shrouded; }
+  if (shroud && neck) {
+    // Orion's abort-system cover hangs below its base round the crew module (only that capsule fits it); every other
+    // cover runs on down round a capsule when hull.js made it a shroud
+    const encloses = def.model?.encloses ?? ENCLOSES[def.id];
+    const wraps = encloses ? entry.below === encloses : !!entry.shrouded;
+    shroud.visible = wraps;
+    neck.visible = !wraps;
+  }
   return null;
 }
+const ENCLOSES = { las_orion: 'capsule_orion' }; // until the part data says it (model.encloses)
 
 // ---------- service, orbital and cargo modules (their Blender models replace this while they download) ----------
 const MODULE_LOOK = {

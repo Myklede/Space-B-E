@@ -209,7 +209,7 @@
     },
     {
       "id": "fairing_capsule",
-      "name": "Steel ball under a shroud",
+      "name": "Metal sphere under a shroud",
       "real": "Vostok on the R-7 (USSR, 1961–63)",
       "desc": "A one-seat sphere coated all over in ablator, on a double-cone instrument module, inside a pointed shroud. No escape tower: the cosmonaut had an ejection seat, and on landing he ejected at 7 km and came down on his own parachute.",
       "pros": [
@@ -708,8 +708,7 @@
         {
           "type": "capsule_orion",
           "options": {
-            "suits": "pressure",
-            "couches": "shock"
+            "suits": "pressure"
           }
         },
         {
@@ -1455,7 +1454,7 @@
       "id": "dawn_stack",
       "name": "Payload stack with a kick motor",
       "real": "Dawn on a Delta II 7925H (2007); Pathfinder and both Mars rovers flew the same way",
-      "desc": "A fairing over the capsule, which sits on the payload attach fitting, on a Star 48-class solid motor, on the spin table that spins it up before it fires.",
+      "desc": "The aluminium 9.5-ft Delta II fairing that Dawn flew, with its cone-on-cone nose, over the capsule, which sits on the payload attach fitting, on a Star 48-class solid motor, on the spin table that spins it up before it fires.",
       "pros": [
         "The kick motor adds two tonnes of propellant",
         "Spin-stabilised: no guidance needed for the burn"
@@ -1468,7 +1467,7 @@
       "diameter": "m",
       "icon": "kick_motor_s",
       "stack": [
-        "nose_pointed_m",
+        "nose_biconic_m",
         "capsule_m",
         "heat_shield_m",
         "paf_m",

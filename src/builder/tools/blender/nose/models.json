@@ -844,8 +844,8 @@
   "part": "las_orion",
   "size": "l",
   "height": 5,
-  "triangles": 14528,
-  "kb": 105,
+  "triangles": 12324,
+  "kb": 95,
   "nodes": [
    "form_neck",
    "form_shroud",

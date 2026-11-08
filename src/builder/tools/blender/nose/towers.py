@@ -19,7 +19,7 @@ import os, sys, math
 sys.dont_write_bytecode = True
 sys.path.insert(0, os.path.dirname(os.path.abspath(__file__)))
 import nl  # noqa: E402
-from nl import V, Acc, M, er, ea, polar, lathe, cyl, sphere, torus, tube, box, beam, patch, disc, band, ring_on, strip_along, bell, Rev, fillet, FRONT, NECK, DEG, RADIUS  # noqa: E402
+from nl import V, Acc, M, er, ea, polar, lathe, cyl, sphere, torus, tube, box, beam, patch, disc, band, ring_on, strip_along, bell, Rev, fillet, resample, FRONT, NECK, DEG, RADIUS  # noqa: E402
 
 TOWERS = {
     # truss towers: legs, base half-width, top half-width, motor span (m0, m1, radius), jettison (j0, j1, radius), nose start
@@ -32,8 +32,10 @@ TOWERS = {
     # shrouded systems: fairing cylinder top (yc), fairing cone top (yt) and its radius (rt)
     'las_soyuz': dict(part='las_soyuz', size='m', H=5.6, bt=0.55, yc=2.4, yt=3.3, rt=0.42, motor=(3.65, 5.2, 0.24), jet=(4.95, 5.2, 0.24), nose=5.2,
                       real=dict(motor='ring', jettison='separate', steering='gridfins'), fins_y=1.25, fairing_motors=True, truss=True),
-    'las_orion': dict(part='las_orion', size='l', H=5.0, bt=0.6, ogive=2.75, rt=0.36, motor=(2.75, 3.65, 0.36), jet=(3.65, 4.15, 0.3), nose=4.42,
-                      real=dict(motor='reverse', jettison='separate', steering='acm'), windows=True),
+    # Orion: the boost-protective cover hangs below the part's base round the crew module (form_shroud, shown only over
+    # capsule_orion), then necks into the abort motor; the abort motor is long and slim as on the real LAS
+    'las_orion': dict(part='las_orion', size='l', H=5.0, bt=0.6, ogive=0.55, rt=0.36, motor=(0.55, 3.65, 0.36), jet=(3.65, 4.15, 0.3), nose=4.42,
+                      real=dict(motor='reverse', jettison='separate', steering='acm'), orion=True),
     'las_shenzhou': dict(part='las_shenzhou', size='m', H=4.5, bt=0.45, yc=1.95, yt=2.55, rt=0.3, motor=(2.62, 3.85, 0.2), jet=(3.85, 4.12, 0.17), nose=4.12,
                          real=dict(motor='canted', jettison='separate', steering='gridfins'), fins_y=0.95, hem=True),
     'las_gaganyaan': dict(part='las_gaganyaan', size='m', H=5.0, bt=0.45, yc=1.85, yt=2.65, rt=0.32, motor=(2.65, 4.0, 0.28), jet=(4.0, 4.38, 0.2), nose=4.38,
@@ -140,6 +142,8 @@ def shroud_tower(b, root, S, H, R, pd):
     """The fairing of a shrouded escape system: cylinder (or ogive) up to the tower, its two bases, grid fins and motors."""
     bt = float((pd.get('hullProfile') or {}).get('bt', S['bt']))
     skin = M('white')
+    if S.get('orion'):
+        return orion_cover(b, root, S, H, R)
     if 'ogive' in S:  # Orion: an ogive boost-protective cover rising straight into the abort motor
         y0, y1, rt = bt, S['ogive'], S['rt']
         L = y1 - y0
@@ -199,6 +203,55 @@ def shroud_tower(b, root, S, H, R, pd):
     if S.get('truss'):  # Soyuz: a short truss from the fairing's cone to the motor
         truss(b, 4, S['rt'] * 0.86, S['motor'][2] * 0.9, S['yt'], S['motor'][0], 1, M('alu'), 0.02, 45.0)
     return rev
+
+
+def orion_cover(b, root, S, H, R):
+    """Orion's launch abort system cover. Below y = 0 (the crew module's top) it follows capsule_orion's 32.5 degree
+    wall a few cm out, down to the module's shoulder, with the window openings over the crew module's windows: the
+    node form_shroud, which the game shows only when capsule_orion is the part below (sections/nose/art.js wrapModel).
+    Above y = 0 it closes round the docking tunnel and necks into the abort motor. form_neck is a flat collar on the
+    docking ring for any other capsule."""
+    cd = nl.part_data('capsule_orion') or {}
+    hc = float(cd.get('height', 2.25))
+    Rc = RADIUS[cd.get('size', 'l')]
+    pc = (cd.get('hullProfile') or {}).get('profile') or [[0.975, 0], [1, 0.03], [0.36, 0.78], [0.31, 0.85], [0.267, 0.9], [0.267, 1]]
+    cap = [(rf * Rc, yf * hc - hc) for (rf, yf) in pc]
+    i_sh = max(range(len(cap)), key=lambda i: cap[i][0])
+    sh, ce = cap[i_sh], cap[i_sh + 1]  # the shoulder and the end of the straight conical wall
+    half = math.atan2(sh[0] - ce[0], ce[1] - sh[1])  # the wall's half-angle from the axis
+    gap = 0.05
+    d = gap / math.cos(half)
+    rv = NECK + 0.06  # round the docking tunnel and its ring
+    p1 = (ce[0] + d, ce[1])
+    y_v = p1[1] + (p1[0] - rv) / math.tan(half)
+    pts = [(sh[0] + 0.015, sh[1]), p1, (rv, y_v), (rv, 0.06), (S["rt"], S["ogive"])]
+    prof = resample(fillet(pts, 0.1, 6), 0.3)
+    below = [p for p in prof if p[1] <= 0.0] + [(rv, 0.0)]
+    above = [(rv, 0.0)] + [p for p in prof if p[1] > 0.0]
+    skin = M('white')
+    # the part above the crew module (always shown)
+    lathe(b, above, skin, 56)
+    rev_a = Rev(above)
+    ring_on(b, rev_a, 0.05, 0.03, 0.008, M('mid_grey'), 48)
+    # the cover round the crew module
+    a = Acc()
+    lathe(a, below, skin, 64)
+    rev = Rev(below)
+    for j in range(2):  # the cover's two halves
+        strip_along(a, rev, FRONT + 35 + 180 * j, 0.03, rev.L - 0.02, 0.035, 0.008, M('mid_grey'))
+    ring_on(a, rev, 0.03, 0.03, 0.006, M('mid_grey'), 64)
+    lathe(a, [(sh[0] + 0.015, sh[1]), (sh[0] - 0.02, sh[1])], M('dark'), 64)  # its lower edge on the shoulder
+    for (az, yf, w, h) in ((-28, 0.5, 0.24, 0.2), (28, 0.5, 0.24, 0.2), (-44, 0.42, 0.24, 0.2), (44, 0.42, 0.24, 0.2), (0, 0.4, 0.3, 0.3)):
+        s = rev.s_at_y(yf * hc - hc)
+        patch(a, rev, FRONT + az, s, w, h, M('glass'), 0.003, 0.0, 3, 3, 1.0, 0.04)
+        patch(a, rev, FRONT + az, s, w + 0.05, h + 0.05, M('dark'), 0.002, 0.0, 3, 3, 1.0, 0.05)
+    a.emit('form_shroud', root)
+    # on any other capsule: a flat collar on the docking ring
+    a = Acc()
+    lathe(a, [(NECK - 0.02, 0.003), (rv, 0.003)], skin, 48)
+    lathe(a, [(NECK + 0.012, 0.0), (NECK + 0.012, 0.03), (NECK - 0.02, 0.03), (NECK - 0.02, 0.0)], M('alu'), 48)
+    a.emit('form_neck', root)
+    return rev_a
 
 
 def motor_case(b, S, H, slug):
