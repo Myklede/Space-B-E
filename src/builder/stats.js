@@ -9,6 +9,19 @@ export const RELIABILITY_MIN = 0.8;
 export const COLD_TEMP_C = 5;
 /** With active steering the centre of pressure may sit up to this share of the stack height ahead of the centre of mass. */
 export const STEERING_MARGIN = 0.06;
+/**
+ * Series production (Wright's law, decided with the user): each doubling of the number of identical engines built for
+ * one ship cuts the cost of the next one to this share. Aerospace learning rates run about 0.80–0.90 (T. P. Wright 1936,
+ * aircraft; NASA cost estimating uses 0.85–0.95); 0.85 here. A cluster of n engines costs one engine × seriesFactor(n).
+ */
+export const LEARNING_RATE = 0.85;
+/** Cost of n identical units relative to one: sum of i^log2(LEARNING_RATE) for i = 1..n (1 for one, about 19 for 33). */
+export function seriesFactor(n) {
+  const b = Math.log2(LEARNING_RATE);
+  let t = 0;
+  for (let i = 1; i <= Math.max(1, Math.round(n)); i++) t += Math.pow(i, b);
+  return t;
+}
 const BONUS_CAP = 0.06; // the most the "good engineering" flags (avionics, wiring tunnel, spheres…) may add to reliability
 
 /** Mass, cost, thrust and Isp of one engine definition { fuel, nozzle, pump } from data/engines.json. */
@@ -125,7 +138,7 @@ export function computeShipSpec(assembly, { catalog, engines, launch, balance, p
   const liftoffBurn = padFx.liftoffLossMps > 0 && ispSL > 0 ? Math.min(usableFuel, fullWet * (1 - Math.exp(-padFx.liftoffLossMps / (ispSL * g0)))) : 0;
   const fuelMass = usableFuel - liftoffBurn;
   const wetMass = dryMass + fuelMass;
-  const cost = sum(layout, (e) => (e.def.cost * costFactor(e) + mod(e).costD) * mod(e).costF) + sum(engineEntries, (e, i) => engineSpecs[i].cost * costFactor(e) * countOf(e)) + (hull.cost ?? 0);
+  const cost = sum(layout, (e) => (e.def.cost * costFactor(e) + mod(e).costD) * mod(e).costF) + sum(engineEntries, (e, i) => engineSpecs[i].cost * costFactor(e) * seriesFactor(countOf(e))) + (hull.cost ?? 0);
 
   // Performance (one stage: the flight model burns everything with the thrust-weighted Isp)
   const deltaV = fuelMass > 0 && dryMass > 0 ? ispVac * g0 * Math.log(wetMass / dryMass) : 0;
@@ -226,7 +239,7 @@ export function computeShipSpec(assembly, { catalog, engines, launch, balance, p
   };
 
   const breakdown = {
-    parts: layout.map((e) => ({ id: e.id, type: e.type, name: e.def.name, family: e.def.family, mass: massOf(e), dry: dryOf(e) + (e.def.engine ? engineStats(engineDefOf(e), engines, g0, mod(e)).mass * massFactor(e) * countOf(e) : 0), cost: (e.def.cost * costFactor(e) + mod(e).costD) * mod(e).costF + (e.def.engine ? engineStats(engineDefOf(e), engines, g0, mod(e)).cost * costFactor(e) * countOf(e) : 0), fuel: (e.def.fuel?.mass ?? 0) + (e.def.booster?.propellant ?? 0), y: e.y, height: e.height, sideArea: e.def.aero.sideArea, attach: e.attach, material: materialOf(e)?.name ?? null, reliability: Math.min(1, (e.def.reliability ?? 1) + reliabilityDelta(e) + mod(e).rel) })),
+    parts: layout.map((e) => ({ id: e.id, type: e.type, name: e.def.name, family: e.def.family, mass: massOf(e), dry: dryOf(e) + (e.def.engine ? engineStats(engineDefOf(e), engines, g0, mod(e)).mass * massFactor(e) * countOf(e) : 0), cost: (e.def.cost * costFactor(e) + mod(e).costD) * mod(e).costF + (e.def.engine ? engineStats(engineDefOf(e), engines, g0, mod(e)).cost * costFactor(e) * seriesFactor(countOf(e)) : 0), fuel: (e.def.fuel?.mass ?? 0) + (e.def.booster?.propellant ?? 0), y: e.y, height: e.height, sideArea: e.def.aero.sideArea, attach: e.attach, material: materialOf(e)?.name ?? null, reliability: Math.min(1, (e.def.reliability ?? 1) + reliabilityDelta(e) + mod(e).rel) })),
     fuelPartIds: layout.filter((e) => e.def.fuel || e.def.booster).map((e) => e.id),
     enginePartIds: [...engineEntries, ...boosterEntries].map((e) => e.id),
     finPartIds: layout.filter((e) => /fin/.test(e.type)).map((e) => e.id),
@@ -252,7 +265,7 @@ export function partFigures(def, { engines, g0, materials = null, catalog = null
     engine = engineStats(engineDef ?? { fuel: 'methalox', nozzle: 'sl', pump: String(def.size).toUpperCase() }, engines, g0, m);
     engine = { ...engine, count, totalThrust: engine.thrust * count, totalThrustSL: engine.thrustSL * count };
     mass += engine.mass * matMass * count;
-    cost += engine.cost * matCost * count;
+    cost += engine.cost * matCost * seriesFactor(count);
   }
   const booster = def.booster ? { thrust: def.booster.thrust * m.thrustF, ispSL: def.booster.ispSL + m.isp, ispVac: def.booster.ispVac + m.isp, propellant: def.booster.propellant, burnTime: def.booster.burnTime } : null;
   return {

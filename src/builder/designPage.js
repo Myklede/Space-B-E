@@ -4,7 +4,7 @@
 // Nothing floats over the ship except the big explanation card (partCard.js): clicking a part, on the ship or by its
 // picture or name in the column, opens it in the middle of the screen. The column stays a clean list (picture, name,
 // one line, price, a small INSTALL / USE button); an installed part's own controls stay in its view. One card open at a time.
-import { partFigures } from './stats.js';
+import { partFigures, seriesFactor } from './stats.js';
 import { createPadViews } from './designPad.js';
 import { hullChoices, hullHasSkin, hullMaterial } from './hull.js';
 import { internalsArt } from './bay/internalsArt.js';
@@ -121,7 +121,7 @@ export function createDesignPage({ assembly, catalog, sections, materials, engin
   };
   const priceOfShape = (shape) => {
     let cost = 0, mass = 0;
-    for (const t of shape.stack) { const d = catalog.get(t); if (!d) continue; const f = figuresOf(d); const n = d.engine ? (catalog.get(shape.stack[shape.stack.indexOf(t) - 1])?.mounts?.count ?? 1) : 1; cost += f.cost * n; mass += f.wet === f.mass ? f.mass * n : f.wet; }
+    for (const t of shape.stack) { const d = catalog.get(t); if (!d) continue; const f = figuresOf(d); const n = d.engine ? (catalog.get(shape.stack[shape.stack.indexOf(t) - 1])?.mounts?.count ?? 1) : 1; cost += f.cost * (d.engine ? seriesFactor(n) : n); mass += f.wet === f.mass ? f.mass * n : f.wet; } // a cluster is priced as a series (stats.js seriesFactor)
     for (const r of shape.radial ?? []) { const d = catalog.get(r.type); if (!d) continue; const f = figuresOf(d); cost += f.cost * (r.symmetry ?? 1); mass += f.wet * (r.symmetry ?? 1); }
     return { cost, mass };
   };
