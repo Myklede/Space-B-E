@@ -1,5 +1,17 @@
 # Asset provenance
 
+## v3 consoles and calm-distance pass
+
+All console chassis, chairs, monitor arms, keyboards, phone, headset, guards, status towers, overhead supports and radial collar plates are original geometry authored in `additions.py`. The averaged opaque grating tile is generated analytically in `detail.py` from a low-contrast coverage pattern; it uses no photograph. The existing CC0 Blue Metal Plate finish supplies the new chassis/plate paint detail and AO bake inputs; no new third-party textures were downloaded.
+
+Control-room references (viewing only, not shipped or sampled):
+
+- NASA Launch Control Center fact sheet: https://www.nasa.gov/wp-content/uploads/2018/06/launch_control_center_final.pdf
+- NASA EGS overview: https://www.nasa.gov/humans-in-space/exploration-ground-systems/exploration-ground-systems-overview/
+- Artemis console reference: https://www.flickr.com/photos/nasakennedy/52351766557
+
+All console screen imagery, plots, labels and radar graphics are our original canvas drawings. They are clearly illustrative; no flight-room screenshot or weather-radar image is used. Actual current-ship statistics come from the unchanged builder's computeShipSpec. The transfer field and weather radar are schematic mock-ups, not trajectory predictions or live feeds.
+
 All shipped meshes, UVs, baked AO, layout data and sandbox geometry were generated specifically for SpaceB&E. No downloaded models, trademarks or NASA logos are shipped.
 
 ## CC0 texture sources (detail pass, 2026-11-08)

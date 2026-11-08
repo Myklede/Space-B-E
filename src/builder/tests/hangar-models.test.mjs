@@ -2,6 +2,8 @@
 import assert from 'node:assert/strict';
 import {readFileSync,statSync,readdirSync} from 'node:fs';
 import path from 'node:path';
+import {fitCollar} from '../tools/blender/hangar/collarFit.mjs';
+import {automaticResolution} from '../../../sandbox/role1.hangar.render.js';
 const root='public/assets/models/builder/hangar';
 const layout=JSON.parse(readFileSync(path.join(root,'layout.json'),'utf8'));
 const original=JSON.parse(readFileSync('src/builder/tools/blender/hangar/refs/contract-v1.json','utf8'));
@@ -26,7 +28,7 @@ for(const [id,def] of Object.entries(layout.modules)){
   assert.ok(g.nodes.every(n=>n.camera===undefined),id+' no cameras');
   for(const m of g.materials??[]){
     const p=m.pbrMetallicRoughness;
-    if(id!=='lamp'){assert.ok(p.baseColorTexture,id+' baked colour');assert.ok(p.metallicRoughnessTexture,id+' ORM');assert.ok(m.occlusionTexture,id+' baked AO');assert.ok(m.normalTexture,id+' detail normals');}
+    if(id!=='lamp'&&m.name!=='console_screen'){assert.ok(p.baseColorTexture,id+' baked colour');assert.ok(p.metallicRoughnessTexture,id+' ORM');assert.ok(m.occlusionTexture,id+' baked AO');assert.ok(m.normalTexture,id+' detail normals');}
   }
   if(id==='lamp')assert.ok(g.materials.some(m=>m.emissiveFactor?.some(n=>n>0)),'lamp emissive lens');
   const binaryStart=20+data.readUInt32LE(12)+8;
@@ -39,7 +41,7 @@ assert.equal(layout.hallBounds.max[1]-layout.hallBounds.min[1],80);assert.equal(
 assert.equal(layout.levels.length,11);for(let i=0;i<11;i++){assert.equal(layout.levels[i].y,11+i*6);assert.equal(layout.elevator.stops[i+1],layout.levels[i].y);assert.ok(layout.levels[i].retracted>=3);}
 assert.equal(layout.consoleArea.max[0]-layout.consoleArea.min[0],20);assert.equal(layout.consoleArea.max[2]-layout.consoleArea.min[2],8);
 for(const p of layout.placements){assert.ok(models.has(p.module),p.module);if(p.lod)assert.ok(models.has(p.lod));for(const a of ['position','rotation','scale'])assert.ok(p[a].length===3&&p[a].every(Number.isFinite));}
-function drawn(id){const g=models.get(id),cuts=g.nodes.filter(n=>/^slot_cut__/.test(n.name)).map(n=>g.meshes[n.mesh].primitives.reduce((t,p)=>t+g.accessors[p.indices].count/3,0));return layout.modules[id].triangles-cuts.reduce((a,b)=>a+b,0)+(cuts.length?Math.max(...cuts):0);}
+function drawn(id){const g=models.get(id),cuts=g.nodes.filter(n=>/^slot_cut__/.test(n.name)&&n.mesh!==undefined).map(n=>g.meshes[n.mesh].primitives.reduce((t,p)=>t+g.accessors[p.indices].count/3,0));return layout.modules[id].triangles-cuts.reduce((a,b)=>a+b,0)+(cuts.length?Math.max(...cuts):0);}
 function total(lod){return layout.placements.reduce((n,p)=>n+drawn(lod&&p.position[1]>30&&p.lod?p.lod:p.module),0);}
 // Worst collar per half, complete hall, no frustum-culling deduction.
 assert.ok(total(false)<=1000000,'instanced full triangle bound');assert.ok(total(true)<=1000000,'instanced LOD triangle bound');
@@ -51,3 +53,38 @@ for(const f of readdirSync(path.join(root,'textures')))checkImage(readFileSync(p
 for(const c of layout.colliders){assert.ok(c.center.every(Number.isFinite));assert.ok(c.size.every(n=>Number.isFinite(n)&&n>0));}
 assert.equal(new Set(layout.placements.map(p=>p.id)).size,layout.placements.length,'unique placement IDs');
 console.log(`PASS: ${models.size} Draco GLBs; ${bytes} bytes; worst-visible instanced bounds full=${total(false)}, LOD=${total(true)} triangles.`);
+
+const cfg=layout.collar;assert.equal(cfg.plateCount*cfg.angularPitch,360);assert.ok(cfg.notchRadius>=cfg.slideLimits[1]);assert.equal(cfg.clearance,.25);assert.ok(models.has(cfg.plateModule));
+const cylinder=[{y0:0,y1:20,r0:2,r1:2}];
+let f=fitCollar({y:17},[],cylinder,cfg);assert.equal(f.retract,false);assert.ok(f.plateRadii.every(r=>Math.abs(r-2.25)<1e-8));
+f=fitCollar({y:17},[],[{y0:0,y1:20,r0:1,r1:3}],cfg);assert.ok(f.plateRadii.every(r=>r>=2.25&&r<2.27),'adapter interpolation across deck thickness');
+f=fitCollar({y:23},[],[{y0:0,y1:20,r0:2,r1:0}],cfg);assert.ok(f.plateRadii.every(r=>r>.65&&r<.68),'nose taper');
+const booster=angle=>({attach:'radial',y:0,height:15,radius:2,angle,def:{booster:true},outline:{y0:0,y1:15,centerRadius:3,radialHalf:.5,tangentHalf:.5}});
+f=fitCollar({y:17},[booster(90),booster(270)],cylinder,cfg);assert.equal(f.retract,false);assert.ok(Math.max(...f.plateRadii)>3.7);assert.ok(Math.min(...f.plateRadii)<2.3);assert.ok(f.plateRadii.slice(22,26).every(r=>r>3.7),'90deg booster sectors');assert.ok([0,1,46,47].every(i=>f.plateRadii[i]>3.7),'270deg booster sectors');
+f=fitCollar({y:17},[],[{y0:0,y1:20,r0:8,r1:8}],cfg);assert.equal(f.retract,true);assert.ok(f.plateRadii.every(r=>r===cfg.slideLimits[1]));
+assert.equal(fitCollar({y:71},[],cylinder,cfg).retract,true,'above ship retracts');
+f=fitCollar({y:11},[{attach:'axial',y:10,height:1,radius:1,outline:{sections:[{y:4,segments:[2,0,0,2,-2,0,0,-2]}]}}],[],cfg);assert.ok(f.plateRadii.every(r=>r>=2.25),'actual core art outside nominal height stays clear');
+f=fitCollar({y:17},[{...booster(0),outline:{...booster(0).outline,sections:[{y:10,segments:[3.2,-.2,3.2,.2]}]}}],cylinder,cfg);assert.ok(Math.max(...f.plateRadii)<3.6&&Math.max(...f.plateRadii)>3.4,'actual mesh section replaces conservative booster box');
+const bank=models.get('engineering_consoles');assert.ok(layout.modules.engineering_consoles.bytes<=2000000);assert.ok(layout.modules.engineering_consoles.triangles<=80000);
+const bankDrawn=bank.nodes.filter(n=>n.mesh!==undefined).reduce((sum,n)=>sum+bank.meshes[n.mesh].primitives.reduce((v,p)=>v+bank.accessors[p.indices].count/3,0),0);
+assert.equal(bankDrawn,layout.modules.engineering_consoles.instancedTriangles);assert.ok(bankDrawn<=80000,'whole bank triangles including all station instances');
+const v3Full=layout.placements.reduce((n,p)=>n+drawn(p.module==='platform_half'?'platform_v3':p.module),0)+bankDrawn+drawn(cfg.plateModule)*cfg.plateCount*layout.levels.length;
+assert.ok(v3Full<=1000000,'v3 full kit including adaptive collars and bank');
+console.log('V3 full worst-view structure + bank bound: '+v3Full+' triangles.');
+assert.equal(layout.consoles.length,4);
+for(const id of ['station_window','station_builder','station_testfire','station_launch']){
+  assert.ok(bank.nodes.some(n=>n.name===id),id);const st=layout.consoles.find(s=>s.id===id);assert.ok(st);
+  for(const screen of st.screens){const n=bank.nodes.find(n=>n.name===screen);assert.ok(n?.mesh!==undefined,screen);assert.ok(bank.meshes[n.mesh].primitives.every(p=>p.attributes.TEXCOORD_0!==undefined));}
+  assert.ok(st.position[0]>=-10&&st.position[0]<=10&&st.position[2]>=-20&&st.position[2]<=-12);assert.equal(st.interactPoint[1],1.7);assert.equal(st.turnaroundView.position[1],1.7);
+  assert.ok(st.interactPoint[2]>st.position[2],'operator is rocketward; faces door');
+}
+const v2=JSON.parse(readFileSync('src/builder/tools/blender/hangar/refs/contract-v2.json','utf8'));
+for(const key of Object.keys(v2).filter(k=>k!=='modules'))assert.deepEqual(layout[key],v2[key],'v2 layout contract '+key);
+for(const [key,m]of Object.entries(v2.modules))assert.deepEqual(layout.modules[key],m,'v2 module unchanged '+key);
+console.log('PASS: collar cylinder, adapter, nose, twin boosters, oversize; four-console nodes, screen UVs and v2 compatibility.');
+let fakeTime=1000000;const scales=[];const auto=automaticResolution(s=>scales.push(s));
+for(let i=0;i<600;i++){fakeTime+=25;auto.update(fakeTime,25);}
+assert.equal(auto.state.step,2);assert.ok(scales.every(s=>s>=.8),'automatic resolution never drops below 0.8');
+for(let i=0;i<2000;i++){fakeTime+=10;auto.update(fakeTime,10);}
+assert.equal(auto.state.step,0,'automatic resolution recovers to native');
+console.log('PASS: sustained slow/fast windows, 0.8 floor and native recovery.');

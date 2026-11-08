@@ -175,6 +175,11 @@ def catwalk():
     for x in (-3,0,3):g.ibeam((x,-.32,-3),(x,-.32,3),.24)
     return g
 
+if '--v3' in sys.argv:
+    import additions
+    additions.build(globals())
+    sys.exit(0)
+
 for name,fn in [('tower_bay',tower),('wall_bay',wall),('roof_truss',truss)]:
     for low in (False,True):
         ident=name+('_lod' if low else ''); root=start(ident); fn(low).mesh('body',root); save(ident,root,True)

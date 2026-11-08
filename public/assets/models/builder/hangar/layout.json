@@ -480,6 +480,92 @@
           0.44999998807907104
         ]
       }
+    },
+    "platform_v3": {
+      "file": "platform_v3.glb",
+      "triangles": 3408,
+      "bytes": 237548,
+      "bounds": {
+        "min": [
+          -0.02250000089406967,
+          -0.7999999523162842,
+          -6.134531021118164
+        ],
+        "max": [
+          14.109999656677246,
+          1.1200000047683716,
+          6.134531021118164
+        ]
+      }
+    },
+    "platform_v3_far": {
+      "file": "platform_v3_far.glb",
+      "triangles": 720,
+      "bytes": 226588,
+      "bounds": {
+        "min": [
+          -0.005232271272689104,
+          -0.7999999523162842,
+          -6.112775802612305
+        ],
+        "max": [
+          14.048215866088867,
+          1.1049998998641968,
+          6.134531021118164
+        ]
+      }
+    },
+    "catwalk_far": {
+      "file": "kit/catwalk_far.glb",
+      "triangles": 96,
+      "bytes": 83652,
+      "bounds": {
+        "min": [
+          -3.055000066757202,
+          -0.5099999904632568,
+          -3.0
+        ],
+        "max": [
+          3.055000066757202,
+          1.1049998998641968,
+          3.0
+        ]
+      }
+    },
+    "collar_plate": {
+      "file": "kit/collar_plate.glb",
+      "triangles": 24,
+      "bytes": 110376,
+      "bounds": {
+        "min": [
+          0.9978589415550232,
+          -0.11999999731779099,
+          -0.13080625236034393
+        ],
+        "max": [
+          1.9957178831100464,
+          0.14000000059604645,
+          0.13080625236034393
+        ]
+      }
+    },
+    "engineering_consoles": {
+      "file": "engineering_consoles.glb",
+      "triangles": 3268,
+      "instancedTriangles": 12952,
+      "bytes": 255584,
+      "bounds": {
+        "min": [
+          -1.5,
+          -0.009999999776482582,
+          -0.5799999833106995
+        ],
+        "max": [
+          1.5,
+          2.6500000953674316,
+          1.4864014387130737
+        ]
+      }
     }
   },
   "placements": [
@@ -19625,5 +19711,194 @@
     ],
     "width": 1.5,
     "hatchHeightIsAbsolute": true
-  }
+  },
+  "collar": {
+    "notchRadius": 6,
+    "plateCount": 48,
+    "angularPitch": 7.5,
+    "plateModule": "collar_plate",
+    "clearance": 0.25,
+    "slideLimits": [
+      0.35,
+      6
+    ],
+    "ML_TOP": 7,
+    "angleStart": -90,
+    "platformModule": "platform_v3",
+    "farModule": "platform_v3_far"
+  },
+  "consoles": [
+    {
+      "id": "station_window",
+      "module": "engineering_consoles",
+      "position": [
+        -3.6955,
+        0,
+        -15.1307
+      ],
+      "rotation": [
+        0,
+        67.5,
+        0
+      ],
+      "screens": [
+        "screen_station_window_0",
+        "screen_station_window_1",
+        "screen_station_window_2",
+        "screen_station_window_overhead",
+        "screen_station_window_nameplate"
+      ],
+      "interactPoint": [
+        -2.3836091938791197,
+        1.7,
+        -14.587323255501932
+      ],
+      "lookTarget": [
+        -3.8802940365474043,
+        1.34,
+        -15.207270415933378
+      ],
+      "turnaroundView": {
+        "position": [
+          -1.8477590650225735,
+          1.7,
+          -14.36536686473018
+        ],
+        "target": [
+          0,
+          30,
+          0
+        ]
+      }
+    },
+    {
+      "id": "station_builder",
+      "module": "engineering_consoles",
+      "position": [
+        -1.5307,
+        0,
+        -17.2955
+      ],
+      "rotation": [
+        0,
+        22.5,
+        0
+      ],
+      "screens": [
+        "screen_station_builder_0",
+        "screen_station_builder_1",
+        "screen_station_builder_2",
+        "screen_station_builder_overhead",
+        "screen_station_builder_nameplate"
+      ],
+      "interactPoint": [
+        -0.9873232555019317,
+        1.7,
+        -15.983609193879118
+      ],
+      "lookTarget": [
+        -1.607270415933377,
+        1.34,
+        -17.480294036547402
+      ],
+      "turnaroundView": {
+        "position": [
+          -0.7653668647301796,
+          1.7,
+          -15.447759065022572
+        ],
+        "target": [
+          0,
+          30,
+          0
+        ]
+      }
+    },
+    {
+      "id": "station_testfire",
+      "module": "engineering_consoles",
+      "position": [
+        1.5307,
+        0,
+        -17.2955
+      ],
+      "rotation": [
+        0,
+        -22.5,
+        0
+      ],
+      "screens": [
+        "screen_station_testfire_0",
+        "screen_station_testfire_1",
+        "screen_station_testfire_2",
+        "screen_station_testfire_overhead",
+        "screen_station_testfire_nameplate"
+      ],
+      "interactPoint": [
+        0.9873232555019317,
+        1.7,
+        -15.983609193879118
+      ],
+      "lookTarget": [
+        1.607270415933377,
+        1.34,
+        -17.480294036547402
+      ],
+      "turnaroundView": {
+        "position": [
+          0.7653668647301796,
+          1.7,
+          -15.447759065022572
+        ],
+        "target": [
+          0,
+          30,
+          0
+        ]
+      }
+    },
+    {
+      "id": "station_launch",
+      "module": "engineering_consoles",
+      "position": [
+        3.6955,
+        0,
+        -15.1307
+      ],
+      "rotation": [
+        0,
+        -67.5,
+        0
+      ],
+      "screens": [
+        "screen_station_launch_0",
+        "screen_station_launch_1",
+        "screen_station_launch_2",
+        "screen_station_launch_overhead",
+        "screen_station_launch_nameplate"
+      ],
+      "interactPoint": [
+        2.3836091938791197,
+        1.7,
+        -14.587323255501932
+      ],
+      "lookTarget": [
+        3.8802940365474043,
+        1.34,
+        -15.207270415933378
+      ],
+      "turnaroundView": {
+        "position": [
+          1.8477590650225735,
+          1.7,
+          -14.36536686473018
+        ],
+        "target": [
+          0,
+          30,
+          0
+        ]
+      }
+    }
+  ]
 }

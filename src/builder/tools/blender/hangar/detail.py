@@ -39,6 +39,17 @@ def finish(ob, ident, out, bake):
     source='hangar_concrete_floor' if concrete else 'blue_metal_plate'
     path=lambda suffix:os.path.join(HERE,'textures',source+'_'+suffix+'_1k.jpg')
     diff=texture(n,l,path('diff'),detail); rough=texture(n,l,path('rough'),detail,True)
+    if '_far_' in ident:
+        # Own prefiltered grating tile: averaged dark holes + galvanized bearing bars.
+        # Only a faint low-frequency grid survives; it is opaque and mipmaps to its mean.
+        im=bpy.data.images.get('grating_average') or bpy.data.images.new('grating_average',width=64,height=64,alpha=False)
+        pixels=[]
+        for y in range(64):
+            for x in range(64):
+                v=.56+.012*(math.cos(x*math.tau/16)+math.cos(y*math.tau/16))
+                pixels.extend((v,v*1.025,v*1.03,1))
+        im.pixels.foreach_set(pixels);im.filepath_raw=os.path.abspath(os.path.join(out,'textures','grating_average.jpg'));im.file_format='JPEG';im.save()
+        diff.image=im
     normal=texture(n,l,path('nor_gl'),detail,True)
     vc=n.new('ShaderNodeVertexColor'); vc.layer_name='Color'
     ao=n.new('ShaderNodeAmbientOcclusion'); ao.inputs['Distance'].default_value=.75; ao.samples=16
