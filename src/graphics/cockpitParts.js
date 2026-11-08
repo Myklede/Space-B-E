@@ -837,8 +837,8 @@ export function buildCockpitInterior({ pbr, glow, matte, trim, panel, shell, low
     group.add(t);
   }
 
-  // ---- flight switches within reach of the hands (X engine cut-off, Space retro brake, F flight assist).
-  // Left pad beside the throttle: a guarded red CUT-OFF toggle and an amber RETRO push button. Right pad beside the stick: a cyan ASSIST push button.
+  // ---- flight switches within reach of the hands (X engine cut-off, Space lock guidance, F take manual control).
+  // Left pad beside the throttle: a guarded red CUT-OFF toggle and an amber SPACE LOCK push button. Right pad beside the stick: a cyan F MANUAL push button.
   // The parts named cutoffGuard, cutoffSwitch, retroButton and assistButton move in bind() (setControls); cutoffLamp, retroCap and assistCap light up.
   const padGeo = new RoundedBoxGeometry(0.24, 0.02, 0.17, 2, 0.008);
   const posGeo = new THREE.BoxGeometry(0.008, 0.06, 0.008);
@@ -875,7 +875,7 @@ export function buildCockpitInterior({ pbr, glow, matte, trim, panel, shell, low
     holder.add(cap);
     pad.add(ring, holder);
   };
-  const leftPad = makePad(-0.55, [{ t: 'CUT-OFF  X', x: 87, y: 34, s: 22, c: '#f87171' }, { t: 'RETRO  SPACE', x: 371, y: 34, s: 22, c: '#fbbf24' }], 0.24);
+  const leftPad = makePad(-0.55, [{ t: 'X  CUT-OFF', x: 87, y: 34, s: 26, c: '#f87171' }, { t: 'SPACE  LOCK', x: 371, y: 34, s: 26, c: '#fbbf24' }], 0.24);
   const hingeZ = -0.045;
   const tx = -0.07; // toggle x on the pad
   const toggleBase = new THREE.Mesh(baseGeo, metal);
@@ -900,7 +900,7 @@ export function buildCockpitInterior({ pbr, glow, matte, trim, panel, shell, low
   leftPad.add(toggleBase, lever, hinge, cutLamp);
   pushButton(leftPad, 'retroButton', 0.06, dimLamp);
   group.add(leftPad);
-  const rightPad = makePad(0.57, [{ t: 'ASSIST  F', x: 240, y: 34, s: 22, c: '#67e8f9' }], 0.24, 0.03); // the button sits at the front edge: the gloved hand covers the near part of this pad
+  const rightPad = makePad(0.57, [{ t: 'F  MANUAL', x: 240, y: 34, s: 26, c: '#67e8f9' }], 0.24, 0.03); // the button sits at the front edge: the gloved hand covers the near part of this pad
   pushButton(rightPad, 'assistButton', 0, dimLamp, -0.05);
   group.add(rightPad);
   // a few slowly blinking lamps
@@ -936,6 +936,7 @@ export function buildCockpitInterior({ pbr, glow, matte, trim, panel, shell, low
     if (assist) assist.children[0].material = own.assist[0];
     const sw = { cutoff: false, brake: false, assist: false }; // requested
     const pos = { guard: 0, toggle: 0, retro: 0, assist: 0 }; // 0..1 animation positions
+    let lockHold = 0; // seconds the LOCK button stays pressed after a brake pulse, so even a one-frame pulse shows a full press
     const PUSH_DEPTH = 0.008, GUARD_OPEN = -1.9, TOGGLE_FLIP = 0.55;
     const shown = { cut: false, retro: false, assist: false };
     function applySwitches(dt) {
@@ -945,7 +946,9 @@ export function buildCockpitInterior({ pbr, glow, matte, trim, panel, shell, low
       const kG = 1 - Math.exp(-14 * dt), kT = 1 - Math.exp(-22 * dt), kP = 1 - Math.exp(-30 * dt);
       pos.guard += (guardGoal - pos.guard) * kG;
       pos.toggle += (toggleGoal - pos.toggle) * kT;
-      pos.retro += ((sw.brake ? 1 : 0) - pos.retro) * kP;
+      lockHold = Math.max(0, lockHold - dt);
+      const lockDown = sw.brake || lockHold > 0;
+      pos.retro += ((lockDown ? 1 : 0) - pos.retro) * kP;
       pos.assist += ((sw.assist ? 1 : 0) - pos.assist) * kP;
       if (guard) guard.rotation.x = pos.guard * GUARD_OPEN;
       if (toggle) toggle.rotation.x = (pos.toggle * 2 - 1) * TOGGLE_FLIP; // forward = RUN, back towards the pilot = CUT-OFF
@@ -953,7 +956,7 @@ export function buildCockpitInterior({ pbr, glow, matte, trim, panel, shell, low
       if (assist) assist.position.y = 0.019 - pos.assist * PUSH_DEPTH;
       const cutOn = pos.toggle > 0.5;
       if (cutOn !== shown.cut && cutLampMesh) { shown.cut = cutOn; cutLampMesh.material = own.cut[+cutOn]; }
-      if (sw.brake !== shown.retro && retro) { shown.retro = sw.brake; retro.children[0].material = own.retro[+sw.brake]; }
+      if (lockDown !== shown.retro && retro) { shown.retro = lockDown; retro.children[0].material = own.retro[+lockDown]; }
       if (sw.assist !== shown.assist && assist) { shown.assist = sw.assist; assist.children[0].material = own.assist[+sw.assist]; }
     }
 
@@ -995,7 +998,7 @@ export function buildCockpitInterior({ pbr, glow, matte, trim, panel, shell, low
         if (yaw !== undefined) target.yaw = clampTo(yaw, -1, 1);
         if (throttle !== undefined) target.throttle = clampTo(throttle, 0, 1);
         if (cutoff !== undefined) sw.cutoff = !!cutoff;
-        if (brake !== undefined) sw.brake = !!brake;
+        if (brake !== undefined) { sw.brake = !!brake; if (brake) lockHold = 0.3; }
         if (assistOn !== undefined) sw.assist = !!assistOn;
       },
       /** state: 'off' | 'amber' | 'green' | 'red'. Ids work with or without the `btn:` prefix. Returns false for an unknown id or state. */
