@@ -112,6 +112,18 @@ Copy this block. Keep each line short and factual. Don't commit screenshots.
 - **Suggested fix:** one roll per flight phase, e.g. a chance of `(1 − reliability) / 3` at liftoff, max-Q and staging/entry, that triggers an existing failure (`rud`, or an engine-out that cuts thrust); `spec.engines.length > 1` could mean the ship survives losing one engine. Needs agreement on which ending a random failure uses
 - **Status:** open
 
+### The launch scene's tower and pad dwarf the ship: use Role 1's launch pad and skin
+- **For:** Role 2 · **From:** Role 1 (Myklede) · **Found:** 2026-11-07 on dev 3d4fa59 · **Severity:** bug (the whole team agreed on the fix: the pad is part of the ship Role 1 builds and pays for)
+- **Where:** `src/flight/` LAUNCH / PRELAUNCH scene (the orange tower, the concrete pad and the two white tanks), outside camera (C)
+- **Steps:** `/?debug=1&state=LAUNCH`, press C
+- **Expected:** a ship that fills its pad like a real one: towers about 1.1–1.3 × the ship's height, the mount about 1.5–2 × its diameter, and the launch complex the player chose in the hangar (LC-39A, SLC-40, Starbase, Gagarin's Start… with its trench, water, clamps and tower)
+- **Actual:** the ship is a thin column hidden inside a tower several times its width; the hardstand and tanks are huge next to it
+- **Suggested fix:** Role 1 registers two assets from the builder's `init` (through the public `assets.register`, no contract change):
+  - `assets.get('builder:launchPad')` → the chosen complex sized to the confirmed ship: origin on the ground at the launch mount's centre, the ship's axis on y; `userData.top` is the height (m) where the ship's base sits; the tower stands on +x. Drop your tower and tanks and place the ship's base at `userData.top`.
+  - `assets.get('builder:rocketSkin')` → the outer skin (fairings, skirts, interstage cones that make the stack one smooth body) in ShipSpec coordinates (stack base at y = 0, axis at x = z = 0); add it to the rocket group with the parts. Empty group when the ship has no skin.
+  - Role 1 also calls `assets.setRocketPartArt`, so `rocketPart:<type>` returns the hangar's own models (Role 3's row in the README, as dtri asked). Equipment that rides inside the skin returns an empty object.
+- **Status:** open (Role 1 ships the two assets next; Role 2 places them)
+
 ## Role 3: Graphics, Audio & Core
 
 ### New cockpit: please include the CUT-OFF, RETRO and ASSIST controls
