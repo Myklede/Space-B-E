@@ -284,6 +284,16 @@ Người dùng muốn làm lại giao diện trang thiết kế:
   - Sandbox phải dựng đúng chuỗi xử lý ảnh của game (bloom, tone mapping, HDRI).
   - Prompt: `C:/Users/Thainguyen/Downloads/CODEX2-PROMPT-VAB-DETAIL.md`.
 
+- **Codex 2 xong** (commit `2db32c9`, nhãn `hangar-v2-backup` là bản dự phòng): người dùng rất ưng phần chi tiết khi nhìn gần, nhưng còn hai lỗi:
+  - nhìn xa bị nhoè và lấp lánh: vẽ ở 60 % độ phân giải, sàn lưới tạo vân nhiễu;
+  - đèn quá chói: độ sáng 1,15, quá nhiều đèn loá.
+- **Codex 3 (người dùng chốt 2026-11-08):**
+  - Sửa chói và nhoè: độ phân giải 1.0 có tự giảm, bản xa không dùng lưới lỗ, ít đèn loá.
+  - Vành sàn ôm đúng thân tàu ở từng tầng: tấm điền hình nêm trượt vào theo góc, có vết cắt cho booster. Có hàm `fitCollar` để dùng lại trong game.
+  - Sandbox vẽ con tàu thật bằng code builder (chỉ đọc, không sửa): chọn tàu mẫu và hình dáng thì tàu lớn và vành sàn đổi theo ngay.
+  - Cụm bàn cong 4 máy ở tầng trệt: thời tiết và cửa sổ phóng sang sao Hỏa, máy build tàu, thử động cơ và mô phỏng bay, bàn chỉ huy Go/No-Go. Người ngồi quay lưng về phía tàu; đứng dậy quay người lại là thấy toàn cảnh tàu từ dưới nhìn lên.
+  - Prompt: `C:/Users/Thainguyen/Downloads/CODEX3-PROMPT-VAB-CONSOLES.md`.
+
 ## 5. Việc tồn đọng
 
 - **Đã làm cho Role 3 (2026-11-08):**
