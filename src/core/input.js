@@ -22,9 +22,9 @@ function runSafely(fn) {
 }
 
 export const input = {
-  /** True while the key (a KeyboardEvent.code such as 'KeyW' or 'Space') is held. */
+  /** True while the key (a KeyboardEvent.code such as 'KeyW' or 'Space') is held. Mouse buttons count as keys while the pointer is locked: 'Mouse0' left, 'Mouse1' middle, 'Mouse2' right. */
   isDown: (code) => down.has(code),
-  /** Call fn when the key is pressed. Returns an off function. Removed automatically on state change. */
+  /** Call fn when the key (or 'Mouse0'/'Mouse1'/'Mouse2', pointer locked only) is pressed. Returns an off function. Removed automatically on state change. */
   onPress(code, fn) {
     if (!pressHandlers.has(code)) pressHandlers.set(code, new Set());
     pressHandlers.get(code).add(fn);
@@ -87,12 +87,28 @@ window.addEventListener('keydown', (event) => {
 
 // While the pointer is locked, browsers can use Esc to release it without sending keydown, so losing the lock counts as Esc.
 document.addEventListener('pointerlockchange', () => {
+  if (!document.pointerLockElement) releaseMouseButtons();
   if (!document.pointerLockElement && !selfRelease) runSafely(escapeHandler);
   selfRelease = false;
 });
 
+// Mouse buttons act as key codes 'Mouse0' (left), 'Mouse1' (middle), 'Mouse2' (right), only while the pointer is locked,
+// so the click that locks the pointer is never counted. Held buttons are released when the lock is lost or the window blurs.
+function releaseMouseButtons() {
+  for (const code of [...down]) if (code.startsWith('Mouse')) down.delete(code);
+}
+window.addEventListener('mousedown', (event) => {
+  if (!input.isLocked()) return;
+  const code = `Mouse${event.button}`;
+  if (down.has(code)) return;
+  down.add(code);
+  for (const fn of [...(pressHandlers.get(code) ?? [])]) runSafely(fn);
+});
+window.addEventListener('mouseup', (event) => down.delete(`Mouse${event.button}`)); // always, so a button can never stick
+window.addEventListener('contextmenu', (event) => { if (input.isLocked()) event.preventDefault(); });
+
 window.addEventListener('keyup', (event) => down.delete(event.code));
-window.addEventListener('blur', () => down.clear());
+window.addEventListener('blur', () => down.clear()); // also releases Mouse buttons
 
 window.addEventListener('mousemove', (event) => {
   if (!input.isLocked()) return;
