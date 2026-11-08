@@ -9,7 +9,7 @@ import { createWallScreen } from './bay/screen.js';
 import { createTestStand } from './bay/teststand.js';
 import { partArt } from './bay/partArt.js';
 import { mountRadial, skinFor } from './bay/hullArt.js';
-import { DEG, disposeObject, polar } from './bay/util.js';
+import { DEG, disposeObject, polar, createDisposalQueue } from './bay/util.js';
 import { BASE_RADIUS, SIZE_SCALE } from './assembly.js';
 import { box, std } from './bay/util.js';
 
@@ -43,11 +43,12 @@ export function createHangarScene({ renderer }) {
   let layoutCache = [];
 
   // ---------- vehicle ----------
+  const trash = createDisposalQueue();
   function setLayout(layout, freeNodes = []) {
     for (const child of [...rocket.children]) {
       if (child.name === 'vfx-run') continue;
       rocket.remove(child);
-      disposeObject(child);
+      trash.add(child); // disposed after the new parts are drawn, so their shader programs are kept
     }
     groups.clear();
     anchors.length = 0;
@@ -186,6 +187,7 @@ export function createHangarScene({ renderer }) {
 
   // ---------- frame ----------
   function update(dt, controls = {}) {
+    trash.tick();
     rocket.rotation.y = yaw;
     const now = performance.now() / 1000;
     let changed = false;
@@ -203,6 +205,7 @@ export function createHangarScene({ renderer }) {
 
   function dispose() {
     for (const child of [...rocket.children]) disposeObject(child);
+    trash.flush();
     player.dispose();
     wall.dispose();
   }

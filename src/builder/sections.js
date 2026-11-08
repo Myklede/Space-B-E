@@ -180,6 +180,9 @@ function mainFuelOf(catalog, items) {
   return Object.entries(mass).sort((a, b) => b[1] - a[1])[0]?.[0] ?? null;
 }
 
+/** Rows whose parts the ship still needs after a new shape that brings nothing for them (the legs). */
+const KEEP_ROWS = new Set(['landing']);
+
 export function applyShape(assembly, section, shape) {
   const catalog = assembly.catalog;
   const by = chainBySection(assembly);
@@ -206,8 +209,11 @@ export function applyShape(assembly, section, shape) {
     dropRadial: (r) => {
       const def = catalog.get(r.type);
       if (def?.section !== section.id) return false;
-      if (r.origin === section.id) return true;
       const row = rowOf(section, def);
+      // the landing legs stay when the new shape brings none (a ship has to land on Mars), whoever put them there;
+      // other shape-made trim (fins, boosters, verniers) goes with the shape that brought it
+      if (row && KEEP_ROWS.has(row.id) && !shapeRows.has(row.id)) return false;
+      if (r.origin === section.id) return true;
       return !!row && shapeRows.has(row.id);
     },
     rehost: (r, chain) => { const def = catalog.get(r.type); return def ? pickHost(assembly, chain, def, hostRuleFor(def)) : null; },

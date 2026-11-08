@@ -11,7 +11,7 @@ import { assets } from '/src/graphics/index.js';
 import { partArt } from './bay/partArt.js';
 import { internalsArt } from './bay/internalsArt.js';
 import { wantsNasaArt } from './bay/nasa.js';
-import { DEG, disposeObject } from './bay/util.js';
+import { DEG, disposeObject, createDisposalQueue } from './bay/util.js';
 import { mountRadial, skinFor } from './bay/hullArt.js';
 
 const SELECTED = new THREE.Color(0xfbbf24);
@@ -171,8 +171,9 @@ export function createDesignScene() {
   function clearViewCentre() { viewCentre = null; camera.clearViewOffset(); }
 
   // ----- the pad -----
+  const trash = createDisposalQueue();
   function setPad(made) {
-    if (padObject) { padHolder.remove(padObject); disposeObject(padObject); }
+    if (padObject) { padHolder.remove(padObject); trash.add(padObject); }
     padObject = made?.object ?? null;
     padTop = made?.top ?? 0;
     if (padObject) {
@@ -193,7 +194,7 @@ export function createDesignScene() {
     fitTo(stackHeight, stackRadius);
     if (keyNow === layoutKey) return false;
     layoutKey = keyNow;
-    for (const child of [...vehicle.children]) { if (child === pieces) continue; vehicle.remove(child); disposeObject(child); }
+    for (const child of [...vehicle.children]) { if (child === pieces) continue; vehicle.remove(child); trash.add(child); } // disposed after the new parts are drawn
     parts.clear();
     missingArt = [];
     for (const e of layout) {
@@ -233,6 +234,9 @@ export function createDesignScene() {
       const cloned = mats.map((m) => {
         const c = m.clone();
         c.userData = { ...m.userData, vdCloned: true, baseOpacity: m.opacity, baseTransparent: m.transparent, baseEmissive: m.emissive ? m.emissive.clone() : null, baseEmissiveIntensity: m.emissiveIntensity ?? 1 };
+        // transparent from the start (fully opaque at opacity 1 with depth writes on): a fade then changes only the
+        // opacity and never the shader, which three.js would recompile on every switch between opaque and see-through
+        c.transparent = true;
         return c;
       });
       o.material = Array.isArray(o.material) ? cloned : cloned[0];
@@ -244,8 +248,6 @@ export function createDesignScene() {
       for (const m of Array.isArray(o.material) ? o.material : [o.material]) {
         const u = m.userData;
         if (!u?.vdCloned) continue;
-        const clear = opacity < 1 || u.baseTransparent;
-        if (m.transparent !== clear) { m.transparent = clear; m.needsUpdate = true; } // three.js bakes "opaque" into the shader: recompile on a flip
         m.opacity = Math.min(u.baseOpacity, opacity);
         m.depthWrite = opacity >= 0.99;
         if (m.emissive && u.baseEmissive) {
@@ -361,6 +363,7 @@ export function createDesignScene() {
   // ----- frame -----
   function update(rawDt) {
     const dt = Number.isFinite(rawDt) ? Math.min(0.1, Math.max(0, rawDt)) : 0; // the first frames after a load can report odd steps
+    trash.tick();
     if (![smooth.yaw, smooth.pitch, smooth.dist, smooth.targetY].every(Number.isFinite)) Object.assign(smooth, { yaw: orbit.yaw, pitch: orbit.pitch, dist: orbit.dist, targetY: orbit.targetY });
     orbit.idle += dt;
     if (orbit.auto && orbit.idle > 6 && explode < 0.05 && !selected) orbit.yaw += dt * 0.12;
@@ -387,6 +390,7 @@ export function createDesignScene() {
   function dispose() {
     for (const child of [...vehicle.children]) disposeObject(child);
     if (padObject) disposeObject(padObject);
+    trash.flush();
     discTex.dispose();
   }
 
