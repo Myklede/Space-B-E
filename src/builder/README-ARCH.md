@@ -18,7 +18,13 @@ Pure logic (Node-testable, no browser or core imports; everything is passed in):
 |---|---|
 | `assembly.js` | the rocket as a tree of parts with attachment nodes; attach/remove/replace/undo/redo/symmetry; material and internal options per part (`setMaterial`, `setOption`, `options`); layout (metres); serialize; share code. `createCatalog(parts, internals)` adds `kit(def)`, `defaults(def)`, `optionsOf(def, options)` |
 | `stats.js` | `computeShipSpec(assembly, deps)` → `{ spec, breakdown, blocks }` per `SHIP_SPEC_SHAPE`, with materials, internal options (`optionMods`) and solid motors folded in; `engineStats(def, engines, g0, mods)`; `partFigures(def, ctx)` for one part on a card |
-| `gonogo.js` | `evaluate(spec, ctx)` → hard blocks, warnings and the console lines (text from `data/text.json`) |
+| `gonogo.js` | `evaluate(spec, ctx)` → hard blocks, warnings and the console lines in flight-controller words (no numbers, no fixes; text from `data/text.json`), weather calls (lightning, ground wind), HOLD |
+| `hull.js` | the seamless outer skin: `computeHull(layout, { hull })` → skirts, interstages, cones, payload fairings and an automatic equipment bay, with mass, cost, drag (`cdAFactor`), heat on the climb (1976 standard atmosphere, cork on hot flares), buckling margin at max-Q (crewed factor 1.4), wear per flight, `insideIds` (equipment carried inside), `risk`, `limits`; `hullChoices`, `hullMaterial`, `hullHasSkin`, `placeInside` (used by `assembly.layout()`). Data: `data/hull.json` |
+| `weather.js` | launch-day weather at the chosen complex: `weatherFor(launch, { pad, launchData })` → forecast, actual (a cheap weather watch can be wrong), wind, lightning, HOLD fee; deterministic per complex, day and seed |
+| `sections/pad/effects.js` | what the pad does: `padEffects(launch, { pad, weather, thrustSL, g, wetMass })` → fees, reliability, heat limit, held-back liftoff (Δv lost), debris damage chance, repairs, hold-down catch, lightning risk; `padSetup`, `heatLimitOf`, `kitFee`, `complexOf` |
+| `asBuilt.js` | FIFA-style luck at confirm: `buildAsFlown(result, ctx)` → the flown ShipSpec (factory spread ±0.5–3 % by quality, rare defects from each part's reliability, pad debris, skin wrinkles or overheating, the real temperature), defects, notes, seed; refurbishment and wear for a reflown ship; `investigate` for the board |
+| `everyday.js` | numbers in everyday words, English and Vietnamese (mass as cars, thrust as weight lifted, failures as "1 in N flights") |
+| `explain.js`, `i18n.js` | plain-language explanations (`explainFor(key)`, files `sections/<id>/explain.json`, `data/explain-*.json`) and the EN / VI switch (`tr`, `setLang`, saved as `builderLang`) |
 | `sections.js` | the four vehicle sections (nose, body, tail, launch pad): `mergeSectionData(families, files)` folds each `sections/<id>/` folder into the catalogue; `createSections(files)`; `applyShape` (build one section as a real rocket's, keeping the rest, inserting adapters where diameters change and matching the engines' fuel to the tanks), `addThroughRow`, `clearSection`, `currentShape`, `rowCandidates`, `sectionParts`, `padState` |
 | `catalogData.js` | imports `data/families.json` and the four section folders and exports the merged `partsJson`, `internalsJson`, `sections` |
 | `tests/builder.test.mjs` | `node src/builder/tests/builder.test.mjs`: schema checks, text coverage, preset stats, every section (rows reachable, shapes alone and on top of a preset, any build order, clusters, clear, pad fees, save round-trip) |
@@ -55,6 +61,8 @@ Views with fixed interfaces (so three people can work at once): `formulaLens.js`
 - `material` (an option id of the part's `materialFamily` in `data/materials.json`) and `options` (`{ slotKey: optionId }` from the part's kit in `data/internals.json`) are optional; missing values mean the first option. `replace` clears both.
 - Only axial parts (`attach: "axial"` in the catalog) take `top`/`bottom` children; a `top`/`bottom` node holds at most one child. Radial parts take no children.
 - `launch` is `{ slot, site, pad: { equipmentKey: optionId } }`: `slot` from `data/launch.json` (`cold` = 2 °C, the Challenger setup), `site` and the pad equipment from `sections/pad/section.json`. Missing values mean the first (neutral) choice.
+- `hull` is `{ nose?, body?, tail? }`: the skin material of each section (an id from `data/hull.json`); missing means the first.
+- `launch` also carries `day` (HOLD), `seed` (the launch campaign) and `repairDue` (pad repairs owed); `site` is the launch complex.
 - `origin` (optional) is the section a part came from when a shape put it there (`nose`, `body`, `tail`), so building that section again replaces only its own parts. Shapes and presets set it on radial parts such as fins.
 
 ## Layout (metres, from `assembly.layout(catalog)`)
@@ -80,9 +88,12 @@ HANGAR: build → **GO / NO-GO POLL** → GONOGO: lines reveal → no blocks: **
 ## Events
 
 Emits: `ship:built`, `guidebook:open`, `builder:highlightPart` (the Formula Lens and the Flight Report both make parts glow through this one event), `ending:show` + `requestState('ENDING')` with `bankrupt` when funds fall below `balance.insolvencyFloor` and the player declares it.
-Listens: `builder:highlightPart`, `economy:changed`.
+Listens: `builder:highlightPart`, `economy:changed`, `flight:failed` and `ending:show` (the flight record, the investigation board, keeping a ship that came home).
+Registers with Role 3's `assets`: `rocketPart:` art, `builder:rocketSkin`, `builder:launchPad` (`flightArt.js`).
 
 ## Save keys (through core `save`)
+
+Also `builder.luck` (build serial, flight records, the kept ship and its wear) and `builderLang` ('en' | 'vi').
 
 `builder: { draft: Assembly, blueprints: [Assembly], slot }`. Settings written by `settings.js`: `sensitivity`, `invertY`, `quality`, `volume`, `skipSensitive`, `warningSeen` (other roles may read `sensitivity` and `invertY`).
 
@@ -107,6 +118,10 @@ The hangar is a round integration hall the engineer walks through in first perso
 | `bay/loader.js` | Poly Haven assets listed in `data/bayAssets.json` (HDRI, PBR sets, glTF props) with procedural fallbacks |
 | `hangarScene.js` | puts it together: `createHangarScene({ renderer })` → scene, camera, player, stations, wall, test, `setLayout`, `worldAnchors`, `nearestStation`, `placeAtStation` |
 | `hangarScreen.js` | the HUD (crosshair, prompt, chip, toasts) and the station panels: the design page for the design desks (propulsion opens the Tail card, structures the Body, crew systems the Nose, the launch-window desk the Launch pad), test console, range terminal, handbook (`handbook.js`, notes saved as `builderNotes`), dialogs (rename, MORE: preset vehicles, blueprints, share code, redo; clear all) |
+| `partCard.js` | the big explanation card in the middle of the screen: what it does and why, how it works inside (a turning 3D view pulled apart, read back asynchronously through a render target), the numbers in everyday words; EN / VI; opened by clicking a part, piece, shape, complex, equipment or skin |
+| `designPad.js` | the Launch pad card: row 1 a real launch complex, row 2 its eight kinds of equipment, then plain launch-day facts |
+| `investigation.js` | the investigation board after a failed flight (English / Vietnamese): what broke, as built against on paper, the real need, one question |
+| `flightArt.js` | Role 1's art for the flight scenes (agreed by all four roles): `rocketPart:` models through `assets.setRocketPartArt`, `builder:rocketSkin` and `builder:launchPad` through `assets.register`; `flightArtGate.js` keeps the builder's own scenes on Role 3's built-in parts |
 | `autoplace.js` | `autoAttach`: puts a part where a technician would (`insertAbove` for tanks above the engine); the tests use it, the design page adds through `sections.addThroughRow` |
 
 Flow: walk up to a machine → `E` opens its panel (pointer unlocks, the player stands still) → `Esc` closes it (first one step back inside the open card, then the page). `H` opens the handbook anywhere. The readiness poll (GONOGO) is shown from the test conductor's console in the same hall. With `?debug=1`, `window.__game.builder.placeAt(id)` / `openStation(id)` / `startTest()` / `requestArt(ids)` drive it from the console; `window.__game.builder.scene3d` is the design studio; `/?debug=1&state=HANGAR&station=integration` opens a desk straight away.
