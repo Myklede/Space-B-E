@@ -331,12 +331,17 @@ def quilt_maps(size=256):
 
 def glass_material(name='glass', fac=0.05, tint=(0.78, 0.9, 0.95)):
     m = bpy.data.materials.new(name); m.use_nodes = True
-    nt = m.node_tree; nt.nodes.clear()
-    out = nt.nodes.new('ShaderNodeOutputMaterial')
-    tr = nt.nodes.new('ShaderNodeBsdfTransparent'); tr.inputs['Color'].default_value = (*tint, 1)
-    gl = nt.nodes.new('ShaderNodeBsdfGlossy'); gl.inputs['Roughness'].default_value = 0.03
-    mix = nt.nodes.new('ShaderNodeMixShader'); mix.inputs['Fac'].default_value = fac
-    nt.links.new(tr.outputs[0], mix.inputs[1]); nt.links.new(gl.outputs[0], mix.inputs[2]); nt.links.new(mix.outputs[0], out.inputs['Surface'])
+    bsdf = m.node_tree.nodes.get('Principled BSDF')
+    bsdf.inputs['Base Color'].default_value = (*tint, 1)
+    bsdf.inputs['Alpha'].default_value = fac
+    bsdf.inputs['Roughness'].default_value = 0.04
+    transmission = bsdf.inputs.get('Transmission Weight') or bsdf.inputs.get('Transmission')
+    if transmission:
+        transmission.default_value = 0.9
+    if hasattr(m, 'surface_render_method'):
+        m.surface_render_method = 'DITHERED'
+    elif hasattr(m, 'blend_method'):
+        m.blend_method = 'BLEND'
     MATS[name] = m
 
 def hazard_material(name='hazard'):
@@ -379,7 +384,7 @@ def define_materials():
     material('tickwhite', (0.7, 0.7, 0.68), 0.6)
     material('cable', (0.012, 0.012, 0.014), 0.5)
     material('cabley', (0.8, 0.5, 0.01), 0.45)
-    glass_material()
+    glass_material(fac=0.01)
     glass_material('hudglass', 0.25, (0.55, 0.85, 0.7))
     hazard_material()
     for nm, kw in (('clay', dict(dirt=0.5, scuff=0.6)), ('hood', dict(dirt=0.5, scuff=0.6)), ('frame', dict(dirt=0.4, scuff=0.7)), ('floorgrey', dict(dirt=0.7, scuff=0.3))):
@@ -1258,7 +1263,6 @@ def build_windows():
         b_lo, b_hi = 0.03, (TOP - SILL) / ey.y - 0.035
         with fr:
             b.acc.add('frame', slab_geo(shrink(poly, 0.002), [rrect(a_lo, a_hi, b_lo, b_hi, 0.04, 4)], 0.10))
-            b.box('glass', a_hi - a_lo + 0.02, b_hi - b_lo + 0.02, 0.003, (a_lo + a_hi) / 2, (b_lo + b_hi) / 2, -0.075, bevel=0)
 
 # ------------------------------------------------------------------ display pages (emissive images, for the renders; the game draws these live later)
 D_BG = (0.012, 0.025, 0.05)
@@ -1466,9 +1470,10 @@ def build_ceiling():
 
 def build_floor():
     b = O('floor')
-    fr, _ = pf((0, FY, 0), (1, 0, 0), (0, 1, 0))     # a = x, b = -z
-    with fr:
-        b.acc.add('floorgrey', slab_geo(rect((XL - 0.06, XR + 0.06, -ZB - 0.06, 1.05)), [], 0.06))
+    # Use a closed box here: the generic slab triangulation left visible gaps
+    # in the footwell after GLB export on some Blender builds.
+    b.box('floorgrey', XR - XL + 0.12, 0.06, ZB + 1.11,
+          (XL + XR) / 2, FY - 0.03, 0.005, bevel=0)
     def strip(x0, x1, z0, z1):
         b.box('hazard', x1 - x0, 0.01, z1 - z0, (x0 + x1) / 2, FY + 0.002, (z0 + z1) / 2, bevel=0)
     strip(IP_A0, IP_A1, -0.80, -0.70)                    # toe-kick
