@@ -14,6 +14,7 @@ const { partsJson, internalsJson } = mergeSectionData(j('src/builder/data/famili
 const parts = partsJson.parts ?? partsJson;
 const kits = internalsJson.kits ?? {};
 const RADIUS = { s: 0.9375, m: 1.25, l: 1.6875 };
+const hullData = j('src/builder/data/hull.json');
 const MAX_BYTES = 400 * 1024, MAX_TRIS = 20000, SECTION_BYTES = 12 * 1024 * 1024;
 
 let failures = 0;
@@ -80,8 +81,12 @@ for (const def of modelled) {
     ok(Math.abs(m.max[1] - def.height) <= 0.02 * def.height + 0.02, `${def.id}: top at ${m.max[1].toFixed(3)} m for a ${def.height} m part`);
     const r = Math.max(m.max[0], -m.min[0], m.max[2], -m.min[2]);
     const R = RADIUS[def.size] ?? 1.25;
-    const ownShape = def.engine || def.flags?.capsule || def.hullProfile?.kind === 'own' || def.hullProfile?.kind === 'tower' || def.hullProfile?.kind === 'cover';
-    if (!ownShape) ok(Math.abs(r - R) <= 0.06 * R, `${def.id}: widest ${r.toFixed(3)} m at the ${def.size.toUpperCase()} joint radius ${R}`);
+    // only parts whose wall IS the vehicle's outer skin must sit at the joint radius (the hull's 'shell' kind); towers,
+    // covers, capsules, engines, adapters and parts riding inside a skirt or fairing keep their own width
+    const prof = def.hullProfile ?? hullData.profiles?.[def.id] ?? null;
+    const shell = !def.engine && !def.adapter && !def.flags?.capsule && def.family !== 'abort' && (!prof || prof.kind === 'shell');
+    // model.proud (m): fittings that really stand out of the wall, e.g. the Dragon trunk's fins
+    if (shell) ok(r - R <= 0.06 * R + (Number(def.model.proud) || 0) && R - r <= 0.06 * R, `${def.id}: widest ${r.toFixed(3)} m at the ${def.size.toUpperCase()} joint radius ${R}`);
   }
   const slots = kits[def.internals]?.slots ?? [];
   const named = m.names.filter((n) => /^slot_/.test(n));

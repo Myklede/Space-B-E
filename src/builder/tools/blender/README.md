@@ -22,6 +22,8 @@ the code-drawn parts, in the design studio, on the hangar stand, in the explanat
   that is the vehicle's outer skin sits exactly at that radius; ring frames and fittings may stand proud by a few cm.
   Capsules, nose cones, towers and engines keep their own shape (the skin goes round them) and declare it with
   `hullProfile` in the part data (`data/hull.json` profiles show the format).
+- A shell part with fittings that really stand out of its wall (the Dragon trunk's fins, a raceway) declares how far:
+  `"model": { "builder": "nose/crew_trunk_m", "proud": 0.3 }` (metres beyond the stack radius).
 - **Radial parts** (on the side): origin at the attachment point on the host's wall, +X pointing outward, height along
   +Y from the mount; a part that rides inside the skin is placed by the game, model it standing on y = 0 centred.
 - **Engine clusters**: model one engine; the thrust structure's `mounts` places the copies. An engine that may sit in a
