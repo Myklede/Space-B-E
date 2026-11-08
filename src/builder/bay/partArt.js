@@ -5,7 +5,7 @@
 import * as THREE from 'three';
 import { assets } from '/src/graphics/index.js';
 import { withoutFlightArt } from '../flightArtGate.js';
-import { nasaPartArt, isBuilderModel } from './nasa.js';
+import { nasaPartArt, isBuilderModel, applyChoices } from './nasa.js';
 import {
   adapterMesh, airbagMesh, avionicsRingMesh, chuteMesh, finMesh, heatShieldMesh, hiadMesh, instrumentMesh, kickMotorMesh, moduleMesh, noseMesh,
   pafMesh, ringMesh, rtgMesh, sectionMesh, solarWingMesh, sphereMesh, spinTableMesh, srbMesh, tankMesh, thrustMesh, trussMesh, wiringTunnelMesh,
@@ -85,8 +85,11 @@ function singleArt(entry) {
   if (entry.covered && /hiad/.test(def?.id ?? '')) return packedHiadMesh(def, radius); // stowed under the skin for launch
   // Role 1's Blender model, once loaded, wins over the code-drawn art (which shows while it downloads)
   if (isBuilderModel(entry.type)) {
-    const model = nasaPartArt(entry.type);
+    // an engine with a vacuum nozzle uses its vacuum-bell copy when the model has one; only the chosen inner looks show
+    const vac = entry.engine?.nozzle === 'vac' ? nasaPartArt(`${entry.type}#vac`) : null;
+    const model = vac ?? nasaPartArt(entry.type);
     if (model) {
+      applyChoices(model, entry.options);
       model.userData.width = entry.attach === 'radial' ? Math.min(1.2, def?.height ?? 0.8) : undefined;
       if (def?.booster && entry.attach === 'radial') model.userData.srb = true;
       return model;

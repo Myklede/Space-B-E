@@ -204,7 +204,7 @@ def export(root_obj, out, max_tris=20000, expect_height=None, expect_radius=None
         filepath=os.path.abspath(out), export_format='GLB', use_selection=True, export_yup=True, export_apply=True,
         export_draco_mesh_compression_enable=True, export_draco_mesh_compression_level=6,
         export_draco_position_quantization=14, export_draco_normal_quantization=10, export_draco_texcoord_quantization=12,
-        export_materials='EXPORT', export_cameras=False, export_lights=False,
+        export_materials='EXPORT', export_cameras=False, export_lights=False, export_extras=True,
     )
     size = os.path.getsize(os.path.abspath(out))
     print(f'[model] wrote {out} ({size / 1024:.0f} KB)')

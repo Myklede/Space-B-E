@@ -43,6 +43,12 @@ the code-drawn parts, in the design studio, on the hangar stand, in the explanat
 - A choice with its own look: `slot_<key>__<optionId>` (two underscores); the game uses it when that option is fitted,
   else `slot_<key>`. Names: lowercase letters, digits and single underscores; no dots or spaces.
 - Slots that are not modelled keep the code-drawn piece (`bay/internalsArt.js`).
+- On the ship the game shows, for each slot, only `slot_<key>__<option fitted>` when the model has it, else the plain
+  `slot_<key>` (so the plain node must be the slot's FIRST option's look); every other variant is hidden. A piece that
+  replaces another slot (an aerospike or conical nozzle replaces the bell extension) carries the custom property
+  `hides = "nozzleExt"` (exported as glTF extras by `common.export`).
+- An engine with a separate vacuum-bell file names it `"model": { "builder": "tail/engine_m", "vac": "tail/engine_m_vac" }`;
+  the game uses it when the engine's nozzle is `vac`.
 
 ## Looks and budget
 - glTF PBR materials (Principled BSDF): base colour, metallic, roughness; keep metalness moderate (0.3–0.6), the studio

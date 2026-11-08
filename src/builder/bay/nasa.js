@@ -30,6 +30,7 @@ export function registerNasaModels(catalog) {
     if (def.model?.builder) {
       NASA_PARTS[def.id] = { builder: def.model.builder };
       if (def.model.lod) NASA_PARTS[`${def.id}#lod`] = { builder: def.model.lod }; // the low-detail copy for big clusters
+      if (def.model.vac) NASA_PARTS[`${def.id}#vac`] = { builder: def.model.vac }; // an engine with its vacuum bell
     }
     else if (def.model?.model) NASA_PARTS[def.id] = def.model;
   }
@@ -150,7 +151,7 @@ export function requestPartArt(partId, catalog) {
 
 /** Loads the models for a list of part ids. Resolves to the number that now have real art. */
 export async function preloadNasaParts(catalog, ids = Object.keys(NASA_PARTS)) {
-  ids = [...ids, ...ids.filter((id) => NASA_PARTS[`${id}#lod`]).map((id) => `${id}#lod`)]; // a part's low-detail copy loads with it
+  ids = [...ids, ...['lod', 'vac'].flatMap((k) => ids.filter((id) => NASA_PARTS[`${id}#${k}`]).map((id) => `${id}#${k}`))]; // its low-detail and vacuum copies load with it
   const results = await Promise.all([...new Set(ids)].map((id) => requestPartArt(id, catalog)));
   if (failures.size) console.warn('[nasa] models that did not load:', Object.fromEntries(failures));
   return results.filter(Boolean).length;
@@ -162,6 +163,35 @@ function builderProto(scene) {
   proto.updateMatrixWorld(true);
   proto.traverse((o) => { if (o.isMesh) { o.castShadow = true; o.receiveShadow = true; } });
   return proto;
+}
+
+/**
+ * Shows only the chosen look of each inner piece of a Blender model: for every slot key, slot_<key>__<optionId> when
+ * that option is fitted (options: { key: optionId }) and the model has it, else the plain slot_<key> (the first
+ * option's look); every other variant is hidden. A shown piece may hide other slots through its glTF extras
+ * ({ "hides": "nozzleExt" } or a list), e.g. an aerospike or a conical nozzle that replaces the bell extension.
+ */
+export function applyChoices(object, options = null) {
+  const slots = new Map();
+  object.traverse((o) => {
+    if (!o.name?.startsWith('slot_')) return;
+    const [key, variant] = o.name.slice(5).split('__');
+    if (!slots.has(key)) slots.set(key, { base: null, variants: new Map() });
+    const s = slots.get(key);
+    if (variant) s.variants.set(variant, o); else s.base = o;
+  });
+  const shown = new Map();
+  for (const [key, s] of slots) {
+    const pick = s.variants.get(options?.[key]) ?? s.base;
+    if (s.base) s.base.visible = false;
+    for (const v of s.variants.values()) v.visible = false;
+    if (pick) { pick.visible = true; shown.set(key, pick); }
+  }
+  for (const node of shown.values()) {
+    const hides = node.userData?.hides;
+    for (const key of [].concat(hides ?? [])) { const other = shown.get(key); if (other) other.visible = false; }
+  }
+  return object;
 }
 
 /** Is this part drawn by one of Role 1's Blender models (when loaded)? */
