@@ -368,7 +368,8 @@ function buildSkinNow(layout) {
     const el = item.el;
     const yTopFree = el.y1 - item.coverTop, yBotFree = el.y0 + item.coverBottom;
     if (item.stepAbove != null) segBand(item.stepAbove);
-    if (yTopFree - yBotFree > 1e-6) bands.push({ y0: yBotFree, y1: yTopFree, rB: el.rAt(yBotFree - el.y0), rT: el.rAt(yTopFree - el.y0), skin: -1, id: el.id, kind: el.kind });
+    // (an own-shape part keeps its real profile between the ends: a capsule's wall is not a straight cone)
+    if (yTopFree - yBotFree > 1e-6) bands.push({ y0: yBotFree, y1: yTopFree, rB: el.rAt(yBotFree - el.y0), rT: el.rAt(yTopFree - el.y0), skin: -1, id: el.id, kind: el.kind, ...(el.kind === 'own' ? { at: (y) => el.rAt(y - el.y0) } : {}) });
     if (item.stepBelow != null) segBand(item.stepBelow);
   }
   // the band shapes of own parts: their real radius at each end (capsule taper, cover boat-tail)
@@ -385,6 +386,7 @@ export function radiusAt(skin, y) {
   let r = 0;
   for (const b of skin.bands) {
     if (y < b.y0 - 1e-6 || y > b.y1 + 1e-6) continue;
+    if (b.at) { r = Math.max(r, b.at(clamp(y, b.y0, b.y1))); continue; }
     const f = b.y1 > b.y0 ? clamp((y - b.y0) / (b.y1 - b.y0), 0, 1) : 0;
     r = Math.max(r, b.rB + (b.rT - b.rB) * f);
   }
@@ -427,9 +429,12 @@ function dryBays(skin) {
   for (const el of skin.elements) {
     if (!joins(el) || el.heatShield || el.kind === 'cover' || el.kind === 'bay' || (el.kind === 'inner' && el.def.booster)) continue; // (a kick motor fills its own frame)
     if (el.def.fuel) {
+      if (el.kind === 'inner') continue; // a tank hung inside a skirt: the skin's ring round it is the bay
       const s = Math.min(el.h / 2, (INSIDE.skirtFrac ?? 0.35) * el.R);
       const depth = Math.min(INSIDE.skirtDepth ?? 0.5, el.R * 0.4);
-      for (const [y0, y1] of [[el.y1 - s, el.y1], [el.y0, el.y0 + s]]) bays.push({ kind: 'skirt', y0, y1, partId: el.id, wall: () => el.R - 0.04, room: () => depth });
+      // the skirt's wall is the tank's own wall at that height (a shaped tank, the N1's cone or Blok A's waist, narrows)
+      const wallAt = (y) => el.rAt(y - el.y0) - 0.04;
+      for (const [y0, y1] of [[el.y1 - s, el.y1], [el.y0, el.y0 + s]]) bays.push({ kind: 'skirt', y0, y1, partId: el.id, wall: wallAt, room: (y) => Math.min(depth, wallAt(y) * 0.4) });
       continue;
     }
     if (el.kind === 'own' && !el.def.flags?.capsule) continue; // nose caps are solid
@@ -566,10 +571,16 @@ function intoBay(e, bay, slot, w) {
   e.z = -face * Math.sin(a);
 }
 
+/** A real intertank or centerbody (data/hull.json inside.bay.intertankMatch): dry structure between two tanks. */
+const isIntertank = (el) => new RegExp(INSIDE.bay.intertankMatch).test(el.def.id);
+/** A part of the stage above it: its aft skirt, a lattice, or a tank hung inside the skirt (inside.bay.stagePartMatch). */
+export const isStagePart = (el) => new RegExp(INSIDE.bay.stagePartMatch).test(el.def.id) || (!!el.def.fuel && el.kind === 'inner');
+
 /**
  * Where the automatic equipment bay goes and how tall it is, for the items placeInside() could not fit (bay 'orphan'),
- * or null when nothing needs it. Where (data/hull.json inside.bay.prefer, the first that exists): 'intertank', just
- * under the topmost tank above the next body part (real intertanks carry avionics); 'nose', just under the capsule or
+ * or null when nothing needs it. Where (data/hull.json inside.bay.prefer, the first that exists): 'intertank', next to
+ * a real intertank or centerbody right under the topmost tank (real intertanks carry avionics), otherwise below that
+ * tank's own aft skirt, hung tank or lattice (never splitting a stage: S-IVB, DCSS, Blok I); 'nose', just under the capsule or
  * payload on top of the body's first part below any adapter (where service modules ride); else on top of the topmost
  * tank. The intertank comes first because a bay up front puts its side area ahead of the centre of mass and tipped
  * the presets into UNSTABLE. Its diameter is that of the part below it (or of the part above, if that one is wider
@@ -582,7 +593,7 @@ export function planEquipmentBay(layout, skin = buildSkin(layout)) {
   if (!orphans.length) return null;
   const B = INSIDE.bay;
   const els = skin.elements.filter(joins);
-  let below = null, above = null;
+  let below = null, above = null, spot = null;
   const tryNose = () => {
     const noseLow = [...els].reverse().find((el) => el.section === 'nose' && el.kind !== 'cover');
     if (!noseLow) return;
@@ -591,19 +602,26 @@ export function planEquipmentBay(layout, skin = buildSkin(layout)) {
     if (next && next.section === 'body' && els.slice(i + 1, els.indexOf(next)).every((el) => el.kind === 'adapter')) { below = next; above = els[els.indexOf(next) - 1]; }
   };
   const tryIntertank = () => {
-    // under the topmost tank, where real intertanks carry avionics (the part below must be in the body, not an engine)
-    const tank = els.find((el) => el.def.fuel);
-    const next = tank && els[els.indexOf(tank) + 1];
-    if (next && next.section === 'body' && next.kind !== 'adapter') { below = next; above = tank; }
+    // where real stages carry avionics between their tanks: a real intertank or centerbody right under the topmost
+    // tank (the bay joins it); otherwise below that tank's own aft skirt, hung tank or lattice, never between a tank and
+    // a part of its own stage, and still low, for stability
+    const tank = els.find((el) => el.def.fuel && el.section === 'body') ?? els.find((el) => el.def.fuel);
+    if (!tank) return;
+    let k = els.indexOf(tank);
+    if (els[k + 1] && isIntertank(els[k + 1])) { below = els[k + 1]; above = tank; return; }
+    while (els[k + 1] && isStagePart(els[k + 1]) && Math.abs(els[k + 1].y1 - els[k].y0) < 1e-6) k += 1;
+    const last = els[k], after = els[k + 1];
+    if (after && Math.abs(after.y1 - last.y0) < 1e-6) { below = after; above = last; } else spot = { y0: last.y0, R: last.rB, section: tank.section };
+    if (below) spot = { section: tank.section };
   };
-  for (const where of B.prefer ?? ['nose', 'intertank']) { if (!below) (where === 'nose' ? tryNose : tryIntertank)(); }
-  if (!below) {
+  for (const where of B.prefer ?? ['nose', 'intertank']) { if (!below && !spot) (where === 'nose' ? tryNose : tryIntertank)(); }
+  if (!below && !spot) {
     const tank = els.find((el) => el.def.fuel);
     if (tank) { below = tank; above = els[els.indexOf(tank) - 1] ?? null; }
   }
-  if (!below) return null;
-  let R = below.kind === 'inner' ? below.R : below.rT;
-  if (above && above.kind !== 'adapter' && above.kind !== 'cover' && (above.rB ?? 0) > R + TOL) R = above.rB;
+  if (!below && !spot?.R) return null;
+  let R = spot?.R ?? (below.kind === 'inner' ? below.R : below.rT);
+  if (below && above && above.kind !== 'adapter' && above.kind !== 'cover' && (above.rB ?? 0) > R + TOL) R = above.rB;
   // rings round the wall, tallest items first
   const items = orphans.map((e) => ({ e, w: widthOf(e.def), h: e.height ?? e.def.height ?? 0.5 })).sort((p, q) => q.h - p.h || p.e.id.localeCompare(q.e.id));
   const wMax = Math.max(...items.map((it) => it.w));
@@ -629,7 +647,8 @@ export function planEquipmentBay(layout, skin = buildSkin(layout)) {
     }
     dy += ring.h + B.headroom;
   }
-  return { y0: below.y1, height, R, section: below.section === 'nose' ? 'body' : below.section ?? 'body', slots };
+  const section = spot?.section ?? (below.section === 'nose' || below.section === 'tail' ? 'body' : below.section ?? 'body');
+  return { y0: spot?.y0 ?? below.y1, height, R, section, slots };
 }
 
 /** Lifts everything above the equipment bay by its height and records the bay on the layout (layout.equipmentBay). */

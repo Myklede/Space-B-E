@@ -97,7 +97,7 @@ const combos = [];
     N.forEach((_, i) => T.forEach((_, k) => add(i, (i + 2 * k) % B.length, k)));
   }
 }
-const problems = { overlap: [], jump: [], gap: [], uncovered: [], clearance: [], inside: [], propellant: [], axis: [], flight: [], mass: [], adapterCone: [], steep: [], determinism: [], cache: [], bay: [] };
+const problems = { overlap: [], jump: [], gap: [], uncovered: [], clearance: [], inside: [], wall: [], propellant: [], axis: [], flight: [], mass: [], adapterCone: [], steep: [], determinism: [], cache: [], bay: [], stage: [] };
 let maxMass = 0, maxMassCombo = '', withSkin = 0, bays = 0, maxBay = 0, steepest = 0, steepestTag = '';
 for (const [n, b, t] of combos) {
   const tag = `${n.id}+${b.id}+${t.id}`;
@@ -130,6 +130,14 @@ for (const [n, b, t] of combos) {
   }
   // the stack is honest about the bay: everything above it was lifted, so the stack height includes it
   if (baySegs.length && Math.abs(Math.max(...lay.filter((e) => e.attach === 'axial').map((e) => e.y + e.height)) - skin.top) > EPS) problems.bay.push(`${tag}: stack top`);
+  // the bay never splits a stage: no tank (or a part hanging from it) right above it with its own aft skirt, hung tank
+  // or lattice right under it
+  if (baySegs.length) {
+    const joined = skin.elements.filter((el) => el.kind !== 'engine' && el.kind !== 'tower');
+    const i = joined.findIndex((el) => el.kind === 'bay');
+    const up = joined[i - 1], down = joined[i + 1];
+    if (up && down && H.isStagePart(down) && (up.def.fuel || H.isStagePart(up))) problems.stage.push(`${tag}: ${up.def.id} | bay | ${down.def.id}`);
+  }
   if (hull.mass > maxMass) { maxMass = hull.mass; maxMassCombo = tag; }
   // no two skins at the same height
   const segs = [...ring].sort((x, y) => x.y0 - y.y0);
@@ -176,6 +184,9 @@ for (const [n, b, t] of combos) {
       continue;
     }
     if (!(r >= 0) || r + w > e.skinR + EPS || Math.abs(r - (e.mountR - w / 2)) > EPS) problems.inside.push(`${tag}: ${e.type} (${e.bay}) inner face ${r.toFixed(2)} + ${w.toFixed(2)} vs skin ${e.skinR.toFixed(2)}`);
+    // and within the real outer line all along its height (a shaped tank's wall, the N1's cone, narrows)
+    const wallMin = Math.min(...[0, 0.5, 1].map((fr) => H.radiusAt(skin, e.y + e.height * fr)).filter((x) => x > 0));
+    if (r + w > wallMin + EPS) problems.wall.push(`${tag}: ${e.type} (${e.bay}) reaches ${(r + w).toFixed(2)} m, the wall is ${wallMin.toFixed(2)} m`);
     const host = axialById.get(e.parentId);
     const safe = (hullData.inside.tankSafeIds ?? []).includes(e.def.id) || (hullData.inside.tankSafeFlags ?? []).some((f) => e.def.flags?.[f]);
     if (host?.def.fuel && !safe) {
@@ -214,6 +225,8 @@ check(!problems.steep.length, `${combos.length} combinations: no skin cone steep
 check(!problems.inside.length, `${combos.length} combinations: equipment inside the skin sits within it, its ShipSpec x/z the inner face${show(problems.inside)}`);
 check(!problems.propellant.length, `${combos.length} combinations: no equipment rides inside propellant (only helium bottles may)${show(problems.propellant)}`);
 check(!problems.bay.length, `${combos.length} combinations: no pods; an equipment bay only where something fits nowhere else (${bays} ships, the tallest ${maxBay.toFixed(2)} m), its items standing apart round it, the stack lifted to make room${show(problems.bay)}`);
+check(!problems.stage.length, `${combos.length} combinations: the equipment bay never splits a stage (a tank from its aft skirt, hung tank or lattice)${show(problems.stage)}`);
+check(!problems.wall.length, `${combos.length} combinations: inside equipment stays within the real wall all along its height (shaped tanks included)${show(problems.wall)}`);
 check(!problems.axis.length, `${combos.length} combinations: seals and gimbal actuators keep their ShipSpec position on the host's wall${show(problems.axis)}`);
 check(!problems.flight.length, `${combos.length} combinations: only axial parts sit on the axis in the ShipSpec (Role 2's flight stack)${show(problems.flight)}`);
 check(!problems.mass.length, `${combos.length} combinations: skin masses and costs are positive and match their material and cork${show(problems.mass)}`);
