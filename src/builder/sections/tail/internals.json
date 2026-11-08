@@ -39,6 +39,10 @@
               "costF": 1.4,
               "rel": -0.005,
               "real": "RD-170, RD-180, RD-191, NK-33, YF-100, BE-4",
+              "fuels": [
+                "kerolox",
+                "methalox"
+              ],
               "throttle": "RD-191 27–105 %, BE-4 40–100 %",
               "restarts": "BE-4 relights in flight; RD-180 none"
             },
@@ -58,7 +62,11 @@
               "thrustF": 0.85,
               "costF": 1.2,
               "rel": 0.01,
-              "real": "RL10, Vinci"
+              "real": "RL10, Vinci",
+              "fuels": [
+                "hydrolox",
+                "methalox"
+              ]
             },
             {
               "id": "electric",
@@ -113,7 +121,11 @@
               "massF": 1.15,
               "costF": 1.6,
               "rel": -0.008,
-              "real": "Raptor (SpaceX), the only full-flow engine ever flown"
+              "real": "Raptor (SpaceX), the only full-flow engine ever flown",
+              "fuels": [
+                "methalox",
+                "hydrolox"
+              ]
             },
             {
               "id": "tapoff",
@@ -150,6 +162,10 @@
               "costF": 1.5,
               "rel": -0.006,
               "real": "RS-25 (Space Shuttle, SLS: 206 bar), RD-0120 (Energia), LE-7A (H-IIA)",
+              "fuels": [
+                "hydrolox",
+                "methalox"
+              ],
               "throttle": "RS-25 67–109 %",
               "restarts": "none in flight"
             },
@@ -170,6 +186,10 @@
               "costF": 1.05,
               "rel": 0.008,
               "real": "LE-9 (H3 first stage, 1,471 kN), LE-5B (H-IIA upper stage), BE-3U (New Glenn upper stage)",
+              "fuels": [
+                "hydrolox",
+                "methalox"
+              ],
               "restarts": "LE-5B and BE-3U restart in flight"
             }
           ]
@@ -1102,7 +1122,10 @@
               "massD": -20,
               "costD": 15000,
               "rel": 0.002,
-              "real": "Merlin 1D (Falcon 9), F-1 (Saturn V)"
+              "real": "Merlin 1D (Falcon 9), F-1 (Saturn V)",
+              "fuels": [
+                "kerolox"
+              ]
             },
             {
               "id": "apu",

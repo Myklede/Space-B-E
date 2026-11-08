@@ -16,7 +16,7 @@ slot_<key>__<optionId> (another option's look); the game shows one per key:
   slot_cycle (gg) + __tapoff __sc __sc_fuel __ffsc __expander __expander_bleed __electric __pressure
   slot_injector (coaxial) + __swirl __pintle __impinging
   slot_chamber (channels) + __tubes __film __ablative
-  slot_contour (bell, throat to the skirt joint) + __conical __aerospike (whole nozzles: custom property hides = nozzleExt)
+  slot_contour (bell, throat to the skirt joint) + __conical (hides nozzleExt) + __aerospike (hides nozzleExt and chamber)
   slot_nozzleExt (regen) + __radiative __carbon __extendable __ablative
   slot_igniter (spark) + __pyro __tea_teb __ampoule
   slot_stability (none: empty) + __baffles __cavities
@@ -506,36 +506,40 @@ def contour_conical(g, parent):
     a.emit('slot_contour__conical', parent)['hides'] = 'nozzleExt'  # a whole nozzle: no bell skirt below it
 
 
-def contour_aerospike(g, parent):
-    """A toroidal aerospike: a ring of small thrust cells firing down the outside of a truncated central plug.
-    It is the whole nozzle (no bell skirt)."""
-    He, a = g['He'], Acc()
-    yT = g['yT']
+def aerospike_parts(a, g, cells=10, seg=22, cell_seg=6, duct_seg=6, detail=True):
+    """A toroidal aerospike under the injector head: four ducts from the head feed a ring manifold, a ring of small
+    thrust cells fires down the outside of a truncated central plug, which hangs from a central post."""
+    He = g['He']
     rr = 0.2 * He
-    ym = yT - 0.02 * He
-    # distribution manifold fed from the chamber's throat by four ducts
-    tl.torus(a, V(0, ym, 0), rr, 0.022 * He, M('inconel'), 20, 5)
+    ym = g['yT'] - 0.02 * He
+    yI = g['yI']
+    tl.torus(a, V(0, ym, 0), rr, 0.022 * He, M('inconel'), 20 if detail else 14, 5 if detail else 4)
     for i in range(4):
-        route(a, [V(0, yT + 0.01 * He, 0) + polar(45 + 90 * i, g['Rt'] * 0.6), polar(45 + 90 * i, rr * 0.55, ym + 0.02 * He), polar(45 + 90 * i, rr - 0.02 * He, ym + 0.012 * He)], 0.014 * He, M('inconel'), 6)
-    tl.lathe(a, [(0.0, yT - 0.005 * He), (g['Rt'] * 1.1, yT - 0.005 * He), (g['Rt'] * 1.1, yT + 0.012 * He), (0.0, yT + 0.012 * He)], M('inconel'), 14)
-    # the ring of thrust cells
-    n = 10
-    for i in range(n):
-        p = polar(360 * i / n, rr + 0.006 * He, ym - 0.022 * He)
-        tl.lathe(a, [(0.017 * He, -0.05 * He), (0.009 * He, -0.022 * He), (0.012 * He, 0.0)], M('copper'), 6, p)
-    # the plug: concave spike from the cell ring down to a truncated base
+        az = 45 + 90 * i
+        route(a, [polar(az, g['Rc'] * 0.9, yI + 0.004 * He), polar(az, g['Rc'] * 1.25, yI - 0.04 * He), polar(az, rr * 0.95, ym + 0.05 * He), polar(az, rr, ym + 0.018 * He)], 0.016 * He, M('inconel'), duct_seg)
+    tl.cyl(a, V(0, yI + 0.004 * He, 0), V(0, ym, 0), 0.05 * He, M('steel'), 12 if detail else 8, caps=False)  # the plug's post
+    for i in range(cells):
+        p = polar(360 * i / cells, rr + 0.006 * He, ym - 0.022 * He)
+        tl.lathe(a, [(0.017 * He, -0.05 * He), (0.009 * He, -0.022 * He), (0.012 * He, 0.0)], M('copper'), cell_seg, p)
     prof = []
-    for k in range(7):
-        t = k / 6
+    for k in range(7 if detail else 5):
+        t = k / (6 if detail else 4)
         y = lerp(ym - 0.03 * He, 0.03 * He, t)
         r = lerp(rr - 0.012 * He, 0.075 * He, 1 - (1 - t) ** 1.8)
         prof.append((r, y))
     prof = prof[::-1]
-    tl.lathe(a, [(0.0, 0.0), (0.075 * He, 0.0)] + prof + [(rr * 0.6, ym), (0.0, ym)], M('regen'), 22, u_rep=11)
-    y = lerp(0.03 * He, ym - 0.03 * He, 0.5)
-    r = next(r for (r, yy) in prof if yy >= y)
-    tl.torus(a, V(0, y, 0), r + 0.002 * He, 0.006 * He, M('steel'), 24, 3)
-    a.emit('slot_contour__aerospike', parent)['hides'] = 'nozzleExt'
+    tl.lathe(a, [(0.0, 0.0), (0.075 * He, 0.0)] + prof + [(rr * 0.6, ym), (0.0, ym)], M('regen'), seg, u_rep=11)
+    if detail:
+        y = lerp(0.03 * He, ym - 0.03 * He, 0.5)
+        r = next(r for (r, yy) in prof if yy >= y)
+        tl.torus(a, V(0, y, 0), r + 0.002 * He, 0.006 * He, M('steel'), 24, 3)
+
+
+def contour_aerospike(g, parent):
+    """A toroidal aerospike, fed straight from the injector head: it replaces the chamber and the whole bell."""
+    a = Acc()
+    aerospike_parts(a, g)
+    a.emit('slot_contour__aerospike', parent)['hides'] = ['nozzleExt', 'chamber']
 
 
 # ------------------------------------------------------------------ slot_nozzleExt
@@ -622,20 +626,24 @@ def build_engine(slug, size, vac=False):
     return r, g
 
 
-def build_lod(slug, size):
-    """Low-detail engine for clusters of more than nine (Super Heavy, N1): a closed-cycle look, no exhaust pipe, one mesh."""
+def build_lod(slug, size, kind='bell'):
+    """Low-detail engine for clusters of more than nine (Super Heavy, N1): a closed-cycle look, no exhaust pipe, one
+    mesh. kind: 'bell' (sea level), 'vac' (vacuum bell) or 'spike' (aerospike, no chamber)."""
     He = HEIGHT[size]
-    g = geometry(He, False)
+    g = geometry(He, kind == 'vac')
     tl.reset()
     r = tl.root(slug)
     a = Acc()
-    out = bell_prof(g, 0.0, g['Lb'])[::2]
-    if out[-1][1] < g['yT'] - 1e-6:
-        out.append((g['Rt'], g['yT']))
-    tl.lathe(a, out, M('regen'), 20, u_rep=8)
-    tl.lathe(a, [(r_ * 0.95, y) for (r_, y) in out][::2] + [(g['Rt'] * 0.95, g['yT'])], M('soot'), 12, flip=True)
-    tl.torus(a, V(0, 0.01 * He, 0), g['Re'] + 0.01 * He, 0.012 * He, M('steel'), 20, 4)
-    tl.lathe(a, [(r_, y) for (r_, y) in chamber_prof(g)][::2] + [(g['Rc'], g['yI'])], M('copper'), 14)
+    if kind == 'spike':
+        aerospike_parts(a, g, cells=8, seg=16, cell_seg=5, duct_seg=5, detail=False)
+    else:
+        out = bell_prof(g, 0.0, g['Lb'])[::2]
+        if out[-1][1] < g['yT'] - 1e-6:
+            out.append((g['Rt'], g['yT']))
+        tl.lathe(a, out, M('regen'), 20, u_rep=8)
+        tl.lathe(a, [(r_ * 0.95, y) for (r_, y) in out][::2] + [(g['Rt'] * 0.95, g['yT'])], M('soot'), 12, flip=True)
+        tl.torus(a, V(0, 0.01 * He, 0), g['Re'] + 0.01 * He, 0.012 * He, M('steel'), 20, 4)
+        tl.lathe(a, [(r_, y) for (r_, y) in chamber_prof(g)][::2] + [(g['Rc'], g['yI'])], M('copper'), 14)
     tl.lathe(a, [(g['Rc'] * 1.08, g['yI']), (g['Rc'] * 1.08, g['yH']), (g['Rc'] * 0.6, g['yD']), (0.05 * He, g['yG']), (0.07 * He, g['yG'] + 0.03 * He), (0.075 * He, He - 0.02 * He), (0.075 * He, He), (0.0, He)], M('inconel'), 14)
     for az, m in ((0, M('stainless')), (180, M('inconel'))):
         c = tp_pos(g, az, 0.95)
@@ -643,7 +651,7 @@ def build_lod(slug, size):
         top = c + V(0, 0.27 * He, 0)
         tl.tube(a, tl.bend([top, top + V(0, 0.03 * He, 0), polar(az, g['Rc'] * 0.6, g['yD'] - 0.01 * He)], 0.04 * He, 2), 0.026 * He, M('inconel'), 6)
     for az in (135, 225):
-        lo, hi = polar(az, g['Rc'] * 1.12, g['yH'] - 0.012 * He), polar(az, 0.25 * He, He - 0.018 * He)
+        lo, hi = polar(az, g['Rc'] * 1.12, g['yH'] - 0.012 * He), polar(az, 0.25 * He, He - 0.045 * He)
         tl.cyl(a, hi, lo, 0.016 * He, M('steel'), 6)
     a.emit('engine_lod', r)
     return r, g
@@ -660,7 +668,7 @@ def preview(r, g, slug, shots):
         ('rs68', {'cycle': 'gg', 'nozzleExt': 'ablative', 'chamber': 'ablative'}),
         ('rd180', {'cycle': 'sc', 'nozzleExt': 'radiative'}),
         ('rl10', {'cycle': 'expander', 'nozzleExt': 'extendable', 'igniter': 'spark'}),
-        ('aerospike', {'contour': 'aerospike', 'nozzleExt': '__none__', 'cycle': 'expander_bleed'}),
+        ('aerospike', {'contour': 'aerospike', 'nozzleExt': '__none__', 'chamber': '__none__', 'cycle': 'expander_bleed'}),
         ('electric', {'cycle': 'electric', 'contour': 'conical', 'nozzleExt': '__none__'}),
         ('pressure', {'cycle': 'pressure', 'nozzleExt': 'carbon', 'igniter': 'pyro'}),
     ]
@@ -679,12 +687,13 @@ def main():
     jobs = []
     for size in ('s', 'm', 'l'):
         jobs += [(f'engine_{size}', size, 'full', False), (f'engine_{size}_vac', size, 'full', True)]
-    jobs.append(('engine_s_lod', 's', 'lod', False))  # engine_s sits in clusters of 30 and 33 (N1, Super Heavy)
+    # engine_s sits in clusters of 30 and 33 (N1, Super Heavy): low-detail copies for each nozzle look
+    jobs += [('engine_s_lod', 's', 'lod', 'bell'), ('engine_s_lod_vac', 's', 'lod', 'vac'), ('engine_s_lod_spike', 's', 'lod', 'spike')]
     for slug, size, kind, vac in jobs:
         if only and slug not in only.split(','):
             continue
         if kind == 'lod':
-            r, g = build_lod(slug, size)
+            r, g = build_lod(slug, size, vac)
             tl.export(r, slug, height=HEIGHT[size], max_tris=2500)
         else:
             r, g = build_engine(slug, size, vac)

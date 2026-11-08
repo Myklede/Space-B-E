@@ -428,7 +428,7 @@
           "type": "fin_l",
           "on": 0,
           "angle": 45,
-          "yFrac": 0.4,
+          "yFrac": 0,
           "symmetry": 4
         },
         {
@@ -589,7 +589,7 @@
           "type": "fin_l",
           "on": 0,
           "angle": 22.5,
-          "yFrac": 0.3,
+          "yFrac": 0.1,
           "symmetry": 8
         },
         {
@@ -666,7 +666,7 @@
           "type": "fin_grid_m",
           "on": 0,
           "angle": 45,
-          "yFrac": 0.3,
+          "yFrac": 0.05,
           "symmetry": 4
         }
       ]
@@ -945,7 +945,7 @@
           "type": "fin_aft_m",
           "on": 0,
           "angle": 45,
-          "yFrac": 0.2,
+          "yFrac": 0.05,
           "symmetry": 4
         },
         {

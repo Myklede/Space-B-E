@@ -81,7 +81,9 @@ def build_fin(slug):
         tl.cyl(a, V(span * 0.02, 0.73 * h, 0), V(span, 0.13 * h, 0), 0.012, M('grey'), 6)  # leading edge strip
         tl.box(a, V(0.07, 0.25 * h, 0), (0.14, h, 0.24), M('grey'))
     elif slug == 'fin_aft_m':
-        # New Shepard aft fin: a small swept fin that swivels on a hydraulic actuator in a root fairing
+        # New Shepard aft fin: a swept fin that swivels on a hydraulic actuator in a root fairing (drawn 1.5 x the
+        # catalogue height, which reads true to the photos next to the booster)
+        h = h * 1.5
         span = h * 0.45
         out = [(0.08, 0.55 * h), (span, 0.1 * h), (span, -0.12 * h), (0.08, -0.2 * h)]
         wedge_fin(a, out, 0.08, 0.04, M('offwhite'), span=span)
@@ -210,16 +212,111 @@ def build_leg(slug):
     return root, h
 
 
+def loft(a, pts_axis, widths, depths, side, nrm, m, offset=0.0):
+    """A tapered box beam through the points pts_axis, `widths` across (side) and `depths` deep (along nrm)."""
+    secs = []
+    for p, w, d in zip(pts_axis, widths, depths):
+        c = p + nrm * offset
+        secs.append([c + side * (w / 2) + nrm * d, c - side * (w / 2) + nrm * d, c - side * (w / 2), c + side * (w / 2)])
+    verts, faces = [], []
+    for ring_ in secs:
+        verts += ring_
+    for k in range(len(secs) - 1):
+        for i in range(4):
+            j = (i + 1) % 4
+            faces.append([k * 4 + i, k * 4 + j, (k + 1) * 4 + j, (k + 1) * 4 + i])
+    faces.append([0, 3, 2, 1])
+    faces.append([(len(secs) - 1) * 4 + i for i in range(4)])
+    a.add(verts, faces, m)
+
+
+def build_falcon_leg(slug):
+    """
+    Falcon 9 landing leg, one of four: a long, flat carbon-fibre leg folded flat along the tail (as on the pad and
+    during the climb), hinged at its foot end low on the engine section, its telescoping pusher stowed inside, the
+    small foot pad at its tip. pose_deployed (hidden by tail/art.js) is the same leg swung open for landing.
+    Real: about 1.2 m wide at the hinge, an 18 m span open; here the leg is the part's 3.2 m.
+    """
+    d = PARTS[slug]
+    L = d['height']
+    tl.reset()
+    root = tl.root(slug)
+    up, out, side = V(0, 1, 0), V(1, 0, 0), V(0, 0, 1)
+    a = Acc()
+    tl.box(a, V(0.06, 0.08, 0), (0.12, 0.26, 0.62), M('dark'))                                 # hinge fitting
+    tl.cyl(a, V(0.1, 0.06, -0.33), V(0.1, 0.06, 0.33), 0.045, M('alu'), 10)                     # hinge pin
+    a.emit('hinge', root)
+    b = Acc()
+    n = 6
+    pts = [V(0, 0.04 + (L - 0.04) * k / (n - 1), 0) for k in range(n)]
+    widths = [0.58 - 0.3 * (k / (n - 1)) for k in range(n)]
+    depths = [0.13 - 0.04 * (k / (n - 1)) for k in range(n)]
+    loft(b, pts, widths, depths, side, out, M('carbon'), offset=0.035)                       # the leg (a flat carbon box)
+    for f in (0.22, 0.5, 0.78):                                                              # light ribs on the outer face
+        y = 0.04 + (L - 0.04) * f
+        w = 0.58 - 0.3 * f
+        tl.box(b, V(0.035 + 0.13 - 0.04 * f + 0.004, y, 0), (0.01, 0.03, w * 0.92), M('dark'))
+    tl.box(b, V(0.12, L * 0.62, 0), (0.06, 0.12, 0.2), M('alu'))                              # pusher attach lug
+    b.emit('leg', root)
+    # slot_shock: the telescoping pusher with its crushable honeycomb core, stowed inside the leg
+    for k, opt in enumerate(('honeycomb', 'hydraulic', 'telescope')):
+        s_ = Acc()
+        lo, hi = V(0.09, L * 0.3, 0), V(0.09, L * 0.95, 0)
+        mid = lo.lerp(hi, 0.5)
+        if opt == 'honeycomb':
+            tl.cyl(s_, hi, mid, 0.055, M('alu'), 10)
+            tl.cyl(s_, mid, lo, 0.04, M('steel'), 10)
+            tl.cyl(s_, lo.lerp(hi, 0.55), lo.lerp(hi, 0.75), 0.065, M('gold'), 6)
+        elif opt == 'hydraulic':
+            tl.cyl(s_, hi, mid, 0.06, M('steel'), 10)
+            tl.cyl(s_, mid, lo, 0.035, M('stainless'), 8)
+        else:
+            tl.cyl(s_, hi, lo.lerp(hi, 0.55), 0.06, M('carbon'), 10)
+            tl.cyl(s_, lo.lerp(hi, 0.55), lo, 0.045, M('stainless'), 8)
+        s_.emit('slot_shock' if k == 0 else f'slot_shock__{opt}', root)
+    # slot_pads: the foot at the tip of the leg (on top while folded)
+    tip = V(0.1, L, 0)
+    for k, opt in enumerate(('small', 'large', 'dish')):
+        s_ = Acc()
+        rp = 0.16 if opt == 'small' else 0.24
+        if opt == 'dish':
+            tl.lathe(s_, [(0.0, 0.0), (0.16, 0.02), (0.24, 0.07), (0.25, 0.09)], M('dark'), 20, tip, axis=(0, 1, 0))
+        else:
+            tl.lathe(s_, [(0.0, 0.0), (rp, 0.0), (rp, 0.05), (rp * 0.5, 0.08), (0.0, 0.08)], M('dark'), 20, tip, axis=(0, 1, 0))
+        s_.emit('slot_pads' if k == 0 else f'slot_pads__{opt}', root)
+    for k, opt in enumerate(('none', 'probes', 'loadcells')):
+        s_ = Acc()
+        if opt == 'probes':
+            tl.cyl(s_, tip + V(0.1, 0.0, 0.1), tip + V(0.1, 0.6, 0.1), 0.01, M('steel'), 6, caps=False)
+        elif opt == 'loadcells':
+            for f in (0.12, 0.2):
+                tl.box(s_, V(0.2, L * f, 0), (0.06, 0.08, 0.12), M('amber'))
+        s_.emit('slot_probes' if k == 0 else f'slot_probes__{opt}', root)
+    # pose_deployed: the leg swung down and out for landing, propped by the extended pusher
+    pd = Acc()
+    ang = math.radians(118)  # from pointing up along the tail to about 28 degrees below the horizontal
+    axis_d = V(math.sin(ang), math.cos(ang), 0)
+    nrm_d = V(math.cos(ang), -math.sin(ang), 0) * -1
+    ptsd = [V(0.06, 0.06, 0) + axis_d * ((L - 0.04) * k / (n - 1)) for k in range(n)]
+    loft(pd, ptsd, widths, depths, side, nrm_d, M('carbon'))
+    foot = ptsd[-1]
+    tl.lathe(pd, [(0.0, 0.0), (0.16, 0.0), (0.16, 0.05), (0.08, 0.08), (0.0, 0.08)], M('dark'), 16, foot + V(0, -0.1, 0))
+    top = V(0.06, L * 0.55, 0)
+    tl.cyl(pd, top, ptsd[3], 0.05, M('alu'), 10)
+    pd.emit('pose_deployed', root)
+    return root, L
+
+
 def main():
     only = tl.C.arg('--only')
     shots = tl.shots_arg()
-    for slug in ('fin_s', 'fin_m', 'fin_l', 'fin_aft_m', 'fin_flap_l', 'fin_grid_m', 'legs_glenn_l', 'legs_shepard_m'):
+    for slug in ('fin_s', 'fin_m', 'fin_l', 'fin_aft_m', 'fin_flap_l', 'fin_grid_m', 'legs_glenn_l', 'legs_shepard_m', 'legs_falcon_m'):
         if only and slug not in only.split(','):
             continue
         if slug not in PARTS:
             print(f'[model] skip {slug}: not in parts.json')
             continue
-        root, h = build_leg(slug) if slug.startswith('legs') else build_fin(slug)
+        root, h = build_falcon_leg(slug) if slug == 'legs_falcon_m' else build_leg(slug) if slug.startswith('legs') else build_fin(slug)
         tl.report_groups(root)
         tl.export(root, slug)
         if shots:

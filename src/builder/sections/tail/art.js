@@ -197,9 +197,20 @@ function engineArt(entry) {
   const opts = entry.options ?? {};
   const k = c ? clusterFit(c, entry, H, vac ? 0.4 : 0.28) : 1;
   const He = H * k;
+  noteEngine(entry, { H, jetR: (vac ? 0.4 : 0.28) * He, headR: (vac ? 0.1 : 0.12) * He * 1.1 });
   const engine = buildEngine(He, { vac, fuel, cycle: opts.cycle ?? 'gg', ext: opts.nozzleExt ?? 'regen' }, palette());
   engine.position.y = H - He;
   return c ? hangFromFrame(engine, c, H) : engine;
+}
+
+/**
+ * The nozzle each engine was last drawn with (engine part id -> { H, jetR, headR }): the jet vanes and the gimbal ring
+ * hung on that engine (their entry's parentId) are sized and placed from it, so they fit a vacuum bell, a cone or an
+ * aerospike as well as the sea-level bell. jetR: the jet's radius at the exit (y = 0 of the engine part).
+ */
+const ENGINE_LOOK = new Map();
+function noteEngine(entry, look) {
+  if (entry?.id != null) ENGINE_LOOK.set(entry.id, look);
 }
 
 /**
@@ -469,7 +480,7 @@ function liquidBoosterArt(entry, M) {
   const coneH = h * 0.69;
   const cone = new THREE.CylinderGeometry(rb * 0.17, rb, coneH, 32, 6);
   cone.translate(0, coneH / 2, 0);
-  const lean = rb * 1.0;
+  const lean = rb * 0.8; // the tip stops just short of the core, even where the body above is wider
   cone.applyMatrix4(new THREE.Matrix4().makeShear(0, 0, -lean / coneH, 0, 0, 0)); // the tip leans in to the core
   g.add(at(new THREE.Mesh(cone, body), 0, yCyl, 0));
   g.add(at(lathe([[rb * 0.17, 0], [rb * 0.12, h * 0.025], [0.001, h * 0.04]], M.dark, 20), -lean, yCyl + coneH, 0));
@@ -547,9 +558,14 @@ export function wrapModel(model, entry) {
     model.traverse((o) => { if (o.isMesh && o.material?.name === 'regen_bell') o.material.color.copy(c); });
     // in a cluster, size it to the real gaps between the mounts like the drawn engines (Blender bells: exit 0.275 H, vacuum 0.36 H)
     const cl = entry.cluster && (entry.cluster.count ?? 1) > 1 ? entry.cluster : null;
-    if (!cl) return model;
     const H = entry.height ?? def.height;
-    const k = clusterFit(cl, entry, H, entry.engine?.nozzle === 'vac' ? 0.36 : 0.275);
+    const vac = entry.engine?.nozzle === 'vac';
+    const k = cl ? clusterFit(cl, entry, H, vac ? 0.36 : 0.275) : 1;
+    // the jet leaves the bell at its exit radius, a cone at 0.97 of it, an aerospike round its 0.075 H plug base
+    const contour = entry.options?.contour?.id ?? entry.options?.contour;
+    const exitR = (vac ? 0.36 : 0.275) * H * k;
+    noteEngine(entry, { H, jetR: contour === 'aerospike' ? 0.12 * H * k : contour === 'conical' ? exitR * 0.97 : exitR, headR: (vac ? 0.084 : 0.12) * H * k * 1.1 });
+    if (!cl) return model;
     model.scale.setScalar(k);
     model.position.y = H - H * k;
     return hangFromFrame(model, cl, H);
@@ -575,6 +591,19 @@ export function wrapModel(model, entry) {
     const out = group(at(inner, FIN_SHIFT, 0, 0));
     out.userData.width = new THREE.Box3().setFromObject(model).max.x;
     return out;
+  }
+  if (id === 'legs_falcon_m') {
+    // one Falcon 9 leg modelled (tools/blender/tail/gear.py), folded flat along the tail as on the pad; four copies
+    const R = entry.radius ?? 1.25;
+    const deployed = model.getObjectByName('pose_deployed');
+    if (deployed) deployed.visible = false;
+    const g = new THREE.Group();
+    for (let k = 0; k < 4; k++) {
+      const arm = group(at(k === 0 ? model : model.clone(true), R, 0, 0));
+      arm.rotation.y = (k * Math.PI) / 2;
+      g.add(arm);
+    }
+    return g;
   }
   if (LEG_COPIES[id]) {
     // one leg modelled; the stage carries six (New Glenn) or four (New Shepard), each swung to put its foot on the ground
@@ -711,22 +740,34 @@ function steeringArt(entry, M) {
       g.add(v);
     }
   } else if (id === 'jet_vanes') {
-    // the vanes sit in the jet just behind the nozzle exit; on the pad they stop short of the ground
-    const vy = -(Number.isFinite(entry.y) ? Math.min(0.26, Math.max(0, entry.y - 0.24)) : 0.26);
+    // graphite vanes in the jet just behind the nozzle exit of the engine they hang on (sized to its real jet: a bell,
+    // a vacuum bell, a cone or an aerospike's plug), on arms from a ring round the exit; on the pad they stop short of
+    // the ground
+    const host = ENGINE_LOOK.get(entry.parentId);
+    const re = host ? host.jetR : R * 0.6;
+    const exitY = host ? -(entry.yFrac ?? 0.02) * host.H : 0;
+    const vh = Math.max(0.12, re * 0.5);
+    const floor = Number.isFinite(entry.y) ? -entry.y + 0.03 + vh / 2 : -Infinity;
+    const vy = Math.max(exitY - vh * 0.6, floor);
+    const ry = exitY + 0.03, ra = re * 1.15; // the ring clamps round the nozzle's exit lip
     for (let i = 0; i < 4; i++) {
       const arm = new THREE.Group();
-      arm.add(at(box(0.04, 0.42, R * 0.24, M.graphite), R * 0.22, vy, 0)); // the vane in the jet
-      arm.add(at(box(R * 0.42, 0.05, 0.05, M.steel), R * 0.43, vy + 0.2, 0)); // its shaft out through the jet edge
-      arm.add(at(box(0.12, 0.3, 0.12, M.dark), R * 0.66, vy + 0.32, 0)); // actuator
+      arm.add(at(box(re * 0.62, vh, Math.max(0.025, re * 0.06), M.graphite), re * 0.52, vy, 0)); // the vane in the jet
+      arm.add(at(box(ra - re * 0.8, 0.04, 0.04, M.steel), (re * 0.8 + ra) / 2, vy, 0)); // its shaft out through the jet edge
+      arm.add(at(box(0.09, Math.max(0.14, vh * 0.7), 0.09, M.dark), ra, vy + vh * 0.2, 0)); // actuator
+      if (ry > vy + vh * 0.55) arm.add(beam([ra, vy + vh * 0.55, 0], [ra, ry, 0], 0.045, 0.045, M.steel)); // hung from the ring
       arm.rotation.y = (i * Math.PI) / 2 + Math.PI / 4;
       g.add(arm);
     }
-    g.add(ring(R * 0.62, 0.03, M.dark, vy + 0.38, 40));
+    g.add(ring(ra, 0.028, M.dark, ry, 40));
   } else {
+    // round the engine's injector head (its gimbal plane): the ring and two actuators at 90 degrees
     const electric = id === 'gimbal_emech';
-    g.add(ring(R * 0.24, 0.035, M.steel, 0, 32));
+    const host = ENGINE_LOOK.get(entry.parentId);
+    const hr = host ? Math.max(R * 0.24, host.headR * 1.15) : R * 0.24;
+    g.add(ring(hr, 0.035, M.steel, 0, 32));
     for (const a of [0, 90]) {
-      const lo = polar(a, R * 0.26, 0), hi = polar(a, R * 0.52, 0.5);
+      const lo = polar(a, hr * 1.08, 0), hi = polar(a, hr * 2.1, 0.5);
       const mid = lo.clone().lerp(hi, 0.45);
       g.add(rod(hi.toArray(), mid.toArray(), electric ? 0.045 : 0.06, electric ? M.alu : M.dark), rod(mid.toArray(), lo.toArray(), 0.025, M.steel));
       if (electric) g.add(at(cyl(0.07, 0.07, 0.2, M.black, 12), hi.x, hi.y + 0.05, hi.z));

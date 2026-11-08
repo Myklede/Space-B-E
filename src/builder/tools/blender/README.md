@@ -29,6 +29,9 @@ the code-drawn parts, in the design studio, on the hangar stand, in the explanat
 - **Engine clusters**: model one engine; the thrust structure's `mounts` places the copies. An engine that may sit in a
   cluster of more than 9 also ships a low-detail copy (at most 2,500 triangles, no inner pieces) named in its data:
   `"model": { "builder": "tail/<slug>", "lod": "tail/<slug>_lod" }`.
+  The low-detail copy shows only when it has the fitted look: `lod` for the sea-level bell, `lodVac` for the vacuum
+  bell, `lodSpike` for the aerospike (each at most 2,500 triangles); with no matching copy, or another contour, the
+  cluster draws the full model.
 - **Parts drawn as a set** (landing legs, fins in a symmetric group): the game places each copy; model one unit.
 - **Which size**: by the real rocket's diameter: under 2.5 m S, 2.5–4.5 m M (Falcon 9, Atlas, Titan, Soyuz), over 4.5 m
   L (Saturn V, the Shuttle tank, SLS, Starship, Energia, N1, Vulcan, Ariane 5, Long March 5). Strap-on boosters keep the

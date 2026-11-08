@@ -13,8 +13,9 @@ Owned by the tail section agent. Data in `parts.json`, `section.json`, `internal
 - **Size rule** (lead's decision): by the real stage diameter, under 2.5 m is S, 2.5–4.5 m is M, over 4.5 m is L.
   - vulcan and space_shuttle moved to L (new `thrust_triad_l`).
   - mercury_atlas, titan_iiie, lvm3, new_shepard and falcon_heavy are on M.
-  - Kept as they were: the Delta II shapes (2.44 m) and the Redstone single_engine, on M like the earlier Delta II
-    shape.
+  - **Exception to the rule:** Delta II is 2.44 m, a hair under the 2.5 m line, but both Delta II shapes
+    (single_solids, delta_ii_7925) stay on M, so the Delta II family keeps one size. The Redstone-style single_engine
+    (1.78 m) also stays on M, because it is the default shape players start from.
 - **56 parts** (30 earlier + 26 new):
   - 12 thrust structures: `thrust_atlas_m`, `thrust_twin_l`, `thrust_triad_l`, `thrust_sib_l` (8), `thrust_sii_l` (5),
     `thrust_sls_l` (4, boattail), `thrust_superheavy_l` (33), `thrust_starship_l` (6), `thrust_electron_s` (9),
@@ -25,7 +26,9 @@ Owned by the tail section agent. Data in `parts.json`, `section.json`, `internal
   - 2 legs: `legs_glenn_l` (six legs), `legs_shepard_m`.
 - **Part fields:**
   - `thrust_electron_s` (`carbon`) and `srb_p120c_l` (`composite_case`) set `defaultMaterial`.
-  - `thrust_atlas_m` (booster pods out to 1.61 R) and `thrust_sls_l` (boattail) declare `hullProfile: own`.
+  - `thrust_atlas_m` and `thrust_sls_l` (boattail) declare `hullProfile: own`. The Atlas pods reach 1.61 R, but only on
+    two sides (±X), so its profile uses 1.2 R, the round base with the same area, for the skin's drag. The model keeps
+    the real pods.
   - The N1 frame carries `flags.steering`: it steers itself by throttling.
 - **Kits** (option 0 of every new slot is neutral):
   - `engine`:
@@ -38,6 +41,25 @@ Owned by the tail section agent. Data in `parts.json`, `section.json`, `internal
   - `segmented`: new kit on `srb_5seg_l`, `srb_ua1205_l` and `srb_s200_l`, with slots joint, nozzle and grain.
   - `ring`: new kit on `thrust_n1_l`. It copies the `thrust` slots and adds `steer`: differential throttling, or
     gimballed outer engines.
+  - **Fuel-bound options** carry `"fuels"` (FUELS ids from contract.js); the design page greys them out for other
+    fuels and stats falls back (lead's code):
+    - cycle `sc` (oxygen-rich staged combustion): kerolox, methalox. Hot hydrogen-rich gas is the hydrogen engines'
+      way, so no hydrolox engine has flown oxygen-rich.
+    - cycle `sc_fuel`: hydrolox, methalox. With kerosene the fuel-rich gas would soot the turbines.
+    - cycles `expander` and `expander_bleed`: hydrolox, methalox. The fuel must boil in the chamber walls.
+    - cycle `ffsc`: methalox, hydrolox (Raptor; NASA's hydrogen Integrated Powerhead Demonstrator).
+    - gimbal power `fueldraulic`: kerolox only.
+    - The other engine options (injectors, chamber walls, nozzle shapes, extensions, igniters, stability) work with
+      any of the three fuels.
+  - Shapes whose real engines use a fuel-bound option keep it: saturn_sic, octaweb and falcon_heavy use fuel hydraulics.
+    On a methane body (Reliable) those options are greyed out and the fallback applies.
+- **Fin placement:** fins hang low on their frame, trailing edge near the engines, as on the real tails.
+  - saturn_sic: `fin_l` at yFrac 0, under the engine fairings (yFrac 0.4).
+  - saturn_ib: `fin_l` at 0.1.
+  - n1: `fin_grid_m` at 0.05.
+  - new_shepard: `fin_aft_m` at 0.05.
+  - single_engine `fin_m` stays at 0.25: its bottom already sits at the frame's base. mercury_atlas has no fins.
+  - Starship's flaps stay at 0.45, alongside the engine bay.
 - **`data/engines.json`:**
   - 15 references added: f1, h1, j2, rs68, rd170, rd191, nk33, rd0120, be3, le9, yf100, yf77, rd275, lr87, vikas.
   - Fixed: raptor (`ffsc`, `swirl`), rs25 (`sc_fuel`), rd180 (`swirl`, `ampoule`), aj10 (no igniter: hypergolic),
@@ -97,10 +119,17 @@ Owned by the tail section agent. Data in `parts.json`, `section.json`, `internal
 engine-out (the claim has no source), hence LOW_RELIABILITY. Super Heavy reads UNSTABLE because 33 engines put the
 centre of mass very low.
 
-## For the modeller: planned models
+## Models
 
-No part has a `model` field yet (models.test.mjs fails for a missing GLB). Once a file exists, add
-`"model": { "builder": "tail/<slug>" }` to its part. The slug is the part id.
+- **Status:** the tail modeller has shipped 44 GLBs in `public/assets/models/builder/tail/`. Scripts are in
+  `src/builder/tools/blender/tail/`. The files cover:
+  - every part below;
+  - the existing frames, fins and the grid fin;
+  - the engines' vacuum-bell versions (`engine_*_vac`);
+  - the low-detail cluster engine `engine_s_lod`.
+- **Model fields:** the modeller sends the `model` fields (`{ "builder": "tail/<slug>" }`, plus `lod` for `engine_s`)
+  to the lead, who writes them into `parts.json`. This data pass does not touch them.
+- The table below is the spec the models were built to.
 - Contract: `src/builder/tools/blender/README.md`.
 - Option variants are named `slot_<key>__<optionId>`.
 - Legs and fins are modelled as one unit; the game places the copies.
@@ -109,7 +138,7 @@ No part has a `model` field yet (models.test.mjs fails for a missing GLB). Once 
 | Part | Height (m) | Diameter or width | Inner pieces (slots) | Notes |
 |---|---|---|---|---|
 | `engine_s`, `engine_m`, `engine_l` | 1.65 / 2.2 / 2.97 | own shape | `slot_cycle`, `slot_injector`, `slot_chamber`, `slot_contour`, `slot_nozzleExt`, `slot_igniter`, `slot_stability`, with option variants | one generator; **`engine_s` also needs `"lod": "tail/engine_s_lod"`** (≤ 2,500 triangles), because it sits in clusters of 30 and 33 |
-| `thrust_atlas_m` | 1.4 | R 1.25, pods out to 1.61 R on ±X | `slot_baseShield`, `slot_feed`, `slot_pogo` | three mounts at x = −0.7 / 0 / +0.7 R, measured from photos; NASA `atlas.glb` (in the repo) has the booster section to cut |
+| `thrust_atlas_m` | 1.4 | R 1.25, pods out to 1.61 R on ±X (hull profile 1.2 R, equal area) | `slot_baseShield`, `slot_feed`, `slot_pogo` | three mounts at x = −0.7 / 0 / +0.7 R, measured from photos; NASA `atlas.glb` (in the repo) has the booster section to cut |
 | `thrust_twin_l` | 1.2 | R 1.6875 | thrust slots | Vulcan / H3 / Long March 5 |
 | `thrust_triad_l` | 1.4 | R 1.6875 | thrust slots | Shuttle triangle |
 | `thrust_sib_l` | 1.5 | R 1.6875 | thrust slots | inner engines canted 3°, outer 6°; eight fin roots |
@@ -135,39 +164,22 @@ No part has a `model` field yet (models.test.mjs fails for a missing GLB). Once 
 | `legs_shepard_m` | 2.6 | one leg | legs slots | ×4 |
 | `gimbal_ring` (existing) | 0.5 | two actuators | `slot_power` (`__hpu`, `__fueldraulic`, `__apu`) | |
 
-`fin_flap_l` and `fin_aft_m` can stay code-drawn (flat panels on a hinge).
+`fin_flap_l` and `fin_aft_m` now have models too (see the status above).
 
-## For the lead (shared code; not done here)
+## Shared-code requests
 
-1. **`art.js` FRAME_LOOK** for the 12 new frames (the `skirt` fallback works meanwhile). Suggested values, using the
-   art palette:
+Done by the lead and the modeller:
+1. `art.js` has `FRAME_LOOK` entries for all 12 new thrust structures.
+2. The five new liquid boosters have their own art (`liquidBoosterArt`) and models; they no longer fall back to the
+   solid-booster look.
+3. `tail/art.js` `internalsArt` now draws the kits `ring`, `segmented`, `gimbal` and `engine` as well as the earlier
+   ones.
+4. The `bay/screen.js` reliability colour (`warn`) is fixed (commit `ead2de4`).
+5. Fuel-bound options: the lead greys them out on the design page and adds a fallback in stats. The data is the
+   `fuels` field, set in this pass.
 
-   | Frame | Look |
-   |---|---|
-   | `thrust_atlas_m` | skirt, steel |
-   | `thrust_twin_l`, `thrust_energia_l` | skirt, white, dark band 0.2 |
-   | `thrust_triad_l` | skirt, white, black band 0.4 |
-   | `thrust_sib_l` | skirt, white, black band 0.3 |
-   | `thrust_sii_l` | skirt, white |
-   | `thrust_sls_l` | boattail, white |
-   | `thrust_superheavy_l` | skirt, steel |
-   | `thrust_starship_l` | skirt, steel, black band 0.5 |
-   | `thrust_electron_s` | skirt, black |
-   | `thrust_proton_l` | skirt, grey |
-   | `thrust_n1_l` | skirt, grey |
-
-2. **Liquid booster art.** The five new liquid boosters fall back to the GEM-style solid art (white with a teal band,
-   seen in the Falcon Heavy screenshot). They need liquid art (cone nose, engines) or their models.
-3. **Inner-piece art.**
-   - `tail/art.js` `internalsArt` draws only the kits `thrust`, `strapon`, `legs` and `booster`. Add:
-     - `ring`: the `thrust` pieces plus `steer`;
-     - `segmented`: joint, nozzle, grain;
-     - `gimbal`: power.
-   - `bay/internalsArt.js` draws no pieces for the new engine slots `chamber`, `contour` and `stability`.
-   - New slot art keys: `chamber`, `contour`, `stability`, `hpu`, `joint`, `tvc`, `grain`, `ringSteer`.
-4. **`bay/screen.js:77` bug.** `warn` is not defined, so the page throws when reliability is between 80 and 85 %. It
-   showed up when the SLS shape was applied, and it also happens with Soyuz.
-5. **Optional:** an option-level `cheapSeals` flag for the `tworing` joint, so the COLD_SEALS warning can fire.
+Still open:
+- **Optional:** an option-level `cheapSeals` flag for the `tworing` joint, so the COLD_SEALS warning can fire.
 
 ## Facts kept out of player text (estimated or unconfirmed)
 

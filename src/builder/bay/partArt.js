@@ -121,8 +121,11 @@ export function partArt(entry) {
   const r = c.hostRadius ?? entry.radius ?? 1.25;
   const s = c.scale ?? 0.4;
   const spots = (c.layout ?? []).slice(0, c.count);
-  // a big cluster (Super Heavy's 33) draws the engine's low-detail model when it has one (model.lod)
-  const lod = (c.count ?? 1) > 9 ? nasaPartArt(`${entry.type}#lod`) : null;
+  // a big cluster (Super Heavy's 33) draws the engine's low-detail model when it has one with the fitted look: lod for
+  // the sea-level bell, lodVac for the vacuum bell, lodSpike for the aerospike; any other look draws the full model
+  const contour = entry.options?.contour ?? 'bell';
+  const lodKey = contour === 'aerospike' ? 'lodSpike' : contour !== 'bell' ? null : entry.engine?.nozzle === 'vac' ? 'lodVac' : 'lod';
+  const lod = (c.count ?? 1) > 9 && lodKey ? nasaPartArt(`${entry.type}#${lodKey}`) : null;
   for (const [fx, fz] of spots) {
     const lodCopy = lod ? lod.clone(true) : null;
     const one = lodCopy ? (SECTION_ART[entry.def?.section]?.wrapModel?.(lodCopy, entry) ?? lodCopy) : singleArt(entry); // the section sizes it like the full model

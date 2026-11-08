@@ -24,13 +24,17 @@ loader.setDRACOLoader(draco);
  */
 export const NASA_PARTS = {};
 
+/** The extra copies a Blender model may ship ("model": { "builder", "lod", "vac", "lodVac", "lodSpike" }). */
+export const COPY_KEYS = ['lod', 'vac', 'lodVac', 'lodSpike'];
+
 /** Reads each part's `model` field (sections/<id>/parts.json) into NASA_PARTS. Call once with the catalogue. */
 export function registerNasaModels(catalog) {
   for (const def of catalog.parts) {
     if (def.model?.builder) {
       NASA_PARTS[def.id] = { builder: def.model.builder };
-      if (def.model.lod) NASA_PARTS[`${def.id}#lod`] = { builder: def.model.lod }; // the low-detail copy for big clusters
-      if (def.model.vac) NASA_PARTS[`${def.id}#vac`] = { builder: def.model.vac }; // an engine with its vacuum bell
+      // its other copies: lod (low detail, for big clusters), vac (the vacuum bell), lodVac and lodSpike (low detail
+      // with the vacuum bell or the aerospike)
+      for (const k of COPY_KEYS) if (typeof def.model[k] === 'string') NASA_PARTS[`${def.id}#${k}`] = { builder: def.model[k] };
     }
     else if (def.model?.model) NASA_PARTS[def.id] = def.model;
   }
@@ -152,7 +156,7 @@ export function requestPartArt(partId, catalog) {
 
 /** Loads the models for a list of part ids. Resolves to the number that now have real art. */
 export async function preloadNasaParts(catalog, ids = Object.keys(NASA_PARTS)) {
-  ids = [...ids, ...['lod', 'vac'].flatMap((k) => ids.filter((id) => NASA_PARTS[`${id}#${k}`]).map((id) => `${id}#${k}`))]; // its low-detail and vacuum copies load with it
+  ids = [...ids, ...COPY_KEYS.flatMap((k) => ids.filter((id) => NASA_PARTS[`${id}#${k}`]).map((id) => `${id}#${k}`))]; // its low-detail and vacuum copies load with it
   const results = await Promise.all([...new Set(ids)].map((id) => requestPartArt(id, catalog)));
   if (failures.size) console.warn('[nasa] models that did not load:', Object.fromEntries(failures));
   return results.filter(Boolean).length;
