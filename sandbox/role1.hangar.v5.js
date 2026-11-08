@@ -30,6 +30,8 @@ for(const f of Object.values(fragments))Object.assign(layout.modules,f.modules??
 const hiddenPlacements=new Set(Object.values(fragments).flatMap(f=>f.hidePlacements??[]));
 fragments.launcher??={};
 if(!SHOW_LAUNCHER&&fragments.stage&&fragments.stage.banks?.[22])fragments.stage.bankDistance=22;
+// Hall half-width: the hall part may widen the walls (cutaway and bounds follow it).
+const HB=fragments.hall?.hallBounds?.max?.[0]??22;
 const hiddenModules=new Set(Object.values(fragments).flatMap(f=>f.hideModules??[]));
 if(!SHOW_LAUNCHER)hiddenModules.add('mobile_launcher');
 const colliderHidden=c=>(!SHOW_LAUNCHER&&c.kind==='ml')||Object.values(fragments).some(f=>(f.hideColliders??[]).some(h=>(!h.kind||h.kind===c.kind)&&(!h.region||c.center.every((v,i)=>v>=h.region.min[i]&&v<=h.region.max[i]))));
@@ -111,7 +113,7 @@ function build(){
   const map=new Map();
   for(const placement of activePlacements){
     // Cutaway removes only the front cladding/door, not the lattice or rear wall.
-    if(params.cutaway&&((placement.module==='wall_bay'&&(placement.position[2]===-22||(camera.position.x>22&&placement.position[0]===22)||(camera.position.x< -22&&placement.position[0]===-22)))||placement.module==='high_bay_door'))continue;
+    if(params.cutaway&&((placement.module==='wall_bay'&&(placement.position[2]===-HB||(camera.position.x>HB&&placement.position[0]===HB)||(camera.position.x< -HB&&placement.position[0]===-HB)))||placement.module==='high_bay_door'))continue;
     // Keep nearby access levels detailed even above 30 m; overview retains the height rule.
     const distance=camera.position.distanceTo(new THREE.Vector3(...placement.position));
     const far=params.lod&&distantPlacement(placement);lodChoices.set(placement.id,far);
@@ -312,7 +314,7 @@ function tick(now){
   requestAnimationFrame(tick);const frameMs=now-last;auto.update(now,frameMs,params.autoResolution);const dt=Math.min(.1,frameMs/1000);last=now;
   if(params.lod&&now-lastLodCheck>750&&camera.position.distanceToSquared(lastLodCamera)>16){
     lastLodCheck=now;lastLodCamera.copy(camera.position);
-    if(activePlacements.some(p=>{if(params.cutaway&&((p.module==='wall_bay'&&(p.position[2]===-22||(camera.position.x>22&&p.position[0]===22)||(camera.position.x< -22&&p.position[0]===-22)))||p.module==='high_bay_door'))return false;return Boolean(lodChoices.get(p.id))!==distantPlacement(p);}))build();
+    if(activePlacements.some(p=>{if(params.cutaway&&((p.module==='wall_bay'&&(p.position[2]===-HB||(camera.position.x>HB&&p.position[0]===HB)||(camera.position.x< -HB&&p.position[0]===-HB)))||p.module==='high_bay_door'))return false;return Boolean(lodChoices.get(p.id))!==distantPlacement(p);}))build();
   }
   update(dt,now/1000);cameraRig.update(dt);if(params.walk&&!params.fly)walk(dt);else if(controls.enabled)controls.update();renderer.info.reset();
   if(params.gameLook)composer.render(dt);else renderer.render(scene,camera);
