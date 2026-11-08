@@ -803,7 +803,12 @@
       "diameter": "l",
       "icon": "tank_l_lh2_upper",
       "stack": [
-        "tank_l_lh2_upper",
+        {
+          "type": "tank_l_lh2_upper",
+          "options": {
+            "insulation": "foam_white"
+          }
+        },
         "tank_l_lox_hung"
       ],
       "radial": [

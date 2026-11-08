@@ -11,16 +11,26 @@
 // shows its construction (stringers, isogrid, orthogrid, corrugated, carbon). Every axial part fills y = 0..height at
 // exactly its radius, so stacked parts meet without gaps. Long side parts (feed line, raceway, wiring tunnel) are centred
 // on their attach point, the way the stats count them; short ones stand on it.
+//
+// Parts with a Blender model (`model.builder`, src/builder/tools/blender/body/) show that model once it has loaded; the
+// art here draws them while it downloads (a cluster of tanks, a cone, a waisted core) and gives their inner pieces the
+// slot keys of their kit, so the model's own slot_<key> pieces take their place in the exploded view. wrapModel() puts a
+// side model's root (modelled on the host's wall) where the shared placement expects the drawn art's.
 import * as THREE from 'three';
 import { std, canvasTexture } from '../../bay/util.js';
 import bodyParts from './parts.json';
+import bodyInternals from './internals.json';
 
 const BASE_R = 1.25;
 const SCALE = { s: 0.75, m: 1, l: 1.35 };
 const TAU = Math.PI * 2;
 const BODY = Object.fromEntries((bodyParts.parts ?? []).map((p) => [p.id, p]));
+const KIT_KEYS = Object.fromEntries(Object.entries(bodyInternals.kits ?? {}).map(([id, k]) => [id, new Set((k.slots ?? []).map((s) => s.key))]));
+const hasSlot = (def, key) => !!KIT_KEYS[def.internals]?.has(key);
 // structure that sits between two tanks with separate domes; a part's look.fuelAbove says the fuel tank is the upper one
-const BETWEEN = new Set(['intertank_l', 'intertank_m', 'centerbody_m']);
+const BETWEEN = new Set(['intertank_l', 'intertank_m', 'centerbody_m', 'centerbody_l']);
+// stage structure drawn by structureArt (the skirts and centerbody too, while their models load)
+const STRUCTURE_IDS = new Set(['intertank_l', 'intertank_m', 'centerbody_m', 'centerbody_l', 'interstage_m', 'interstage_l_composite', 'forward_skirt_l', 'aft_skirt_l']);
 
 // ---------- textures (drawn once, cloned per repeat) ----------
 const TEX = new Map();
@@ -101,6 +111,17 @@ const foamTex = () => baseTex('foam', 512, 512, (ctx, w, h) => {
   for (let i = 0; i < 3; i++) { const y = (h / 3) * i + 40; ctx.beginPath(); ctx.moveTo(0, y); ctx.bezierCurveTo(w * 0.3, y + 12, w * 0.6, y - 12, w, y); ctx.stroke(); }
 });
 
+/** The Atlas V booster's Tiodize-finished aluminium: copper-brown, darkened unevenly with age and handling. */
+const tiodizeTex = () => baseTex('tiodize', 256, 256, (ctx, w, h) => {
+  seed = 41;
+  ctx.fillStyle = '#a8754e';
+  ctx.fillRect(0, 0, w, h);
+  for (let i = 0; i < 90; i++) {
+    const x = rnd() * w, y = rnd() * h;
+    ctx.fillStyle = rnd() > 0.45 ? `rgba(92,58,38,${0.08 + rnd() * 0.12})` : `rgba(196,150,110,${0.06 + rnd() * 0.1})`;
+    ctx.beginPath(); ctx.ellipse(x, y, 10 + rnd() * 50, 6 + rnd() * 24, rnd() * Math.PI, 0, TAU); ctx.fill();
+  }
+});
 const goldTex = () => baseTex('gold', 256, 256, (ctx, w, h) => {
   seed = 31;
   ctx.fillStyle = '#c9a24a';
@@ -179,6 +200,7 @@ const group = (...objs) => { const g = new THREE.Group(); if (objs.length) g.add
 const cyl = (rt, rb, h, mat, seg = 24) => new THREE.Mesh(new THREE.CylinderGeometry(rt, rb, h, seg), mat);
 const box = (w, h, d, mat) => new THREE.Mesh(new THREE.BoxGeometry(w, h, d), mat);
 const at = (o, x, y, z) => { o.position.set(x, y, z); return o; };
+const torus = (rr, t, mat) => { const o = new THREE.Mesh(new THREE.TorusGeometry(rr, t, 8, 48), mat); o.rotation.x = Math.PI / 2; return o; };
 const polarAt = (o, theta, r, y) => { o.position.set(Math.sin(theta) * r, y, Math.cos(theta) * r); o.rotation.y = theta; return o; };
 function ring(radius, y, mat, t = 0.035) {
   const m = new THREE.Mesh(new THREE.TorusGeometry(radius + t * 0.5, t, 8, 72), mat);
@@ -224,16 +246,25 @@ const M = {
 // ---------- skins ----------
 const PAINT = { kerolox: 0xe4e2dc, methalox: 0xf1f0ec, hydrolox: 0xf1f0ec };
 /** Which skin a tank wears: the player's insulation and material choices win over the part's own look. */
+// The real stages that share these generic tanks look different, and the options their shapes fit say which one it is
+// (section.json): the isogrid hydrogen tanks of Delta IV and H-IIA wear a tan-brown foam, not the Shuttle tank's orange;
+// the bare isogrid kerosene tanks of the Atlas V booster have the copper-brown Tiodize finish; white-painted foam is Long
+// March 5 and Ariane 5; foam inside the tank (S-IVB) leaves a bare wall outside.
 function skinOf(def, entry) {
   const ins = entry.options?.insulation;
-  if (ins === 'foam') return 'foam';
+  const wall = entry.options?.wall;
+  const foam = () => (wall === 'isogrid' ? 'foam_tan' : 'foam');
+  if (ins === 'foam') return foam();
+  if (ins === 'foam_white') return 'foam_white';
   if (ins === 'mli') return 'gold';
+  if (def.look?.skin === 'blanket') return 'blanket';
   const mat = def.materialFamily === 'structure' ? entry.material : null;
-  if (ins !== 'bare' && def.look?.skin === 'foam') return 'foam';
+  if (ins !== 'bare' && ins !== 'internal' && def.look?.skin === 'foam') return foam();
   if (mat === 'stainless') return 'steel';
   if (mat === 'carbon') return 'carbon';
   if (mat === 'titanium') return 'titanium';
   if (mat === 'al2219') return 'cream';
+  if (wall === 'isogrid' && def.fuel?.type === 'kerolox' && (def.look?.skin ?? 'paint') === 'paint') return 'tiodize';
   return def.look?.skin === 'foam' ? 'paint' : (def.look?.skin ?? 'paint');
 }
 function skinMaterial(skin, r, h, fuel = 'methalox') {
@@ -243,11 +274,15 @@ function skinMaterial(skin, r, h, fuel = 'methalox') {
   if (skin === 'carbon') return new THREE.MeshStandardMaterial({ color: 0x8c8c8c, map: rep(carbonTex(), around * 6, tall * 6), roughness: 0.55, metalness: 0.05 });
   if (skin === 'foam') return new THREE.MeshStandardMaterial({ color: 0xffffff, map: rep(foamTex(), around, tall), roughness: 0.95, metalness: 0, bumpMap: rep(panelBump(false), around, tall), bumpScale: 0.002 });
   if (skin === 'gold') return new THREE.MeshStandardMaterial({ color: 0xffffff, map: rep(goldTex(), around * 3, tall * 3), roughness: 0.32, metalness: 0.9, bumpMap: rep(goldTex(), around * 3, tall * 3), bumpScale: 0.01 });
+  if (skin === 'foam_tan') return new THREE.MeshStandardMaterial({ color: 0xc8935c, roughness: 0.9, metalness: 0, bumpMap: rep(foamTex(), around, tall), bumpScale: 0.004 });
+  if (skin === 'tiodize') return new THREE.MeshStandardMaterial({ color: 0xffffff, map: rep(tiodizeTex(), around, tall), roughness: 0.48, metalness: 0.45 });
+  if (skin === 'foam_white') return new THREE.MeshStandardMaterial({ color: 0xefebe3, roughness: 0.85, metalness: 0, bumpMap: rep(foamTex(), around, tall), bumpScale: 0.004 });
+  if (skin === 'blanket') return new THREE.MeshStandardMaterial({ color: 0xc3c7cb, roughness: 0.38, metalness: 0.55, bumpMap: rep(goldTex(), around * 3, tall * 3), bumpScale: 0.01 });
   const color = skin === 'cream' ? 0xe8e1cc : PAINT[fuel] ?? 0xf1f0ec;
   return new THREE.MeshStandardMaterial({ color, roughness: 0.42, metalness: 0.12, bumpMap: rep(panelBump(true), 6, Math.max(1, Math.round(h / 1.2))), bumpScale: 0.006 });
 }
 const inkOf = (skin) => (skin === 'carbon' ? '#f1f0ec' : '#14171a');
-const trimOf = (skin) => (skin === 'foam' ? 0xb85f25 : skin === 'carbon' ? 0x0d0f11 : skin === 'gold' ? 0x9c7a2c : skin === 'steel' || skin === 'titanium' ? 0x7d8287 : 0xcfcdc6);
+const trimOf = (skin) => (skin === 'foam' ? 0xb85f25 : skin === 'foam_tan' ? 0x9c6a3c : skin === 'tiodize' ? 0x6e4a33 : skin === 'carbon' ? 0x0d0f11 : skin === 'gold' ? 0x9c7a2c : skin === 'steel' || skin === 'titanium' ? 0x7d8287 : 0xcfcdc6);
 
 // ---------- tanks ----------
 /** Where a tank sits: 'pair' (it holds both propellants), or 'upper' / 'lower' of a pair split across two parts. */
@@ -270,6 +305,8 @@ function tankArt(def, r, entry) {
   let build = look.build ?? 'separate';
   if (build === 'separate' && entry.options?.bulkhead === 'common') build = 'common';
   let tanks = look.tanks ?? [['LOX', 0.6], ['FUEL', 0.4]];
+  if (build === 'cluster') return clusterArt(def, r, skin, fuel);
+  if (build === 'spheres' || def.hullProfile?.kind === 'own' || def.hullProfile?.kind === 'inner') return profiledTankArt(def, r, skin, fuel);
   const pos = tankRole(def, entry);
   if (pos.role !== 'pair') {
     const ox = tanks.find((t) => t[0] === 'LOX')?.[0] ?? tanks[0][0];
@@ -303,7 +340,9 @@ function tankArt(def, r, entry) {
   // between the two propellants: a short intertank band (separate domes) or one weld line (common bulkhead)
   const split = h * (1 - tanks[0][1]);
   if (tanks.length < 2) {
-    // one propellant: nothing between, the domes are at the ends
+    // one propellant: nothing between, the domes are at the ends; a common bulkhead whose side is not known (PSLV)
+    // shows only its weld line at look.bulkheadAt
+    if (look.bulkheadAt) g.add(ring(r, h * look.bulkheadAt, std(0x6b7177, { roughness: 0.45, metalness: 0.6 }), 0.011));
   } else if (build === 'separate') {
     const bh = Math.min(0.45, Math.max(0.25, h * 0.06));
     const bandMat = skin === 'foam' ? new THREE.MeshStandardMaterial({ color: 0xc46a2c, roughness: 0.95, metalness: 0 }) : std(skin === 'carbon' ? 0x1a1d20 : skin === 'steel' ? 0x9ea4a9 : 0xb9bcbf, { roughness: 0.5, metalness: 0.45 });
@@ -340,8 +379,62 @@ function tankArt(def, r, entry) {
   return g;
 }
 
+/** A bundle of tanks round a centre tank (look.build 'cluster': look.outer tanks of radius look.ring x R round a centre
+ * tank of look.center x R), touching the stack radius, with a frame across the top and a ring at the base (S-IB, Proton).
+ * Drawn while the Blender model loads. */
+function clusterArt(def, r, skin, fuel) {
+  const h = def.height, look = def.look ?? {};
+  const n = look.outer ?? 8, rc = r * (look.center ?? 0.4), ro = r * (look.ring ?? 0.25);
+  const ringR = r - ro;
+  const g = new THREE.Group();
+  const paint = skinMaterial(skin === 'foam' ? 'paint' : skin, r, h, fuel);
+  const dark = std(0x26282b, { roughness: 0.6, metalness: 0.15 });
+  const alternate = /black/i.test(look.paint ?? '');
+  const tank = (rr, mat, x, z) => {
+    const t = group(mesh(new THREE.CylinderGeometry(rr, rr, h - 2 * rr * 0.6 - 0.4, 24), mat, 0, h / 2, 0));
+    for (const s of [1, -1]) { const d = mesh(new THREE.SphereGeometry(rr, 24, 8, 0, TAU, 0, Math.PI / 2), mat, 0, h / 2 + s * (h / 2 - rr * 0.6 - 0.2), 0); d.scale.y = 0.6 * s; t.add(d); }
+    t.position.set(x, 0, z);
+    return t;
+  };
+  g.add(tank(rc, paint, 0, 0));
+  const off = n === 8 ? Math.PI / 8 : 0;
+  for (let i = 0; i < n; i++) {
+    const a = off + (i / n) * TAU;
+    g.add(tank(ro, alternate && i % 2 === 0 ? dark : paint, Math.sin(a) * ringR, Math.cos(a) * ringR));
+  }
+  const frame = M.frame();
+  g.add(ring(r - 0.04, h - 0.06, frame, 0.05), ring(r - 0.04, 0.08, frame, 0.06));
+  for (let i = 0; i < n; i++) { const a = off + (i / n) * TAU; g.add(polarAt(box(0.1, 0.24, r - 0.1, std(0xbfc3c7, { roughness: 0.4, metalness: 0.6 })), a, (r - 0.1) / 2, h - 0.14)); }
+  return g;
+}
+
+/** A tank whose outside follows its hullProfile (the N1 cone, the waisted Soyuz core) or sits inside the skin (the hung
+ * LOX tank on its truss). Drawn while the Blender model loads. */
+function profiledTankArt(def, r, skin, fuel) {
+  const h = def.height, p = def.hullProfile ?? {};
+  const g = new THREE.Group();
+  const mat = skinMaterial(skin, r, h, fuel);
+  if (p.kind === 'inner') {
+    const rt = r * (p.rMax ?? 0.63) - 0.05;
+    const lox = mesh(new THREE.CapsuleGeometry(rt, 0.4, 8, 32), mat, 0, h * 0.36, 0);
+    lox.scale.y = 0.5; // a squat tank: about 1.2 m of a 2 m part, the truss above it
+    g.add(lox);
+    g.add(ring(r - 0.06, h - 0.04, M.frame(), 0.04));
+    const black = std(0x15181b, { roughness: 0.55, metalness: 0.25 });
+    for (let i = 0; i < 8; i++) { const a = (i / 8) * TAU, b = ((i + 1) / 8) * TAU; g.add(tube([Math.sin(a) * rt, h * 0.6, Math.cos(a) * rt], [Math.sin(b) * (r - 0.08), h - 0.06, Math.cos(b) * (r - 0.08)], 0.035, black, 6), tube([Math.sin(b) * rt, h * 0.6, Math.cos(b) * rt], [Math.sin(a) * (r - 0.08), h - 0.06, Math.cos(a) * (r - 0.08)], 0.035, black, 6)); }
+    return g;
+  }
+  const pts = (p.profile ?? [[1, 0], [1, 1]]).map(([rf, yf]) => new THREE.Vector2(rf * r, yf * h));
+  g.add(new THREE.Mesh(new THREE.LatheGeometry(pts, 72), Object.assign(mat, { side: THREE.DoubleSide })));
+  const frame = M.frame();
+  const rAt = (yf) => { const pr = p.profile ?? [[1, 0], [1, 1]]; for (let i = 0; i < pr.length - 1; i++) { const [r0, y0] = pr[i], [r1, y1] = pr[i + 1]; if (yf >= y0 && yf <= y1) return r * (r0 + ((r1 - r0) * (yf - y0)) / Math.max(1e-6, y1 - y0)); } return r * pr.at(-1)[0]; };
+  for (const yf of [0.004, 0.996]) g.add(ring(rAt(yf), yf * h, frame, 0.03));
+  if (def.look?.ringAt) g.add(ring(rAt(def.look.ringAt), def.look.ringAt * h, frame, 0.05)); // the Soyuz load ring
+  return g;
+}
+
 // ---------- stage structure ----------
-const STRUCT_BASE = { centerbody_m: 0xe9e7e1, interstage_m: 0x2b3238, intertank_l: 0xdad7cf, intertank_m: 0xdad7cf };
+const STRUCT_BASE = { centerbody_m: 0xe9e7e1, centerbody_l: 0xe9e7e1, forward_skirt_l: 0xe9e7e1, aft_skirt_l: 0xe9e7e1, interstage_m: 0x2b3238, intertank_l: 0xdad7cf, intertank_m: 0xdad7cf };
 /** The shell material of stage structure: painted metal, carbon, or bare steel/titanium, after the part's material. */
 function structureSkin(kind, base, around, tall, bump = null) {
   if (kind === 'carbon') return new THREE.MeshStandardMaterial({ color: 0x8c8c8c, map: rep(carbonTex(), around * 8, tall * 8), roughness: 0.55, metalness: 0.05, side: THREE.DoubleSide });
@@ -575,7 +668,7 @@ export function partArt(entry) {
     if (def.adapter) return adapterArt(def, e);
     if (def.fuel) return tankArt(def, r, e);
     if (def.id === 'avionics_iu_l') return iuArt(def, r);
-    if (['intertank_l', 'intertank_m', 'centerbody_m', 'interstage_m', 'interstage_l_composite'].includes(def.id)) return structureArt(def, r, e);
+    if (STRUCTURE_IDS.has(def.id)) return structureArt(def, r, e);
     return null;
   }
   if (def.id === 'feedline_external') return feedlineArt(def);
@@ -587,7 +680,7 @@ export function partArt(entry) {
 
 // ---------- internals (exploded view) ----------
 const V = (x, y, z) => new THREE.Vector3(x, y, z);
-const TANK_KITS = new Set(['tank', 'tank_h2', 'tank_common', 'tank_common_h2', 'tank_balloon']);
+const TANK_KITS = new Set(['tank', 'tank_h2', 'tank_common', 'tank_common_h2', 'tank_balloon', 'tank_cluster', 'tank_spheres']);
 
 function tankPieces(def, options, r, h) {
   const out = [];
@@ -616,7 +709,20 @@ function tankPieces(def, options, r, h) {
       bh.add(mesh(domeGeo(dr * 0.98, dd * 0.9, false), alu, 0, split + (b === 'honeycomb' ? 0.2 : 0.12), 0));
     }
   }
-  add('bulkhead', common ? 'Common bulkhead' : 'Bulkheads', bh, V(0.4, 1, 0));
+  if (hasSlot(def, 'bulkhead')) add('bulkhead', common ? 'Common bulkhead' : 'Bulkheads', bh, V(0.4, 1, 0));
+  // wall stiffening: a cut-away panel of the wall with its machined ribs (isogrid, orthogrid, 45-degree waffle) or the
+  // integral stringers and ring frames
+  if (hasSlot(def, 'wall')) {
+    const w = opt('wall') ?? 'integral';
+    const ph = Math.min(1.3, h * 0.3), py = h * 0.5;
+    const pattern = w === 'isogrid' ? isoTex('#c9ccd0', '#8f969c') : w === 'integral' ? null : orthoTex('#c9ccd0', '#8f969c');
+    const wallMat = pattern ? new THREE.MeshStandardMaterial({ color: 0xffffff, map: rep(pattern, 3, 2), bumpMap: rep(pattern, 3, 2), bumpScale: 0.02, roughness: 0.4, metalness: 0.6, side: THREE.DoubleSide }) : alu;
+    const panel = mesh(new THREE.CylinderGeometry(r * 0.96, r * 0.96, ph, 16, 1, true, Math.PI + 0.5, 0.9), wallMat, 0, py, 0);
+    if (w === 'waffle') panel.material.map.rotation = Math.PI / 4;
+    const wall = group(panel);
+    if (w === 'integral') for (let i = 0; i <= 6; i++) wall.add(polarAt(box(0.02, ph, 0.04, M.steel()), Math.PI + 0.5 + (i / 6) * 0.9, r * 0.94, py));
+    add('wall', 'Wall stiffening', wall, V(-0.7, 0, -0.7));
+  }
   // pressurisation (tank kits) or the balloon's pressure system
   if (kit === 'tank_balloon') {
     const p = opt('pressure');
@@ -635,6 +741,7 @@ function tankPieces(def, options, r, h) {
     const p = opt('pressurisation');
     if (p === 'autogenous') press.add(tube([0.55 * r, 0.06 * h, 0.3 * r], [0.55 * r, 0.92 * h, 0.3 * r], 0.03, std(0xc9a24a, { roughness: 0.3, metalness: 0.9 }), 10), at(new THREE.Mesh(new THREE.SphereGeometry(0.08, 16, 12), std(0xc9a24a, { roughness: 0.3, metalness: 0.9 })), 0.55 * r, 0.92 * h, 0.3 * r));
     else if (p === 'nitrogen') for (const [x, z] of [[0.35, 0.35], [-0.35, 0.35]]) press.add(at(new THREE.Mesh(new THREE.SphereGeometry(0.2 * r, 24, 16), std(0xb9c6d2, { roughness: 0.3, metalness: 0.7 })), x * r, 0.3 * h, z * r));
+    else if (p === 'cold_helium') for (let i = 0; i < 6; i++) { const a = Math.PI * 0.6 + (i / 5) * Math.PI * 0.8; press.add(at(new THREE.Mesh(new THREE.SphereGeometry(0.12 * r, 16, 12), std(0x7f8388, { roughness: 0.42, metalness: 0.6 })), Math.sin(a) * 0.6 * r, 0.12 * h, Math.cos(a) * 0.6 * r)); } // titanium spheres in the hydrogen (S-IVB)
     else {
       for (const [x, z] of [[0.4, 0.3], [-0.4, 0.3], [0, -0.45]]) press.add(at(new THREE.Mesh(new THREE.CapsuleGeometry(0.1 * r, 0.16 * r, 6, 16), new THREE.MeshStandardMaterial({ color: 0xffffff, map: rep(carbonTex(), 1, 2), roughness: 0.35, metalness: 0.2 })), x * r, 0.3 * h, z * r));
       if (p === 'heated') { // the heat-exchanger coil on the engine end
@@ -651,12 +758,15 @@ function tankPieces(def, options, r, h) {
     const bo = opt('baffles');
     if (bo !== 'none') for (const f of [0.22, 0.4, 0.62, 0.8]) baf.add(ring(0.78 * r, f * h, alu, 0.03));
     else baf.add(ring(0.78 * r, 0.45 * h, std(0x4b5563, { roughness: 0.6, metalness: 0.4, transparent: true, opacity: 0.35 }), 0.012));
-    if (bo === 'antivortex') for (let i = 0; i < 4; i++) baf.add(at(box(0.5 * r, 0.25, 0.02, alu), 0, 0.08 * h, 0)).children.at(-1).rotation.y = (i * Math.PI) / 4;
+    if (bo === 'antivortex' || bo === 'pmd') for (let i = 0; i < 4; i++) baf.add(at(box(0.5 * r, 0.25, 0.02, alu), 0, 0.08 * h, 0)).children.at(-1).rotation.y = (i * Math.PI) / 4;
+    if (bo === 'pmd') for (let i = 0; i < 4; i++) { const a = Math.PI / 4 + (i * Math.PI) / 2; baf.add(tube([Math.sin(a) * 0.85 * r, 0.45 * h, Math.cos(a) * 0.85 * r], [Math.sin(a) * 0.3 * r, 0.06 * h, Math.cos(a) * 0.3 * r], 0.03, std(0xe3e6e9, { roughness: 0.3, metalness: 0.8 }), 6)); } // screen channels to the outlet
     add('baffles', 'Slosh baffles', baf, V(1, 0, 0));
   }
   // insulation
   const ins = opt('insulation');
   const insMat = ins === 'foam' ? new THREE.MeshStandardMaterial({ color: 0xffffff, map: rep(foamTex(), 1, 1), roughness: 0.95, metalness: 0, side: THREE.DoubleSide })
+    : ins === 'foam_white' ? new THREE.MeshStandardMaterial({ color: 0xefebe3, roughness: 0.85, metalness: 0, bumpMap: rep(foamTex(), 1, 1), bumpScale: 0.004, side: THREE.DoubleSide })
+    : ins === 'internal' ? new THREE.MeshStandardMaterial({ color: 0xffffff, map: rep(orthoTex('#d8cc9a', '#8a7a52'), 3, 2), roughness: 0.85, metalness: 0, side: THREE.DoubleSide })
     : ins === 'mli' ? new THREE.MeshStandardMaterial({ color: 0xffffff, map: rep(goldTex(), 2, 2), roughness: 0.32, metalness: 0.9, side: THREE.DoubleSide })
       : std(0xe6e3dc, { roughness: 0.4, metalness: 0.3, side: THREE.DoubleSide });
   const ph = Math.min(h * 0.35, Math.max(0.6, split * 0.8)), py = Math.max(ph / 2 + 0.1, split * 0.5);
@@ -666,7 +776,7 @@ function tankPieces(def, options, r, h) {
     const p = (th, y) => [Math.sin(th) * r * 1.03, y, Math.cos(th) * r * 1.03];
     for (const y of [py - ph / 2, py + ph / 2]) for (let i = 0; i < 8; i++) insPiece.add(tube(p(-0.6 + i * 0.15, y), p(-0.6 + (i + 1) * 0.15, y), 0.008, faint, 4));
     for (const th of [-0.6, 0.6]) insPiece.add(tube(p(th, py - ph / 2), p(th, py + ph / 2), 0.008, faint, 4));
-  } else insPiece.add(mesh(new THREE.CylinderGeometry(r * 1.02, r * 1.02, ph, 40, 1, true, -0.6, 1.2), insMat, 0, py, 0));
+  } else insPiece.add(mesh(new THREE.CylinderGeometry(r * (ins === 'internal' ? 0.94 : 1.02), r * (ins === 'internal' ? 0.94 : 1.02), ph, 40, 1, true, -0.6, 1.2), insMat, 0, py, 0)); // internal: tiles inside the wall
   add('insulation', 'Insulation', insPiece, V(0, 0, 1));
   // feed lines
   const fo = opt('feedline');
@@ -676,6 +786,8 @@ function tankPieces(def, options, r, h) {
   } else {
     feed.add(mesh(new THREE.CylinderGeometry(0.06, 0.06, 0.9 * h, 12), M.steel(), -0.3 * r, 0.47 * h, -0.5 * r), mesh(new THREE.CylinderGeometry(0.09, 0.09, 0.1, 12), M.amber(), -0.3 * r, 0.06 * h, -0.5 * r));
     if (fo === 'dual') feed.add(mesh(new THREE.CylinderGeometry(0.06, 0.06, 0.9 * h, 12), M.steel(), 0.3 * r, 0.47 * h, -0.5 * r), mesh(new THREE.CylinderGeometry(0.09, 0.09, 0.1, 12), M.amber(), 0.3 * r, 0.06 * h, -0.5 * r));
+    if (fo === 'pogo') feed.add(mesh(new THREE.CapsuleGeometry(0.12, 0.3, 6, 16), M.steel(), -0.3 * r + 0.22, 0.12 * h, -0.5 * r)); // the gas-filled accumulator by the engine inlet
+    if (fo === 'surge') for (const y of [0.2, 0.5]) feed.add(mesh(new THREE.SphereGeometry(0.08, 12, 8), M.steel(), -0.3 * r + 0.13, y * h, -0.5 * r)); // small dampers on the line
   }
   add('feedline', fo === 'tunnel' ? 'Feed tunnel' : 'Feed lines', feed, fo === 'tunnel' ? V(0, -1, 0.3) : V(0, -1, -0.8));
   return out;
@@ -740,7 +852,24 @@ function avionicsPieces(def, options, r, h) {
     else for (const dx of [-0.08, 0.08]) g.add(at(cyl(0.01, 0.01, 0.34, M.steel(), 6), -0.5 * r + dx, 0.5 * h + 0.25, -0.5 * r));
     add('fts', 'Flight termination', g, V(-1, 0, -1));
   }
+  if (hasSlot(def, 'cooling')) {
+    // cold plates under the boxes and a coolant loop (Saturn IU), or the duct that blows ground air in until lift-off
+    const g = new THREE.Group();
+    if (opt('cooling') === 'coldplate') {
+      const plate = std(0x9aa3ab, { roughness: 0.32, metalness: 0.7, side: THREE.DoubleSide });
+      for (const th of [Math.PI, Math.PI / 2, 0]) g.add(mesh(new THREE.CylinderGeometry(r * 0.9, r * 0.9, 0.6 * h, 8, 1, true, th - 0.25, 0.5), plate, 0, 0.5 * h, 0));
+      g.add(at(torus(r * 0.88, 0.015, std(0xb87333, { roughness: 0.35, metalness: 0.9 })), 0, 0.16 * h, 0));
+    } else g.add(at(torus(r * 0.86, 0.05, std(0xe7dfc4, { roughness: 0.8 })), 0, 0.88 * h, 0));
+    add('cooling', 'Cooling', g, V(0, 1, 0.3));
+  }
   return out;
+}
+
+/** The hot-staging lattice's heat shield on the dome below the joint, or nothing (Gemini 10 flew without one). */
+function shieldPieces(def, options, r, h) {
+  const g = new THREE.Group();
+  if ((options?.shield?.id ?? 'shield') !== 'none') g.add(new THREE.Mesh(new THREE.LatheGeometry([[r * 0.93, 0.04], [r * 0.75, 0.12], [r * 0.45, 0.22], [0, 0.28]].map(([x, y]) => new THREE.Vector2(x, y)), 48), std(0x6c6f73, { roughness: 0.42, metalness: 0.55, side: THREE.DoubleSide })));
+  return [{ key: 'shield', name: 'Heat shield', object: g, dir: V(0, -1, 0) }];
 }
 
 /**
@@ -754,7 +883,25 @@ export function internalsArt(def, options, dims) {
   if (TANK_KITS.has(kit)) out = tankPieces(def, options, r, h);
   else if (kit === 'stage_structure') out = structurePieces(def, options, r, h);
   else if (kit === 'avionics') out = avionicsPieces(def, options, r, h);
+  else if (kit === 'truss_hotstage') out = shieldPieces(def, options, r, h);
   if (!out) return null;
+  // in the kit's order, so the numbered markers match the card's numbered list
+  const order = [...(KIT_KEYS[kit] ?? [])];
+  out.sort((a, b) => order.indexOf(a.key) - order.indexOf(b.key));
   for (const piece of out) piece.object.traverse((o) => { if (o.isMesh) { o.castShadow = true; o.receiveShadow = false; } });
+  return out;
+}
+
+/**
+ * Dresses a loaded Blender model before the shared code places it (bay/partArt.js singleArt). Returns null to leave it.
+ * A side model (the APS pod, the ullage motor) is built with its root on the host's wall, pointing +x; the shared
+ * placement puts a side part's origin 0.45 x its width out from the wall (the drawn art is centred), so the model moves
+ * back by that much and its mount sits on the wall.
+ */
+export function wrapModel(model, entry) {
+  if (entry?.attach !== 'radial' || !entry.def) return null;
+  const w = model.userData.width ?? Math.min(1.2, entry.def.height ?? 0.8);
+  const out = group(at(model, -0.45 * w, 0, 0));
+  out.userData = { ...model.userData, width: w };
   return out;
 }
