@@ -68,6 +68,21 @@ Copy this block. Keep each line short and factual. Don't commit screenshots.
 
 ## Role 2: Flight & Astronaut
 
+### After orbit the game cuts to CRUISE: the player should unbuckle and float back to the cabin
+- **For:** Role 2 · **From:** Role 3 (dtri, the player's design) · **Found:** 2026-11-08 on dev 5948880 · **Severity:** feature
+- **Where:** `src/flight/index.js` (ORBIT → CRUISE, around the transfer burn `T` and `requestState('CRUISE')`), a new zero-g float controller (like `WalkController`), `src/flight/egress.js` (Mars route)
+- **Steps:** fly the Apollo preset to orbit, press T
+- **Expected:** one continuous first-person scene, no cut:
+  - after the transfer burn, harness off (`cockpit.userData.harness(t)`, 0 buckled … 1 released; sound `crew.harness`);
+  - float up out of the couch and pull to the hatch behind the seats (`aftHatch`, `cockpit.userData.openHatch(t)`, sound `cockpit.hatch`);
+  - through the short passage into the cabin: call `cockpit.userData.attachCabin(assets.get('cabin'))` first, so cockpit, passage and cabin sit in one scene; waypoints in `cockpit.userData.floatPath` (couch eye → hatch → passage → cabin entry);
+  - then free zero-g floating in the cabin: WASD + mouse, grab handrails (`cabin.userData.handrails` = [{ a, b }], cabin-local), collide with `cabin.userData.floatColliders` = [{ min, max }], `cabin.userData.zeroG(true)` lets loose items drift; sounds `crew.push`, `handrail.grab`, ambience `cabin.fans`;
+  - before ENTRY, the same route back to the couch and `harness(0)`.
+  On Mars the egress uses the same hatch and passage: `aftHatch` and `ladderTop` move from Apollo's side hatch to the hatch behind the seats (the side hatch becomes `sideHatch`).
+- **Actual:** pressing T cuts to the CRUISE screen; nothing connects the cockpit and the cabin.
+- **Suggested fix:** build the float controller and the two timelines on the Role 3 hooks above (they arrive with Role 3's next push; README "Role 3 APIs", rows `cockpit`, `cabin`, audio). No new state or event is needed: ORBIT → CRUISE stays, the cut becomes this scene; Role 4 starts CRUISE where it ends.
+- **Status:** open (Role 3 side in progress)
+
 ### After a Mars touchdown the flight computer lifts off again
 - **For:** Role 2 · **From:** Role 3 (dtri) · **Found:** 2026-11-08 on dev 0b0c0bd · **Severity:** bug
 - **Where:** `src/flight/` (the flight computer / phase logic after `fc.landed`)
@@ -188,6 +203,15 @@ Copy this block. Keep each line short and factual. Don't commit screenshots.
 - **Status:** open
 
 ## Role 4: Story, Cruise & Knowledge
+
+### CRUISE is a separate outside screen: it should play inside the cabin
+- **For:** Role 4 · **From:** Role 3 (dtri, the player's design) · **Found:** 2026-11-08 on dev 5948880 · **Severity:** feature
+- **Where:** `src/cruise/index.js` (its own space scene with an orbiting camera around `rocketPart:engine_m` + `rocketPart:capsule_m`)
+- **Steps:** fly to orbit, press T
+- **Expected:** CRUISE starts where Role 2's orbit scene ends: the player floating inside the cabin, which is attached to the cockpit in the space scene (`cockpit.userData.attachCabin(assets.get('cabin'))`), moving with Role 2's zero-g float controller. Earth shrinks and Mars grows through the cabin windows; the cruise UI and time warp stay as they are, drawn over the cabin (or on its screens). Before ENTRY the player floats back to the couch (Role 2's timeline).
+- **Actual:** a hard cut to an outside view of a fixed engine + capsule, which are not the player's ship.
+- **Suggested fix:** use the cockpit + cabin as the cruise scene; if an outside view stays (e.g. key C), draw `assets.get('ship')` (the player's ship from Role 1's models, coming with Role 3's next push) instead of the two fixed `rocketPart:` parts.
+- **Status:** open (Role 3 side in progress)
 
 ### Reset money on the bankrupt ending
 - **For:** Role 4 · **From:** Role 1 (in `docs/DECISIONS.md`) · **Found:** 2026-11-07 on dev 0722c4e · **Severity:** bug
