@@ -163,6 +163,24 @@ Người dùng muốn làm lại giao diện trang thiết kế:
 4. **May rủi (luck):** `asBuilt.js`, `investigation.js` (+ css), `gonogo.js`, `gonogoView.js`, `data/text.json`, `index.js`, `hangarScreen.js`, `bay/teststand.js`, `tests/luck.test.mjs`.
 5. **Lời giải thích (content):** `sections/{nose,body,tail}/explain.json`, `data/explain-general.json`.
 
+## 7. Đợt 4 (2026-11-07): 30 hình dáng thật mỗi thẻ, mô hình Blender (ĐÃ CHỐT)
+
+- **Mục tiêu:** mỗi thẻ (Mũi, Thân, Đuôi, Bệ phóng) có khoảng 30 hình dáng lấy từ tàu và bệ phóng thật, thêm nhiều linh kiện và mảnh bên trong để người chơi tự sáng tạo. Đúng thực tế là quan trọng nhất.
+- **Công cụ:** Blender + Python. Agent viết script dựng mô hình theo kích thước thật từ ảnh và bản vẽ NASA, như Role 3 dựng xe tự hành (`scripts/blender/rover.py`). Dùng mô hình miễn phí bản quyền (NASA, Smithsonian CC0, Sketchfab CC0) khi có mẫu tốt. Không dùng AI biến ảnh thành 3D: méo, không ráp khít, vướng bản quyền.
+  - Blender 5.2.3 LTS đã cài bằng winget (người dùng cho phép), cùng bản với cả nhóm.
+- **Kích thước:** giữ 3 cỡ đường kính (S 1,88 m, M 2,5 m, L 3,38 m). Tàu thật thu theo tỷ lệ về cỡ gần nhất, giữ đúng hình dáng và tỷ lệ.
+- **Chất lượng:** cân bằng. Khoảng 20 nghìn tam giác, dưới 400 KB mỗi mô hình (glb nén Draco), texture tối đa 1K, mỗi phần tối đa khoảng 12 MB.
+- **Mảnh bên trong:** Blender cho mảnh chính của linh kiện chủ lực (capsule, động cơ, bồn, tháp, bệ). Mảnh phụ giữ hình dựng bằng code.
+- **Đội agent:** mỗi phần 3 agent (tìm tài liệu, dựng 3D, kiểm tra), tổng 12 agent, Opus 5.5 mức extra high. Agent kiểm tra soát hai lần: danh sách và nguồn trước khi dựng, rồi kết quả trong game.
+- **Thứ tự:**
+  - 4 agent tìm tài liệu chạy ngay ở pha A (chỉ ghi vào `C:/Users/Thainguyen/AppData/Local/Temp/spaceb-wave4/<phần>/`).
+  - Khi đợt 3 xong, AI dựng chuẩn ráp nối: gốc ở đáy giữa trục, Y hướng lên, mét, vòng nối đúng bán kính, mảnh trong tên `slot_<key>`, linh kiện tự khai báo hình dáng ngoài cho vỏ, bộ nạp `public/assets/models/builder/<phần>/`, test kích thước và dung lượng.
+  - Sau đó: pha B (ghi dữ liệu vào repo), agent dựng 3D, agent kiểm tra.
+- **Người dùng báo lỗi tỷ lệ:** ở cảnh phóng (LAUNCH, phần của Role 2/3), tàu mảnh và nhỏ, khuất trong tháp cam to và bệ quá lớn. Chưa được sửa trong code mới của cả nhóm. Phần Role 1 sẽ làm:
+  - (1) Nối hình tàu của hangar sang cảnh bay qua `assets.setRocketPartArt`.
+  - (2) Ghi `docs/SHARE_PROBLEMS.md` cho Role 2: cỡ tháp và bệ theo kích thước tàu.
+  - (3) Bệ trong trang thiết kế giữ quy tắc tỷ lệ thật: tháp khoảng 1,1–1,3 lần chiều cao tàu, bệ đỡ khoảng 1,5–2 lần đường kính.
+
 ## 5. Việc tồn đọng
 
 - Khoảng 58 model NASA không dùng (35 MB) còn trong repo; lệnh xoá hàng loạt từng bị chặn, cần người dùng cho phép.
