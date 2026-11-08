@@ -17,7 +17,9 @@ import { getMars } from '/src/surface/scenes.js';
 import { FlightController, TUNING } from './FlightController.js';
 import { createCockpitControls, createCockpitIndicators } from './cockpitControls.js';
 import { ascentGuide, assistReadout, landingGuide, predictPath } from './flightAssist.js';
-import { createDebrisField } from './debris.js';
+import { createDebrisField, DEBRIS_ENCOUNTER } from './debris.js';
+import { createDebrisWindow, createEncounterTracker, conjunctionAxes, conjunctionPieces, rcsRequest, trackAim } from './conjunction.js';
+import { createConjunctionPanel } from './hud/conjunctionPanel.js';
 import { atmosphereTop, pressureRatio } from './atmosphere.js';
 import { createAutopilot } from './autopilot.js';
 import { MANUAL, createManualWindow, createStickState, dirFromOffsets, frameFor, offsetsFromDir } from './manualControl.js';
@@ -25,7 +27,7 @@ import { createManualAimPanel } from './hud/manualAimPanel.js';
 import { createPacer, createEventDetector, paceContext } from './pacing.js';
 import { approachBack, computeCorridor, corridorGauge, predictInterface } from './corridor.js';
 import { createChecklist, objectiveText } from './objectives.js';
-import { clearPhaseRatings, createPhaseTracker, getPhaseRatings } from './rating.js';
+import { clearPhaseRatings, createPhaseTracker, getPhaseRatings, rateDebris, storeRating } from './rating.js';
 import { attitudeDeg } from './attitude.js';
 import { dot, qRotate, LOCAL_RIGHT, LOCAL_UP } from './vec.js';
 import { STARTS } from './presets.js';
@@ -40,7 +42,7 @@ import { ZOOM_DEFAULT, ZOOM_PAD, applyMouse, createChaseState, createOrbit, hori
 const fmt = (n, d = 0) => (Number.isFinite(n) ? n.toFixed(d) : '∞');
 
 export { FlightController };
-// Phase ratings for Role 4's Flight Report: [{ phase: 'ascent'|'entry'|'landing', stars: 1..3, stats, text }] (see rating.js).
+// Phase ratings for Role 4's Flight Report: [{ phase: 'ascent'|'debris'|'entry'|'landing', stars: 1..3, stats, text }] (see rating.js).
 export { getPhaseRatings };
 
 const EGRESS_CINEMATIC = false; // first-person egress after landing (egress.js); off until the new spaceship interior is designed
@@ -64,7 +66,7 @@ const TELEMETRY_EVERY = 0.5; // s (contract: flight:telemetry about twice per se
 const toCockpit = new THREE.Quaternion().setFromAxisAngle(new THREE.Vector3(1, 0, 0), Math.PI / 2); // nose +Y → cockpit −Z
 
 // Mission state that survives state changes (LAUNCH → ORBIT keeps the same controller; LANDING ⇄ INTERIOR too).
-const mission = { fc: null, autopilot: createAutopilot(), manualAscent: createManualWindow('ascent', MANUAL.windows.ascent), stick: null, planetId: null, fuelForMars: null, debrisDone: false, tracker: createPhaseTracker(), card: null, ascentList: createChecklist('ascent'), entryList: createChecklist('entry'), blackout: 'before' };
+const mission = { fc: null, autopilot: createAutopilot(), manualAscent: createManualWindow('ascent', MANUAL.windows.ascent), stick: null, planetId: null, fuelForMars: null, debrisDone: false, debrisWin: createDebrisWindow(), debrisTracker: null, debrisRated: false, cardQueue: [], tracker: createPhaseTracker(), card: null, ascentList: createChecklist('ascent'), entryList: createChecklist('entry'), blackout: 'before' };
 const ENTRY_FPA = -22.8; // deg at the atmosphere's edge: inside the corridor but off its centre, so a small RCS trim pays off
 const ENTRY_APPROACH = 40; // s of approach before the atmosphere (time to trim the corridor)
 const CARD_SECONDS = 6;
@@ -94,6 +96,7 @@ function controllerFor(state) {
     astronaut.reset();
     mission.fuelForMars = null;
     mission.debrisDone = false;
+    mission.debrisWin = createDebrisWindow(); mission.debrisTracker = null; mission.debrisRated = false; mission.cardQueue = [];
     clearPhaseRatings(); // a new mission starts: forget last flight's ratings
     mission.manualAscent = createManualWindow('ascent', MANUAL.windows.ascent); // the ascent window is offered once per mission
     mission.stick = createStickState(mission.manualAscent);
@@ -356,8 +359,31 @@ function offerManualUi() {
   s.pacer.event('manual_offer', s.fc.t, 0.5); // back to 1× now
 }
 
+// Orbital debris encounter: field placed ahead, alarm, offer to dodge (F). A player flying free goes straight into the window.
+function placeDebris() {
+  const fc = s?.fc;
+  if (!fc) return false;
+  mission.debrisDone = true;
+  fc.setObstacles(createDebrisField({ fc, ...DEBRIS_ENCOUNTER }));
+  mission.debrisTracker = createEncounterTracker();
+  mission.debrisRated = false;
+  const dw = mission.debrisWin = createDebrisWindow();
+  s.debrisWarning = MANUAL.windows.debris.offerSeconds;
+  s.debrisAt = fc.t;
+  s.pacer.event('debris', fc.t, 4); // back to 1× (the offer / window also pins it)
+  audio.play('alarm.master');
+  dw.offer();
+  if (stick().free) { stick().giveBack(); dw.take(); callout('Debris ahead. Your stick is scored now.'); }
+  else callout('Debris conjunction ahead. Take the stick to dodge, or the computer burns for you.', 6);
+  return true;
+}
+
+const state0Orbit = () => placeDebris();
 const FREE_STATES = ['LAUNCH', 'ORBIT', 'ENTRY', 'LANDING'];
 const stick = () => (mission.stick ??= createStickState(mission.manualAscent));
+const hasStick = () => stick().has || mission.debrisWin.active;
+const DEBRIS_LESSON = 'Real ISS crews have dodged orbital debris more than 30 times since 1999. About 36,000 tracked pieces larger than 10 cm circle the Earth.';
+const rcsLimit = (fc) => (fc.ship.hasRCS ? TUNING.rcsAccel.rcs : TUNING.rcsAccel.noRcs);
 function zoomIn() {
   s.chase = false; // always from the cockpit (the camera zooms into its centre display)
   try { input.lockPointer(); } catch { /* pointer lock may be refused */ }
@@ -371,6 +397,9 @@ function toggleManual() {
   const w = mission.manualAscent;
   const fc = s?.fc;
   if (!s || s.phase0?.active) return null;
+  const dw = mission.debrisWin;
+  if (dw.offered) { dw.take(); zoomIn(); callout('You have the stick. Dodge!'); return 'window'; }
+  if (dw.active) { dw.cancel(); finishManual('Computer has it.'); return 'cancel'; }
   if (!w.busy && (!FREE_STATES.includes(s.stateName) || s.countdown > 0 || !fc || fc.liftoffT === null || fc.landed || fc.failed)) return null;
   const was = stick().mode;
   const r = stick().toggle({ planetId: fc.planetId });
@@ -401,7 +430,7 @@ function lockManual() {
 // Esc: give the stick back
 function cancelManual() {
   if (!s) return;
-  if (mission.manualAscent.cancel() || stick().giveBack()) finishManual('Computer has it.');
+  if (mission.debrisWin.cancel() || mission.manualAscent.cancel() || stick().giveBack()) finishManual('Computer has it.');
 }
 
 // Zoom pose for a cockpit: in the rig's local frame (camera = child of the rig at the pilot's eye = origin).
@@ -541,8 +570,10 @@ export default {
       // set the outside camera for screenshots: orbit(yawDeg, pitchDeg, dist); `wheel` fakes a wheel step; chase(on) toggles the view
       orbit(yawDeg, pitchDeg, dist) { if (s) { s.orbit.yaw = THREE.MathUtils.degToRad(yawDeg); s.orbit.pitch = THREE.MathUtils.degToRad(pitchDeg); if (dist) s.orbit.dist = dist; s.cam.ready = false; } return s?.orbit; },
       wheel(delta) { if (s) s.orbit.dist = stepZoom(s.orbit.dist, delta); return s?.orbit.dist; },
+      debris() { return state0Orbit(); }, // place the debris field now and start the warning/offer
       manual: {
         get state() { return mission.manualAscent.state; },
+        get debris() { return mission.debrisWin.state; },
         offer() { // force-offer the ascent window now, even if the guide step is not 'turn'
           if (!s || !mission.manualAscent.offer()) return false;
           s.debugDir = { ...s.fc.forward };
@@ -554,7 +585,10 @@ export default {
         take() { startManual(); return mission.manualAscent.state; },
         lock() { lockManual(); return mission.manualAscent.state; },
         cancel() { cancelManual(); return mission.manualAscent.state; },
-        aim(yawDeg, pitchDeg) { mission.manualAscent.setAim(yawDeg, pitchDeg); return mission.manualAscent.readout().aim; },
+        aim(yawDeg, pitchDeg) { // debris window: panel units (|v| ≤ 1) or metres in the conjunction plane (x = orbit normal, y = up)
+          const dw = mission.debrisWin;
+          if (dw.busy) { const k = Math.max(Math.abs(yawDeg), Math.abs(pitchDeg)) > 1 ? 1 / MANUAL.windows.debris.rangeMetres : 1; dw.setAim(yawDeg * k, pitchDeg * k); return dw.aim; }
+          mission.manualAscent.setAim(yawDeg, pitchDeg); return mission.manualAscent.readout().aim; },
         track(on) { if (s) s.manualTrack = !!on; return !!s?.manualTrack; },
       },
       chase(on) { if (s && !s.phase0?.active && s.chase !== on) { s.chase = on; if (on) { resetOrbit(s.orbit); s.cam.ready = false; } } return s?.chase; },
@@ -585,6 +619,7 @@ export default {
     guideMark.style.color = '#7dffa8';
     s.hud.root.append(guideMark);
     s.aimPanel = createManualAimPanel({ parent: hudLayer });
+    s.conjPanel = createConjunctionPanel({ parent: hudLayer });
     s.controls = createCockpitControls({
       input,
       onManual: startManual,
@@ -595,7 +630,7 @@ export default {
     input.onEscape(cancelManual); // Esc during manual control gives the stick back (core clears it on every state change)
     if (state === 'LAUNCH') s.cam.heading.set(0, 0, 1); // on the pad "behind" is the clear side, away from the tower and tanks
     input.onPress('KeyC', () => {
-      if (s.phase0?.active || stick().has || s.egress) return;
+      if (s.phase0?.active || hasStick() || s.egress) return;
       s.chase = !s.chase;
       if (s.chase) { resetOrbit(s.orbit); s.cam.ready = false; } // behind and above, zoom kept
     });
@@ -649,7 +684,7 @@ export default {
     const mouse = input.mouseDelta();
     const mouseOk = Math.abs(mouse.x) < MAX_MOUSE_STEP && Math.abs(mouse.y) < MAX_MOUSE_STEP;
     const manualWin = mission.manualAscent;
-    if (s.egress || stick().has) { /* the mouse is ignored while the egress plays; otherwise it aims the ○ (below), it neither looks around nor orbits */ }
+    if (s.egress || hasStick()) { /* the mouse is ignored while the egress plays; otherwise it aims the ○ (below), it neither looks around nor orbits */ }
     else if (mouseOk) {
       if (s.chase) applyMouse(s.orbit, mouse.x, mouse.y); // outside: the mouse orbits the rocket, cockpit look untouched
       else {
@@ -657,7 +692,7 @@ export default {
         s.look.pitch = Math.max(-1.2, Math.min(1.2, s.look.pitch - mouse.y * 0.002));
       }
     }
-    if (s.chase && !stick().has) s.orbit.dist = stepZoom(s.orbit.dist, input.wheelDelta?.()); // core input adds wheelDelta; none yet = no zoom
+    if (s.chase && !hasStick()) s.orbit.dist = stepZoom(s.orbit.dist, input.wheelDelta?.()); // core input adds wheelDelta; none yet = no zoom
 
     if (s.phase0?.active) {
       fc.holdDown = true; fc.throttle = 0;
@@ -701,7 +736,7 @@ export default {
       } else offerManualUi();
     }
     if (win.busy && (fc.failed || fc.planetId !== 'earth' || fc.landed)) { win.close(); s.zoom.target = 0; } // a failure ends the window: no stars
-    const auto = mission.autopilot.update(fc, { countdown: s.countdown > 0, corridor: s.corridor });
+    const auto = mission.autopilot.update(fc, { countdown: s.countdown > 0, corridor: s.corridor, holdDodge: mission.debrisWin.busy });
     let pilot = auto;
     let readout = null;
     const dtMan = Math.min(dt, 0.1);
@@ -727,20 +762,43 @@ export default {
         pilot = { ...auto, aim: dirFromOffsets(s.manualFrame, readout.aim.yawDeg, readout.aim.pitchDeg) };
       }
     }
+    // ---- debris dodge window: conjunction view, aim ○ = sideways RCS thrust (conjunction.js) ----
+    const dw = mission.debrisWin;
+    s.debrisReadout = null;
+    if (mission.debrisTracker && !mission.debrisRated && !fc.failed) {
+      const snap = mission.debrisTracker.update(fc, dtMan);
+      const pieces = conjunctionPieces(fc, fc.obstacles);
+      if (dw.busy && (fc.planetId !== 'earth' || state !== 'ORBIT')) { dw.close(); s.zoom.target = 0; }
+      if (dw.busy) {
+        if (s.manualTrack && dw.active) { const a = trackAim(pieces, rcsLimit(fc)); dw.setAim(a.x, a.y); }
+        const r = dw.update(dtMan, { mouse: dw.active && mouseOk ? mouse : { x: 0, y: 0 }, pieces, ahead: snap.ahead, dv: snap.dv, hits: snap.hits, passed: snap.passed, total: snap.total });
+        s.debrisReadout = r;
+        if (dw.active) pilot = { ...auto, rcs: rcsRequest(conjunctionAxes(fc.pos, fc.vel), dw.aim, rcsLimit(fc)) };
+        for (const ev of r.events) {
+          if (ev === 'declined') callout('Computer has it.');
+          else if (ev === 'clear' || ev === 'timeout') finishManual('Clear of the debris. Computer has it.');
+        }
+      }
+      if (snap.ahead === 0 && fc.t - s.debrisAt > 2) { // the whole field has passed: rate it, then the lesson
+        mission.debrisRated = true;
+        const rating = storeRating(rateDebris({ manualFlown: dw.result().flown, ...mission.debrisTracker.stats(fc) }));
+        mission.cardQueue.push({ text: rating.text, t: CARD_SECONDS }, { text: DEBRIS_LESSON, t: CARD_SECONDS + 2 });
+      }
+    } else if (dw.busy && fc.failed) { dw.close(); s.zoom.target = 0; }
     if (win.offered) {
       for (const ev of win.update(dtMan).events) if (ev === 'declined') { callout('Computer has it.'); s.zoom.target = 0; }
     }
     if (!win.busy && !stick().free) s.manualReadout = null;
     s.zoom.k = Math.max(0, Math.min(1, s.zoom.k + (s.zoom.target > s.zoom.k ? dt : -dt) / ZOOM_SECONDS));
-    if (!stick().has && s.zoom.target === 1) s.zoom.target = 0;
+    if (!hasStick() && s.zoom.target === 1) s.zoom.target = 0;
     // pacing: time compression + automatic slow-down (pacing.js); physics stays at the fixed step
     const aligned = !ascent0 || dot(fc.forward, ascent0.direction) > Math.cos(THREE.MathUtils.degToRad(6));
-    const pace = paceContext(fc, { ascent: ascent0, landing: landing0, countdown: s.countdown > 0, trimming: !!pilot.trim, aligned, manual: win.busy || stick().free });
+    const pace = paceContext(fc, { ascent: ascent0, landing: landing0, countdown: s.countdown > 0, trimming: !!pilot.trim, aligned, manual: win.busy || stick().free || mission.debrisWin.busy });
     for (const name of s.events.update(pace)) s.pacer.event(name, pace.t);
     s.warpInfo = s.pacer.decide(pace, Math.min(dt, 0.1));
     fc.update(dt, pilot, { timeWarp: s.warpInfo.warp, stopOnNotice: true });
     // cockpit stick/lever (animation only, never fed to physics)
-    const manualNow = stick().has;
+    const manualNow = hasStick();
     let stickPitch = 0, stickYaw = 0;
     if (manualNow && readout) {
       const nose = offsetsFromDir(s.manualFrame, fc.forward);
@@ -763,11 +821,7 @@ export default {
     if (state === 'ORBIT' && t.phase === 'orbit' && !mission.debrisDone) {
       s.inOrbitFor = (s.inOrbitFor ?? 0) + dt;
       if (s.inOrbitFor > DEBRIS_AFTER_ORBIT) {
-        mission.debrisDone = true;
-        fc.setObstacles(createDebrisField({ fc, aheadDistance: 3600, count: 45, seed: 2041 }));
-        s.debrisWarning = 8;
-        s.pacer.event('debris', fc.t, 4);
-        audio.play('alarm.master');
+        placeDebris();
       }
     }
     if (s.debrisWarning > 0) s.debrisWarning -= dt;
@@ -780,7 +834,8 @@ export default {
     // phase ratings (stars) + the numbers behind the entry corridor gauge
     const interfaceAngle = approaching ? predictInterface(fc)?.fpaDeg ?? null : null;
     for (const r of mission.tracker.update(fc, { guideDir: ascent0?.direction ?? null, guideStep: ascent0?.step ?? null, corridor: s.corridor, interfaceAngleDeg: interfaceAngle, manualAscent: win.result() })) mission.card = { text: r.text, t: CARD_SECONDS };
-    if (mission.card) { mission.card.t -= dt; if (mission.card.t <= 0) mission.card = null; }
+    if (mission.card) { mission.card.t -= dt; if (mission.card.t <= 0) mission.card = mission.cardQueue.shift() ?? null; }
+    else if (mission.cardQueue.length) mission.card = mission.cardQueue.shift();
 
     // automatic state moves
     if (!s.done && !fc.failed) {
@@ -925,6 +980,7 @@ export default {
       a.warnings.unshift({ level: n <= IGNITION_AT ? 'red' : 'amber', text: `T-${n}${n <= IGNITION_AT ? ' · MAIN ENGINE START' : ' · clamps on'}` });
     }
     if (win.offered) a.warnings.unshift({ level: 'manual-offer', text: 'MANUAL CONTROL AVAILABLE · press F (gravity turn, scored)' });
+    if (mission.debrisWin.offered) a.warnings.unshift({ level: 'manual-offer', text: 'DEBRIS AHEAD · press F to dodge (scored)' });
     // objective, step checklist, warp indicator, entry corridor gauge
     const earth = fc.planetId === 'earth';
     if (landing0?.blackout) mission.blackout = 'in'; else if (mission.blackout === 'in') mission.blackout = 'after';
@@ -950,16 +1006,16 @@ export default {
     };
     const activeCockpit = s.mode === 'surface' ? s.surface.cockpit : s.mode === 'site' ? s.site.cockpit : view.cockpit;
     const steering = s.steering.update(activeCockpit, !fc.failed,
-      () => s.steeringPlan.readout(fc, pilot, { corridor: s.corridor, countdown: s.countdown > 0, manualOffer: win.offered, manual: win.active ? { lockReady: !!s.manualReadout?.lockReady } : stick().free ? { free: true } : null }), performance.now() / 1000);
+      () => s.steeringPlan.readout(fc, pilot, { corridor: s.corridor, countdown: s.countdown > 0, manualOffer: win.offered, debris: mission.debrisWin.offered ? 'offer' : mission.debrisWin.active ? 'dodge' : null, manual: win.active ? { lockReady: !!s.manualReadout?.lockReady } : stick().free ? { free: true } : null }), performance.now() / 1000);
     s.hud.setSteeringVisible(steering.fallback);
     const toLocal = (d) => (d && s.mode === 'surface' ? v3(d).applyQuaternion(s.surface.toLocal) : d);
     s.hud.marker('pro', steering.fallback ? project(toLocal(a.prograde)) : null);
     s.hud.marker('retro', steering.fallback ? project(toLocal(a.retrograde)) : null);
     s.hud.marker('guide', steering.fallback ? project(toLocal(guide?.direction)) : null);
     // manual-control overlay: Role 3's setAim if the cockpit has it, else our panel on the projected centre display
-    s.hud.setManual(stick().has);
+    s.hud.setManual(hasStick());
     const rig = s.mode === 'surface' ? s.surface.rig : s.mode === 'site' ? s.site.rig : view.rig;
-    const live = stick().has ? s.manualReadout : null;
+    const live = hasStick() ? s.manualReadout : null;
     if (typeof activeCockpit?.userData?.setAim === 'function') {
       s.aimPanel.update(null, null);
       if (s.aimShown && s.aimShown !== activeCockpit) { s.aimShown.userData.setAim?.(null); s.aimShown = null; }
@@ -972,6 +1028,10 @@ export default {
     } else {
       s.aimPanel.update(live, live ? displayRect(cam, rig, activeCockpit) : null, s.callout?.t > 0 ? s.callout.text : null);
     }
+    // debris conjunction view: always our HTML panel (Role 3's in-display aim cannot draw many objects)
+    const dLive = mission.debrisWin.active ? s.debrisReadout : null;
+    if (dLive) { activeCockpit?.userData?.setAim?.(null); s.aimShown = null; }
+    s.conjPanel.update(dLive, dLive ? displayRect(cam, rig, activeCockpit) : null, s.callout?.t > 0 ? s.callout.text : null);
     const danger = t.collisionWarning && fc.obstacles.find((o) => o.id === t.collisionWarning.id);
     s.hud.marker('collision', danger ? project(v3(danger.pos).sub(v3(fc.pos)).normalize()) : null);
   },
@@ -984,7 +1044,9 @@ export default {
     s.phase0?.dispose();
     stick().giveBack();
     mission.manualAscent.close(); // a state change ends an open window (no stars)
+    mission.debrisWin.close();
     s.aimPanel.dispose();
+    s.conjPanel.dispose();
     s.egress?.overlay.dispose();
     s.aimShown?.userData?.setAim?.(null);
     s.hud.setManual(false);

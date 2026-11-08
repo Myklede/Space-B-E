@@ -60,13 +60,15 @@ function guidanceInput(fc, corridor, entryTrim) {
   return control;
 }
 
-export function steeringHint(fc, { corridor = null, countdown = false, manualOffer = false, manual = null } = {}) {
+export function steeringHint(fc, { corridor = null, countdown = false, manualOffer = false, manual = null, debris = null } = {}) {
   const words = tuning.hint;
+  if (debris === 'dodge') return { text: words.debrisDodge, level: 'warn' };
   if (manual?.free) return { text: words.manualFree, level: 'ok' };
   if (manual) return manual.lockReady ? { text: words.manualLock, level: 'ok' } : { text: words.manualFly, level: 'warn' };
   if (countdown) return { text: words.countdown, level: 'ok' };
   if (fc.failed) return { text: words.failed, level: 'warn' };
   if (fc.landed) return { text: words.landed, level: 'ok' };
+  if (debris === 'offer') return { text: words.debrisOffer, level: 'ok' };
   if (manualOffer) return { text: words.manualOffer, level: 'ok' };
   if (corridor && fc.altitude > atmosphereTop(fc.planet)) {
     const gauge = corridorGauge(fc, corridor);

@@ -80,6 +80,7 @@ export const TUNING = {
   coldSealFailWindow: [55, 75], // s after liftoff (Challenger broke up at T+73 s)
   heatWarnFrac: 0.7,
   nearMissDistance: 15, // m
+  rcsAccel: { rcs: 3, noRcs: 1 }, // m/s²: sideways RCS push requested with input.rcs (debris dodge)
   collisionWarnTime: 20, // s: warn when a piece will pass closer than its danger radius within this time
 };
 
@@ -143,6 +144,7 @@ export class FlightController {
     this.accumulator = 0;
     this.warpEffective = 1;
     this.trimmedDv = 0; // m/s spent on corridor trim
+    this.rcsDv = 0; // m/s spent on input.rcs pushes (debris dodge)
     this.failed = null;
     this.chuteOpen = false;
     this.landed = false;
@@ -353,6 +355,7 @@ export class FlightController {
     }
     this._integrateRotation(dt);
     if (input.trim) this._trimNudge(input.trim, dt);
+    if (input.rcs) this._rcsPush(input.rcs, dt);
     // engine stays "lit" while the throttle is up or a brake burn is in progress
     if (this.throttle === 0 && !this._braking) this.engineLit = false;
     else if (this.throttle > 0) this.engineLit = this.engineLit || this._ignite();
@@ -435,6 +438,20 @@ export class FlightController {
     this.trimmedDv = (this.trimmedDv ?? 0) + Math.abs(dv);
   }
 
+  // RCS push: input.rcs = { x, y, z } planet-centred acceleration request (m/s²), clamped to the ship's RCS limit
+  // (TUNING.rcsAccel). No rotation needed (thrusters fire on every side). Costs fuel through the rocket equation.
+  _rcsPush(req, dt) {
+    if (this.onGround || this.fuel <= 0) return;
+    const a = v3(Number(req.x) || 0, Number(req.y) || 0, Number(req.z) || 0);
+    const m = len(a);
+    if (m < 1e-9) return;
+    const limit = this.ship.hasRCS ? TUNING.rcsAccel.rcs : TUNING.rcsAccel.noRcs;
+    const dv = Math.min(m, limit) * dt;
+    this.vel = add(this.vel, scale(a, dv / m));
+    this.fuel = Math.max(0, this.fuel - this.mass * (dv / (this.ship.ispVac * this.g0)));
+    this.rcsDv = (this.rcsDv ?? 0) + dv;
+  }
+
   // --- rotation ----------------------------------------------------------------
   _turnAccel() { return this.ship.hasRCS ? TUNING.turnAccel.rcs : TUNING.turnAccel.noRcs; }
 
@@ -513,6 +530,7 @@ export class FlightController {
       o.vel = add(o.vel, scale(o.pos, (-this.mu / (ro * ro * ro)) * dt));
       o.pos = add(o.pos, scale(o.vel, dt));
       const d = len(sub(o.pos, this.pos));
+      if (!(d >= o.minDist)) o.minDist = d; // closest centre distance so far (rating)
       if (d <= o.radius + this.ship.radius) {
         if (this.armorLeft > 0) {
           this.armorLeft -= 1;

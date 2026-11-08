@@ -86,7 +86,7 @@ export function createAutopilot(options = {}) {
 
     // ---- Orbit / coast above the atmosphere ----
     if (alt > top && (tel.phase === 'orbit' || tel.phase === 'coast' || tel.phase === 'ascent')) {
-      const warn = tel.collisionWarning;
+      const warn = ctx.holdDodge ? null : tel.collisionWarning; // holdDodge: the player is offered / flying the dodge
       if (warn) {
         if (warn.id !== dodgeId) { dodgeId = warn.id; dodgeStart = fc.t; dodgeDone = false; }
         if (!dodgeDone && fc.t - dodgeStart < MAX_DODGE_BURN) {
