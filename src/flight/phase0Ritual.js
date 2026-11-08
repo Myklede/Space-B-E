@@ -11,7 +11,13 @@ export function createPhase0Ritual({ parent, hud, input, audio, graphics, cinema
   const poll = buildPoll(ship, { needDv: Object.values(economy.balance.deltaVKmS ?? {}).reduce((a, b) => a + b, 0) * 1000 || 5400 });
   const plan = phase0Plan({ attempt, data });
   let stage = 'waiting', since = now(), disposed = false, generation = 0, shown = 0;
-  const sound = (id) => audio.play(audio.ids().includes(id) ? id : 'ui.click');
+  let o2FlowStarted = false;
+  const sound = (id) => {
+    const chosen = audio.ids().includes(id) ? id : 'ui.click';
+    if (chosen === 'suit.o2flow') o2FlowStarted = true;
+    audio.play(chosen);
+  };
+  const stopO2Flow = () => { if (o2FlowStarted) { audio.stop('suit.o2flow'); o2FlowStarted = false; } };
   const setStage = (value) => { stage = value; since = now(); panel.root.dataset.stage = value; };
   const buttons = () => getSite()?.cockpit?.userData;
   const drawChecklist = () => {
@@ -29,11 +35,11 @@ export function createPhase0Ritual({ parent, hud, input, audio, graphics, cinema
   };
   const finish = () => {
     if (disposed || stage === 'done') return;
-    setStage('done'); panel.finish(); onCountdown();
+    stopO2Flow(); setStage('done'); panel.finish(); onCountdown();
   };
   const quick = () => {
     if (disposed || stage === 'done' || stage === 'quick' || stage === 'cleared') return;
-    stopBoarding(); setStage('quick'); graphics.fade({ to: 0, duration: 0 });
+    stopBoarding(); stopO2Flow(); setStage('quick'); graphics.fade({ to: 0, duration: 0 });
     panel.setChecklist([], false); panel.setFact(null); panel.setKeys(null); panel.setSkip(null);
     const warnings = poll.filter((line) => !line.go);
     panel.setPoll(warnings, { heading: warnings.length ? copy.quickWarnings : copy.quickHeading });
@@ -97,6 +103,6 @@ export function createPhase0Ritual({ parent, hud, input, audio, graphics, cinema
       } else if (stage === 'cleared' && elapsed >= T.cleared) finish();
       else if (stage === 'quick' && elapsed >= T.quickNoGo) finish();
     },
-    dispose() { if (disposed) return; stopBoarding(); disposed = true; offs.forEach((off) => off?.()); panel.dispose(); graphics.fade({ to: 0, duration: 0 }); },
+    dispose() { if (disposed) return; stopBoarding(); stopO2Flow(); disposed = true; offs.forEach((off) => off?.()); panel.dispose(); graphics.fade({ to: 0, duration: 0 }); },
   };
 }

@@ -13,7 +13,7 @@ import { G0, PLANETS, contract, economy, events, getShip, input, requestState, u
 import { astronaut } from '/src/surface/astronaut.js';
 import { getMars } from '/src/surface/scenes.js';
 import { FlightController } from './FlightController.js';
-import { createCockpitControls, cockpitStickValues } from './cockpitControls.js';
+import { createCockpitControls, createCockpitIndicators } from './cockpitControls.js';
 import { ascentGuide, assistReadout, landingGuide, predictPath } from './flightAssist.js';
 import { createDebrisField } from './debris.js';
 import { atmosphereTop, pressureRatio } from './atmosphere.js';
@@ -373,7 +373,7 @@ export default {
       state, fc, view, surface: null, mode: null,
       look: { yaw: 0, pitch: 0 }, orbit: createOrbit(state === 'LAUNCH' ? ZOOM_PAD : ZOOM_DEFAULT), cam: createChaseState(), chase: false, pacer: createPacer(), events: createEventDetector(), warpInfo: { warp: 1 }, assist: true,
       corridor: fc.planetId === 'mars' && fc.altitude > atmosphereTop(fc.planet) ? computeCorridor(fc) : null,
-      sinceTelemetry: 0, engineSound: false, done: false, steering: createSteeringDisplay(), steeringPlan: createGuidanceReference(),
+      sinceTelemetry: 0, engineSound: false, done: false, indicators: createCockpitIndicators(), steering: createSteeringDisplay(), steeringPlan: createGuidanceReference(),
     };
     const hudLayer = document.createElement('div');
     hudLayer.style.cssText = 'position:absolute;inset:0;pointer-events:none';
@@ -497,7 +497,7 @@ export default {
     s.warpInfo = s.pacer.decide(pace, Math.min(dt, 0.1));
     fc.update(dt, pilot, { timeWarp: s.warpInfo.warp, stopOnNotice: true });
     s.controls.endFrame();
-    const stickValues = cockpitStickValues(s.controls.input, fc.throttle);
+    const stickValues = s.indicators.update(pilot, fc.throttle, { assist: s.assist, brakeBurn: pilot.brake && fc.engineLit });
     for (const c of [s.view?.cockpit, s.site?.cockpit, s.surface?.cockpit]) c?.userData?.setControls?.(stickValues);
     const t = fc.telemetry;
     const a = assistReadout(fc);
