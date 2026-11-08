@@ -200,6 +200,22 @@ Copy this block. Keep each line short and factual. Don't commit screenshots.
 
 ## Needs the whole team
 
+### Demo climax: the return to Earth ends like Soyuz 1 (1967) when the crew flew with an untested parachute; needs three new contract names
+- **For:** all four roles · **From:** Role 2 + Role 4 (Minh Vuong) · **Found:** 2026-11-08 on dev 1fc9eef · **Severity:** decision (contract change: all four must agree)
+- **Where:** `src/core/contract.js` (`WARNINGS`, `ENDINGS`, `HISTORY_LESSONS`); Role 1 builder warnings; Role 2 Phase 0 GO/NO-GO poll; Role 4 RETURN cinematic, ending and memorial; Role 3 art
+- **Steps:** (design, nothing to reproduce) the 3-minute pitch: build → launch → Mars → tasks → the return home
+- **Expected:** the pitch's emotional peak. Everyone believes the mission is safe on the way home; near Earth the main parachute fails, reconstructed like **Soyuz 1, 24 April 1967** (Vladimir Komarov, the first person to die during a spaceflight). It must come from an earlier choice, like the real flight: before launch the GO/NO-GO poll said the parachute was not proven and the player said GO anyway. Then: the lesson, "Coincidentally, history has seen an astronaut die exactly like this", the In Memoriam page (the existing tribute system), and the closing line: "In a game, we lose a pretend life and press Try again. Some people gave their real lives to teach the next generation these lessons. They deserve to be known, and remembered." Facts are being verified from NASA History, RussianSpaceWeb and other sources before anything ships (myths such as the radio-cursing story are excluded).
+- **Actual:** the contract has no warning, ending or history lesson for it
+- **Suggested fix:** add to `src/core/contract.js`:
+  - `WARNINGS`: `CHUTE_UNTESTED` (the return parachute was not drop-tested / not qualified). **Role 1:** raise it when the player picks a cheap or untested parachute, or skips a parachute drop test to save money and days (your call how it looks in the builder).
+  - `ENDINGS`: `lastDescent` (title "The Last Descent", tone serious, never humorous).
+  - `HISTORY_LESSONS`: `soyuz1`.
+  - **Role 2:** the GO/NO-GO poll shows `RECOVERY: NO-GO · parachute not proven` for `CHUTE_UNTESTED` (already built from the warnings list), and the choice is remembered for the return.
+  - **Role 4:** RETURN plays the reconstructed parachute failure only when that warning was overridden (otherwise the normal splashdown and Homecoming), then `lastDescent` / `soyuz1` with the memorial and the closing line.
+  - **Role 3 (art, can come later):** the return capsule hanging under a drogue, a main parachute that does not come out, a reserve parachute tangled with the drogue, and the open steppe below. Nothing graphic: the screen goes black before impact.
+  - Please reply here with "agree" per role (Role 1, Role 3; Role 2 and Role 4 are proposing). Role 2/4 will build everything except the three names now, so only the contract line is missing once you agree.
+- **Status:** open
+
 ### Role 1 is adding part effects in flight, on Mars and in the cruise (information: all four agreed)
 - **For:** all four roles · **From:** Role 1 (Myklede) · **Found:** 2026-11-08 on dev 66d5e5d · **Severity:** decision (agreed by all four, told by Myklede)
 - **Where:**
