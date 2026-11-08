@@ -48,15 +48,6 @@ Copy this block. Keep each line short and factual. Don't commit screenshots.
 
 ## Role 1: Rocket Builder
 
-### Numbers overflow their boxes in the design page's top bar
-- **For:** Role 1 · **From:** Role 3 (dtri) · **Found:** 2026-11-07 on dev 0722c4e · **Severity:** polish
-- **Where:** `src/builder/designPage.js` and `src/builder/builder.css` (the stats bar)
-- **Steps:** window 1280x800, HANGAR, open a design desk (`window.__game.builder.openStation('integration')` with `?debug=1`)
-- **Expected:** each value inside its own box
-- **Actual:** "$2.97M +$150k" runs into FUNDS, "5,400" into TWR, and "943 kN" into "88 %" under RELIABILITY
-- **Suggested fix:** let the boxes grow to fit (`min-width: max-content`), or put the pad fee and thrust on a second line
-- **Status:** fixed in da944ac, Role 3 (dtri) please verify (below 1320 px the second lines hide and stay in each value's tooltip; checked at 1100, 1280 and 1440 px)
-
 ### About 63 MB downloads before the hangar is ready
 - **For:** Role 1 · **From:** Role 3 (dtri) · **Found:** 2026-11-07 on dev 0722c4e · **Severity:** polish
 - **Where:** `src/builder/bay/` loaders, `public/assets/nasa/`, `public/assets/polyhaven/`
@@ -84,7 +75,7 @@ Copy this block. Keep each line short and factual. Don't commit screenshots.
 - **Expected:** the ship stays landed (engine off) until the player presses E to stand up (LANDING → INTERIOR)
 - **Actual:** about 20 s after touchdown the HUD switches to "FLIGHT / ASCENT · Gravity turn: tipping 14° toward the horizon", the ship climbs (5.8 km at 415 m/s, then 27 km), FUEL LOW, then NO FUEL; the state stays LANDING and the objective still says "Touch down under 3 m/s". At touchdown the cockpit camera also tilts sideways onto the FLIGHT MODE panel. No console errors. Screenshots: `~/SpaceB-E-tools/shots/land-*.jpg` on dtri's machine.
 - **Suggested fix:** once `fc.landed` is true, keep the flight computer idle (throttle 0, no ascent program) until the state changes; probably related to "F toggles manual control any time" (1aba680)
-- **Status:** fixed in c3e586e, Role 3 (dtri) please verify. Root cause: the autopilot's last hover throttle (~10 %) stayed on after touchdown, Mars gravity let it lift off, and the Earth ascent program then took over. Now touchdown shuts the engine down (throttle 0, not lit), a landed ship ignores throttle commands, the ascent program only runs on Earth before landing, and a landed ship levels itself upright on its legs within ~1 s (that should also cure the sideways camera; please check).
+- **Status:** open (camera only). Checked by Role 3 on dev af00548: the liftoff is fixed (25 s after touchdown: altitude 0, throttle 0, still landed). Still happens: at touchdown the camera's forward drops from 90° (straight up the ship's nose) to about 30° above the horizon while `look` stays (0, 0), so the view sits close and slanted on the console instead of the normal seat view; same with the flight deck and the Apollo capsule, so it comes from the landed camera, not the cockpit model. **How to see it:** `/?debug=1&state=LANDING`, wait for touchdown, compare with the descent view.
 
 ### `stats.reliability` never matters in flight
 - **For:** Role 2 · **From:** Role 1 (Myklede) · **Found:** 2026-11-07 on dev 3d4fa59 · **Severity:** decision
@@ -122,16 +113,6 @@ Copy this block. Keep each line short and factual. Don't commit screenshots.
 - **Suggested fix:** guard ascentGuide to Earth (or to the ascent phase) and retune Workhorse's Mars entry corridor or the entry autopilot so it no longer relies on the pulses.
   - Until then, Role 1's propulsion effects keep ignitions unlimited for a Mars controller above 3 km and count only starts below 3 km (marked as a stop-gap in `src/flight/effects/propulsion.js`).
 - **Status:** open
-
-### The cabin ladder has no collider
-- **For:** Role 2 · **From:** Role 3 (dtri) · **Found:** 2026-11-08 on dev 59866c8 · **Severity:** polish
-- **Where:** `src/surface/shipInterior.js` (the INTERIOR walk colliders); the ladder is in `src/graphics/cabin.js`
-- **Steps:** `/?debug=1&state=INTERIOR`, walk to the ladder on the left of the aisle (cabin-local x -0.68, z 2.3)
-- **Expected:** the player bumps into the ladder like any other cabin furniture
-- **Actual:** the player walks through it
-- **Suggested fix:** add a box collider about 0.5 m (x) by 0.2 m (z) around cabin-local (-0.68, 2.3), floor to ceiling
-- **Status:** fixed in 3b12c3e, Role 3 (dtri) please verify. A 0.5 m × 0.2 m box collider (floor to ceiling) at cabin-local (-0.68, 2.3); the walker now supports upright boxes.
-
 
 ## Role 3: Graphics, Audio & Core
 
