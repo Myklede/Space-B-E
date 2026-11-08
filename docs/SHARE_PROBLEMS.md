@@ -55,7 +55,7 @@ Copy this block. Keep each line short and factual. Don't commit screenshots.
 - **Expected:** each value inside its own box
 - **Actual:** "$2.97M +$150k" runs into FUNDS, "5,400" into TWR, and "943 kN" into "88 %" under RELIABILITY
 - **Suggested fix:** let the boxes grow to fit (`min-width: max-content`), or put the pad fee and thrust on a second line
-- **Status:** open
+- **Status:** fixed in da944ac, Role 3 (dtri) please verify (below 1320 px the second lines hide and stay in each value's tooltip; checked at 1100, 1280 and 1440 px)
 
 ### About 63 MB downloads before the hangar is ready
 - **For:** Role 1 · **From:** Role 3 (dtri) · **Found:** 2026-11-07 on dev 0722c4e · **Severity:** polish
