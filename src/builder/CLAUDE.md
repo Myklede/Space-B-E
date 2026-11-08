@@ -182,6 +182,11 @@ Người dùng muốn làm lại giao diện trang thiết kế:
   - (3) Bệ trong trang thiết kế giữ quy tắc tỷ lệ thật: tháp khoảng 1,1–1,3 lần chiều cao tàu, bệ đỡ khoảng 1,5–2 lần đường kính.
   - **Cả nhóm đã đồng ý (người dùng báo 2026-11-07):** cảnh phóng dùng bệ phóng của Role 1, vì tiền bệ là một phần tiền đóng tàu của Role 1. Role 1 đăng ký `builder:launchPad` và `builder:rocketSkin` qua `assets.register`, thêm `assets.setRocketPartArt`. Role 2 đặt chúng vào cảnh LAUNCH thay tháp của họ. Đã ghi `docs/SHARE_PROBLEMS.md` và `docs/DECISIONS.md` (commit `e202086`). Phần code của Role 1 làm ngay sau khi agent vỏ và agent thẻ xong.
 
+### Tiến độ đợt 4 (2026-11-07)
+- Bước 0 xong (commit `1bcb601`): chuẩn ráp nối (`src/builder/tools/blender/README.md`), thư viện `common.py`, ví dụ `examples/tank_example.py`, bộ nạp mô hình `model.builder`, mảnh trong `slot_<key>`, `hullProfile` trong dữ liệu linh kiện, test `tests/models.test.mjs`. Thử bồn mẫu: đúng 4,000 m, bán kính 1,256 m, 5.260 tam giác, 31 KB, game nạp được.
+- Pha A: Đuôi xong (31 kiểu, 26 linh kiện, 27 mô hình), Bệ phóng xong (31 bệ, 8 thiết bị mới, 17 mô hình); Mũi, Thân đang chạy. Kiểm tra lần 1 cho Đuôi và Bệ phóng đang chạy.
+- **Người dùng chốt:** tàu khổng lồ dùng giảm giá sản xuất loạt (định luật Wright, 85 %: cụm 9 động cơ ≈ 6,5 lần giá một chiếc, 33 động cơ ≈ 18 lần) và là mục tiêu về sau, vượt ngân sách đầu (commit `ef10bab`).
+
 ## 5. Việc tồn đọng
 
 - Khoảng 58 model NASA không dùng (35 MB) còn trong repo; lệnh xoá hàng loạt từng bị chặn, cần người dùng cho phép.
