@@ -2,7 +2,7 @@ import * as THREE from 'three';
 import { GLTFLoader } from 'three/addons/loaders/GLTFLoader.js';
 import { events, getShip } from '/src/core/index.js';
 import {
-  drawAttitudePage, drawPropulsionPage, drawTrajectoryPage, normaliseAim, normaliseTrajectory,
+  drawAttitudePage, drawPropulsionPage, drawConjunctionPage, drawTrajectoryPage, normaliseAim, normaliseConjunction, normaliseTrajectory,
 } from './cockpitScreens.js';
 
 const URL = '/assets/models/flightdeck.glb';
@@ -14,8 +14,18 @@ let deckLoad = null;
 const live = {
   t: null, phase: 'ASCENT', altitude: null, speed: null, verticalSpeed: null, throttle: null, fuelKg: null,
   fuelMax: 0, fuelFrac: null, thrust: null, twr: null, isp: null, deltaVLeft: null, gForce: null, q: null,
-  maxQ: null, engineTemp: null, history: [], pitch: null, roll: null, yaw: null,
+  maxQ: null, engineTemp: null, history: [], pitch: null, roll: null, yaw: null, pitchRate: null, rollRate: null, yawRate: null,
 };
+// Static ship numbers fill thrust, TWR, Isp and delta-v until the first flight:telemetry arrives (live values then win).
+function applyShipFallback() {
+  const stats = getShip()?.stats;
+  if (!stats) return;
+  live.fuelMax = stats.fuelMass || live.fuelMax || 0;
+  live.thrust = stats.thrust ?? null;
+  live.twr = stats.twrEarth ?? null;
+  live.isp = stats.ispSL ?? null;
+  live.deltaVLeft = stats.deltaV ?? null;
+}
 
 const finite = (v) => typeof v === 'number' && Number.isFinite(v);
 const clamp = (v, lo, hi) => Number.isFinite(v) ? Math.min(hi, Math.max(lo, v)) : lo;
@@ -51,7 +61,7 @@ function loadDeck() {
 
 events.on('flight:telemetry', (p = {}) => {
   if (finite(p.t) && finite(live.t) && p.t < live.t - 1) live.history = [];
-  for (const key of ['t', 'phase', 'altitude', 'speed', 'verticalSpeed', 'throttle', 'fuelKg', 'fuelMax', 'fuelFrac', 'thrust', 'twr', 'isp', 'deltaVLeft', 'gForce', 'q', 'maxQ', 'engineTemp', 'pitch', 'roll', 'yaw']) {
+  for (const key of ['t', 'phase', 'altitude', 'speed', 'verticalSpeed', 'throttle', 'fuelKg', 'fuelMax', 'fuelFrac', 'thrust', 'twr', 'isp', 'deltaVLeft', 'gForce', 'q', 'maxQ', 'engineTemp', 'pitch', 'roll', 'yaw', 'pitchRate', 'rollRate', 'yawRate']) {
     if (p[key] !== undefined) live[key] = p[key];
   }
   if (live.fuelMax > 0 && finite(live.fuelKg)) live.fuelFrac = clamp(live.fuelKg / live.fuelMax, 0, 1);
@@ -62,8 +72,9 @@ events.on('flight:telemetry', (p = {}) => {
 });
 events.on('state:changed', ({ to }) => {
   if (to !== 'LAUNCH') return;
-  Object.assign(live, { t: null, phase: 'ASCENT', altitude: null, speed: null, verticalSpeed: null, throttle: null, fuelKg: null, fuelFrac: null, history: [] });
+  Object.assign(live, { t: null, phase: 'ASCENT', altitude: null, speed: null, verticalSpeed: null, throttle: null, fuelKg: null, fuelFrac: null, history: [], pitch: null, roll: null, yaw: null, pitchRate: null, rollRate: null, yawRate: null });
   live.fuelMax = getShip()?.stats?.fuelMass || 0;
+  applyShipFallback();
 });
 
 // Start loading during boot, while the player is in the menu or hangar.
@@ -120,7 +131,7 @@ function installDeck(group) {
   const centre = named('centreDisplay');
   const left = named('displayLeft');
   const right = named('displayRight');
-  let trajectory = null, aim = null;
+  let trajectory = null, aim = null, conjunction = null;
   let lastDraw = 0, lastFrame = performance.now(), alarm = false, alarmPhase = 0;
   const redraw = (now = performance.now(), force = false) => {
     if (!force && now - lastDraw < 100) return;
@@ -130,7 +141,7 @@ function installDeck(group) {
   };
   screenCanvas(left, 640, 640, (c, w, h) => drawPropulsionPage(c, w, h, live));
   screenCanvas(right, 640, 640, (c, w, h) => drawAttitudePage(c, w, h, live));
-  screenCanvas(centre, 1024, 826, (c, w, h) => drawTrajectoryPage(c, w, h, trajectory, aim, { live, phase: String(live.phase || 'ASCENT').toUpperCase() }));
+  screenCanvas(centre, 1024, 826, (c, w, h) => conjunction ? drawConjunctionPage(c, w, h, conjunction, { live }) : drawTrajectoryPage(c, w, h, trajectory, aim, { live, phase: String(live.phase || 'ASCENT').toUpperCase() }));
 
   // Give mutable meshes private materials; every cockpit gets independent lamps and switches.
   model.traverse((o) => {
@@ -198,16 +209,13 @@ const assistBase = assistCap?.position.clone(), retroBase = retroCap?.position.c
     aim = data == null ? null : normaliseAim(data);
     redraw(performance.now(), true);
   };
+  group.userData.setConjunction = (data) => {
+    conjunction = data == null ? null : normaliseConjunction(data);
+    redraw(performance.now(), true);
+  };
   group.userData.setAlarm = (on) => { alarm = !!on; };
 
-  if (getShip()?.stats) {
-    const stats = getShip().stats;
-    live.fuelMax = stats.fuelMass || 0;
-    live.thrust = stats.thrust ?? null;
-    live.twr = stats.twrEarth ?? null;
-    live.isp = stats.ispSL ?? null;
-    live.deltaVLeft = stats.deltaV ?? null;
-  }
+  if (live.thrust === null || live.t === null) applyShipFallback(); // before the first telemetry only
   group.userData.onFrame = () => {
     const now = performance.now(), dt = Math.min(0.1, Math.max(0, (now - lastFrame) / 1000));
     lastFrame = now;

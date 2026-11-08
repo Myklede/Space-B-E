@@ -142,3 +142,35 @@ export function boardingPath(base, eyeY) {
     { position: [bx + 2.6, y(1.02), bz + 3.4], lookAt: [bx, y(1), bz] },
   ];
 }
+
+// ---------- aim-and-click (mouse) ----------
+export const normaliseNodeName = (name) => String(name ?? '').replace(/[.:\[\]\s]/g, '').toLowerCase();
+
+/** Which checklist button id a scene node belongs to ('btn:hatch' / 'btnhatch' group, 'btnCap.hatch', 'btnLamp.hatch'), or null. */
+export function buttonIdOfName(name, steps = CHECKLIST_STEPS) {
+  const n = normaliseNodeName(name);
+  for (const step of steps) {
+    const id = step.id.toLowerCase();
+    if (n === `btn${id}` || n === `btncap${id}` || n === `btnlamp${id}`) return step.id;
+  }
+  return null;
+}
+
+/**
+ * What the reticle shows when it rests on button `id`.
+ * → { id, kind: 'next'|'blocked'|'done'|'none', tone: 'ok'|'warn'|'done'|null, label: string|null, clickable }
+ */
+export function aimInfo(checklist, id, steps = CHECKLIST_STEPS) {
+  const i = steps.findIndex((s) => s.id === id);
+  if (i < 0 || checklist.done) return { id: null, kind: 'none', tone: null, label: null, clickable: false };
+  const step = steps[i];
+  if (i < checklist.index) return { id, kind: 'done', tone: 'done', label: `${step.name} · done`, clickable: false };
+  if (i === checklist.index) return { id, kind: 'next', tone: 'ok', label: `${step.name} · ${step.aim}`, clickable: true };
+  return { id, kind: 'blocked', tone: 'warn', label: `${step.name} · ${steps[checklist.index].first}`, clickable: false };
+}
+
+/** The button the player should hit next ('hatch' ...), or null when the checklist is finished. */
+export const nextButtonId = (checklist, steps = CHECKLIST_STEPS) => (checklist.done ? null : steps[checklist.index].id);
+
+/** Fallback label for an item whose button mesh could not be found: 'HATCH · press 1'. */
+export const fallbackLabel = (step, tpl = phase0Data.copy.pressHint) => `${step.name} · ${tpl.replace('{key}', step.key)}`;

@@ -19,8 +19,8 @@ import { getProgress } from '/src/missions/index.js';
 import { WalkController } from './WalkController.js';
 import { createInteractables } from './interactables.js';
 import { takeEgressPending } from '/src/flight/egress.js';
-import { createArrival } from './egressArrival.js';
-import { createShipInterior, CABIN, PREBREATHE_DEBUG_S } from './shipInterior.js';
+import { createArrival, ladderCamera } from './egressArrival.js';
+import { createShipInterior, CABIN, CABIN_BOXES, PREBREATHE_DEBUG_S } from './shipInterior.js';
 import { createSuitHUD } from './hud/createSuitHUD.js';
 import { astronaut } from './astronaut.js';
 import { getCabin, getMars, getMarsSunSetter, prepareScenes } from './scenes.js';
@@ -375,9 +375,18 @@ export default {
       graphics.setView(scene, camera);
       // coming in from Mars: start just inside the airlock, facing the cabin
       const fromOutside = previous === 'SURFACE';
+      const egress = takeEgressPending(); // coming down the ladder from the flight deck (flight/egress.js)
+      let ladder = null; // world eye points of Role 3's real ladder (cabin.js), if the art has them
+      const lt = art.userData.ladderTopCabin, lb = art.userData.ladderBottom;
+      if (egress && lt && lb) {
+        art.updateMatrixWorld(true);
+        const w = (o) => { const v = new THREE.Vector3(); o.getWorldPosition(v); return { x: v.x, y: v.y, z: v.z }; };
+        ladder = { top: w(lt), bottom: w(lb) };
+      }
       s.walker = new WalkController({
-        gravity: PLANETS.mars.g, bounds: CABIN.bounds, mode: 'cabin',
-        start: fromOutside ? { x: 0, z: 3.0 } : CABIN.spawn, yaw: fromOutside ? 0 : CABIN.spawnYaw,
+        gravity: PLANETS.mars.g, bounds: CABIN.bounds, boxes: CABIN_BOXES, mode: 'cabin',
+        start: ladder ? { x: ladder.bottom.x, z: ladder.bottom.z } : fromOutside ? { x: 0, z: 3.0 } : CABIN.spawn,
+        yaw: ladder ? 0 : fromOutside ? 0 : CABIN.spawnYaw, // ladder: stand at the foot facing into the cabin (-Z)
       });
       s.cabin = createShipInterior({
         bus: events, interactables: registry, oxygen: astronaut.oxygen,
@@ -394,8 +403,9 @@ export default {
         },
       });
       s.cabin.suited = astronaut.suited;
-      if (takeEgressPending()) { // coming down the ladder from the flight deck (flight/egress.js)
+      if (egress) {
         s.arrival = createArrival();
+        s.arrivalLadder = ladder;
         input.onPress('Space', () => s?.arrival?.skip());
       }
       if (fromOutside && astronaut.dust.level > 0.01) {
@@ -500,8 +510,14 @@ export default {
       const p = s.arrival.update(dt);
       walker.update(dt, {});
       const eye = walker.eye;
-      camera.position.set(eye.x, eye.y + p.dy, eye.z);
-      camera.quaternion.setFromEuler(new THREE.Euler(walker.pitch + p.pitch, walker.yaw, 0, 'YXZ'));
+      if (s.arrivalLadder) {
+        const c = ladderCamera(p, s.arrivalLadder.top, s.arrivalLadder.bottom);
+        camera.position.set(c.x, c.y, c.z);
+        camera.quaternion.setFromEuler(new THREE.Euler(walker.pitch + p.pitch, walker.yaw + c.yaw, 0, 'YXZ'));
+      } else {
+        camera.position.set(eye.x, eye.y + p.dy, eye.z);
+        camera.quaternion.setFromEuler(new THREE.Euler(walker.pitch + p.pitch, walker.yaw, 0, 'YXZ'));
+      }
       astronaut.body.update(dt, { env: 'cabin_mars', heartRate: walker.heartRate });
       hudTelemetry = walker.telemetry;
       hudYaw = walker.yaw;
