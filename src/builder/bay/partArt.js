@@ -56,10 +56,32 @@ function proceduralArt(entry) {
   return moduleMesh(def, FAMILY_TINT[def.family] ?? 0x3b4148);
 }
 
+/**
+ * An inflatable heat shield packed for launch (when the skin covers it): the deflated tube stack folded tight round
+ * its centre plug, under a woven thermal blanket, all within the stack radius. Inflated, it would be far wider.
+ */
+function packedHiadMesh(def, radius) {
+  const h = def.height;
+  const g = new THREE.Group();
+  const blanket = new THREE.MeshStandardMaterial({ color: 0x9b7a52, roughness: 0.92, metalness: 0.02 });
+  const tube = new THREE.MeshStandardMaterial({ color: 0xc9b48a, roughness: 0.85, metalness: 0.02 });
+  g.add(Object.assign(new THREE.Mesh(new THREE.CylinderGeometry(radius * 0.42, radius * 0.5, h * 0.9, 32), new THREE.MeshStandardMaterial({ color: 0x5b6168, roughness: 0.5, metalness: 0.6 })), { position: new THREE.Vector3(0, h * 0.45, 0) }));
+  const folds = 4;
+  for (let i = 0; i < folds; i++) {
+    const r = radius * (0.62 + 0.07 * i), t = Math.min(h / (folds * 2.2), radius * 0.09);
+    const ring = new THREE.Mesh(new THREE.TorusGeometry(r, t, 10, 48), i % 2 ? blanket : tube);
+    ring.rotation.x = Math.PI / 2;
+    ring.position.y = h * (0.18 + 0.2 * i);
+    g.add(ring);
+  }
+  return g;
+}
+
 /** Art for one part, without cluster handling. */
 function singleArt(entry) {
   const def = entry.def;
   const radius = entry.radius ?? 1.25;
+  if (entry.covered && /hiad/.test(def?.id ?? '')) return packedHiadMesh(def, radius); // stowed under the skin for launch
   const own = def?.section && SECTION_ART[def.section]?.partArt?.(entry);
   if (own) return own;
   if (def?.flags?.cheapSeals) return ringMesh(def, radius, 0x8a6d3b);

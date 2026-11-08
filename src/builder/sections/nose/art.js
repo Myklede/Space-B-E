@@ -302,24 +302,9 @@ function capsuleBelow(entry, R) {
   const r = SIZE_RADIUS[d.size] ?? 1.25;
   return r <= R + 0.01 ? { h: d.height, r } : null;
 }
-/**
- * The lower part of a shroud that hangs down round the capsule it encloses: see-through, so the capsule and its
- * equipment stay visible (like a cut-away drawing), and ignored by clicks so the capsule can still be picked.
- */
-function shroudSkirt(R, depth, railAz = [0, 180]) {
-  const g = new THREE.Group();
-  const glass = new THREE.MeshStandardMaterial({ color: 0xf2f1ed, roughness: 0.3, metalness: 0.1, transparent: true, opacity: 0.16, side: THREE.DoubleSide, depthWrite: false });
-  g.add(at(cyl(R + 0.012, R + 0.012, depth, glass, 72, true), 0, -depth / 2, 0));
-  const edge = metal(0x9aa0a6, 0.45, 0.6);
-  g.add(ring(R + 0.012, -depth + 0.01, 0.014, edge, 72));
-  for (const az of railAz) {
-    const a = az * DEG;
-    g.add(at(box(0.02, depth, 0.02, edge), Math.cos(a) * (R + 0.016), -depth / 2, -Math.sin(a) * (R + 0.016)));
-  }
-  g.traverse((o) => { if (o.isMesh) { o.raycast = () => {}; o.castShadow = false; } });
-  g.userData.shroud = true;
-  return g;
-}
+// A cover over a capsule that fits inside it is the top of a payload fairing: the rest of that fairing, down round the
+// capsule, its heat shield and any payload hardware, is the outer skin (hull.js, drawn by bay/hullArt.js), which turns
+// see-through while the nose card is open. So the cover itself stops at its base ring here.
 
 function fairingArt(def, R, entry) {
   const kind = FAIRING_KIND[def.id] ?? 'ogive';
@@ -331,7 +316,7 @@ function fairingArt(def, R, entry) {
   const skin = new THREE.MeshStandardMaterial({ color: kind === 'composite' ? 0xf4f3ef : WHITE, roughness: 0.42, metalness: 0.08, bumpMap: panelBump(5, 3), bumpScale: 0.003 });
   g.add(lathe(pts, skin, 72));
   const dark = metal(DARK, 0.55, 0.6);
-  if (cap) g.add(shroudSkirt(R, cap.h + 0.04), ring(R + 0.006, 0.02, 0.02, dark));
+  if (cap) g.add(ring(R + 0.006, 0.02, 0.02, dark)); // the joint with the fairing skin below
   else g.add(ring(NECK + 0.01, 0.02, 0.02, metal(0x8f969c, 0.4, 0.8)), ring(R + 0.004, bt + 0.02, 0.022, dark));
   for (const az of [0, 180]) g.add(railAlong(pts, az, dark, bt, H - 0.08));
   // access doors and vents on the cylinder
@@ -462,7 +447,7 @@ function soyuzLas(def, R, opts, entry) {
   const cap = capsuleBelow(entry, R);
   const bt = cap ? 0 : 0.55, yc = 2.4, yt = 3.3;
   const pts = cap ? [[0, 0], [R, 0], [R, yc], [R * 0.97, yc + 0.06], [0.42, yt], [0, yt]] : [[0, 0], [NECK, 0], [NECK + 0.02, 0.03], [R - 0.02, bt - 0.03], [R, bt], [R, yc], [R * 0.97, yc + 0.06], [0.42, yt], [0, yt]];
-  if (cap) g.add(shroudSkirt(R, cap.h + 0.04, [90, 270]));
+  // (round a capsule, the fairing below this cone is the outer skin: hull.js)
   g.add(lathe(pts, new THREE.MeshStandardMaterial({ color: 0xe9e9e4, roughness: 0.45, metalness: 0.1, bumpMap: panelBump(5, 2), bumpScale: 0.003 }), 72));
   const dark = metal(DARK, 0.55, 0.6);
   g.add(ring(R + 0.004, bt + 0.02, 0.02, dark));
@@ -773,7 +758,7 @@ function seated(content, seat, width) {
 const seatCache = new Map();
 function radialArt(entry) {
   const def = entry.def;
-  const seat = seatFor(entry);
+  const seat = entry.inside ? null : seatFor(entry); // equipment riding inside the skin is placed by hull.js, not seated on the wall
   if (entry.parentId) { if (seat) seatCache.set(`${def.id}:${entry.radius}`, seat); else seatCache.delete(`${def.id}:${entry.radius}`); }
   let content = null;
   if (OWN_RADIAL[def.id]) content = OWN_RADIAL[def.id](def);

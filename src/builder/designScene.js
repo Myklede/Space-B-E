@@ -1,16 +1,24 @@
 // The design studio: the vehicle alone on its launch pad in a dark studio, turned by hand, zoomed with the wheel.
 // The page tells it which section is open (the others fade back) and which part is selected (it glows; when the page
 // asks, its internals slide out). No DOM labels: the side panel carries all the text. No listeners: the page feeds it.
+// The outer skin (hull.js, drawn by bay/hullArt.js) wraps the stack into one body. While a section's card is open its
+// skin turns see-through (so do its tank and cabin walls that have equipment riding inside them), and that equipment
+// and the parts the skin covers show; while the card is closed they are hidden. pick() on the skin returns
+// { hull: sectionId, section, material, under } (under: the covered part at that spot), unless that skin's card is open,
+// when the click goes through to what is inside.
 import * as THREE from 'three';
 import { assets } from '/src/graphics/index.js';
 import { partArt } from './bay/partArt.js';
 import { internalsArt } from './bay/internalsArt.js';
 import { wantsNasaArt } from './bay/nasa.js';
 import { DEG, disposeObject } from './bay/util.js';
+import { mountRadial, skinFor } from './bay/hullArt.js';
 
 const SELECTED = new THREE.Color(0xfbbf24);
 const SECTION_GLOW = new THREE.Color(0x67e8f9);
 const UP = new THREE.Vector3(0, 1, 0);
+const SKIN_OPEN = 0.25; // opacity of the open section's skin
+const WALL_OPEN = 0.3; // opacity of an open section's tank or cabin wall that has equipment riding inside it
 
 export function createDesignScene() {
   const scene = new THREE.Scene();
@@ -75,6 +83,11 @@ export function createDesignScene() {
   let hotPiece = null;
   let missingArt = [];
   let optionsResolver = () => ({});
+  // the outer skin: its art, what hull.js said about it, and the parts that show only while their card is open
+  let skin = null;
+  let hullInfo = null;
+  let hiddenClosed = new Set();
+  let holders = new Map(); // part id → sections of the equipment riding inside its own walls (a tank's skirt, an intertank, the cabin)
 
   // ----- orbit camera -----
   const orbit = { yaw: 0.6, pitch: 0.2, dist: 20, targetY: 6, fitDist: 20, fitY: 6, minDist: 3, auto: true, idle: 0 };
@@ -173,7 +186,7 @@ export function createDesignScene() {
 
   // ----- vehicle -----
   function setLayout(layout) {
-    const keyNow = layout.map((e) => `${e.id}:${e.type}:${e.angle}:${e.yFrac}:${e.y.toFixed(2)}:${e.material ?? ''}:${JSON.stringify(e.options ?? null)}:${e.cluster?.count ?? 1}:${e.engine ? `${e.engine.fuel}-${e.engine.nozzle}` : ''}:${e.above ?? ''}:${e.below ?? ''}`).join('|');
+    const keyNow = layout.map((e) => `${e.id}:${e.type}:${e.angle}:${e.yFrac}:${e.y.toFixed(2)}:${e.material ?? ''}:${JSON.stringify(e.options ?? null)}:${e.cluster?.count ?? 1}:${e.engine ? `${e.engine.fuel}-${e.engine.nozzle}` : ''}:${e.above ?? ''}:${e.below ?? ''}`).join('|') + `|skin:${JSON.stringify(layout.hullMaterials ?? {})}`;
     layoutCache = layout;
     stackHeight = 0; stackRadius = 1.25;
     for (const e of layout) if (e.attach === 'axial') { stackHeight = Math.max(stackHeight, e.y + e.height); stackRadius = Math.max(stackRadius, e.radius); }
@@ -188,26 +201,22 @@ export function createDesignScene() {
       art.traverse((o) => { if (o.isMesh) { o.castShadow = true; o.receiveShadow = true; } });
       if (wantsNasaArt(e.type) && !art.userData.nasa && !art.userData.cluster) missingArt.push(e.type);
       let holder = art;
-      if (e.attach === 'radial') {
-        const pivot = new THREE.Group();
-        pivot.position.set(0, e.y, 0);
-        pivot.rotation.y = e.angle * DEG;
-        const isFin = /fin/.test(e.type), isLegs = /leg/.test(e.type), isSrb = !!art.userData.srb;
-        const host = layout.find((x) => x.id === e.parentId);
-        const taper = host?.def.flags?.capsule ? 1 - 0.3 * Math.max(0, e.yFrac - 0.4) : 1; // capsules narrow towards the top
-        if (isSrb) art.position.x = e.radius + (art.userData.width ?? 0.9) * 0.5 + 0.05;
-        else if (!isFin && !isLegs) art.position.x = e.radius * taper + (art.userData.width ?? 0.6) * 0.45;
-        if (isFin) art.position.x = e.radius - 1.2;
-        pivot.add(art);
-        holder = pivot;
-      } else {
-        art.position.y = e.y;
-      }
+      if (e.attach === 'radial') holder = mountRadial(art, e, layout);
+      else art.position.y = e.y;
       holder.userData.partId = e.id;
       holder.traverse((o) => { o.userData.partId = e.id; });
       vehicle.add(holder);
       parts.set(e.id, { holder, entry: e, art });
     }
+    // the outer skin, rebuilt only with the layout or the skin materials (this function returns early otherwise)
+    const made = skinFor(layout);
+    hullInfo = made.hull;
+    skin = made.object;
+    skin.traverse((o) => { if (o.isMesh) { o.castShadow = true; o.receiveShadow = true; } });
+    vehicle.add(skin);
+    hiddenClosed = new Set([...hullInfo.insideIds, ...hullInfo.coveredIds]);
+    holders = new Map();
+    for (const e of layout) if (e.inside && e.bayPart && ['part', 'dry', 'cabin', 'skirt'].includes(e.bay)) holders.set(e.bayPart, new Set([...(holders.get(e.bayPart) ?? []), e.def.section]));
     if (selected && !parts.has(selected)) selected = null;
     explodedFor = null;
     rebuildPieces();
@@ -235,7 +244,8 @@ export function createDesignScene() {
       for (const m of Array.isArray(o.material) ? o.material : [o.material]) {
         const u = m.userData;
         if (!u?.vdCloned) continue;
-        m.transparent = opacity < 1 || u.baseTransparent;
+        const clear = opacity < 1 || u.baseTransparent;
+        if (m.transparent !== clear) { m.transparent = clear; m.needsUpdate = true; } // three.js bakes "opaque" into the shader: recompile on a flip
         m.opacity = Math.min(u.baseOpacity, opacity);
         m.depthWrite = opacity >= 0.99;
         if (m.emissive && u.baseEmissive) {
@@ -247,12 +257,26 @@ export function createDesignScene() {
   function applyLook() {
     const exploded = explode > 0.02 && selected && parts.has(selected);
     for (const [id, p] of parts) {
+      // equipment inside the skin and parts the skin covers show only while their own card is open
+      const shown = !hiddenClosed.has(id) || (activeSection && p.entry.def.section === activeSection) || id === selected;
+      p.holder.visible = !!shown;
+      if (!shown) continue;
       cloneMaterials(p.holder);
       const inSection = !activeSection || p.entry.def.section === activeSection;
+      // a wall that is also the skin (a tank, the cabin) with equipment inside it turns see-through with its card open
+      const seeThrough = activeSection && inSection && !!holders.get(id)?.has(activeSection);
       if (id === selected) setLook(p.holder, { opacity: exploded ? Math.max(0.08, 1 - explode * 1.15) : 1, emissive: exploded ? null : SELECTED, emissiveIntensity: 0.5 });
       else if (exploded) setLook(p.holder, { opacity: 0.15 });
       else if (padActive) setLook(p.holder, { opacity: 0.55 });
-      else setLook(p.holder, { opacity: inSection ? 1 : 0.22 });
+      else setLook(p.holder, { opacity: !inSection ? 0.22 : seeThrough ? WALL_OPEN : 1 });
+    }
+    if (skin) {
+      cloneMaterials(skin);
+      for (const seg of skin.children) {
+        const sec = seg.userData.hullSection;
+        const open = activeSection && sec === activeSection;
+        setLook(seg, { opacity: exploded ? 0.12 : padActive ? 0.55 : open ? SKIN_OPEN : activeSection ? 0.22 : 1 });
+      }
     }
     if (padObject) {
       cloneMaterials(padObject);
@@ -309,13 +333,29 @@ export function createDesignScene() {
     }
     const hits = raycaster.intersectObjects([...vehicle.children.filter((c) => c !== pieces), padHolder], true);
     for (const hit of hits) {
+      if (!shownInScene(hit.object)) continue; // hidden equipment and covered parts cannot be clicked
       if (hit.object.userData.pad) return { pad: true };
-      const id = hit.object.userData.partId;
+      const u = hit.object.userData;
+      if (u.hull) {
+        // the skin: while its card is open it is see-through, so a click goes to what is inside it
+        if (activeSection && u.hullSection === activeSection) continue;
+        if (explode > 0.3) continue;
+        // { hull: sectionId, section, material }: the page opens the skin's explanation card; under = the covered part there
+        const seg = hullInfo?.segments[u.hullIndex];
+        const y = vehicle.worldToLocal(hit.point.clone()).y;
+        const under = (seg?.covers ?? []).map((cid) => parts.get(cid)?.entry).filter(Boolean).sort((a, b) => Math.abs(a.centerY - y) - Math.abs(b.centerY - y))[0];
+        return { hull: u.hullSection, section: u.hullSection, material: u.hullMaterial, under: under?.id ?? null };
+      }
+      const id = u.partId;
       if (!id || !parts.has(id)) continue;
       if (explode > 0.3 && selected && id !== selected) continue; // faded parts behind an exploded one do not steal the click
       return { partId: id, section: parts.get(id).entry.def.section };
     }
     return null;
+  }
+  function shownInScene(o) {
+    for (let p = o; p; p = p.parent) if (!p.visible) return false;
+    return true;
   }
 
   // ----- frame -----
@@ -360,6 +400,8 @@ export function createDesignScene() {
     get explode() { return explode; },
     get missingArt() { return missingArt; },
     get layout() { return layoutCache; },
+    /** What hull.js said about the skin now drawn (segments, insideIds, coveredIds, risk…). */
+    get hull() { return hullInfo; },
     get padTop() { return padTop; },
     get pieces() { return pieceList.map((p) => ({ key: p.key, name: p.name })); },
     /** Forget the built vehicle so the next setLayout rebuilds it (after real models arrive). */

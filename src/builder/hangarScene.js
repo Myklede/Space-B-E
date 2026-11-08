@@ -8,6 +8,7 @@ import { createPlayer } from './bay/player.js';
 import { createWallScreen } from './bay/screen.js';
 import { createTestStand } from './bay/teststand.js';
 import { partArt } from './bay/partArt.js';
+import { mountRadial, skinFor } from './bay/hullArt.js';
 import { DEG, disposeObject, polar } from './bay/util.js';
 import { BASE_RADIUS, SIZE_SCALE } from './assembly.js';
 import { box, std } from './bay/util.js';
@@ -51,27 +52,19 @@ export function createHangarScene({ renderer }) {
     groups.clear();
     anchors.length = 0;
     layoutCache = layout;
+    // the outer skin (hull.js): on the stand the ship is finished, so the equipment inside it and the parts it
+    // covers are not drawn at all (the design studio shows them through the skin while a card is open)
+    const { hull, object: skin } = skinFor(layout);
+    skin.traverse((o) => { if (o.isMesh) o.castShadow = o.receiveShadow = true; });
+    rocket.add(skin);
+    const hidden = new Set([...hull.insideIds, ...hull.coveredIds]);
     for (const e of layout) {
+      if (hidden.has(e.id)) continue;
       const art = partArt(e);
       art.traverse((o) => { if (o.isMesh) o.castShadow = o.receiveShadow = true; });
       let holder = art;
-      if (e.attach === 'radial') {
-        const pivot = new THREE.Group();
-        pivot.position.set(0, e.y, 0);
-        pivot.rotation.y = e.angle * DEG;
-        const isFin = /fin/.test(e.type);
-        const isLegs = /leg/.test(e.type);
-        const isSrb = !!art.userData.srb;
-        const host = layout.find((x) => x.id === e.parentId);
-        const taper = host?.def.flags?.capsule ? 1 - 0.3 * Math.max(0, e.yFrac - 0.4) : 1; // capsules narrow towards the top
-        if (isSrb) art.position.x = e.radius + (art.userData.width ?? 0.9) * 0.5 + 0.05;
-        else if (!isFin && !isLegs) art.position.x = e.radius * taper + (art.userData.width ?? 0.6) * 0.45;
-        if (isFin) art.position.x = e.radius - 1.2;
-        pivot.add(art);
-        holder = pivot;
-      } else {
-        art.position.y = e.y;
-      }
+      if (e.attach === 'radial') holder = mountRadial(art, e, layout);
+      else art.position.y = e.y;
       holder.userData.partId = e.id;
       rocket.add(holder);
       groups.set(e.id, holder);
