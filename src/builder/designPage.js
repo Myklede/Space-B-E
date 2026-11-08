@@ -1,12 +1,23 @@
 // The vehicle design page. The ship turns in 3D in the middle (drag, wheel, click a part). On the right, four cards:
 // Nose, Body, Tail, Launch pad. Open one and it becomes a vertical list: first the shape (taken from real vehicles),
 // then every component of that section, then each component's choices, and inside the part, its own internals.
-// Nothing floats over the ship: every word is in the card column. One card open at a time.
+// Nothing floats over the ship except the big explanation card (partCard.js): clicking a part, on the ship or by its
+// picture or name in the column, opens it in the middle of the screen. The column stays a clean list (picture, name,
+// one line, price, a small INSTALL / USE button); an installed part's own controls stay in its view. One card open at a time.
 import { partFigures } from './stats.js';
 import { createPadViews } from './designPad.js';
 import { hullChoices, hullMaterial } from './hull.js';
 import { internalsArt } from './bay/internalsArt.js';
 import { BASE_RADIUS, SIZE_SCALE } from './assembly.js';
+import { explainFor } from './explain.js';
+import { createPartCard } from './partCard.js';
+import { effectWords } from './everyday.js';
+import { heatLimitOf, kitFee, padEffects, padSetup } from './sections/pad/effects.js';
+import { padArt } from './sections/pad/art.js';
+import { weatherFor } from './weather.js';
+import { hullArt } from './bay/hullArt.js';
+import launchData from './data/launch.json';
+import './partCard.css';
 import {
   VEHICLE_SECTIONS, WARNING_SECTION, addThroughRow, applyShape, clearSection, currentShape, rowCandidates, rowItems, rowOf, sectionParts,
 } from './sections.js';
@@ -34,6 +45,7 @@ export function createDesignPage({ assembly, catalog, sections, materials, engin
   el.hidden = true;
   const state = { open: null, path: [], focus: null, lens: false };
   let last = null;
+  let cardApi = null; // the big explanation card (partCard.js), made once the helpers below exist
 
   // ---------- top bar ----------
   const top = h('header', 'vd-top');
@@ -122,6 +134,7 @@ export function createDesignPage({ assembly, catalog, sections, materials, engin
   // ---------- navigation ----------
   const here = () => state.path[state.path.length - 1] ?? { view: 'home' };
   function openSection(id, view = { view: 'home' }) {
+    cardApi?.close();
     state.open = id;
     state.path = [{ view: 'home' }];
     if (view.view !== 'home') state.path.push(view);
@@ -137,6 +150,7 @@ export function createDesignPage({ assembly, catalog, sections, materials, engin
     render();
   }
   function closeAll() {
+    cardApi?.close();
     state.open = null;
     state.path = [];
     state.focus = null;
@@ -157,11 +171,16 @@ export function createDesignPage({ assembly, catalog, sections, materials, engin
     }
   }
 
-  // ---------- generic list item (collapsed row → expands in place) ----------
-  function item({ id, img = null, name, sub = '', price = '', tag = null, on = false, expanded = false, onToggle, detail = null, action = null, hot = false }) {
-    const wrap = h('div', `vd-item${on ? ' vd-item--on' : ''}${expanded ? ' vd-item--open' : ''}${hot ? ' vd-item--hot' : ''}`);
+  // ---------- generic list item ----------
+  // A clean row: picture, name, one short line, price, then a small action button (quick) or a tag. With onOpen the
+  // row opens the big explanation card (an "i" marks it); onToggle alone keeps the older expand-in-place form
+  // (expanded, detail, action) for any card that still uses it.
+  function item({ id, img = null, name, sub = '', price = '', tag = null, on = false, expanded = false, onToggle, onOpen = null, quick = null, chevron = null, detail = null, action = null, hot = false, twoLines = false }) {
+    const wrap = h('div', `vd-item${on ? ' vd-item--on' : ''}${expanded ? ' vd-item--open' : ''}${hot ? ' vd-item--hot' : ''}${onOpen ? ' vd-item--card' : ''}${twoLines ? ' vd-item--two' : ''}`);
     wrap.dataset.item = id;
-    const row = btn('vd-item-row', null, onToggle, { item: id });
+    const line = h('div', 'vd-item-line');
+    const row = btn('vd-item-row', null, onOpen ?? onToggle, { item: id });
+    if (onOpen) row.title = 'What it is, in plain words';
     if (img !== null) {
       const im = h('img', 'vd-item-img');
       im.src = img || '';
@@ -175,9 +194,13 @@ export function createDesignPage({ assembly, catalog, sections, materials, engin
     const right = h('span', 'vd-item-right');
     if (tag) right.append(h('span', `vd-tag vd-tag--${tag.kind ?? 'info'}`, tag.text));
     if (price) right.append(h('span', 'vd-item-price', price));
-    right.append(h('span', 'vd-item-chev', expanded ? '▾' : '▸'));
+    if (chevron) right.append(h('span', 'vd-item-chev', chevron));
+    else if (onOpen) right.append(h('span', 'vd-item-info', 'i'));
+    else right.append(h('span', 'vd-item-chev', expanded ? '▾' : '▸'));
     row.append(right);
-    wrap.append(row);
+    line.append(row);
+    if (quick) line.append(btn('vd-quick', quick.label, () => quick.run(), { quick: quick.tool ?? 'install' }));
+    wrap.append(line);
     if (expanded && (detail || action)) {
       const d = h('div', 'vd-item-detail');
       if (detail) d.append(...[].concat(detail).filter(Boolean));
@@ -226,26 +249,18 @@ export function createDesignPage({ assembly, catalog, sections, materials, engin
     if (part) { const mat = materialOf(part, def); if (mat) rows.push(fact('Material', mat.name)); }
     return facts(...rows);
   }
-  function compare(def, installedDef, installedPart) {
-    const fig = figuresOf(def), cur = figuresOf(installedDef, installedPart);
-    const box = h('div', 'vd-compare');
-    box.append(h('div', 'vd-label', `Compared with the ${installedDef.name}`));
-    box.append(fact('Mass', signed(fig.mass - cur.mass, fmtMass), fig.mass > cur.mass ? 'vd-warn' : 'vd-good'));
-    box.append(fact('Price', signed(fig.cost - cur.cost, fmtMoneyShort), fig.cost > cur.cost ? 'vd-warn' : 'vd-good'));
-    box.append(fact('Reliability', signed((fig.reliability - cur.reliability) * 100, (n) => `${n.toFixed(1)} %`), fig.reliability < cur.reliability ? 'vd-warn' : 'vd-good'));
-    if (def.fuel && installedDef.fuel) box.append(fact('Propellant', signed(def.fuel.mass - installedDef.fuel.mass, fmtMass)));
-    return box;
-  }
+  // a part from a list: the row opens the explanation card, the small button installs it straight away
   function candidateItem(def, { installed = null, installedPart = null, onInstall, label = 'INSTALL' }) {
     const fig = figuresOf(def);
-    const open = state.focus === def.id;
     const isOn = installed?.id === def.id;
     const sub = def.fuel ? `${fmtMass(def.fuel.mass)} ${def.fuel.type}` : def.booster ? fmtKN(fig.booster.thrust) : def.engine ? `${fmtKN(fig.engine.thrust)} each` : def.mounts ? `${def.mounts.count} engine${def.mounts.count > 1 ? 's' : ''}` : (def.desc || def.role || '');
+    const run = () => onInstall(def);
+    const kind = label === 'SWAP' ? 'swap' : 'install';
     return item({
       id: def.id, img: icons.iconFor(def), name: def.name, sub, price: `${def.engine ? 'from ' : ''}${fmtMoneyShort(fig.cost)}`,
-      on: isOn, tag: isOn ? { text: 'INSTALLED', kind: 'on' } : null, expanded: open, onToggle: () => toggleFocus(def.id),
-      detail: open ? [h('div', 'vd-role', def.role ?? ''), para(def.detail ?? def.desc ?? ''), prosCons(def.pros, def.cons), partFacts(def, fig), installed && !isOn ? compare(def, installed, installedPart) : null] : null,
-      action: open && !isOn ? primary(`${label} · ${fmtMoneyShort(fig.cost)}`, () => onInstall(def), 'install') : null,
+      on: isOn, tag: isOn ? { text: 'INSTALLED', kind: 'on' } : null,
+      onOpen: () => { sound('ui.click'); openCard({ kind: 'part', def, install: { kind, tool: 'install', run }, compareWith: installed && !isOn ? { def: installed, part: installedPart } : null }); },
+      quick: isOn ? null : { label, tool: 'install', run },
     });
   }
 
@@ -289,7 +304,8 @@ export function createDesignPage({ assembly, catalog, sections, materials, engin
           const n = e?.cluster?.count ?? 1;
           const mat = materialOf(part, def);
           const sub = def.engine ? `${n > 1 ? `${n} × ` : ''}${part.engine?.fuel ?? ''} · ${part.engine?.nozzle === 'vac' ? 'vacuum' : 'sea-level'} nozzle` : mat?.name ?? def.role ?? '';
-          group.append(item({ id: part.id, img: icons.iconFor(def), name: `${def.name}${twins > 1 ? ` ×${twins}` : ''}`, sub, price: fmtMoneyShort(fig.cost * twins), onToggle: () => { sound('ui.click'); go({ view: 'part', id: part.id }); } }));
+          // clicking an installed part opens its controls in the column and its explanation card in the middle
+          group.append(item({ id: part.id, img: icons.iconFor(def), name: `${def.name}${twins > 1 ? ` ×${twins}` : ''}`, sub, price: fmtMoneyShort(fig.cost * twins), chevron: '▸', onOpen: () => { sound('ui.click'); go({ view: 'part', id: part.id }); openCard({ kind: 'part', def, part }); } }));
         }
         const canAdd = row.mode === 'radial' || (row.mode === 'stack' && (row.multi || row.id === 'tanks' || row.id === 'structure' || row.id === 'payload' || !items.length));
         if (canAdd && rowCandidates(catalog, sec, row).length) {
@@ -312,27 +328,25 @@ export function createDesignPage({ assembly, catalog, sections, materials, engin
     return out;
   }
 
+  function useShape(sec, shape) {
+    applyShape(assembly, sec, shape);
+    sound('ui.snap');
+    toast(`${sec.short}: ${shape.name}`);
+    state.open = sec.id;
+    state.path = [{ view: 'home' }];
+    state.focus = null;
+    changed();
+    sync3d();
+  }
   function shapeItems(sec) {
     const cur = currentShape(assembly, sec);
     return sec.shapes.map((shape) => {
-      const open = state.focus === shape.id;
-      const { cost, mass } = priceOfShape(shape);
-      const list = h('ul', 'vd-shape-parts');
-      for (const t of shape.stack) { const d = catalog.get(t); if (d) list.append(h('li', null, d.name)); }
-      for (const r of shape.radial ?? []) { const d = catalog.get(r.type); if (d) list.append(h('li', 'vd-shape-side', `${d.name}${(r.symmetry ?? 1) > 1 ? ` ×${r.symmetry}` : ''}`)); }
+      const { cost } = priceOfShape(shape);
+      const isOn = cur?.id === shape.id;
       return item({
-        id: shape.id, img: shapeIcon(shape), name: shape.name, sub: shape.real ?? '', price: fmtMoneyShort(cost), on: cur?.id === shape.id, tag: cur?.id === shape.id ? { text: 'IN USE', kind: 'on' } : null,
-        expanded: open, onToggle: () => toggleFocus(shape.id),
-        detail: open ? [para(shape.desc ?? ''), prosCons(shape.pros, shape.cons), h('div', 'vd-label', 'What it is made of'), list, facts(fact('Price', fmtMoney(cost)), fact('Mass with propellant', fmtMass(mass)), shape.diameter ? fact('Diameter', shape.diameter.toUpperCase()) : null)] : null,
-        action: open && cur?.id !== shape.id ? primary(sectionParts(assembly, sec.id).axial.length ? 'USE THIS SHAPE (replaces this section)' : 'USE THIS SHAPE', () => {
-          applyShape(assembly, sec, shape);
-          sound('ui.snap');
-          toast(`${sec.short}: ${shape.name}`);
-          state.path = [{ view: 'home' }];
-          state.focus = null;
-          changed();
-          sync3d();
-        }, 'useshape') : null,
+        id: shape.id, img: shapeIcon(shape), name: shape.name, sub: shape.real ?? '', price: fmtMoneyShort(cost), on: isOn, tag: isOn ? { text: 'IN USE', kind: 'on' } : null,
+        onOpen: () => { sound('ui.click'); openCard({ kind: 'shape', section: sec.id, shape }); },
+        quick: isOn ? null : { label: 'USE', tool: 'useshape', run: () => useShape(sec, shape) },
       });
     });
   }
@@ -345,19 +359,31 @@ export function createDesignPage({ assembly, catalog, sections, materials, engin
     const row = sec.rows.find((r) => r.id === rowId);
     if (!row) return [];
     const defs = rowCandidates(catalog, sec, row);
-    return [para(row.role ?? '', 'vd-muted'), ...defs.map((def) => candidateItem(def, {
-      onInstall: (d) => {
-        const { ids, message } = addThroughRow(assembly, sec, row, d.id);
-        if (!ids.length) { sound('ui.error'); toast(message, 'bad'); return; }
-        sound('ui.snap');
-        toast(message);
-        changed();
-        state.path = [{ view: 'home' }, { view: 'part', id: ids[0] }];
-        state.focus = null;
-        sync3d();
-        render();
-      },
-    }))];
+    return [para(row.role ?? '', 'vd-muted'), ...defs.map((def) => candidateItem(def, { onInstall: (d) => addPart(sec, row, d) }))];
+  }
+  /** Adds a part through its row (as + Add does) and shows it; false when it does not fit. */
+  function addPart(sec, row, d) {
+    const { ids, message } = addThroughRow(assembly, sec, row, d.id);
+    if (!ids.length) { sound('ui.error'); toast(message, 'bad'); return false; }
+    sound('ui.snap');
+    toast(message);
+    changed();
+    state.open = sec.id;
+    state.path = [{ view: 'home' }, { view: 'part', id: ids[0] }];
+    state.focus = null;
+    sync3d();
+    render();
+    return true;
+  }
+  /** Swaps an installed part for another of the same row; false when it does not fit. */
+  function swapPart(id, to) {
+    const from = catalog.get(assembly.part(id)?.type);
+    if (!assembly.replace(id, to.id)) { sound('ui.error'); toast('That part does not fit in this place.', 'bad'); return false; }
+    sound('ui.snap');
+    toast(`${from?.name ?? 'Part'} → ${to.name}`);
+    state.focus = null;
+    changed();
+    return true;
   }
 
   function viewPart(sec, id) {
@@ -366,18 +392,18 @@ export function createDesignPage({ assembly, catalog, sections, materials, engin
     if (!def) { back(); return []; }
     const fig = figuresOf(def, part);
     const out = [];
-    const head = h('div', 'vd-part-head');
+    // the picture and the name open the explanation card; the rest of this view is the part's own controls
+    const explainIt = () => { sound('ui.click'); openCard({ kind: 'part', def, part }); };
+    const head = btn('vd-part-head', null, explainIt, { tool: 'explain' });
+    head.title = 'What it is, in plain words';
     const im = h('img', 'vd-part-img');
     im.src = icons.iconFor(def);
     im.alt = def.name;
     im.draggable = false;
-    const ht = h('div', 'vd-part-title');
-    ht.append(h('div', 'vd-part-name', def.name), h('div', 'vd-role', def.role ?? ''));
+    const ht = h('span', 'vd-part-title');
+    ht.append(h('span', 'vd-part-name', def.name), h('span', 'vd-role', def.role ?? ''), h('span', 'vd-explain-link', 'What it does, in plain words ▸'));
     head.append(im, ht);
-    out.push(head);
-    const more = h('details', 'vd-more');
-    more.append(h('summary', null, 'What it is, in plain words'), para(def.detail ?? def.desc ?? ''), prosCons(def.pros, def.cons));
-    out.push(more, partFacts(def, fig, part));
+    out.push(head, partFacts(def, fig, part));
     // material
     const fam = materialFamily(def);
     if (fam) {
@@ -428,16 +454,7 @@ export function createDesignPage({ assembly, catalog, sections, materials, engin
     if (swaps.length) {
       const box = h('div', 'vd-block');
       box.append(h('div', 'vd-label', 'Swap it for'));
-      box.append(...swaps.map((d) => candidateItem(d, {
-        installed: def, installedPart: part, label: 'SWAP',
-        onInstall: (to) => {
-          if (!assembly.replace(id, to.id)) { sound('ui.error'); toast('That part does not fit in this place.', 'bad'); return; }
-          sound('ui.snap');
-          toast(`${def.name} → ${to.name}`);
-          state.focus = null;
-          changed();
-        },
-      })));
+      box.append(...swaps.map((d) => candidateItem(d, { installed: def, installedPart: part, label: 'SWAP', onInstall: (to) => swapPart(id, to) })));
       out.push(box);
     }
     out.push(btn('vd-btn vd-btn--danger vd-btn--wide', 'REMOVE THIS PART', () => { assembly.remove(id); sound('ui.click'); toast(`${def.name} removed.`); state.path.pop(); changed(); sync3d(); }, { tool: 'remove' }));
@@ -472,17 +489,17 @@ export function createDesignPage({ assembly, catalog, sections, materials, engin
     const def = part && catalog.get(part.type);
     const slot = def && kitOf(def)?.slots.find((s) => s.key === key);
     if (!slot) { back(); return []; }
-    const current = assembly.options(id)[key];
+    const current = assembly.options(id)[key] ?? slot.options[0];
     const out = [para(slot.role ?? '', 'vd-muted')];
+    const now = figuresOf(def, part);
     for (const o of slot.options) {
-      const open = state.focus === o.id;
-      const now = figuresOf(def, part);
+      const isOn = current?.id === o.id;
       const then = figuresOf(def, { ...part, options: { ...(part.options ?? {}), [key]: o.id } });
+      const fx = isOn ? 'fitted now' : effectWords({ now, next: then, lang: 'en' }).join(' · ') || deltaLine(o);
       out.push(item({
-        id: o.id, img: optionIcon(def, slot, o), name: o.name, sub: deltaLine(o), on: current?.id === o.id, tag: current?.id === o.id ? { text: 'FITTED', kind: 'on' } : null,
-        expanded: open, onToggle: () => toggleFocus(o.id),
-        detail: open ? [para(o.note ?? ''), prosCons(o.pros, o.cons), facts(o.real ? fact('Real-world reference', o.real) : null, fact('Part mass', `${fmtMass(now.mass)} → ${fmtMass(then.mass)}`), fact('Part price', `${fmtMoneyShort(now.cost)} → ${fmtMoneyShort(then.cost)}`), fact('Part reliability', `${fmtPct(now.reliability)} → ${fmtPct(then.reliability)}`), then.engine ? fact('Thrust · Isp (vacuum)', `${fmtKN(now.engine.thrust)} · ${fmtInt(now.engine.ispVac)} s → ${fmtKN(then.engine.thrust)} · ${fmtInt(then.engine.ispVac)} s`) : null)] : null,
-        action: open && current?.id !== o.id ? primary('USE THIS', () => { assembly.setOption(id, key, o.id); sound('ui.snap'); state.focus = null; changed(); }, 'useoption') : null,
+        id: o.id, img: optionIcon(def, slot, o), name: o.name, sub: fx, twoLines: true, on: isOn, tag: isOn ? { text: 'FITTED', kind: 'on' } : null,
+        onOpen: () => { sound('ui.click'); openCard({ kind: 'option', def, slot, option: o, part }); },
+        quick: isOn ? null : { label: 'USE THIS', tool: 'useoption', run: () => { assembly.setOption(id, key, o.id); sound('ui.snap'); state.focus = null; changed(); } },
       }));
     }
     return out;
@@ -493,27 +510,164 @@ export function createDesignPage({ assembly, catalog, sections, materials, engin
     const cur = hullMaterial(assembly.hull, sec.id);
     const out = [para('Real rockets are one smooth body: skirts, interstages and fairings cover every narrower part. Pick what this section\'s skin is made of.', 'vd-muted')];
     for (const m of hullChoices(sec.id)) {
-      const open = state.focus === m.id, isOn = m.id === cur?.id;
-      const rows = [];
-      if (m.maxTempC != null) rows.push(fact('Takes heat up to', `${fmtInt(m.maxTempC)} °C`));
-      if (m.massPerM2) rows.push(fact('Mass per square metre', `${m.massPerM2} kg`));
-      if (m.costPerM2) rows.push(fact('Price per square metre', fmtMoneyShort(m.costPerM2)));
-      if (m.real) rows.push(fact('Real-world reference', m.real));
+      const isOn = m.id === cur?.id;
+      const bits = [m.short, Number.isFinite(m.maxTempC) ? `up to ${fmtInt(m.maxTempC)} °C` : null, m.massPerM2 ? `${m.massPerM2} kg/m²` : null].filter(Boolean);
       out.push(item({
-        id: m.id, img: null, name: m.name, sub: m.short ?? '', price: '', on: isOn, tag: isOn ? { text: 'CHOSEN', kind: 'on' } : null,
-        expanded: open, onToggle: () => toggleFocus(m.id),
-        detail: open ? [para(m.note ?? ''), prosCons(m.pros, m.cons), facts(...rows)] : null,
-        action: open && !isOn ? primary('USE THIS SKIN', () => { assembly.setHull(sec.id, m.id); sound('ui.click'); state.focus = null; changed(); }, 'choose') : null,
+        id: m.id, img: skinIcon(m), name: m.name, sub: bits.join(' · '), price: m.costPerM2 ? `${fmtMoneyShort(m.costPerM2)}/m²` : '', on: isOn, tag: isOn ? { text: 'CHOSEN', kind: 'on' } : null,
+        onOpen: () => { sound('ui.click'); openCard({ kind: 'hull', section: sec.id, material: m }); },
+        quick: isOn ? null : { label: 'USE', tool: 'choose', run: () => useSkin(sec.id, m) },
       }));
     }
     return out;
   }
+  function useSkin(sectionId, m) { assembly.setHull(sectionId, m.id); sound('ui.click'); state.focus = null; changed(); }
 
   // ---------- the launch pad card (designPad.js) ----------
-  // the big explanation card (partCard.js, card agent): openCard({ kind: 'part' | 'option' | 'shape' | 'pad' | 'equip' | 'hull', ... })
-  let cardApi = null;
+  // ---------- the big explanation card (partCard.js) ----------
+  // openCard({ kind: 'part' | 'option' | 'shape' | 'pad' | 'equip' | 'hull', ... }). A target may carry its own
+  // `action: { kind, run, tool }`; otherwise actionFor() below decides what its main button does.
   const openCard = (target) => cardApi?.open?.(target);
-  const padViews = createPadViews({ assembly, sections, h, item, fact, facts, para, prosCons, primary, signed, go, back, state, sound, changed, toggleFocus, getLast: () => last, icons, openCard });
+  /** The part fitted now in the same row as def (one kind only), to compare with; null when def itself is fitted. */
+  function installedFor(def) {
+    const sec = sections[def?.section];
+    const row = sec && rowOf(sec, def);
+    if (!row) return null;
+    const items = rowItems(assembly, sec, row);
+    if (!items.length || items.some((x) => x.part.type === def.id)) return null;
+    const kinds = new Set(items.map((x) => x.part.type));
+    if (kinds.size !== 1) return null;
+    return { def: catalog.get(items[0].part.type), part: items[0].part };
+  }
+  /** A part reached from inside the card (a shape's list): add it as + Add would, or swap the one in its place. */
+  function defaultInstall(def) {
+    const sec = sections[def?.section];
+    const row = sec && rowOf(sec, def);
+    if (!row) return null;
+    const items = rowItems(assembly, sec, row);
+    if (items.some((x) => x.part.type === def.id)) return { status: 'installed' };
+    const canAdd = row.mode === 'radial' || (row.mode === 'stack' && (row.multi || ['tanks', 'structure', 'payload'].includes(row.id) || !items.length));
+    if (canAdd) return { kind: 'install', tool: 'install', run: () => addPart(sec, row, def) };
+    const one = items.find((x) => canReplace(x.part, catalog.get(x.part.type), def));
+    return one ? { kind: 'swap', tool: 'install', run: () => swapPart(one.part.id, def) } : null;
+  }
+  /** What the card's main button does for a target: { kind, run, tool } or { status } (INSTALLED, FITTED…). */
+  function actionFor(tg) {
+    if (tg.action) return tg.action;
+    if (tg.kind === 'part') {
+      if (tg.part && assembly.part(tg.part.id)) return { status: 'installed' };
+      return tg.install ?? defaultInstall(tg.def);
+    }
+    if (tg.kind === 'option') {
+      const part = tg.part && assembly.part(tg.part.id);
+      if (!part) return null;
+      const cur = assembly.options(part.id)[tg.slot.key] ?? tg.slot.options[0];
+      if (cur?.id === tg.option.id) return { status: 'fitted' };
+      return { kind: 'use', tool: 'useoption', run: () => { assembly.setOption(part.id, tg.slot.key, tg.option.id); sound('ui.snap'); changed(); } };
+    }
+    if (tg.kind === 'shape') {
+      const sec = typeof tg.section === 'string' ? sections[tg.section] : tg.section;
+      if (!sec) return null;
+      if (currentShape(assembly, sec)?.id === tg.shape.id) return { status: 'inUse' };
+      return { kind: 'useShape', tool: 'useshape', run: () => useShape(sec, tg.shape) };
+    }
+    if (tg.kind === 'hull') {
+      const sid = typeof tg.section === 'string' ? tg.section : tg.section?.id;
+      if (hullMaterial(assembly.hull, sid)?.id === tg.material.id) return { status: 'chosen' };
+      return { kind: 'useSkin', tool: 'choose', run: () => useSkin(sid, tg.material) };
+    }
+    if (tg.kind === 'pad') {
+      if (padNow().site?.id === tg.pad?.id) return { status: 'chosen' };
+      if (!assembly.setLaunch || !tg.pad?.id) return null;
+      // as the pad card does: a new complex brings its own kit and weather, so the old choices and forecast go
+      return { kind: 'choose', tool: 'choose', run: () => { assembly.setLaunch({ site: tg.pad.id, complex: undefined, slot: undefined, forecast: undefined, day: 0, pad: {} }); sound('ui.click'); changed(); } };
+    }
+    if (tg.kind === 'equip') {
+      const id = typeof tg.option === 'string' ? tg.option : tg.option?.id;
+      if (!id) return null;
+      const now = padNow().equipment.find((c) => c.eq.key === tg.key)?.option;
+      if (now?.id === id) return { status: 'chosen' };
+      if (!assembly.setPadOption) return null;
+      return { kind: 'choose', tool: 'choose', run: () => { assembly.setPadOption(tg.key, id); sound('ui.click'); changed(); } };
+    }
+    return null;
+  }
+  /** The launch complex and the equipment in use: the player's own choice, else the complex's kit, else the first option. */
+  function padNow() {
+    const st = padSetup(assembly.launch, sections.pad);
+    return { site: st.complex, equipment: st.choices, setup: st };
+  }
+  /** A launch complex's numbers as the pad card shows them: fees, heat limit, a day of waiting, the forecast. */
+  function padFigures(c) {
+    const pad = sections.pad;
+    const st = padSetup(assembly.launch, pad);
+    const b = last?.breakdown;
+    if (st.complex?.id === c.id) {
+      const weather = b?.weather?.complex === c.id ? b.weather : weatherFor(assembly.launch, { pad, launchData });
+      const fx = b?.padFx && b.padFx.complex?.id === c.id ? b.padFx : padEffects(assembly.launch, { pad, weather, thrustSL: b?.thrustSL ?? 0, g: g0 });
+      return { current: true, fee: fx.fee - (fx.feeParts?.hold ?? 0) - (fx.feeParts?.repairDue ?? 0), feeLabel: 'feeNow', heatLimitKN: fx.heatLimitKN ?? heatLimitOf(st), holdFee: weather.holdFee, forecastC: weather.forecastC, climate: weather.climate ?? c.climate?.name ?? null };
+    }
+    const w = weatherFor({ site: c.id, seed: assembly.launch?.seed }, { pad, launchData });
+    return { current: false, fee: kitFee(c, pad), feeLabel: 'kitFee', heatLimitKN: heatLimitOf(padSetup({ site: c.id }, pad)), holdFee: w.holdFee, forecastC: w.forecastC, climate: w.climate ?? c.climate?.name ?? null };
+  }
+  /** One equipment option at the complex chosen now: the pad's heat limit with it, its own number, a day of waiting. */
+  function equipFigures(key, o) {
+    const st = padSetup(assembly.launch, sections.pad);
+    const choices = st.choices.map((c) => (c.eq.key === key ? { ...c, option: o } : c));
+    const heat = key === 'mount' || key === 'deluge';
+    return {
+      heatLimitKN: heat ? heatLimitOf({ ...st, choices }) : null, heatLabel: 'heatHere', ownHeatKN: o.heatKN ?? null,
+      holdFee: o.holdF != null ? Math.round((st.complex?.holdFee ?? 0) * o.holdF) : null,
+    };
+  }
+  // pictures: the same cache keys and art as the pad card (designPad.js), so each picture is rendered once
+  const padIcon = (c) => icons?.objectIcon?.(`pad:${c.id}`, () => padArt({ site: c, slot: { tempC: 10 }, equipment: padSetup({ site: c.id }, sections.pad).choices }, { radius: 1.25, height: 14, icon: true }).object, { pad: 1.02 }) ?? '';
+  const equipIcon = (key, o) => icons?.objectIcon?.(`padeq:${key}:${o.id}`, () => padArt({ site: null, slot: { tempC: 10 }, equipment: [{ eq: { key }, option: o }] }, { radius: 1.25, height: 14, icon: true, only: key }).object, { pad: 1.05 }) ?? '';
+  /** A swatch of a skin material: a short ring of the real skin art. */
+  function skinIcon(m) {
+    return icons?.objectIcon?.(`skin:${m.id}`, () => hullArt([{ kind: 'skirt', y0: 0, y1: 1.3, r0: 0.9, r1: 0.9, material: m.id, section: 'body' }]), { pad: 1.05 }) ?? '';
+  }
+  /** A shape's totals for the card: price, mass with propellant, propellant, push at sea level, height. */
+  function shapeFigures(section, shape) {
+    const { cost, mass } = priceOfShape(shape);
+    let propellant = 0, thrustSL = 0, height = 0;
+    shape.stack.forEach((t, i) => {
+      const d = catalog.get(t);
+      if (!d) return;
+      height += d.height ?? 0;
+      propellant += d.fuel?.mass ?? 0;
+      if (d.engine) {
+        const n = catalog.get(shape.stack[i - 1])?.mounts?.count ?? 1;
+        const f = partFigures(d, { engines, g0, materials, catalog, engineDef: { fuel: shape.engine?.fuel ?? 'methalox', nozzle: shape.engine?.nozzle ?? 'sl', pump: String(d.size).toUpperCase() }, count: n });
+        thrustSL += f.engine?.totalThrustSL ?? 0;
+      }
+    });
+    for (const r of shape.radial ?? []) {
+      const d = catalog.get(r.type);
+      if (!d?.booster) continue;
+      const f = figuresOf(d);
+      propellant += (d.booster.propellant ?? 0) * (r.symmetry ?? 1);
+      thrustSL += f.booster.thrust * (f.booster.ispVac > 0 ? f.booster.ispSL / f.booster.ispVac : 1) * (r.symmetry ?? 1);
+    }
+    const size = shape.diameter ?? shape.stack.map((t) => catalog.get(t)?.size).find(Boolean) ?? 'm';
+    return { cost, mass, propellant, thrustSL, height, diameter: 2 * BASE_RADIUS * (SIZE_SCALE[size] ?? 1) };
+  }
+  cardApi = createPartCard({
+    explainFor, catalog, sections, g0, getMoney, icons,
+    figuresOf: (def, part = null) => figuresOf(def, part),
+    diameterOf: (def) => (def.attach === 'axial' && !def.engine ? 2 * BASE_RADIUS * (SIZE_SCALE[def.size] ?? 1) : 0), // an engine or a side part is not as wide as the stage
+    entryOf,
+    optionsOf: (def, opts) => catalog.optionsOf?.(def, opts) ?? {},
+    currentOption: (part, slot) => assembly.options(part.id)[slot.key] ?? slot.options[0],
+    installedFor, actionFor, shapeFigures,
+    currentShape: (sid) => (sections[sid] ? currentShape(assembly, sections[sid]) : null),
+    hullNow: (sid) => hullMaterial(assembly.hull, sid),
+    padNow, padFigures, equipFigures, padIcon, equipIcon, skinIcon,
+    partExists: (id) => !!assembly.part(id),
+    freshPart: (id) => assembly.part(id),
+    onSound: (id) => sound(id),
+  });
+  stage.insertBefore(cardApi.el, dock);
+  const padViews = createPadViews({ assembly, sections, h, item, fact, facts, para, prosCons, primary, signed, go, back, state, sound, changed, toggleFocus, getLast: () => last, icons, openCard, g: g0 });
 
   // ---------- cards ----------
   function sectionSummary(id) {
@@ -600,8 +754,10 @@ export function createDesignPage({ assembly, catalog, sections, materials, engin
     const s = result.spec.stats, b = result.breakdown;
     const money = getMoney(), fee = b.launchFee ?? b.slot?.fee ?? 0;
     stats.replaceChildren(
-      chip('Cost', fmtMoneyShort(s.cost), s.cost + fee > money ? 'bad' : 'ok', fee ? `+${fmtMoneyShort(fee)} launch fees` : 'no launch fees'),
-      chip('Funds', fmtMoneyShort(money), money < s.cost + fee ? 'bad' : 'ok'),
+      result.reuse
+        ? chip('Cost', fmtMoneyShort(result.price ?? s.cost), (result.price ?? s.cost) + fee + (result.pending ?? 0) > money ? 'bad' : 'ok', `refurbished, flight ${(result.reuse.flights ?? 1) + 1}`)
+        : chip('Cost', fmtMoneyShort(s.cost), s.cost + fee + (result.pending ?? 0) > money ? 'bad' : 'ok', fee ? `+${fmtMoneyShort(fee)} launch fees` : 'no launch fees'),
+      chip('Funds', fmtMoneyShort(money), money < (result.reuse ? result.price ?? s.cost : s.cost) + fee + (result.pending ?? 0) ? 'bad' : 'ok'),
       chip('Δv', fmtInt(s.deltaV), 'ok', 'm/s'),
       chip('TWR', s.twrEarth.toFixed(2), s.twrEarth >= 1 ? 'ok' : 'bad', `${fmtKN(b.thrustSL)} on the pad`),
       chip('Reliability', fmtPct(s.reliability), s.reliability >= 0.9 ? 'good' : s.reliability >= 0.8 ? 'ok' : 'bad'),
@@ -616,10 +772,35 @@ export function createDesignPage({ assembly, catalog, sections, materials, engin
     const hit = scene3d.pick(e.clientX, e.clientY, view.getBoundingClientRect());
     if (!hit) return;
     sound('ui.click');
-    if (hit.pad) { openSection('pad'); return; }
-    if (hit.internal) { state.path = [{ view: 'home' }, { view: 'part', id: hit.partId }, { view: 'slot', id: hit.partId, key: hit.internal }]; state.focus = null; sync3d(); render(); return; }
-    const def = catalog.get(assembly.part(hit.partId)?.type);
-    if (def?.section) openSection(def.section, { view: 'part', id: hit.partId });
+    // the column goes to what was clicked, and the explanation card opens over the ship
+    if (hit.pad) {
+      openSection('pad');
+      const site = padNow().site;
+      if (site) openCard({ kind: 'pad', pad: site });
+      return;
+    }
+    if (hit.hull) {
+      const sid = hit.section ?? hit.hull;
+      const material = (typeof hit.material === 'object' && hit.material) || hullChoices(sid).find((m) => m.id === hit.material) || hullMaterial(assembly.hull, sid);
+      if (sections[sid]) openSection(sid);
+      if (material) openCard({ kind: 'hull', section: sid, material });
+      return;
+    }
+    const part = assembly.part(hit.partId);
+    const def = catalog.get(part?.type);
+    if (hit.internal) {
+      state.path = [{ view: 'home' }, { view: 'part', id: hit.partId }, { view: 'slot', id: hit.partId, key: hit.internal }];
+      state.focus = null;
+      sync3d();
+      render();
+      const slot = def && kitOf(def)?.slots.find((s) => s.key === hit.internal);
+      if (slot) openCard({ kind: 'option', def, slot, option: assembly.options(part.id)[slot.key] ?? slot.options[0], part });
+      return;
+    }
+    if (def?.section) {
+      openSection(def.section, { view: 'part', id: hit.partId });
+      openCard({ kind: 'part', def, part });
+    }
   });
   view.addEventListener('wheel', (e) => { e.preventDefault(); scene3d.zoomBy(e.deltaY > 0 ? 1.12 : 1 / 1.12); }, { passive: false });
   const ghost = document.createElement('canvas');
@@ -664,6 +845,7 @@ export function createDesignPage({ assembly, catalog, sections, materials, engin
     // a part that disappeared (undo, swap, clear) closes its views
     while (state.path.length > 1 && ['part', 'slot'].includes(here().view) && !assembly.part(here().id)) state.path.pop();
     render();
+    cardApi?.refresh();
   }
 
   function update(dt) {
@@ -676,6 +858,7 @@ export function createDesignPage({ assembly, catalog, sections, materials, engin
     if (rect.width && rect.height) scene3d.setViewCentre(rect.left + rect.width / 2, rect.top + rect.height / 2, window.innerWidth, window.innerHeight);
     scene3d.update(dt);
     turn.value = String(((((scene3d.orbit.yaw * 180) / Math.PI) % 360) + 360) % 360);
+    cardApi?.update(dt); // the card's turning view renders only while the card is open
   }
 
   function show({ card = null, view: v = null } = {}) {
@@ -688,6 +871,7 @@ export function createDesignPage({ assembly, catalog, sections, materials, engin
   }
   function hide() {
     if (el.hidden) return;
+    cardApi?.close();
     el.hidden = true;
     state.open = null;
     state.path = [];
@@ -699,8 +883,16 @@ export function createDesignPage({ assembly, catalog, sections, materials, engin
 
   return {
     el, lensHost, refresh, show, hide, update,
-    /** Esc: one step back inside the open card, then close the card. Returns true when it did something. */
-    back: () => { if (!state.open) return false; back(); return true; },
+    /** Esc: close the explanation card first, then one step back inside the open card, then close the card. Returns true when it did something. */
+    back: () => {
+      if (cardApi?.isOpen) { cardApi.close(); return true; }
+      if (!state.open) return false;
+      back();
+      return true;
+    },
+    /** The big explanation card: open(target), close(), isOpen. */
+    card: cardApi,
+    openCard,
     closePicker: () => closeAll(),
     rotateBy: (deg) => { scene3d.orbit.yaw += (deg * Math.PI) / 180; scene3d.orbit.idle = 0; },
     openSection,
