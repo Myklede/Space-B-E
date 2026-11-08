@@ -99,6 +99,20 @@ Copy this block. Keep each line short and factual. Don't commit screenshots.
   - Role 1 also calls `assets.setRocketPartArt`, so `rocketPart:<type>` returns the hangar's own models (Role 3's row in the README, as dtri asked). Equipment that rides inside the skin returns an empty object.
 - **Status:** open (Role 1 ships the two assets next; Role 2 places them)
 
+### ascentGuide fires one-frame burns on a lofted Mars entry
+- **For:** Role 2 · **From:** Role 1 (Myklede, wave-5 propulsion agent) · **Found:** 2026-11-08 on dev 66d5e5d · **Severity:** bug
+- **Where:** `src/flight/autopilot.js` (`ascentGuide(fc)` is used on any planet) together with the coast ↔ entry phase switch in `FlightController._computePhase`
+- **Steps:** autopilot on Workhorse from `STARTS.marsEntry` (FPA −22.8°, 5,389 kg fuel). The lofted entry flattens at about 33.6–33.7 km (vertical speed about 0, Mach about 5).
+- **Expected:** no engine burn while the ship coasts through the upper atmosphere on entry
+- **Actual:**
+  - The phase flips coast ↔ entry every few metres, and each flip makes `ascentGuide()` return 'circularise'. The autopilot commands full throttle for one frame, then cuts.
+  - That is one engine start each time: 9 starts at 4× warp, 17 at 2×, 35 at 1×. The count depends on the frame rate.
+  - The pulses add about 20 m/s prograde, and that is what keeps Workhorse from blacking out later. With a guard (`fc.planetId === 'earth' ? ascentGuide(fc) : null`, as `steering.js` already does), Workhorse blacks out on entry instead.
+  - Now that engines have real ignition counts (wave 5, TEA-TEB cartridges), those pulses would use up the landing relights.
+- **Suggested fix:** guard ascentGuide to Earth (or to the ascent phase) and retune Workhorse's Mars entry corridor or the entry autopilot so it no longer relies on the pulses.
+  - Until then, Role 1's propulsion effects keep ignitions unlimited for a Mars controller above 3 km and count only starts below 3 km (marked as a stop-gap in `src/flight/effects/propulsion.js`).
+- **Status:** open
+
 ## Role 3: Graphics, Audio & Core
 
 ## Role 4: Story, Cruise & Knowledge
@@ -136,7 +150,30 @@ Copy this block. Keep each line short and factual. Don't commit screenshots.
   - No contract name changes: failures use existing `ENDINGS` and `flight:failed`.
   - The flight's record is kept in `save.partEffects`.
   - Role 1 runs Role 2's and Role 4's tests before each commit and will list every touched file here when it lands on dev. Please tell Myklede if a hook gets in your way.
-- **Status:** open (in progress on `role1-builder`)
+- **Files Role 1 changed outside `src/builder` (please read before you edit them):**
+  - **Role 2:**
+    - `src/flight/FlightController.js`: the hooks marked "part effects"; the engine cut at touchdown; `part_failure` in `BUS_FLIGHT_EVENTS`; telemetry `thrust` and `twr` through the thrust hook; `armorUsed` on `debris_hit`.
+    - `src/flight/autopilot.js`:
+      - the hoverslam block (`SLAM`) for engines with a throttle floor;
+      - `avoidDebris()`: dodge if it can burn, otherwise nose into the stream; it also runs on the coast after MECO;
+      - `throttleTarget = 0` once landed;
+      - the status line "Debris ahead: nose into the stream".
+    - `src/flight/index.js`: the record setter, and the debris callout "Debris strike!" when no armour was used.
+    - `src/flight/objectives.js`: the touchdown line shows the chosen legs' limit.
+    - `src/flight/steering.js`: prediction copies use the quiet effects.
+    - `src/flight/effects/*` (new).
+    - `src/surface/oxygen.js`, `astronaut.js`, `shipInterior.js`: oxygen in kg, nitrogen, prebreathe by cabin air.
+    - `src/surface/RoverController.js`, `rovers.js`: battery from the ship's power, charging at the lander.
+  - **Role 4:**
+    - `src/cruise/index.js`, `data.json` and the new `life.js`: storm dose by shielding, a scrubber failure with backups, the cabin leak, the tank emergency venting real kg, `co2` in mmHg in telemetry.
+    - `src/missions/index.js`: the log upload takes time by antenna; with no working antenna, the existing `beagle` ending. The hint line shows "Uploading … %".
+  - **Tests:** every Role 2 and Role 4 test passes; new tests in `src/flight/tests/effects-*.test.mjs`, `src/surface/tests/lifeEffects.test.mjs` and `src/cruise/tests/life.test.mjs`.
+  - **Contract:** no new events, states, endings, tasks or stations.
+- **Notes for Role 2:**
+  - The HUD throttle shows the commanded throttle, while the pad holds real thrust at 92 % for the first seconds. If you want, show `thrust / thrustNow(alt)`.
+  - `corridor.js` still uses `TUNING.heatLimit` rather than `fc._heatLimit()`, which now follows the chosen shield.
+- **Note for Role 4:** telemetry `co2` is in mmHg (NASA's long-mission limit is about 3 mmHg; Apollo 13 reached about 15). The report mock's `peakCo2: 0.6` looks like a percentage.
+- **Status:** done on `role1-builder` (wave 5); please tell Myklede if a hook gets in your way
 
 ### Allow PRELAUNCH → HANGAR (and LAUNCH → HANGAR before liftoff) so the player can SCRUB a launch
 - **For:** all four roles · **From:** Role 2 + Role 4 (Minh Vuong) · **Found:** 2026-11-07 on dev 3d4fa59 · **Severity:** decision

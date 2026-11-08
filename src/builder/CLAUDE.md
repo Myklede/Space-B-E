@@ -238,11 +238,28 @@ Người dùng muốn làm lại giao diện trang thiết kế:
     - (3) sự sống (O₂, CO₂, nước, bức xạ, hành trình);
     - (4) hạ cánh, điện, liên lạc;
     - (5) bảng phân tích sau chuyến và hao mòn.
+- **Người dùng chốt về oxy (2026-11-08):**
+  - Làm như thật, nhưng vẫn phải tính toán để thử thách người chơi.
+  - Bình xịn thì đỡ phải tính; bình rẻ thì hết nhanh, phải tính kỹ.
+  - Hiện số liệu thật cho Reliable khoảng 11 lần ra ngoài, quá dư.
+  - Cần cân chỉnh bằng các yếu tố thật: phi hành đoàn thở suốt 259 ngày hành trình (0,84 kg/người/ngày), trừ khi có vòng tái tạo O₂; bình rẻ nhỏ và áp suất thấp; mỗi lần ra ngoài xả khí khoang; bình rò rỉ.
+  - Mục tiêu: rẻ nhất khoảng 2–3 lần ra ngoài, tầm trung khoảng 5–6, xịn nhất từ 10 trở lên.
 - **Khung chung (AI làm ở bước 0):**
   - `src/builder/traits/` (`index.js` cùng 4 nhóm `.js` và `.json` số liệu thật) tính `ShipSpec.stats.traits`, kèm `minThrottle` và `ignitions` mà FlightController đã đọc sẵn.
   - `src/flight/effects/` (`index.js` và 3 nhóm) gồm các điểm móc trong FlightController: `params`, `thrust`, `ignite`, `maxQ`, `heatLimit`, `touchdownLimit`, `turnAccel`, `debrisHit`, `step`, `liftoff`, `end`.
   - Bản ghi mỗi chuyến lưu ở `save.partEffects` để hangar phân tích. Hook giá trị phải thuần, không gieo xúc xắc, vì bản sao dự đoán quỹ đạo cũng gọi chúng.
   - Chưa có số liệu thì tàu bay y như cũ; test của Role 2 vẫn qua hết.
+- **Xong đợt 5 (2026-11-08):**
+  - 5 agent làm và 5 agent kiểm tra; mỗi phần soát một lần, sửa hết các lỗi tìm ra. Toàn bộ test của 4 role đều qua; `check:boot` qua.
+  - Kết quả 4 tàu mẫu (30 chuyến mỗi tàu, có mảnh vụn): Reliable 30/30 hạ cánh, Workhorse 30/30, Cold Morning 29/30 kết thúc Challenger, Thin Skin 30/30 kết thúc Columbia.
+  - **Quyết định AI đã chốt** (người dùng có thể đổi):
+    - TEA-TEB 6 lần đánh lửa.
+    - 4 đuôi Atlas V, Angara, Ariane 5, Ariane 64 mặc định dùng đánh lửa điện.
+    - Độ mòn theo đường cong Falcon 9: gần như không giảm độ tin cậy trước nửa đời bộ phận.
+    - Bình composite áp suất cao $150k (ước tính).
+    - Vỏ chịu nhiệt tính lại theo dòng khí êm hay xoáy và theo đường bay thật của game.
+    - Thẻ Whipple và tấm giáp sửa theo vật lý; tấm tản nhiệt rẻ nhất.
+  - **Gợi ý cho Role 3:** khoang demo Apollo (bản quét CC0 của Smithsonian). Phương án thay thế: Orion.
 
 ## 5. Việc tồn đọng
 

@@ -57,4 +57,41 @@ Choices the spec left open. Add a line whenever you pick the simplest option: th
   - **Data:** `ShipSpec.stats.traits = { version, propulsion, structure, life, landing }` (`src/builder/traits/`), plus the flat `minThrottle` and `ignitions` that FlightController already reads. The flight side is in `src/flight/effects/`, with hooks in FlightController.
   - **Record:** each flight's record is kept in `save.partEffects`.
   - **Rules:** every field is optional, and the contract does not change.
+- **2026-11-08, Role 1 (all four agreed): part effects, what landed.**
+  - **Data:** `ShipSpec.stats.traits = { version, propulsion, structure, life, landing }`, computed in `src/builder/traits/` from real numbers with sources (`traits/*.json`), plus the flat `minThrottle` and `ignitions`.
+  - **Flight hooks** (`src/flight/effects/`): `params`, `thrust`, `ignite`, `maxQ`, `heatLimit`, `touchdownLimit`, `turnAccel`, `chuteDeploy`, `chuteCdA`, `debrisHit`, `step`, `liftoff`, `end`. Value hooks are pure, because the trajectory prediction calls them on a copy.
+  - **Engines and pad:**
+    - real throttle floors per cycle and injector (Merlin 40 %, RS-25 67 %, F-1 on/off, LMDE 10 %);
+    - starts per igniter: spark unlimited; TEA-TEB 6, an estimate; pyro and ampoule 1. The Atlas V, Angara, Ariane 5 and Ariane 64 tails default to spark, because in this one-stage game they also do the upper stage's job;
+    - in-flight engine failure at 0.4 × (1 − reliability): an engine-out cluster flies on;
+    - a pad that cannot take full thrust holds the ship back at liftoff, so a cheap pad climbs visibly slower. The builder no longer burns propellant for it.
+  - **Structure:**
+    - max-Q is the skin rating ÷ 1.4 (NASA-STD-5001);
+    - ascent heating uses laminar and turbulent flow on the game's own climb, so the hangar and the flight agree within 1 °C;
+    - debris uses NASA's ballistic-limit equations (Cour-Palais, Christiansen; titanium per Ratliff 2009), with burst by critical crack size; a holed tank leaks about 1.7 t;
+    - each ablator has a real peak heat flux and heat load;
+    - a titanium skin was added.
+  - **Life:**
+    - oxygen in kg; a trip outside costs the suit fill + the cabin air let out + the cabin's breathing until the next walk;
+    - a 50 L / 150 bar bottle gives about 2 trips, a NORS-class tank about 12. The user's rule: real, and a challenge for cheap set-ups;
+    - LiOH, amine and CDRA scrubbers; 98 % water recovery;
+    - radiation behind g/cm² of shielding (MSL RAD 1.84 mSv/day);
+    - a cabin leak's time to seal scales with the hole.
+  - **Landing:**
+    - legs absorb energy (Apollo LM 3.05 m/s) and the tip-over follows the lean along the drift;
+    - canopies have Mach limits (DGB 2.2, ringsail 0.7);
+    - Mars power: solar at 43 % of Earth's sunlight, MMRTG 110 W; rovers charge at the lander;
+    - antenna data rates and link windows decide the log upload time.
+  - **Surface clock:** 87× (the EMU's 7.3 h of oxygen = the game's 300 s); stored Wh are divided by the same factor.
+  - **Autopilot** (Role 2's file, agreed):
+    - a hoverslam for engines that cannot hover;
+    - an engine cut at touchdown;
+    - with debris ahead, it dodges if it can burn, otherwise it holds the nose into the stream and keeps 3 starts in reserve.
+  - **After every flight**, the hangar opens a flight analysis (EN/VI): what each part did, its wear this flight and in total, and one "instead" comparison. Nothing new is shown during flight.
+  - **Wear:** material-based, with a wear-out curve (wear⁴): little extra risk below about half of a part's life, as reused Falcon 9 boosters show.
+  - **New save fields:**
+    - `partEffects.flights`: the flight records;
+    - on each flight record: `design`, `flown`, `wear {before, after, loads}`, `effectsId`, `home.before`;
+    - `fleet.wear.consumed`.
+  - **Telemetry:** `co2` is in mmHg.
 
