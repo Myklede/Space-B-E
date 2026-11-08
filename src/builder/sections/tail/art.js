@@ -74,6 +74,9 @@ function palette() {
     titanium: () => std(0x63676b, { roughness: 0.45, metalness: 0.75 }),
     graphite: () => std(0x2a2a2c, { roughness: 0.85, metalness: 0.1 }),
     insul: () => std(0xeae6dc, { roughness: 0.9, metalness: 0 }),
+    foam: () => std(0xc8783a, { roughness: 0.85, metalness: 0 }),
+    foamTan: () => std(0xc89a62, { roughness: 0.85, metalness: 0 }),
+    greenGrey: () => std(0xb7beb3, { roughness: 0.55, metalness: 0.12 }),
     shield: () => std(0xb9bcc0, { roughness: 0.4, metalness: 0.85 }),
     plate: () => std(0x3a3e44, { roughness: 0.7, metalness: 0.4, side: THREE.DoubleSide }),
     nozzle: () => std(0x2e3135, { roughness: 0.6, metalness: 0.5, side: THREE.DoubleSide }),
@@ -191,21 +194,28 @@ function engineArt(entry) {
   const vac = entry.engine?.nozzle === 'vac';
   const fuel = entry.engine?.fuel ?? 'methalox';
   const opts = entry.options ?? {};
-  let k = 1;
-  if (c) {
-    // size every engine to the real gaps between the mounts (bells may touch, never overlap) and to the frame rim
-    const hr = c.hostRadius ?? entry.radius ?? 1.25;
-    const pts = (c.layout ?? [[0, 0]]).slice(0, c.count);
-    const gap = minGap(pts, hr);
-    let maxR = 0.47 * gap;
-    for (const [x, z] of pts) maxR = Math.min(maxR, Math.max(0.3 * gap, hr * 1.25 - Math.hypot(x, z) * hr));
-    k = Math.min(1, maxR / ((vac ? 0.4 : 0.28) * H));
-  }
+  const k = c ? clusterFit(c, entry, H, vac ? 0.4 : 0.28) : 1;
   const He = H * k;
   const engine = buildEngine(He, { vac, fuel, cycle: opts.cycle ?? 'gg', ext: opts.nozzleExt ?? 'regen' }, palette());
   engine.position.y = H - He;
-  if (!c) return engine;
-  // bay/partArt.js will scale this copy by s and set its height to H(1 − s): cancel both so the engine hangs from the frame
+  return c ? hangFromFrame(engine, c, H) : engine;
+}
+
+/**
+ * How much to shrink one engine of a cluster so it fits the real gaps between the mounts (bells may touch, never
+ * overlap) and the frame rim. exitFrac: the bell's exit radius over the engine height.
+ */
+function clusterFit(c, entry, H, exitFrac) {
+  const hr = c.hostRadius ?? entry.radius ?? 1.25;
+  const pts = (c.layout ?? [[0, 0]]).slice(0, c.count);
+  const gap = minGap(pts, hr);
+  let maxR = 0.47 * gap;
+  for (const [x, z] of pts) maxR = Math.min(maxR, Math.max(0.3 * gap, hr * 1.25 - Math.hypot(x, z) * hr));
+  return Math.min(1, maxR / (exitFrac * H));
+}
+
+/** bay/partArt.js scales each cluster copy by s and lifts it to H(1 - s): cancel both so the engine hangs from the frame. */
+function hangFromFrame(engine, c, H) {
   const s = c.scale ?? 0.4;
   const wrap = new THREE.Group();
   wrap.scale.setScalar(1 / s);
@@ -225,6 +235,19 @@ const FRAME_LOOK = {
   thrust_five_l: { kind: 'skirt', skin: 'white', quadrants: true },
   thrust_seven_l: { kind: 'skirt', skin: 'white', band: 'dark', bandFrac: 0.25 },
   thrust_octaweb_m: { kind: 'skirt', skin: 'white', band: 'black', bandFrac: 0.3, octagon: true },
+  // wave 4 frames: the look while their Blender models download (tools/blender/tail/thrust.py)
+  thrust_atlas_m: { kind: 'skirt', skin: 'steel' },
+  thrust_twin_l: { kind: 'skirt', skin: 'white', band: 'dark', bandFrac: 0.2 },
+  thrust_triad_l: { kind: 'skirt', skin: 'white', band: 'black', bandFrac: 0.4 },
+  thrust_sib_l: { kind: 'skirt', skin: 'white', band: 'black', bandFrac: 0.3 },
+  thrust_sii_l: { kind: 'skirt', skin: 'white' },
+  thrust_sls_l: { kind: 'boattail', skin: 'foam' },
+  thrust_superheavy_l: { kind: 'skirt', skin: 'steel', band: 'dark', bandFrac: 0.3 },
+  thrust_starship_l: { kind: 'skirt', skin: 'steel', band: 'black', bandFrac: 0.5 },
+  thrust_electron_s: { kind: 'skirt', skin: 'carbon' },
+  thrust_proton_l: { kind: 'skirt', skin: 'grey' },
+  thrust_n1_l: { kind: 'skirt', skin: 'grey' },
+  thrust_energia_l: { kind: 'skirt', skin: 'white', band: 'dark', bandFrac: 0.2 },
 };
 
 /** The opening of each mount in a plate of radius rPlate: holeR, smaller near the rim, 0 when the mount is past the edge. */
@@ -474,6 +497,105 @@ function liquidBoosterArt(entry, M) {
   return out;
 }
 
+/**
+ * The wave 4 liquid strap-ons (Delta IV CBC, Falcon Heavy side core, Energia Blok A, Angara URM-1, Long March 5),
+ * drawn simply while their Blender models (tools/blender/tail/boosters.py) download: tank, nose, engines.
+ * Diameter: the real booster / core ratio of the rocket that uses it (NOTES.md).
+ */
+const STRAP = {
+  booster_cbc_l: { d: 3.375, body: 'foamTan', base: 'white', nose: 0.9, bells: [[0, 0, 0.24]] },
+  booster_f9_m: { d: 2.5, body: 'white', base: 'black', nose: 0.95, bells: [[0, 0, 0.11], ...[0, 1, 2, 3, 4, 5, 6, 7].map((k) => [0.66 * Math.cos((k * Math.PI) / 4), 0.66 * Math.sin((k * Math.PI) / 4), 0.11])] },
+  booster_blok_a_m: { d: 1.71, body: 'grey', base: 'dark', nose: 1.4, bells: [0, 1, 2, 3].map((k) => [0.42 * Math.cos(((k + 0.5) * Math.PI) / 2), 0.42 * Math.sin(((k + 0.5) * Math.PI) / 2), 0.19]) },
+  booster_urm1_m: { d: 2.5, body: 'greenGrey', base: 'dark', nose: 0.95, bells: [[0, 0, 0.25]] },
+  booster_cz5_m: { d: 2.26, body: 'white', base: 'white', nose: 1.45, bells: [[0, -0.48, 0.19], [0, 0.48, 0.19]] },
+};
+
+function strapArt(entry, M) {
+  const s = STRAP[entry.type ?? entry.def.id];
+  const h = entry.def.height, D = s.d, r = D / 2, drop = boosterDrop(entry, h);
+  const g = new THREE.Group();
+  const le = 0.55 * D, ys = le * 0.9, yn = h - s.nose * D;
+  for (const [fx, fz, re] of s.bells) {
+    const R = re * D;
+    g.add(at(lathe([[R, 0], [R * 0.6, le * 0.35], [R * 0.3, le * 0.6], [R * 0.45, le]], M.nozzle, 18), fx * r, 0, fz * r));
+  }
+  g.add(at(cyl(r, r * 0.9, ys * 0.5, M[s.base], 32), 0, ys + ys * 0.25, 0));
+  g.add(at(cyl(r, r, yn - ys * 1.5, M[s.body], 32), 0, (yn + ys * 1.5) / 2, 0));
+  g.add(at(lathe([[r, 0], [r * 0.5, (h - yn) * 0.6], [0.001, h - yn]], M.white, 32), 0, yn, 0));
+  g.add(struts(r, ys + D * 0.5, yn - D * 0.3, M, 0.08));
+  g.position.y = -drop;
+  const out = group(g);
+  out.userData.srb = true;
+  out.userData.width = D;
+  return out;
+}
+
+/**
+ * Dresses a Blender model before the shared code places it (bay/partArt.js singleArt). Returns null to leave it.
+ * - A booster: dropped like the drawn ones (boosterDrop), given clamp struts on its core side (-x), and its real width
+ *   so the shared placement puts its axis at the right distance from the core.
+ * - An engine: its regeneratively cooled bell tinted by the fuel (as the drawn engines).
+ */
+export function wrapModel(model, entry) {
+  const def = entry?.def;
+  if (!def) return null;
+  if (def.engine) {
+    const tint = BELL_COLOR[entry.engine?.fuel] ?? BELL_COLOR.methalox;
+    // real regenerative bells are steel grey with a hint of the fuel's soot or heat tint, not copper
+    const c = new THREE.Color(tint).lerp(new THREE.Color(0x86837f), 0.78);
+    model.traverse((o) => { if (o.isMesh && o.material?.name === 'regen_bell') o.material.color.copy(c); });
+    // in a cluster, size it to the real gaps between the mounts like the drawn engines (Blender bells: exit 0.275 H, vacuum 0.36 H)
+    const cl = entry.cluster && (entry.cluster.count ?? 1) > 1 ? entry.cluster : null;
+    if (!cl) return model;
+    const H = entry.height ?? def.height;
+    const k = clusterFit(cl, entry, H, entry.engine?.nozzle === 'vac' ? 0.36 : 0.275);
+    model.scale.setScalar(k);
+    model.position.y = H - H * k;
+    return hangFromFrame(model, cl, H);
+  }
+  if (def.booster && entry.attach === 'radial') {
+    const h = def.height, drop = boosterDrop(entry, h);
+    const box = new THREE.Box3().setFromObject(model);
+    const inner = Math.max(0.2, -box.min.x); // the axis to the core side, fittings included
+    const M = palette();
+    const g = group(model, struts(inner - 0.03, h * 0.12, h * 0.78, M, 0.06));
+    g.position.y = -drop;
+    const out = group(g);
+    out.userData.srb = true;
+    out.userData.width = inner * 2;
+    return out;
+  }
+  const id = entry.type ?? def.id;
+  if (/fin/.test(id) && entry.attach === 'radial') {
+    // the shared placement puts fins at (host radius - 1.2): carry the same offset as the drawn fins (FIN_SHIFT)
+    const inner = group(model);
+    // a Starship flap's tiles face the windward side (+z): mirror the copy on the far side so its tiles do too
+    if (id === 'fin_flap_l' && Math.cos(((entry.angle ?? 0) * Math.PI) / 180) < 0) inner.scale.z = -1;
+    const out = group(at(inner, FIN_SHIFT, 0, 0));
+    out.userData.width = new THREE.Box3().setFromObject(model).max.x;
+    return out;
+  }
+  if (LEG_COPIES[id]) {
+    // one leg modelled; the stage carries six (New Glenn) or four (New Shepard), each swung to put its foot on the ground
+    const R = entry.radius ?? 1.25, { n, foot: [fx, fy] } = LEG_COPIES[id]; // the foot pad, relative to the hinge
+    const ground = (Number.isFinite(entry.y) ? -entry.y : -2.4) + 0.05;
+    const L = Math.hypot(fx, fy), phi = Math.atan2(fy, fx);
+    const want = Math.asin(Math.max(-1, Math.min(1, ground / L)));
+    const g = new THREE.Group();
+    for (let k = 0; k < n; k++) {
+      const leg = k === 0 ? model : model.clone(true);
+      leg.rotation.z = want - phi;
+      const arm = group(at(leg, R * 0.98, 0, 0));
+      arm.rotation.y = (k * Math.PI * 2) / n;
+      g.add(arm);
+    }
+    return g;
+  }
+  return null;
+}
+// copies per stage, and the bottom of the foot pad at the model's reference pose (tools/blender/tail/gear.py LEGS)
+const LEG_COPIES = { legs_glenn_l: { n: 6, foot: [2.3, -3.04] }, legs_shepard_m: { n: 4, foot: [1.05, -2.19] } };
+
 // ---------- fins, grid fins, fairings ----------
 /** A swept fin with a doubler at the root and a darker leading edge. Root at x = FIN_SHIFT (see the header). */
 function finArt(entry, M) {
@@ -629,6 +751,7 @@ export function partArt(entry) {
   if (id === 'srb_s' || id === 'srb_m') return gemArt(entry, M);
   if (id === 'srb_l') return srbLArt(entry, M);
   if (id === 'booster_liquid_m') return liquidBoosterArt(entry, M);
+  if (STRAP[id]) return strapArt(entry, M);
   if (id === 'fin_grid_m') return gridFinArt(entry, M);
   if (/^fin_[sml]$/.test(id)) return finArt(entry, M);
   if (id === 'aft_fairing_m') return fairingArt(entry, M);
@@ -638,6 +761,53 @@ export function partArt(entry) {
 }
 
 // ---------- internals (exploded view) ----------
+/**
+ * The engine kit's pieces, laid out like the Blender engine (tools/blender/tail/engine.py: bell to 0.54 h, chamber to
+ * 0.73 h, dome to 0.82 h, turbopump on +x). Once the model has loaded, its own slot pieces replace these.
+ */
+function engineInternals(opt, h, M, add) {
+  const Rt = 0.069 * h, Rc = 0.12 * h, Re = 0.275 * h, yT = 0.54 * h, yI = 0.73 * h;
+  const cycle = group(at(cyl(0.06 * h, 0.06 * h, 0.2 * h, M.steel, 12), 0.2 * h, 0.74 * h, 0));
+  const c = opt('cycle') ?? 'gg';
+  if (c === 'gg' || c === 'tapoff' || c === 'expander_bleed') cycle.add(rod([0.2 * h, 0.64 * h, 0], [Re + 0.04 * h, 0.1 * h, 0], 0.025 * h, M.dark));
+  if (c === 'sc' || c === 'ffsc' || c === 'sc_fuel') cycle.add(at(cyl(0.03 * h, 0.03 * h, 0.08 * h, M.copper, 10), 0.2 * h, 0.88 * h, 0), rod([0.2 * h, 0.9 * h, 0], [0.04 * h, 0.8 * h, 0], 0.03 * h, M.copper));
+  if (c === 'ffsc' || c === 'sc_fuel') cycle.add(at(cyl(0.06 * h, 0.06 * h, 0.2 * h, M.steel, 12), -0.2 * h, 0.74 * h, 0));
+  if (c === 'electric') cycle.add(at(box(0.08 * h, 0.08 * h, 0.08 * h, M.black), 0.2 * h, 0.6 * h, 0));
+  if (c === 'pressure') cycle.clear().add(at(ball(0.03 * h, M.amber, 10), 0.15 * h, 0.8 * h, 0.04 * h), at(ball(0.03 * h, M.amber, 10), 0.15 * h, 0.8 * h, -0.04 * h));
+  add('cycle', 'Turbopump', cycle, DIR.R);
+  add('injector', 'Injector', group(at(cyl(Rc * 0.96, Rc * 0.96, 0.01 * h, M.copper, 24), 0, yI, 0), lathe([[Rc * 1.1, yI], [Rc * 0.45, 0.81 * h], [0.001, 0.82 * h]], M.chamber, 24)), DIR.U);
+  const ch = opt('chamber') ?? 'channels';
+  add('chamber', 'Combustion chamber', group(lathe([[Rt, yT], [Rc * 0.9, yT + 0.08 * h], [Rc, yT + 0.12 * h], [Rc, yI]], ch === 'ablative' ? M.graphite : ch === 'tubes' ? M.steel : M.copper, 24)), DIR.L);
+  const ct = opt('contour') ?? 'bell';
+  const contour = ct === 'aerospike'
+    ? group(lathe([[0.08 * h, 0], [0.12 * h, 0.25 * h], [0.18 * h, 0.5 * h], [0.001, 0.52 * h]], M.nozzle, 28))
+    : ct === 'conical' ? group(lathe([[Re, 0], [Rt, yT]], M.nozzle, 28)) : group(lathe([[0.21 * h, 0.26 * h], [0.15 * h, 0.4 * h], [Rt, yT]], M.nozzle, 28));
+  add('contour', 'Nozzle contour', contour, V(-0.6, -0.4, 0.6));
+  const ext = opt('nozzleExt') ?? 'regen';
+  add('nozzleExt', 'Nozzle extension', group(lathe([[Re, 0], [0.24 * h, 0.13 * h], [0.21 * h, 0.26 * h]], ext === 'radiative' ? M.titanium : ext === 'regen' ? M.nozzle : M.carbon, 28)), DIR.D);
+  add('igniter', 'Igniter', group(at(cyl(0.012 * h, 0.012 * h, 0.06 * h, opt('igniter') === 'pyro' ? M.amber : M.steel, 8), 0, 0.79 * h, Rc)), DIR.F);
+  const st = new THREE.Group();
+  if (opt('stability') === 'baffles') {
+    for (let i = 0; i < 6; i++) {
+      const b = at(box(Rc * 0.55, 0.035 * h, 0.004 * h, M.copper), Math.cos((i * Math.PI) / 3) * Rc * 0.65, yI - 0.02 * h, Math.sin((i * Math.PI) / 3) * Rc * 0.65);
+      b.rotation.y = -(i * Math.PI) / 3;
+      st.add(b);
+    }
+  }
+  if (opt('stability') === 'cavities') st.add(ring(Rc, 0.012 * h, M.graphite, yI - 0.012 * h, 24));
+  add('stability', 'Combustion stability', st, V(0, -0.3, -1));
+}
+
+/** The gimbal kit's power source: a hydraulic power unit, fuel-driven hydraulics, or an APU turbine. */
+function gimbalInternals(opt, r, M, add) {
+  const p = new THREE.Group();
+  const o = opt('power') ?? 'hpu';
+  if (o === 'fueldraulic') p.add(rod([r * 0.4, 0.45, 0.1], [r * 0.25, 0.05, 0.1], 0.02, M.steel), rod([r * 0.4, 0.45, -0.1], [r * 0.25, 0.05, -0.1], 0.02, M.steel));
+  else if (o === 'apu') p.add(at(box(0.22, 0.16, 0.16, M.dark), r * 0.45, 0.4, 0), at(cyl(0.07, 0.07, 0.3, M.white, 12), r * 0.45, 0.6, 0.15));
+  else p.add(at(box(0.2, 0.14, 0.16, M.dark), r * 0.45, 0.4, 0), at(ball(0.09, M.steel, 14), r * 0.45, 0.6, -0.1));
+  add('power', 'Power for the actuators', p, DIR.R);
+}
+
 const DIR = { L: V(-1, 0, 0), R: V(1, 0, 0), U: V(0, 1, 0), D: V(0, -1, 0), F: V(0, 0, 1), B: V(0, 0, -1) };
 
 /**
@@ -646,14 +816,17 @@ const DIR = { L: V(-1, 0, 0), R: V(1, 0, 0), U: V(0, 1, 0), D: V(0, -1, 0), F: V
  */
 export function internalsArt(def, options, dims) {
   const kit = def?.internals;
-  if (!['thrust', 'strapon', 'legs', 'booster'].includes(kit)) return null;
+  if (!['thrust', 'ring', 'strapon', 'legs', 'booster', 'segmented', 'gimbal', 'engine'].includes(kit)) return null;
   const M = palette();
   const r = dims?.radius ?? 1.25, h = dims?.height ?? def.height ?? 1;
   const opt = (k) => options?.[k]?.id;
   const out = [];
   const add = (key, name, object, dir) => out.push({ key, name, object, dir: dir.clone().normalize() });
 
-  if (kit === 'thrust') {
+  if (kit === 'engine') { engineInternals(opt, h, M, add); return out; }
+  if (kit === 'gimbal') { gimbalInternals(opt, r, M, add); return out; }
+
+  if (kit === 'thrust' || kit === 'ring') {
     const pts = (def.mounts?.layout ?? [[0, 0]]).slice(0, def.mounts?.count ?? 1);
     const holeR = pts.length > 1 ? Math.min(0.42 * minGap(pts, r), 0.3 * r) : 0.3 * r;
     const shield = opt('baseShield') ?? 'curtains';
@@ -682,6 +855,17 @@ export function internalsArt(def, options, dims) {
     const pogo = group(rod([r * 0.3, h * 0.95, r * 0.3], [r * 0.3, 0.15, r * 0.3], 0.045, M.steel));
     if (opt('pogo') === 'accumulator') pogo.add(at(ball(0.13, M.steel, 16), r * 0.3, h * 0.55, r * 0.3), at(ball(0.1, M.steel, 16), r * 0.3, h * 0.3, r * 0.3), at(box(0.06, 0.12, 0.06, M.amber), r * 0.3 + 0.13, h * 0.55, r * 0.3));
     add('pogo', 'POGO suppressor', pogo, V(0.6, 0.5, 0.6));
+    if (kit === 'ring') {
+      // steering a ring of fixed engines: throttle valves on the outer feeds (KORD), or a pair of actuators per engine
+      const steer = new THREE.Group();
+      const outer = pts.filter(([fx, fz]) => Math.hypot(fx, fz) > 0.6);
+      for (const [fx, fz] of outer) {
+        if (opt('steer') === 'gimbals') steer.add(rod([fx * r, 0.05, fz * r], [fx * r * 0.92, 0.25, fz * r * 0.92], 0.018, M.steel));
+        else steer.add(at(box(0.08, 0.1, 0.08, M.amber), fx * r * 0.94, h * 0.25, fz * r * 0.94));
+      }
+      if (opt('steer') !== 'gimbals') steer.add(at(box(0.26, 0.18, 0.2, M.dark), 0, h * 0.5, 0)); // the KORD control unit
+      add('steer', 'Steering', steer, V(-0.6, 0.6, 0.5));
+    }
     return out;
   }
 
@@ -700,23 +884,32 @@ export function internalsArt(def, options, dims) {
     return out;
   }
 
-  if (kit === 'booster') {
+  if (kit === 'booster' || kit === 'segmented') {
     const y0 = -h * 0.25, rr = Math.max(0.3, h * 0.07);
     const grainOpt = opt('grain') ?? 'star';
-    const points = grainOpt === 'star' ? 7 : grainOpt === 'highthrust' ? 12 : grainOpt === 'finocyl' ? 6 : 24;
+    const points = grainOpt === 'star' ? 11 : grainOpt === 'highthrust' ? 14 : grainOpt === 'finocyl' ? 6 : 24;
     // one cast segment of propellant, its bore shape showing on the cut face
     const grain = group(at(cyl(rr * 0.85, rr * 0.85, h * 0.3, std(0x8a7a5a, { roughness: 0.9, metalness: 0 }), 32), 0, y0 + h * 0.55, 0));
     const bore = new THREE.Shape();
-    const rIn = grainOpt === 'longburn' ? rr * 0.18 : rr * 0.22, rOut = grainOpt === 'longburn' ? rr * 0.2 : grainOpt === 'finocyl' ? rr * 0.6 : rr * 0.42;
+    const rIn = grainOpt === 'longburn' ? rr * 0.18 : grainOpt === 'bucket' ? rr * 0.4 : rr * 0.22, rOut = grainOpt === 'longburn' ? rr * 0.2 : grainOpt === 'bucket' ? rr * 0.42 : grainOpt === 'finocyl' ? rr * 0.6 : rr * 0.42;
     for (let i = 0; i <= points * 2; i++) { const a = (i / (points * 2)) * Math.PI * 2; const rad = i % 2 ? rIn : rOut; if (i === 0) bore.moveTo(Math.cos(a) * rad, Math.sin(a) * rad); else bore.lineTo(Math.cos(a) * rad, Math.sin(a) * rad); }
     const boreGeo = new THREE.ExtrudeGeometry(bore, { depth: h * 0.31, bevelEnabled: false });
     boreGeo.rotateX(-Math.PI / 2);
     grain.add(at(new THREE.Mesh(boreGeo, std(0x15181b, { roughness: 1, metalness: 0 })), 0, y0 + h * 0.395, 0));
     add('grain', 'Propellant grain', grain, DIR.R);
     const noz = group(lathe([[rr * 0.85, y0], [rr * 0.5, y0 + h * 0.08], [rr * 0.34, y0 + h * 0.11]], M.nozzle, 28));
-    if (opt('nozzle') === 'tvc') noz.add(ring(rr * 0.42, 0.03, M.black, y0 + h * 0.11), rod([rr * 0.7, y0 + h * 0.05, 0], [rr * 0.7, y0 + h * 0.18, 0], 0.025, M.steel), rod([-rr * 0.7, y0 + h * 0.05, 0], [-rr * 0.7, y0 + h * 0.18, 0], 0.025, M.steel));
+    if (opt('nozzle') === 'tvc' || (kit === 'segmented' && (opt('nozzle') ?? 'flex') === 'flex')) noz.add(ring(rr * 0.42, 0.03, M.black, y0 + h * 0.11), rod([rr * 0.7, y0 + h * 0.05, 0], [rr * 0.7, y0 + h * 0.18, 0], 0.025, M.steel), rod([-rr * 0.7, y0 + h * 0.05, 0], [-rr * 0.7, y0 + h * 0.18, 0], 0.025, M.steel));
     if (opt('nozzle') === 'lit') noz.add(at(ball(rr * 0.35, M.steel, 14), rr * 1.0, y0 + h * 0.15, 0), ring(rr * 0.6, 0.02, M.amber, y0 + h * 0.05));
     add('nozzle', 'Nozzle', noz, DIR.D);
+    if (kit === 'segmented') {
+      // the field joints between the cast segments: one capture-feature band, or the old two-O-ring tang and clevis
+      const joint = new THREE.Group();
+      for (const f of [0.35, 0.5, 0.65]) {
+        if (opt('joint') === 'tworing') joint.add(ring(rr * 1.0, 0.012, M.dark, y0 + h * f - 0.03), ring(rr * 1.0, 0.012, M.dark, y0 + h * f + 0.03));
+        else joint.add(ring(rr * 1.0, 0.025, M.grey, y0 + h * f));
+      }
+      add('joint', 'Field joints', joint, DIR.L);
+    }
     return out;
   }
 
