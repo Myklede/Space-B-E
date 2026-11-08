@@ -3,12 +3,13 @@ import {chromium} from 'playwright-core';
 import {writeFileSync,readFileSync} from 'node:fs';
 import assert from 'node:assert/strict';
 const refs='src/builder/tools/blender/hangar/refs';
+if(process.argv.includes('--v4')){await import('./inspect-v4.mjs');process.exit(0);}
 const browser=await chromium.launch({channel:'chrome',headless:true,args:['--enable-gpu','--ignore-gpu-blocklist','--enable-unsafe-swiftshader']});
 const report={date:new Date().toISOString(),browser:browser.version(),viewport:[1440,860],views:{},before:{},errors:[],httpErrors:[]};
 try{
   const page=await browser.newPage({viewport:{width:1440,height:860},deviceScaleFactor:1});
   page.on('pageerror',e=>report.errors.push(String(e)));page.on('console',m=>{if(m.type()==='error')report.errors.push(m.text());});page.on('response',r=>{if(r.status()>=400)report.httpErrors.push({url:r.url(),status:r.status()});});
-  async function open(suffix=''){await page.goto('http://localhost:5280/sandbox/role1.hangar.html'+suffix);await page.waitForFunction(()=>window.hangarInspect?.ready,{},{timeout:120000});await page.waitForTimeout(2000);}
+  async function open(suffix='?v=3'){await page.goto('http://localhost:5280/sandbox/role1.hangar.html'+suffix);await page.waitForFunction(()=>window.hangarInspect?.ready,{},{timeout:120000});await page.waitForTimeout(2000);}
   async function shot(name){
     await page.addStyleTag({content:'.lil-gui,header,#info,aside {visibility:hidden!important}'});
     const buffer=await page.screenshot({path:refs+'/shots/'+name+'.png',type:'png'});

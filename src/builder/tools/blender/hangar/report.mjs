@@ -1,6 +1,7 @@
 // Regenerate only the metrics section, keeping handwritten integration notes.
 import {readFileSync,writeFileSync,readdirSync,statSync} from 'node:fs';
 import path from 'node:path';
+if(process.argv.includes('--v4')){await import('./report-v4.mjs');process.exit(0);}
 const dir='src/builder/tools/blender/hangar',asset='public/assets/models/builder/hangar';
 const layout=JSON.parse(readFileSync(asset+'/layout.json','utf8'));
 const qa=JSON.parse(readFileSync(dir+'/refs/inspection.json','utf8'));

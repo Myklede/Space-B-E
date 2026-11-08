@@ -3,7 +3,10 @@ import assert from 'node:assert/strict';
 import {readFileSync,statSync,readdirSync} from 'node:fs';
 import path from 'node:path';
 import {fitCollar} from '../tools/blender/hangar/collarFit.mjs';
+import {fitCollarArc,plateIndices} from '../tools/blender/hangar/collarArc.mjs';
+import {createHash} from 'node:crypto';
 import {automaticResolution} from '../../../sandbox/role1.hangar.render.js';
+import {automaticResolution as automaticResolutionV4} from '../../../sandbox/role1.hangar.render-v4.js';
 const root='public/assets/models/builder/hangar';
 const layout=JSON.parse(readFileSync(path.join(root,'layout.json'),'utf8'));
 const original=JSON.parse(readFileSync('src/builder/tools/blender/hangar/refs/contract-v1.json','utf8'));
@@ -28,7 +31,7 @@ for(const [id,def] of Object.entries(layout.modules)){
   assert.ok(g.nodes.every(n=>n.camera===undefined),id+' no cameras');
   for(const m of g.materials??[]){
     const p=m.pbrMetallicRoughness;
-    if(id!=='lamp'&&m.name!=='console_screen'){assert.ok(p.baseColorTexture,id+' baked colour');assert.ok(p.metallicRoughnessTexture,id+' ORM');assert.ok(m.occlusionTexture,id+' baked AO');assert.ok(m.normalTexture,id+' detail normals');}
+    if(id!=='lamp'&&!['console_screen','v4_console_glow'].includes(m.name)){assert.ok(p.baseColorTexture,id+' baked colour');assert.ok(p.metallicRoughnessTexture,id+' ORM');assert.ok(m.occlusionTexture,id+' baked AO');assert.ok(m.normalTexture,id+' detail normals');}
   }
   if(id==='lamp')assert.ok(g.materials.some(m=>m.emissiveFactor?.some(n=>n>0)),'lamp emissive lens');
   const binaryStart=20+data.readUInt32LE(12)+8;
@@ -88,3 +91,51 @@ assert.equal(auto.state.step,2);assert.ok(scales.every(s=>s>=.8),'automatic reso
 for(let i=0;i<2000;i++){fakeTime+=10;auto.update(fakeTime,10);}
 assert.equal(auto.state.step,0,'automatic resolution recovers to native');
 console.log('PASS: sustained slow/fast windows, 0.8 floor and native recovery.');
+
+// V4 adds data/assets without rewriting any value used by the saved v3 sandbox.
+const v3=JSON.parse(readFileSync('src/builder/tools/blender/hangar/refs/contract-v3.json','utf8'));
+for(const [key,value]of Object.entries(v3))if(key==='modules'){
+  for(const [id,def]of Object.entries(value))assert.deepEqual(layout.modules[id],def,'v3 module '+id);
+}else assert.deepEqual(layout[key],value,'v3 contract '+key);
+const protectedFiles=JSON.parse(readFileSync('src/builder/tools/blender/hangar/refs/protected-v3.json','utf8'));
+for(const [file,hash]of Object.entries(protectedFiles))assert.equal(createHash('sha256').update(readFileSync(file)).digest('hex'),hash,'old asset/runtime unchanged: '+file);
+const w=layout.wrap;assert.equal(w.version,4);assert.equal(w.openSector.center,90);assert.equal(w.openSector.width,90);assert.deepEqual(w.openSector.direction,[0,0,-1]);
+assert.deepEqual(w.segments.map(s=>s.id).sort(),['back','left','right']);
+const occupied=Array(360).fill(0);
+for(const s of w.segments){
+  assert.equal(s.arc[1]-s.arc[0],90);assert.equal(s.closed,0);assert.equal(s.retracted,4);
+  assert.deepEqual(s.slideAxis,{left:[-1,0,0],right:[1,0,0],back:[0,0,1]}[s.id]);
+  for(let a=s.arc[0];a<s.arc[1];a++)occupied[(a+360)%360]++;
+  for(const id of [s.module,s.lod]){assert.ok(models.has(id));for(const node of ['attach_slide','segment_deck',...s.seamCoverIds])assert.ok(models.get(id).nodes.some(n=>n.name===node),id+'/'+node);}
+}
+for(let a=0;a<360;a++)assert.equal(occupied[a],a>=45&&a<135?0:1,'arc union at '+a);
+assert.equal(w.levels.length,11);assert.equal(w.placements.filter(p=>p.dynamic==='wrapSegment').length,33);
+for(const l of w.levels){assert.equal(l.y,layout.levels[l.level].y);assert.equal(l.segments.length,3);for(const id of l.segments)assert.ok(w.placements.some(p=>p.id===id&&p.level===l.level));}
+for(const p of w.placements){assert.ok(models.has(p.module));if(p.lod)assert.ok(models.has(p.lod));for(const key of ['position','rotation','scale'])assert.ok(p[key].length===3&&p[key].every(Number.isFinite));}
+for(const c of w.colliders){assert.ok(c.center.every(Number.isFinite));assert.ok(c.size.every(n=>n>0&&Number.isFinite(n)));assert.ok(Number.isInteger(c.level));assert.ok(w.segments.some(s=>s.id===c.segment));if(c.dynamic==='wrapSegment')assert.ok(w.placements.some(p=>p.level===c.level&&p.segment===c.segment&&p.dynamic===c.dynamic));}
+assert.ok(w.colliders.some(c=>c.level===-1&&c.segment==='back'),'fixed rear structure envelope');
+const allIndices=w.segments.flatMap(s=>plateIndices(s,cfg));assert.equal(allIndices.length,36);assert.equal(new Set(allIndices).size,36);
+for(const i of allIndices){const a=((cfg.angleStart+(i+.5)*cfg.angularPitch)%360+360)%360;assert.ok(a<45||a>=135,'no collar in viewing slot');}
+for(const s of w.segments){
+  f=fitCollarArc({y:17},s,[],cylinder,cfg);assert.equal(f.retract,false);assert.equal(f.plateRadii.length,12);assert.ok(f.plateRadii.every(r=>Math.abs(r-2.25)<1e-8));
+  f=fitCollarArc({y:17},s,[],[{y0:0,y1:10,r0:3,r1:1},{y0:10,y1:20,r0:1,r1:3}],cfg);assert.equal(f.retract,false);assert.ok(f.plateRadii.every(r=>r>1.25&&r<1.29),'waist/deck thickness');
+  f=fitCollarArc({y:17},s,[booster(90),booster(270)],cylinder,cfg);assert.equal(f.retract,false);assert.equal(Math.max(...f.plateRadii)>3.7,s.id==='back','only rear booster changes active plates');
+  f=fitCollarArc({y:17},s,[{...booster(90),outline:{...booster(90).outline,centerRadius:9}}],cylinder,cfg);assert.equal(f.retract,false,'oversize only in empty slot is excluded');
+  assert.equal(fitCollarArc({y:17},s,[],[{y0:0,y1:20,r0:8,r1:8}],cfg).retract,true,'oversize core');
+  assert.equal(fitCollarArc({y:71},s,[],cylinder,cfg).retract,true,'above top');
+}
+assert.equal(fitCollarArc({y:17},w.segments.find(s=>s.id==='back'),[{...booster(270),outline:{...booster(270).outline,centerRadius:9}}],cylinder,cfg).retract,true,'oversize rear booster retracts rear');
+const bank4=models.get(w.consoleModule),def4=layout.modules[w.consoleModule];
+const bank4Drawn=bank4.nodes.filter(n=>n.mesh!==undefined).reduce((n,node)=>n+bank4.meshes[node.mesh].primitives.reduce((sum,p)=>sum+bank4.accessors[p.indices].count/3,0),0);
+assert.equal(bank4Drawn,def4.instancedTriangles);assert.ok(bank4Drawn<=120000);assert.ok(def4.bytes<=3000000);
+for(const st of layout.consoles){assert.ok(bank4.nodes.some(n=>n.name===st.id));for(const name of st.screens){const n=bank4.nodes.find(n=>n.name===name);assert.ok(n?.mesh!==undefined);assert.ok(bank4.meshes[n.mesh].primitives.every(p=>p.attributes.TEXCOORD_0!==undefined));}}
+const full4=layout.placements.filter(p=>p.module!=='platform_half').reduce((n,p)=>n+drawn(p.module==='mobile_launcher'?w.launcherModule:p.module),0)+w.placements.reduce((n,p)=>n+drawn(p.module),0)+drawn(w.islandModule)+bank4Drawn+drawn(cfg.plateModule)*36*11;
+assert.ok(full4<=1000000,'v4 complete full-detail kit including all segments, rear structure, bank and collars: '+full4);
+const batch4=new Set([...layout.placements.filter(p=>p.module!=='platform_half').map(p=>p.module==='mobile_launcher'?w.launcherModule:p.module),...w.placements.flatMap(p=>p.lod?[p.module,p.lod]:[p.module]),w.islandModule]);
+const maxCalls=[...batch4].reduce((n,id)=>n+models.get(id).meshes.reduce((v,m)=>v+m.primitives.length,0)*2,0)+9;
+assert.ok(maxCalls<=150,'v4 conservative near/far structure batch bound '+maxCalls);
+console.log(`PASS V4: ${full4} complete-kit triangles; bank ${bank4Drawn} triangles / ${def4.bytes} bytes; ${directoryBytes(root)} folder bytes; <=${maxCalls} structure batches. ${Object.keys(protectedFiles).length} original files hash-verified. Wrap union, slides, nodes, collider metadata and arc fitting passed.`);
+const scale4=[];const auto4=automaticResolutionV4(s=>scale4.push(s));
+for(let i=0;i<600;i++){fakeTime+=19;auto4.update(fakeTime,19);}assert.equal(auto4.state.step,2);assert.ok(scale4.every(s=>s>=.8));
+for(let i=0;i<2000;i++){fakeTime+=10;auto4.update(fakeTime,10);}assert.equal(auto4.state.step,0,'v4 native recovery');
+console.log('PASS: v4 sustained 55 FPS budget, floor and recovery.');

@@ -1,5 +1,11 @@
 # Asset provenance
 
+## V4 wrap and console refinement
+
+All quarter decks, seam covers, rear lattice, rail supports, stair flights, front-open inspection launcher, console shells/hardware/chairs and floor island are original geometry in `additions_v4.py`. New atlas names and normal derivatives have v4 suffixes. They reuse the same **CC0 1.0** Poly Haven [Blue Metal Plate](https://polyhaven.com/a/blue_metal_plate) and [Hangar Concrete Floor](https://polyhaven.com/a/hangar_concrete_floor) sources listed below, with original tint, grime and Cycles AO bakes. The opaque far-grating pattern is analytically generated. No additional third-party texture/model was downloaded. The HDRI remains the existing read-only CC0 [Small Hangar 01](https://polyhaven.com/a/small_hangar_01).
+
+The supplied `vab_work_platforms_with_sls.webp` and NASA platform cutaway were viewed in Downloads only, never copied, traced or sampled. Console canvas typography, plots, schematics and UI artwork are original. All v4 screenshots depict our own rendered assets, without reference-photo content.
+
 ## v3 consoles and calm-distance pass
 
 All console chassis, chairs, monitor arms, keyboards, phone, headset, guards, status towers, overhead supports and radial collar plates are original geometry authored in `additions.py`. The averaged opaque grating tile is generated analytically in `detail.py` from a low-contrast coverage pattern; it uses no photograph. The existing CC0 Blue Metal Plate finish supplies the new chassis/plate paint detail and AO bake inputs; no new third-party textures were downloaded.

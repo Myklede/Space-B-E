@@ -175,6 +175,12 @@ def catwalk():
     for x in (-3,0,3):g.ibeam((x,-.32,-3),(x,-.32,3),.24)
     return g
 
+if '--v4' in sys.argv:
+    import detail_v4 as detail
+    import additions_v4
+    additions_v4.build(globals())
+    sys.exit(0)
+
 if '--v3' in sys.argv:
     import additions
     additions.build(globals())

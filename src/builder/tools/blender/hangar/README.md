@@ -2,7 +2,138 @@
 
 This is a new standalone asset kit and inspection template for Role 1. Existing game scenes, shared Blender helpers, other assets, dependency manifests and Git state were not edited by this task. Leave these files uncommitted for Claude to review. The human's port 5173 server was not restarted.
 
-## Run and rebuild
+## V4: 270-degree wrap, viewing slot and console inspection
+
+V4 is now the default at **http://localhost:5280/sandbox/role1.hangar.html** (also `?v=4`). **`?v=3`** loads the saved calm-lighting/two-half implementation; **`?v=2`** loads its historical predecessor. Claude's non-sandbox-canvas hiding fix is retained immediately before console creation in v4. The saved runtime files and every original GLB/texture are unchanged: `refs/protected-v3.json` records 121 SHA-256 hashes, asserted by the asset test. `refs/contract-v3.json` is the full pre-v4 manifest; every original key/value/module definition remains unchanged. Backups are Claude's `b90cab3` / `hangar-v3` and `2db32c9` / `hangar-v2-backup`; no restore or modifying Git command was used.
+
+Only the authorized hangar assets/tools/tests and `sandbox/role1.hangar.*` changed. No game code, dependencies, saves, other assets or port 5173 were changed. All game-module imports remain read-only. The older sections below describe historical implementations; this section takes precedence for the default v4 viewer.
+
+### V4 commands
+
+```powershell
+# Additive v4 bake/export only; uses the existing checked-in v2/v3 manifest and assets:
+& 'C:/Program Files/Blender Foundation/Blender 5.2/blender.exe' -b --factory-startup -P src/builder/tools/blender/hangar/build.py -- --v4 --bake --out public/assets/models/builder/hangar
+# Reuse an existing 5280 server; start this only if 5280 is not already serving:
+npx.cmd vite --port 5280 --strictPort --config src/builder/tools/blender/hangar/vite.config.mjs --configLoader native
+node src/builder/tests/hangar-models.test.mjs
+node src/builder/tests/models.test.mjs
+node src/builder/tests/builder.test.mjs
+npm.cmd run check:static
+node src/builder/tools/blender/hangar/inspect.mjs --v4
+node src/builder/tools/blender/hangar/camera-check-v4.mjs
+node src/builder/tools/blender/hangar/report.mjs --v4
+node src/builder/tools/blender/hangar/audit-v4.mjs
+```
+
+`--v4` selects `additions_v4.py` and `detail_v4.py`; no original GLB is regenerated. Omitting `--bake` is safe only if the geometry/UV/material inputs have not changed. All new atlases are 512 px, with four-thread CPU Cycles AO/colour and ORM bakes and separate mipmapped CC0 normals. New normal derivatives, averaged-grating tile and bake names have v4 suffixes; existing textures are never overwritten. The previous unflagged/`--v3` build commands below are historical regeneration commands, not a rollback procedure. One Blender job and one inspection browser run sequentially.
+
+The inspection dispatcher selects the new v4 script with `--v4`; without that flag it explicitly opens `?v=3` for historical measurements. V4 uses one Chrome/page sequentially for all three sandbox versions and the real game on 5280, tests actual mouse drags, fly inputs, double-click focus, segment slides, three collar presets, the builder editor and reveal, and repeats twenty shape changes twice to check resident memory. It writes only under this tools directory.
+
+### Wrap geometry and data
+
+New `layout.wrap` is additive; original `placements`, `levels[].halves`, `colliders`, `collar`, `consoles`, bounds and motion contracts remain intact. In Assembly angles **0=+X, 90=-Z, 180=-X, 270=+Z**. `openSector` is `{center:90,width:90,direction:[0,0,-1]}`. The open interval is 45..135 degrees at every level, with no collar panels. Each of the eleven original heights has three new placements:
+
+| Segment | Arc, degrees | World slide axis | Closed / retracted, m | Rotation Y |
+|---|---|---|---|---:|
+| right | -45..45 | +X | 0 / 4 | 0 |
+| left | 135..225 | -X | 0 / 4 | 180 |
+| back | 225..315 | +Z | 0 / 4 | 270 |
+
+Each segment uses `wrap_deck_v4` / `wrap_deck_v4_far`; `attach_slide` local +X points outward. `segment_deck` is its main mesh. The seams at 225 and 315 degrees have narrow cover plates: left owns `seam_cover_end`, right owns `seam_cover_start`, back owns neither, avoiding doubled faces. Seam ownership and marker IDs are in `wrap.seams` / `segments[].seamCoverIds`. Fixed decks extend from the **6 m notch** to a square outer boundary at 14 m on their support side. Visible yellow I-beam fascias, radial under-beams, modeled near grating, rails, kick plates, white equipment boxes, orange-red panels, red pipe stubs and under-deck cable trays are baked into the new quarter module. Far copies use opaque averaged grating and broad rails, without thin mid-rails or fine bearing bars.
+
+`wrap.placements` contains 136 placements: 33 sliding decks, 33 fixed rail/support modules, ten six-metre stair flights and sixty rear lattice bays (five columns across X=-12..12 at Z=17, twelve six-metre bays high). Rear tower members use a blue painted finish. Existing side lattice, red standpipes and under-deck lamps remain. The front slot has no new spanning structure. Stairs and tracks belong to the fixed support; production needs interlocks before deck motion. The new inspection launcher `launcher_slot_v4` retains `attach_deck=[0,7,0]`, side/rear supports and an open front sightline to the real ship base. The original mobile launcher remains intact for older versions.
+
+`wrap.colliders` adds four closed-state boxes per segment/level plus five conservative rear-tower envelopes. Sliding boxes carry `dynamic:'wrapSegment'`, `level`, `segment`; apply `center += slideAxis * currentOffset`. Fixed rear envelopes use `level:-1, segment:'back'`. V4 uses the original collider list minus original platform boxes, plus these additions. Original launcher/tower collision envelopes remain conservative. Adjustable inner panels, stairs and console furniture still need production walk surfaces; these boxes are not a multi-floor navigation mesh.
+
+### Pure arc fitting and ship synchronization
+
+Import **`fitCollarArc` and `plateIndices` from `collarArc.mjs`**. This separate module preserves the original `collarFit.mjs` bytes/API. `fitCollarArc(level, segment, layoutEntries, hullSegments, collarCfg)` returns `{plateIndices, plateRadii, retract}`; `segment.arc` is an increasing degree range. Radii correspond to the returned original 48-panel indices, not a newly renumbered arc. Entries/hull use height above ML_TOP; level is absolute world Y. The helper selects twelve 7.5-degree plates per quarter, **36 per level / 396 total**. The open front has none. Notch, 0.25 m clearance and 0.35..6 m radial limits are unchanged.
+
+The full existing hull/measured-radial outline algorithm evaluates each wedge; only selected directions can trigger that segment's oversize retraction. Thus an oversized booster wholly within the empty slot does not retract the back/side segments. An oversized core retracts all three; an oversized rear booster retracts the back. Above the ship's top each segment retracts. The sandbox logs oversize level/segment IDs once per affected fit. Tests include cylinders, waist transitions, twin boosters at 90/270 degrees, excluded-slot oversize, active-arc oversize and above-top handling.
+
+Panel and yellow toe-board meshes remain two instanced draws. Their matrices inherit the segment's signed X/Z offset. Radius damping reaches 99% in about 0.6 seconds; slide motion retains the 1–2 second top-down wave. The custom raycast accounts for shader-deformed panel radii, so orbit focus picks the actual fitted surface. Old `slot_cut__s/m/l` nodes remain in the untouched original assets and are never drawn by v4.
+
+The real ship reuses the unchanged `role1.hangar.ship.js` pipeline documented under v3: catalogue/Assembly, NASA registration and bounded preload, layout, partArt/mountRadial, skinFor and computeShipSpec. It stands at ML_TOP and its measured outline sections drive every arc. All five builder presets and three shape-card selectors remain; console edits update that same Assembly and both ship and collars. Shared geometry ownership/disposal remains the game's implementation. This is local sandbox synchronization, not a write into the human's running game/session.
+
+### Console bank and cameras
+
+`engineering_consoles_v4` replaces only the v4 display template. The four named station roots and twenty `screen_*` nodes/UVs retain their original names. Desk shells have beveled edges, sloped upper panels, metal trim/kick plates and cable ports; separate hardware includes three monitor arms/bezels, keyboard/button banks, phone, mouse, headset, guarded switches, gooseneck lamp, low-emission status tower, chair/casters and overhead truss/display. Three repeated chassis/material meshes are instanced four times; four canvas atlases supply all live mock-up screens/nameplates. Soft blue desk-spill strips are baked colours, with no added lights. The raised tiled island/cable trench is a separate original module in the same console area. Nameplates read WINDOW & WEATHER, SPACECRAFT DESIGN, ENGINE TEST & SIM, LAUNCH DIRECTOR. All plots are illustrative, with real current-ship metrics and the game's weather fields; no launch event or poll is dispatched.
+
+Console transforms, interact points and orientations are unchanged: operators sit on the rocketward side facing away toward the door. Sit/stand controls remain. The 1.5 second reveal now ends at an angular-midpoint target between the real base and tip, looking up through the open slot **with the decks closed**. No automatic hardware motion is triggered by standing up.
+
+- **F**, or Camera → Free fly / orbit: toggle collision-free inspection. **WASD** moves; **Q/E** descends/ascends; hold **right mouse** to look; **Shift** is 4× speed, **Ctrl** is 0.15×; wheel adjusts speed (0.1..80 m/s). Near clip is 0.05 m; logarithmic depth remains on.
+- Orbit: left drag, wheel zoom; **double-click a visible surface** to set the pivot, including instanced/deformed collars. Minimum orbit distance is 0.3 m. Ground first-person walking remains separate.
+- New presets: Slot view, Wrap overview, Console bank (3 m eye height), four desk close-ups. Original ground/overview/access/collar/ceiling presets remain. Engineering console bank contains each Sit action and Stand up and turn around.
+
+### Calm lighting and performance
+
+The fixed light count, HDRI/environment 0.35, hemisphere 0.32, FogExp2 0.009 and the game's composer chain remain: finite guard, bloom, ACES tone mapping, SMAA HIGH, restrained chromatic aberration, vignette and grain 0.06. V4 exposure is **0.85**; ceiling spots remain 4000 each, rocket spots are **450 / 750** instead of 650 / 1200. Positions, decay, angles and ship-following targets otherwise match v3. Nearby lens rows use strength 1.8, far lenses 0.35. No added console lights, no runtime shadow passes. Clean captures quantify clipped-white area rather than claiming subjective glare is impossible.
+
+Resolution starts at **1.0**. V4's isolated `role1.hangar.render-v4.js` preserves the game's sustained half-second windows, four slow windows, twelve fast windows, step size, backoff and recovery, but uses **1000/55 ms** as the slow threshold (held recovery below 17 ms) to honor this pass's 55 FPS target. It can descend only to **0.8**. V2/v3 controllers are unchanged. Full near detail is kept; far cards are opaque, mipmapped, anisotropy up to 8, with simplified rails and high uniform roughness/no far normal sampling. Quarter decks switch initially at 14 m with 12/16 m hysteresis, removing sub-pixel grating sooner; other structure retains 22 m initial / 19/25 m hysteresis. Preset/distance LOD preserves animated poses and excludes cutaway walls from rebuild decisions. Pure rotation does not change distance selections. All-pass renderer counts include real ship art and post-processing; kit batch counts exclude ship art. Console portfolio captures explicitly use native resolution; measured performance captures use automatic resolution.
+
+<!-- V4_METRICS -->
+
+| New module | Unique triangles | GLB KiB | Colour / ORM / normal px |
+|---|---:|---:|---|
+| wrap_deck_v4 | 3,172 | 256.3 | 512 / 512 / 512 |
+| wrap_deck_v4_far | 360 | 230.5 | 512 / 512 / 512 |
+| wrap_track_v4 | 276 | 110.2 | 512 / 512 / 512 |
+| rear_tower_v4 | 2,552 | 205.6 | 512 / 512 / 512 |
+| rear_tower_v4_far | 432 | 112.2 | 512 / 512 / 512 |
+| wrap_stair_v4 | 1,760 | 218.5 | 512 / 512 / 512 |
+| launcher_slot_v4 | 864 | 136.0 | 512 / 512 / 512 |
+| console_island_v4 | 444 | 103.3 | 512 / 512 / 512 |
+| engineering_consoles_v4 | 5,792 | 379.1 | 512 / 512 / 512 |
+
+Whole folder, including every v2/v3 file and external atlases: **15,250,767 bytes (15.25 MB) / 20 MB**. 40 GLBs. New bank: **23,048 drawn triangles / 120,000**, **388,204 GLB bytes / 3 MB**, seven batches (three instanced chassis materials + four canvas atlases). No hero triangle exemptions.
+
+| Reliable, Game look ON, 1440 × 860 | Triangles, all passes | Total calls | Structure / complete kit batches | Scale | 5 s mean FPS | Instantaneous min FPS | p95 ms |
+|---|---:|---:|---|---:|---:|---:|---:|
+| slot | 251,899 | 184 | 38 / 47 | 0.9 | 58.2 | 23.5 | 24.1 |
+| overview | 246,049 | 188 | 31 / 40 | 1.0 | 93.7 | 33.0 | 18.1 |
+
+Measured 2026-11-08T14:16:14.022Z, Chrome 156.0.8078.80, GPU ANGLE (AMD, AMD Radeon(TM) Graphics (0x00001638) Direct3D11 vs_5_0 ps_5_0, D3D11). Device scale 1; renderer starts at 1.0, automatic resolution ON with floor 0.8. Scale is the actual final scale, not a claim that scaled results are native. Minimum means the slowest single RAF interval; background machine work can affect it. Full-detail, complete envelope with real ship/post: **869,197 triangles**, 32 structure batches. Conservative complete-kit (no culling) bound is separately asserted in hangar-models.test.mjs.
+
+Slow 60 m orbit: mean **81.4 FPS**, minimum **23.6 FPS**, p95 **18.1 ms**, **0 re-batches**. Near geometry is modeled grating; far decks use opaque averaged tiles, no fine grating/mid-rails, high roughness and no normal-map sampling.
+
+The requested sustained-average targets pass. Single-frame dips still occur during warmed steady views/orbit, as the minimum column shows; the stronger request that dips occur only during rebuilds is **not fully met**. There were no LOD re-batches in the slow orbit. Initial loading and model/shape rebuilding can also stall. Do not present this run as a guarantee of zero stutter.
+
+| Clean screenshot | White pixels (RGB ≥250) | Largest connected region, px |
+|---|---:|---:|
+| slot | 0 | 0 |
+| overview | 0 | 0 |
+
+Compatibility: actual pointer drags moved the camera in v2, v3 and v4 by v2: 82.51 m; v3: 80.93 m; v4: 81.10 m. Free fly movement/RMB/wheel, double-click focus, three-axis retraction, three real-ship collar presets, console editor sync and the 1.5 s reveal were asserted. Sandbox/page/console errors: **0**; HTTP failures: **0**. Game on 5280: **HANGAR**, 7 advancing frames, 0 errors.
+
+Memory after each identical twenty-shape sequence, returning to Reliable: 449 geometries / 167 textures → 449 geometries / 167 textures. Counts are equal after cache warm-up.
+
+Additional real-input camera trial: normal/Shift/Ctrl travel over 0.5 seconds = 2.01 m / 8.14 m / 0.31 m; Q descends. Pure ground-view rotation: 60.1 FPS mean / 23.6 minimum at scale 0.9, 0 re-batches. See camera-check-v4.json.
+
+Requested checks:
+- `hangar-v4-test.log`: PASS.
+- `models-v4-test.log`: PASS.
+- `builder-v4-test.log`: PASS.
+- `static-v4-check.log`: PASS.
+
+Asset tests assert 121 unchanged original-file hashes, complete original manifest values, arc/booster/oversize cases, texture sizes, module nodes, budgets and adaptive-resolution recovery. `refs/changed-v4.json` records the final scoped file inventory and read-only Git/whitespace audit.
+
+Regenerate: `node src/builder/tools/blender/hangar/report.mjs --v4` (or `report-v4.mjs`). Detailed evidence: `refs/inspection-v4.json`, `refs/inspection-v4.log`, `refs/build-v4.log`. Screenshots: `refs/shots/v4-*.png`.
+
+<!-- /V4_METRICS -->
+
+### For Claude — v4 integration
+
+- Review the additive v4 paths; leave saved v2/v3 files intact. No game/core/package/Git changes or server operations on 5173 were performed.
+- Adopt `wrap.placements` instead of the old platform-half placements; keep old placement data for compatibility. Render one selected seam owner at each rear corner. Add the fixed rear lattice/tracks and interlock access stairs before retraction.
+- Fit each segment with `fitCollarArc`, feed current hull and measured radial sections, and attach its panels to the correct world slide axis. Preserve top-down timing and above-top/oversize retraction. Do not add plates inside the front slot.
+- Move `wrap.colliders` with segment offsets; replace conservative ML/tower envelopes with navigable support/walk surfaces before upstairs play. Add explicit panel-edge/stair/console collision handling rather than treating the supplied ground envelopes as exact.
+- Use `layout.consoles` unchanged with the v4 template and live canvas textures. Preserve operators facing away from the ship. Use the new slot-facing, base-to-tip angular-midpoint framing as the post-console camera pose; do not auto-retract on standing.
+- The launcher front cutaway is inspection art; review its front-open support design before game use. Original launcher GLB/colliders remain intact.
+- Reuse the calm rig and fixed light count, 55 FPS resolution budget/floor and distance LOD. Review measured scale and single-frame minima on the human's active machine; rebuilding art and initial shader/model loads can briefly stall.
+- Keep the non-sandbox canvas hiding fix only in standalone viewers. Integrate into the game's existing renderer/loop rather than hiding the game canvas there.
+- Consolidate existing CC0 attribution into team credits later. Nothing needs deletion to meet the 20 MB limit; old versions remain available.
+
+## Run and rebuild (historical v2/v3)
 
 From the repository root, in PowerShell (Node 26.13.0, Blender 5.2.3 LTS):
 
