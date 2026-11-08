@@ -265,14 +265,14 @@
       "en": {
         "what": "A big frame for five engines, as on the Saturn V's first stage. Four steering engines sit at the corners of a square, with one fixed engine in the middle.",
         "why": "Five engines give huge thrust, and the ship can lose one and fly on. The Saturn V's five F-1 engines made about 34 MN together.",
-        "without": "Five engines cost five times as much as one. The frame itself is heavy.",
+        "without": "Five engines cost about four times as much as one: a run of identical engines is cheaper each. The frame itself is heavy.",
         "inside": "Crossed beams and four thrust posts carry the push of five engines: the centre one fixed, the outer four on swivel joints. A ring of pipes feeds them all, and a heat shield across the base protects the bay.",
         "analogy": "Like the five dots on a dice: four at the corners, one in the middle."
       },
       "vi": {
         "what": "Khung đỡ lực đẩy (thrust structure) lớn cho năm động cơ, như tầng một của Saturn V. Bốn động cơ lái đặt ở bốn góc hình vuông, còn một động cơ cố định ở giữa.",
         "why": "Năm động cơ cho lực đẩy khổng lồ, và tàu mất một chiếc vẫn bay tiếp được. Năm động cơ F-1 của Saturn V cộng lại đẩy khoảng 34 MN.",
-        "without": "Năm động cơ tốn gấp năm lần một chiếc. Bản thân khung cũng nặng.",
+        "without": "Năm động cơ tốn khoảng gấp bốn lần một chiếc: làm hàng loạt động cơ giống nhau thì mỗi chiếc rẻ hơn. Bản thân khung cũng nặng.",
         "inside": "Các dầm đan chéo và bốn trụ chịu lực truyền cú đẩy của năm động cơ: chiếc ở giữa cố định, bốn chiếc ngoài trên khớp xoay. Một vòng ống cấp nhiên liệu cho tất cả, và một tấm chắn nhiệt ngang đáy bảo vệ khoang.",
         "analogy": "Giống mặt năm chấm của con xúc xắc: bốn chấm ở góc, một chấm ở giữa.",
         "pros": [
@@ -280,7 +280,7 @@
           "Chân đế rộng cho tên lửa đẩy phụ lớn và vây"
         ],
         "cons": [
-          "Phải mua năm động cơ: giá gấp năm lần một chiếc",
+          "Phải mua năm động cơ",
           "Khung nặng"
         ],
         "real": "Khung lực đẩy Saturn V S-IC (năm F-1, mỗi chiếc 6.770 kN, rộng 10,1 m)",
@@ -291,14 +291,14 @@
       "en": {
         "what": "A frame for seven engines: one in the middle and six around it, packed with no gaps.",
         "why": "Seven medium engines push like two large ones, and the ship survives the loss of one. Blue Origin's New Glenn flies seven BE-4 engines this way.",
-        "without": "Seven engines cost seven times as much as one, and the frame is heavy.",
+        "without": "Seven engines cost about five times as much as one, since a run of identical engines is cheaper each, and the frame is heavy.",
         "inside": "A wheel of beams carries seven mounts, one in the middle and six around it. A ring pipe feeds every engine through its own valve, and a shield across the base keeps the jets from heating the bay.",
         "analogy": "Like seven coins pushed together on a table: six fit perfectly around one."
       },
       "vi": {
         "what": "Khung đỡ lực đẩy (thrust structure) cho bảy động cơ: một ở giữa, sáu xếp quanh, khít không chừa khe.",
         "why": "Bảy động cơ cỡ vừa đẩy ngang hai động cơ lớn, và tàu sống sót khi mất một chiếc. Tên lửa New Glenn của Blue Origin bay với bảy động cơ BE-4 theo cách này.",
-        "without": "Bảy động cơ tốn gấp bảy lần một chiếc, và khung nặng.",
+        "without": "Bảy động cơ tốn khoảng gấp năm lần một chiếc, vì làm hàng loạt động cơ giống nhau thì mỗi chiếc rẻ hơn, và khung nặng.",
         "inside": "Một vành dầm hình bánh xe mang bảy chỗ gắn, một ở giữa và sáu xung quanh. Một ống vòng cấp nhiên liệu cho từng động cơ qua van riêng, và một tấm chắn ngang đáy giữ các luồng khí phụt không nung nóng khoang.",
         "analogy": "Giống bảy đồng xu dồn sát trên bàn: sáu đồng ôm vừa khít quanh một đồng.",
         "pros": [
@@ -306,7 +306,7 @@
           "Xếp khít"
         ],
         "cons": [
-          "Phải mua bảy động cơ: giá gấp bảy lần một chiếc",
+          "Phải mua bảy động cơ",
           "Khung nặng"
         ],
         "real": "Tầng một New Glenn (bảy BE-4, 17.100 kN lúc rời bệ, rộng 7 m)",
@@ -338,6 +338,324 @@
         "real": "Octaweb của Falcon 9 (chín Merlin 1D, 7.607 kN lúc rời bệ) · Electron (chín Rutherford)",
         "name": "Octaweb (9 động cơ)"
       }
+    },
+    "part:thrust_atlas_m": {
+      "en": {
+        "what": "The tail of the Atlas that carried John Glenn into orbit: a skirt with two bulging fairings for two booster engines, and a sustainer engine between them.",
+        "why": "Every engine lights on the pad, so none has to start in flight. On the real Atlas the skirt and its two outer engines slid off after about two minutes and the sustainer burned on alone: a 'stage and a half'.",
+        "without": "A single-engine frame is simpler. Here nothing drops off, so the skirt and all three engines ride all the way, and losing any one engine ends the flight.",
+        "inside": "A ring frame carries three engine mounts in a row; the two outer ones sit inside the side fairings. Above it, the real Atlas had stainless-steel balloon tanks so thin they had to stay pressurised or fold under their own weight.",
+        "analogy": "Like a backpack with two side pockets: the heavy things ride in the pockets, the main thing in the middle."
+      },
+      "vi": {
+        "what": "Đuôi của tên lửa Atlas đã đưa John Glenn lên quỹ đạo: một váy đuôi có hai ốp phình ra hai bên cho hai động cơ đẩy (booster engine), và một động cơ duy trì (sustainer) ở giữa.",
+        "why": "Mọi động cơ đều khởi động trên bệ, nên không cái nào phải đề máy giữa trời. Trên Atlas thật, váy đuôi cùng hai động cơ ngoài trượt rơi ra sau khoảng hai phút, còn động cơ duy trì cháy tiếp một mình: kiểu “một tầng rưỡi”.",
+        "without": "Khung một động cơ thì đơn giản hơn. Ở đây không có gì rơi ra, nên váy đuôi và cả ba động cơ đi theo đến cùng, và hỏng bất kỳ động cơ nào cũng kết thúc chuyến bay.",
+        "inside": "Một khung vòng mang ba chỗ gắn động cơ xếp thành hàng; hai chỗ ngoài nằm trong hai ốp bên. Phía trên, Atlas thật có bồn bóng (balloon tank) bằng thép không gỉ mỏng đến mức phải luôn giữ áp suất, không thì tự xẹp dưới sức nặng của chính nó.",
+        "analogy": "Giống chiếc ba lô có hai túi hông: đồ nặng nằm ở hai túi, món chính ở giữa.",
+        "name": "Khoang đẩy Atlas (3 động cơ)",
+        "pros": [
+          "Mọi động cơ khởi động trên bệ, không cái nào phải đề máy giữa trời",
+          "Thế đứng rộng cho hai động cơ ngoài"
+        ],
+        "cons": [
+          "Không chịu được mất động cơ: cái nào cũng phải chạy",
+          "Hai ốp phình làm tăng lực cản"
+        ],
+        "real": "Mercury-Atlas LV-3B (1960–63): hai động cơ đẩy XLR89-5 (tổng 1.517 kN) trong váy đuôi được bỏ lại, rộng 4,9 m tính cả hai ốp; một động cơ duy trì XLR105-5 (363 kN); hai động cơ vernier LR101; bồn bóng thép không gỉ 3,0 m"
+      },
+      "_todo": "Mount positions were measured from photos (see NOTES.md); not stated here."
+    },
+    "part:thrust_twin_l": {
+      "en": {
+        "what": "A wide frame for two engines side by side under a wide core stage, with a strong rim that big boosters push against.",
+        "why": "Many heavy rockets put two engines under a wide core and clamp big boosters round it: the core burns for minutes, the boosters for the first two. Vulcan, H3 and Long March 5 are built this way.",
+        "without": "One engine is simpler and lighter. With two, losing either one still ends the flight.",
+        "inside": "A beam frame spans the base with an engine hanging from each side, and the rim carries the boosters' push into the core.",
+        "analogy": "Like a wide bike rack holding two bikes: one bar across, a bike hanging from each end."
+      },
+      "vi": {
+        "what": "Khung đỡ lực đẩy (thrust structure) rộng cho hai động cơ đặt cạnh nhau dưới một tầng lõi to, có vành chắc để các tên lửa đẩy phụ lớn tì vào.",
+        "why": "Nhiều tên lửa hạng nặng đặt hai động cơ dưới một lõi rộng rồi kẹp tên lửa đẩy phụ (booster) lớn quanh nó: lõi cháy nhiều phút, tên lửa đẩy phụ cháy hai phút đầu. Vulcan, H3 và Trường Chinh 5 đều làm như vậy.",
+        "without": "Một động cơ thì đơn giản và nhẹ hơn. Có hai chiếc thì hỏng chiếc nào cũng vẫn kết thúc chuyến bay.",
+        "inside": "Một khung dầm vắt ngang đáy, mỗi bên treo một động cơ, và vành khung truyền lực đẩy của tên lửa đẩy phụ vào tầng lõi.",
+        "analogy": "Giống giá treo xe đạp rộng: một thanh ngang, mỗi đầu treo một chiếc xe.",
+        "name": "Khung đỡ hai động cơ, cỡ rộng",
+        "pros": [
+          "Đủ chỗ cho hai động cơ lớn và đường ống của chúng",
+          "Vành chắc cho tên lửa đẩy phụ lớn"
+        ],
+        "cons": [
+          "Không chịu được mất động cơ",
+          "Nặng hơn khung hai động cơ cỡ vừa"
+        ],
+        "real": "Vulcan (hai BE-4, 5,4 m) · tầng một H3 (hai LE-9, mỗi chiếc 1.471 kN, 5,27 m) · lõi Trường Chinh 5 (hai YF-77, mỗi chiếc 700 kN trong chân không, 5 m)"
+      }
+    },
+    "part:thrust_triad_l": {
+      "en": {
+        "what": "A wide frame for three engines in a triangle, one on top and two below: the Space Shuttle’s tail at the width of its 8.4 m tank.",
+        "why": "With three engines, losing one is survivable. In 1985, on flight STS-51-F, one Shuttle engine shut down early and Challenger still reached orbit on the other two.",
+        "without": "A single engine is cheaper, but one failure ends the flight. Three engines cost more, and this frame is heavier.",
+        "inside": "A truss of struts carries the push of the three engine mounts into the stage. Each engine has its own feed pipes and valves, so a failed one can be shut off while the other two keep running.",
+        "analogy": "Like a three-engine jet that can still fly on two."
+      },
+      "vi": {
+        "what": "Khung đỡ lực đẩy (thrust structure) cỡ rộng cho ba động cơ xếp hình tam giác, một ở trên, hai ở dưới: đuôi tàu con thoi theo bề rộng của bồn 8,4 m.",
+        "why": "Có ba động cơ thì mất một chiếc vẫn sống sót. Năm 1985, trong chuyến STS-51-F, một động cơ của tàu con thoi tắt sớm, và tàu Challenger vẫn lên tới quỹ đạo bằng hai chiếc còn lại.",
+        "without": "Một động cơ thì rẻ hơn, nhưng hỏng một lần là hết chuyến bay. Ba động cơ tốn tiền hơn, và khung này nặng hơn.",
+        "inside": "Một khung giàn bằng thanh chống truyền cú đẩy từ ba chỗ gắn động cơ vào tầng tên lửa. Mỗi động cơ có ống cấp và van riêng, nên chiếc hỏng có thể bị khóa lại trong khi hai chiếc kia vẫn chạy.",
+        "analogy": "Giống chiếc máy bay phản lực ba động cơ, hỏng một vẫn bay tiếp bằng hai.",
+        "pros": [
+          "Mất một động cơ vẫn bay tiếp",
+          "Đủ chỗ cho tên lửa đẩy phụ lớn ở hai bên"
+        ],
+        "cons": [
+          "Phải mua ba động cơ",
+          "Nặng hơn khung ba động cơ cỡ vừa"
+        ],
+        "real": "Thân sau tàu con thoi (1981–2011): ba RS-25, mỗi chiếc 1.860 kN ở mặt đất; bồn ngoài rộng 8,4 m",
+        "name": "Khung lực đẩy ba động cơ, cỡ rộng"
+      }
+    },
+    "part:thrust_sib_l": {
+      "en": {
+        "what": "A frame for eight engines in two squares: four fixed in the middle and four outer ones that swivel to steer. The first stage of the Saturn I and IB.",
+        "why": "Eight engines spread the heat and the load. Saturn IB launched the first crewed Apollo, three Skylab crews and Apollo–Soyuz.",
+        "without": "Fewer, bigger engines are simpler. Eight engines mean eight to buy and a heavy frame.",
+        "inside": "The inner four engines are bolted tilted 3° outward; the outer four, tilted 6°, swivel to steer. Above them the tanks were a cluster too: eight Redstone-sized tanks round one Jupiter-sized tank.",
+        "analogy": "Like a cake with eight candles: four in the middle, four round the edge."
+      },
+      "vi": {
+        "what": "Khung đỡ lực đẩy (thrust structure) cho tám động cơ xếp thành hai hình vuông: bốn chiếc cố định ở giữa và bốn chiếc ngoài xoay được để lái. Tầng một của Saturn I và IB.",
+        "why": "Tám động cơ chia nhau nhiệt và tải. Saturn IB đã phóng chuyến Apollo có người đầu tiên, ba phi hành đoàn Skylab và chuyến Apollo–Soyuz.",
+        "without": "Ít động cơ mà to hơn thì đơn giản hơn. Tám động cơ nghĩa là phải mua tám chiếc và khung nặng.",
+        "inside": "Bốn động cơ trong được bắt chặt, nghiêng ra ngoài 3°; bốn động cơ ngoài nghiêng 6° và xoay được để lái. Phía trên, bồn chứa cũng là một chùm: tám bồn cỡ Redstone quanh một bồn cỡ Jupiter.",
+        "analogy": "Giống chiếc bánh cắm tám cây nến: bốn cây ở giữa, bốn cây quanh mép.",
+        "name": "Khung đỡ tám động cơ",
+        "pros": [
+          "Mất một động cơ vẫn bay tiếp",
+          "Tám động cơ chia nhau nhiệt và tải"
+        ],
+        "cons": [
+          "Phải mua tám động cơ",
+          "Khung nặng"
+        ],
+        "real": "S-IB của Saturn IB (1966–75): tám H-1, tổng 7.100 kN, rộng 6,53 m, tám vây sải 12,0 m; bốn động cơ trong nghiêng 3°, bốn động cơ ngoài nghiêng 6° và xoay được"
+      },
+      "_todo": "Gimbal range (7.5° from the Saturn I press kit) is not confirmed for the S-IB; left out."
+    },
+    "part:thrust_sii_l": {
+      "en": {
+        "what": "A cone of beams that carries five engines in a cross: the Saturn V's second stage, with the centre engine fixed and the four outer ones swivelling.",
+        "why": "The real stage lit about 67 km up, so it needed no fins and its engines wear long bells made for thin air. Five engines let it lose one: on Apollo 13 the centre engine shut down two minutes early and the other four burned longer.",
+        "without": "At sea level long vacuum bells push weakly, and five engines are five to buy.",
+        "inside": "The cone gathers the push of the five engines into the bottom of the huge hydrogen tank above. The Apollo 13 shutdown was caused by heavy shaking called POGO.",
+        "analogy": "Like an upside-down lampshade with five bulbs hanging from it."
+      },
+      "vi": {
+        "what": "Một hình nón bằng dầm đỡ năm động cơ xếp hình chữ thập: tầng hai của Saturn V, động cơ giữa cố định còn bốn động cơ ngoài xoay được.",
+        "why": "Tầng thật khởi động ở độ cao khoảng 67 km, nên không cần vây và động cơ mang chuông vòi phun dài dành cho không khí loãng. Năm động cơ giúp nó mất một chiếc vẫn bay: trên Apollo 13, động cơ giữa tắt sớm hai phút và bốn chiếc kia cháy lâu hơn để bù.",
+        "without": "Ở mặt đất, chuông vòi phun chân không (vacuum nozzle) dài đẩy yếu, và năm động cơ là năm chiếc phải mua.",
+        "inside": "Hình nón gom lực đẩy của năm động cơ dồn vào đáy bồn hydro khổng lồ phía trên. Lần tắt máy trên Apollo 13 là do rung lắc mạnh gọi là POGO.",
+        "analogy": "Giống chiếc chụp đèn úp ngược có năm bóng đèn treo bên dưới.",
+        "name": "Nón đỡ năm động cơ",
+        "pros": [
+          "Mất một động cơ vẫn bay tiếp",
+          "Khung hình nón nhẹ"
+        ],
+        "cons": [
+          "Phải mua năm động cơ",
+          "Dành cho không khí loãng"
+        ],
+        "real": "S-II của Saturn V (1967–73): năm J-2, 4.400 kN trong chân không, Isp 421 s, rộng 10 m; động cơ giữa cố định, bốn động cơ ngoài xoay được"
+      },
+      "_todo": "Outer mount radius estimated from drawings; not stated here."
+    },
+    "part:thrust_sls_l": {
+      "en": {
+        "what": "The base of the SLS core stage: a deep engine section for four hydrogen engines in a square, wrapped in a tapering boattail.",
+        "why": "The boattail shields the tops of the engines from the rushing air and the heat, and stiffens the tail. The four engines are veterans of Space Shuttle flights.",
+        "without": "A plain frame is lighter: this is the heaviest four-engine frame here, and four engines are four to buy.",
+        "inside": "A thrust structure holds the four engines with their hydraulic steering on top. The two big solid boosters push on the core through attach points front and back.",
+        "analogy": "Like a skirt round the top of four light bulbs, hiding the wiring."
+      },
+      "vi": {
+        "what": "Phần đáy tầng lõi SLS: một khoang động cơ sâu cho bốn động cơ hydro xếp hình vuông, bọc trong váy thu đuôi (boattail) thon dần.",
+        "why": "Váy thu đuôi che phần đầu các động cơ khỏi luồng gió và hơi nóng, đồng thời làm đuôi cứng hơn. Bốn động cơ là những “cựu binh” từng bay trên tàu con thoi.",
+        "without": "Một khung trơn thì nhẹ hơn: đây là khung bốn động cơ nặng nhất ở đây, và bốn động cơ là bốn chiếc phải mua.",
+        "inside": "Một khung đỡ lực đẩy (thrust structure) giữ bốn động cơ, bộ lái thủy lực nằm phía trên chúng. Hai tên lửa đẩy phụ rắn lớn tì vào tầng lõi qua các điểm gắn phía trước và phía sau.",
+        "analogy": "Giống chiếc váy quây quanh đầu bốn bóng đèn, che đi dây điện.",
+        "name": "Khoang động cơ có váy thu đuôi (4 động cơ)",
+        "pros": [
+          "Che đường ống động cơ khỏi gió và nhiệt",
+          "Làm đuôi cứng hơn (thưởng nhỏ về độ tin cậy)"
+        ],
+        "cons": [
+          "Khung bốn động cơ nặng nhất",
+          "Phải mua bốn động cơ"
+        ],
+        "real": "Khoang động cơ và váy thu đuôi tầng lõi SLS (2022–): bốn RS-25, khoảng 7.440 kN lúc rời bệ (khoảng 25 % lực đẩy của SLS), rộng 8,4 m"
+      },
+      "_todo": "Boattail taper and engine spacing estimated from NASA photos; not stated here."
+    },
+    "part:thrust_superheavy_l": {
+      "en": {
+        "what": "The base of SpaceX's Super Heavy: 33 engines in three rings, 3 in the centre, 10 round them and 20 at the edge.",
+        "why": "The inner 13 swivel on electric actuators to steer and relight to land; the outer 20 only push at launch. Together they give the most thrust of any rocket stage.",
+        "without": "Fewer engines are simpler and lighter: this is the heaviest frame here, with 33 engines to buy and plumb.",
+        "inside": "A steel engine bay under a 9 m booster holds the three rings. There are no landing legs: the booster flies back to the launch tower, which catches it with two arms.",
+        "analogy": "Like a shower head with 33 holes, where only the middle ones can tilt."
+      },
+      "vi": {
+        "what": "Phần đáy tầng đẩy Super Heavy của SpaceX: 33 động cơ xếp thành ba vòng, 3 chiếc ở giữa, 10 chiếc quanh chúng và 20 chiếc ở mép.",
+        "why": "13 động cơ trong xoay được nhờ bộ đẩy điện (electric actuator) để lái và đề máy lại để hạ cánh; 20 động cơ ngoài chỉ đẩy lúc phóng. Gộp lại chúng cho lực đẩy lớn nhất của mọi tầng tên lửa.",
+        "without": "Ít động cơ hơn thì đơn giản và nhẹ hơn: đây là khung nặng nhất ở đây, với 33 động cơ phải mua và đi ống.",
+        "inside": "Một khoang động cơ bằng thép dưới tầng đẩy rộng 9 m giữ ba vòng động cơ. Không có chân đáp: tầng đẩy bay về tháp phóng, và tháp bắt nó bằng hai cánh tay.",
+        "analogy": "Giống vòi sen có 33 lỗ, trong đó chỉ các lỗ ở giữa nghiêng được.",
+        "name": "Khoang động cơ Super Heavy (33 động cơ)",
+        "pros": [
+          "Mất động cơ vẫn bay tiếp",
+          "Lực đẩy lớn nhất của mọi tầng tên lửa"
+        ],
+        "cons": [
+          "Phải mua và đi ống cho 33 động cơ",
+          "Khung nặng nhất ở đây"
+        ],
+        "real": "Super Heavy (2023–): 33 Raptor, 73,5 MN (Block 1) đến 80,8 MN (Block 3) lúc rời bệ, rộng 9 m, 13 động cơ lái bằng bộ đẩy điện, được tháp bắt từ ngày 13/10/2024"
+      },
+      "_todo": "Ring radii estimated from photos; not stated here."
+    },
+    "part:thrust_starship_l": {
+      "en": {
+        "what": "Starship's engine bay: three sea-level engines in the middle and three vacuum engines with much bigger bells round them.",
+        "why": "The middle three swivel to steer and to land; the outer three are bolted fixed and push in space. Each engine sits in its own shielded compartment.",
+        "without": "Fewer engines are simpler. In this hangar all six take the same engine and the same nozzle type.",
+        "inside": "The three middle engines sit on a thrust puck at the bottom of the oxygen tank, braced by a steel cone; the three vacuum engines are bolted to the tank's dome round them.",
+        "analogy": "Like three office chairs that swivel in the middle of a room, with three big armchairs fixed round them."
+      },
+      "vi": {
+        "what": "Khoang động cơ của Starship: ba động cơ mặt đất (sea-level) ở giữa và ba động cơ chân không (vacuum) có chuông vòi phun to hơn hẳn xếp quanh.",
+        "why": "Ba chiếc giữa xoay được để lái và hạ cánh; ba chiếc ngoài bắt cố định và đẩy trong không gian. Mỗi động cơ nằm trong một khoang chắn riêng.",
+        "without": "Ít động cơ thì đơn giản hơn. Trong xưởng này cả sáu dùng chung một loại động cơ và một loại vòi phun.",
+        "inside": "Ba động cơ giữa ngồi trên một “đĩa đẩy” (thrust puck) ở đáy bồn oxy, được chống bằng một hình nón thép; ba động cơ chân không bắt vào vòm bồn xung quanh.",
+        "analogy": "Giống ba chiếc ghế xoay đặt giữa phòng, quanh là ba chiếc ghế bành to bắt cố định.",
+        "name": "Khoang động cơ Starship (6 động cơ)",
+        "pros": [
+          "Ba động cơ xoay được để lái và hạ cánh",
+          "Mỗi động cơ nằm trong khoang chắn riêng"
+        ],
+        "cons": [
+          "Phải mua sáu động cơ",
+          "Trong xưởng này cả sáu dùng chung một loại vòi phun"
+        ],
+        "real": "Tầng trên Starship (2023–): ba Raptor mặt đất (xoay được; bộ đẩy điện từ sau chuyến bay thử thứ 2) và ba Raptor chân không, rộng 9 m; Block 4 sẽ thêm ba động cơ chân không"
+      }
+    },
+    "part:thrust_electron_s": {
+      "en": {
+        "what": "A light carbon-fibre frame for nine small engines on a slim 1.2 m stage: Rocket Lab's Electron.",
+        "why": "Nine small engines are cheap to build in series, and carbon fibre keeps the frame light. Electron is made for small satellites.",
+        "without": "It is narrow, so under a wider body the game adds an adapter. With no engine-out, any one engine failure ends the flight.",
+        "inside": "Eight engines sit in a ring round a ninth. Each Rutherford engine's pumps are spun by electric motors on lithium-polymer batteries, and almost every engine part is 3D printed.",
+        "analogy": "Like a slim pencil case holding nine small markers."
+      },
+      "vi": {
+        "what": "Khung đỡ lực đẩy (thrust structure) bằng sợi carbon, nhẹ, cho chín động cơ nhỏ trên một tầng mảnh rộng 1,2 m: Electron của Rocket Lab.",
+        "why": "Chín động cơ nhỏ làm hàng loạt thì rẻ, và sợi carbon giữ khung nhẹ. Electron được làm để phóng vệ tinh nhỏ.",
+        "without": "Khung hẹp, nên dưới một thân rộng hơn trò chơi sẽ thêm bộ chuyển đường kính. Không chịu được mất động cơ: hỏng một chiếc bất kỳ là kết thúc chuyến bay.",
+        "inside": "Tám động cơ xếp vòng quanh chiếc thứ chín. Bơm của mỗi động cơ Rutherford được quay bằng mô-tơ điện chạy pin lithium-polymer, và gần như mọi chi tiết động cơ đều được in 3D.",
+        "analogy": "Giống chiếc hộp bút mảnh đựng chín cây bút dạ nhỏ.",
+        "name": "Khung đỡ carbon (9 động cơ)",
+        "pros": [
+          "Khung sợi carbon nhẹ",
+          "Chín động cơ nhỏ: làm hàng loạt thì rẻ"
+        ],
+        "cons": [
+          "Hẹp: thân rộng hơn cần bộ chuyển đường kính",
+          "Không chịu được mất động cơ"
+        ],
+        "real": "Tầng một Electron (2017–): chín Rutherford, 224 kN ở mặt đất / 234 kN trong chân không, Isp 311 s, rộng 1,2 m, vật liệu composite carbon"
+      }
+    },
+    "part:thrust_proton_l": {
+      "en": {
+        "what": "A ring of six engines with nothing in the middle: one engine under each of six fuel tanks clustered round a central oxidiser tank. Proton's first stage.",
+        "why": "Engines at the rim steer strongly: each swivels sideways in one plane, and together they can point the rocket any way.",
+        "without": "With no engine-out, losing any one engine ends the flight, and six engines are six to buy.",
+        "inside": "The tail looks like six rockets bundled round a seventh. The real propellants light on contact and keep for weeks, but they are poisonous; kerosene and oxygen stand in for them here.",
+        "analogy": "Like six pencils held in a ring round a thicker one."
+      },
+      "vi": {
+        "what": "Một vòng sáu động cơ, ở giữa để trống: mỗi động cơ nằm dưới một trong sáu bồn nhiên liệu xếp quanh bồn chất oxy hóa ở giữa. Tầng một của Proton.",
+        "why": "Động cơ đặt ở mép lái rất khỏe: mỗi chiếc xoay ngang trong một mặt phẳng, gộp lại chúng hướng được tên lửa về mọi phía.",
+        "without": "Không chịu được mất động cơ: hỏng bất kỳ chiếc nào cũng kết thúc chuyến bay, và sáu động cơ là sáu chiếc phải mua.",
+        "inside": "Phần đuôi trông như sáu tên lửa bó quanh chiếc thứ bảy. Nhiên liệu thật tự bốc cháy khi gặp nhau (hypergolic) và để được hàng tuần, nhưng rất độc; ở đây dầu hỏa và oxy đứng thay.",
+        "analogy": "Giống sáu cây bút chì xếp vòng quanh một cây to hơn.",
+        "name": "Vòng sáu động cơ (Proton)",
+        "pros": [
+          "Động cơ ở mép lái rất khỏe",
+          "Ở giữa để trống, đơn giản"
+        ],
+        "cons": [
+          "Không chịu được mất động cơ",
+          "Phải mua sáu động cơ"
+        ],
+        "real": "Tầng một Proton-M (2001–): sáu RD-275M (N₂O₄/UDMH), 10.532 kN, Isp 285 s, bồn chất oxy hóa 4,1 m, rộng 7,4 m tính cả các bồn nhiên liệu, mỗi động cơ xoay khoảng 7° trong một mặt phẳng"
+      }
+    },
+    "part:thrust_n1_l": {
+      "en": {
+        "what": "The base of the Soviet N1 Moon rocket: 24 fixed engines round the rim and six inside, under a wide cone.",
+        "why": "It was built to lose engines and fly on, with huge thrust. All four launches, from 1969 to 1972, failed in this first stage.",
+        "without": "Fewer engines are far simpler to plumb and to keep cool; thirty engines heat and shake each other.",
+        "inside": "None of the 30 NK-15 engines swivelled: the flight control system pitched and yawed the rocket by throttling engines on opposite sides of the outer ring, and the KORD system shut down any engine that failed together with the one opposite. The four failures were a fire and false shutdowns, a turbopump that exploded on the pad, a roll the controls could not stop, and a pressure surge when the inner six shut down.",
+        "analogy": "Like a cake with thirty candles: a lot of fire close together, and one flare-up can reach the rest."
+      },
+      "vi": {
+        "what": "Phần đáy tên lửa Mặt Trăng N1 của Liên Xô: 24 động cơ cố định quanh mép và sáu chiếc bên trong, dưới một hình nón rộng.",
+        "why": "Nó được thiết kế để mất động cơ vẫn bay tiếp, với lực đẩy khổng lồ. Cả bốn lần phóng, từ 1969 đến 1972, đều thất bại ở chính tầng một này.",
+        "without": "Ít động cơ hơn thì dễ đi ống và dễ giữ mát hơn nhiều; ba mươi động cơ nung nóng và rung lắc lẫn nhau.",
+        "inside": "Không chiếc nào trong 30 động cơ NK-15 xoay được: hệ điều khiển bay lái chúc ngóc và đổi hướng bằng cách chỉnh ga (throttle) các động cơ ở hai phía đối diện của vòng ngoài, còn hệ KORD tắt mọi động cơ hỏng cùng với chiếc đối diện. Bốn lần thất bại là: cháy và tắt máy nhầm, một bơm tuabin (turbopump) nổ ngay trên bệ, tên lửa xoay tròn mà bộ lái không chặn được, và một đợt dồn áp khi sáu động cơ trong tắt.",
+        "analogy": "Giống chiếc bánh cắm ba mươi cây nến: lửa sát nhau, một chỗ bùng lên có thể lan sang cả những cây khác.",
+        "name": "Vòng ba mươi động cơ (N1)",
+        "pros": [
+          "Tự lái bằng chỉnh ga: không cần khớp xoay",
+          "Thiết kế để mất động cơ vẫn bay tiếp"
+        ],
+        "cons": [
+          "Phải mua và đi ống cho ba mươi động cơ",
+          "Khung khó giữ mát nhất"
+        ],
+        "real": "Khối A của N1 (1969–72): 30 NK-15, 45.400 kN, đáy rộng 17 m, sáu động cơ trong ở khoảng nửa đường kính, bốn vây lưới; chúc ngóc và đổi hướng bằng chỉnh ga lệch nhau ở 24 động cơ vòng ngoài, KORD tắt động cơ theo từng cặp đối diện"
+      }
+    },
+    "part:thrust_energia_l": {
+      "en": {
+        "what": "A wide frame for four hydrogen engines in a square under the Energia core, with hard points for four big boosters.",
+        "why": "The four core engines burned hydrogen while the four kerosene boosters did most of the lifting. The payload rode on the side of the core, not on top.",
+        "without": "With no engine-out, losing any one engine ends the flight, and four engines are four to buy.",
+        "inside": "The four RD-0120 engines hang in a square; the boosters push through hard points on the rim. Energia flew twice: Polyus in 1987 and the Buran shuttle in 1988.",
+        "analogy": "Like a table on four legs, with four helpers lifting it from the sides."
+      },
+      "vi": {
+        "what": "Khung rộng cho bốn động cơ hydro xếp hình vuông dưới tầng lõi Energia, có các điểm bám chắc cho bốn tên lửa đẩy phụ (booster) lớn.",
+        "why": "Bốn động cơ lõi đốt hydro, còn bốn tên lửa đẩy phụ chạy dầu hỏa làm phần lớn việc nâng. Vật cần phóng gắn bên hông tầng lõi chứ không ở trên đỉnh.",
+        "without": "Không chịu được mất động cơ: hỏng bất kỳ chiếc nào cũng kết thúc chuyến bay, và bốn động cơ là bốn chiếc phải mua.",
+        "inside": "Bốn động cơ RD-0120 treo thành hình vuông; các tên lửa đẩy phụ tì vào điểm bám trên vành. Energia bay hai lần: Polyus năm 1987 và tàu con thoi Buran năm 1988.",
+        "analogy": "Giống chiếc bàn bốn chân, có thêm bốn người phụ nâng từ hai bên.",
+        "name": "Khung lõi hydro (4 động cơ)",
+        "pros": [
+          "Bốn động cơ xếp vuông: đơn giản và chắc",
+          "Điểm bám cho bốn tên lửa đẩy phụ lớn"
+        ],
+        "cons": [
+          "Phải mua bốn động cơ",
+          "Không chịu được mất động cơ"
+        ],
+        "real": "Tầng lõi Block Ts của Energia (1987–88): bốn RD-0120 (mỗi chiếc 1.526 kN ở mặt đất / 1.961 kN trong chân không, Isp 354 / 455 s), rộng 7,75 m"
+      },
+      "_todo": "Engine spacing estimated; not stated here."
     },
     "part:srb_s": {
       "en": {
@@ -446,6 +764,274 @@
         "real": "Tên lửa đẩy phụ của Soyuz (Blok B, V, G, D): RD-107A, 839 kN ở mặt đất / 1.020 kN trong chân không, Isp 263 / 320 s, khoảng 39 tấn nhiên liệu, 118 s, 19,6 m × 2,7 m",
         "name": "Tên lửa đẩy phụ nhiên liệu lỏng"
       }
+    },
+    "part:srb_5seg_l": {
+      "en": {
+        "what": "The booster of NASA's SLS: a Space Shuttle booster with a fifth segment added. Here it pushes with about 1,310 kN at sea level for 61 seconds.",
+        "why": "Each real one gives about 14.6 MN at liftoff: they are the largest solid motors ever flown, and the two together give about four fifths of the SLS's thrust at liftoff.",
+        "without": "Without boosters the core does all the lifting. With them comes a low Isp, no way to shut them down, and a 3.8 t casing that stays attached.",
+        "inside": "Five steel segments full of propellant are joined at the launch site, and the nozzle tilts to steer. Unlike the Shuttle's boosters, they are not fished out of the sea and flown again.",
+        "analogy": "Like a firework tube with one more section of powder: longer, and a stronger push."
+      },
+      "vi": {
+        "what": "Tên lửa đẩy phụ (booster) của SLS (NASA): tên lửa đẩy phụ của tàu con thoi được thêm khúc thứ năm. Ở đây nó đẩy khoảng 1.310 kN ở mặt đất trong 61 giây.",
+        "why": "Mỗi chiếc thật cho khoảng 14,6 MN lúc rời bệ: đây là những động cơ nhiên liệu rắn lớn nhất từng bay, và hai chiếc cộng lại cho khoảng bốn phần năm lực đẩy của SLS lúc rời bệ.",
+        "without": "Không có tên lửa đẩy phụ, tầng lõi phải tự nâng tất cả. Có chúng thì Isp thấp, không tắt được, và vỏ 3,8 tấn cứ dính theo tàu.",
+        "inside": "Năm khúc thép đầy thuốc phóng được nối lại ở bãi phóng, và vòi phun nghiêng được để lái. Khác với tên lửa đẩy phụ của tàu con thoi, chúng không được vớt lên từ biển để bay lại.",
+        "analogy": "Giống ống pháo hoa được nối thêm một khúc thuốc: dài hơn và đẩy mạnh hơn.",
+        "name": "Tên lửa đẩy phụ rắn năm khúc",
+        "pros": [
+          "Mỗi chiếc khoảng 1.310 kN lúc rời bệ",
+          "Vòi phun lái được"
+        ],
+        "cons": [
+          "Vỏ 3,8 tấn vẫn dính theo",
+          "Isp thấp",
+          "Không tắt được"
+        ],
+        "real": "Tên lửa đẩy phụ năm khúc của SLS (2022–): tối đa 14.600 kN ở mặt đất, Isp 268 s, khoảng 640 tấn thuốc phóng, 126 s, 54 m × 3,71 m, các khúc bằng thép, không thu hồi"
+      }
+    },
+    "part:srb_ua1205_l": {
+      "en": {
+        "what": "The Titan III's solid booster: five segments, 3 m wide, with a tank of nitrogen tetroxide strapped along its side for steering. Here about 880 kN at sea level for 58 seconds.",
+        "why": "Two of them lit on the pad and did all the lifting for nearly two minutes; the core engines only lit seconds before they fell away. Titan IIIE rockets launched both Vikings to Mars and both Voyagers.",
+        "without": "Without it the core lifts alone. With it comes a low Isp, no way to shut it down, and a 3 t casing with its tank that ride along.",
+        "inside": "The nozzle is fixed. To steer, valves squirt nitrogen tetroxide from the side tank into one side of the exhaust, and the jet bends away.",
+        "analogy": "Like steering a garden-hose jet by squirting a little water into its side, instead of moving the hose."
+      },
+      "vi": {
+        "what": "Tên lửa đẩy phụ (booster) nhiên liệu rắn của Titan III: năm khúc, rộng 3 m, có một bồn nitơ tetroxit (N₂O₄) gắn dọc bên hông để lái. Ở đây khoảng 880 kN ở mặt đất trong 58 giây.",
+        "why": "Hai chiếc khởi động trên bệ và tự nâng toàn bộ trong gần hai phút; động cơ lõi chỉ khởi động vài giây trước khi chúng rơi ra. Tên lửa Titan IIIE đã phóng cả hai tàu Viking lên Sao Hỏa và cả hai tàu Voyager.",
+        "without": "Không có nó, tầng lõi tự nâng một mình. Có nó thì Isp thấp, không tắt được, và vỏ 3 tấn cùng bồn chất phun đi theo đến cùng.",
+        "inside": "Vòi phun cố định. Để lái, các van phun nitơ tetroxit từ bồn bên hông vào một phía của luồng khí thải, và luồng khí bị bẻ cong sang hướng kia.",
+        "analogy": "Giống lái tia nước vòi tưới bằng cách xịt thêm chút nước vào một bên tia, thay vì cầm vòi xoay đi.",
+        "name": "Tên lửa đẩy phụ rắn Titan",
+        "pros": [
+          "Mỗi chiếc khoảng 880 kN lúc rời bệ",
+          "Lái được mà vòi phun không phải xoay"
+        ],
+        "cons": [
+          "Vỏ 3 tấn và bồn chất phun vẫn dính theo",
+          "Isp thấp",
+          "Không tắt được"
+        ],
+        "real": "UA1205 (Titan IIIC, IIID, IIIE; bay lần đầu 1965): năm khúc, 3,05 m × 25,9 m, mỗi chiếc khoảng 5.300 kN, Isp 263 s, khoảng 115 s; lái bằng phun chất lỏng (LITVC), có khoang chứa N₂O₄ gắn bên ngoài"
+      }
+    },
+    "part:srb_p120c_l": {
+      "en": {
+        "what": "A stubby solid motor wound from carbon fibre in one piece: the booster of Ariane 6 and the first stage of Vega C. Here about 840 kN at sea level for 65 seconds.",
+        "why": "The carbon case is light. It is the largest one-piece carbon-fibre solid motor ever built, 3.4 m wide and 13.5 m long, holding about 142 tonnes of propellant.",
+        "without": "Without it the core lifts alone. It is dear for its thrust, cannot be shut down, and its 2 t casing stays attached.",
+        "inside": "A carbon-fibre case wound in one piece is filled with propellant. Its nozzle tilts on a flexible pivot, pushed by electric actuators instead of hydraulics.",
+        "analogy": "Like a carbon-fibre fishing rod: wound from thin threads, light and strong."
+      },
+      "vi": {
+        "what": "Một động cơ nhiên liệu rắn ngắn mập, vỏ quấn bằng sợi carbon liền một khối: tên lửa đẩy phụ (booster) của Ariane 6 và tầng một của Vega C. Ở đây khoảng 840 kN ở mặt đất trong 65 giây.",
+        "why": "Vỏ carbon nhẹ. Đây là động cơ rắn vỏ sợi carbon liền khối lớn nhất từng chế tạo, rộng 3,4 m, dài 13,5 m, chứa khoảng 142 tấn thuốc phóng.",
+        "without": "Không có nó, tầng lõi tự nâng một mình. Nó đắt so với lực đẩy, không tắt được, và vỏ 2 tấn cứ dính theo tàu.",
+        "inside": "Vỏ sợi carbon quấn liền một khối, nhồi đầy thuốc phóng. Vòi phun nghiêng trên một khớp mềm, được đẩy bằng bộ đẩy điện (electric actuator) thay cho thủy lực.",
+        "analogy": "Giống chiếc cần câu sợi carbon: quấn từ những sợi mảnh, vừa nhẹ vừa chắc.",
+        "name": "Tên lửa đẩy phụ rắn vỏ carbon",
+        "pros": [
+          "Vỏ carbon nhẹ",
+          "Vòi phun lái bằng điện"
+        ],
+        "cons": [
+          "Đắt so với lực đẩy",
+          "Không tắt được",
+          "Vỏ 2 tấn vẫn dính theo"
+        ],
+        "real": "P120C (2022–): trung bình 4.500 kN / tối đa 4.780 kN, Isp 280 s, khoảng 142 tấn thuốc phóng, 134 s, 3,4 m × 13,5 m, vỏ sợi carbon quấn, vòi phun trên khớp mềm với bộ đẩy cơ điện (SABCA)"
+      },
+      "_todo": "Sea-level Isp 252 s is a game estimate (see NOTES.md); not stated here."
+    },
+    "part:srb_3_m": {
+      "en": {
+        "what": "Japan's H3 booster: a simple solid motor 2.5 m wide and 15 m long, with a carbon-fibre case. Here about 680 kN at sea level for 55 seconds.",
+        "why": "It is built to be simple and cheap: its nozzle is fixed, so the core engines do all the steering, and it lets go of the core with a simpler separation system. H3 flies with none, two or four of them.",
+        "without": "Without it the core lifts alone. With it comes a low Isp and no way to shut it down.",
+        "inside": "A case packed with propellant round a hollow core; the gas rushes out through one nozzle bolted straight at the bottom.",
+        "analogy": "Like a plain firework rocket: light it and it pushes until it is empty."
+      },
+      "vi": {
+        "what": "Tên lửa đẩy phụ (booster) của H3 (Nhật Bản): một động cơ nhiên liệu rắn đơn giản, rộng 2,5 m, dài 15 m, vỏ sợi carbon. Ở đây khoảng 680 kN ở mặt đất trong 55 giây.",
+        "why": "Nó được làm cho đơn giản và rẻ: vòi phun cố định (fixed nozzle), nên các động cơ lõi lo toàn bộ việc lái, và nó tách khỏi tầng lõi bằng một hệ tách đơn giản hơn. H3 bay với không, hai hoặc bốn chiếc.",
+        "without": "Không có nó, tầng lõi tự nâng một mình. Có nó thì Isp thấp và không tắt được.",
+        "inside": "Một vỏ nhồi thuốc phóng quanh lõi rỗng; khí phụt ra qua một vòi phun bắt thẳng ở đáy.",
+        "analogy": "Giống quả pháo thăng thiên thường: châm lửa là nó đẩy cho tới khi cháy hết.",
+        "name": "Tên lửa đẩy phụ rắn SRB-3",
+        "pros": [
+          "Mỗi chiếc khoảng 680 kN lúc rời bệ",
+          "Vòi phun cố định đơn giản"
+        ],
+        "cons": [
+          "Isp thấp",
+          "Không tắt được"
+        ],
+        "real": "SRB-3 (2023–): tối đa 2.300 kN, Isp 283,6 s, 110 s, 15 m × 2,5 m, nặng 76,2 tấn khi nạp đầy, vỏ sợi carbon, vòi phun cố định, hệ tách đơn giản hơn"
+      }
+    },
+    "part:srb_s200_l": {
+      "en": {
+        "what": "India's big solid booster for LVM3: 3.2 m wide and 25 m long, with a nozzle that swivels. Here about 870 kN at sea level for 64 seconds.",
+        "why": "Two of them lift and steer LVM3 alone for its first two minutes; the core only lights about 110 s after liftoff. LVM3 launched Chandrayaan-3, which landed near the Moon's south pole in 2023.",
+        "without": "Without it the core lifts alone. With it comes a low Isp, no way to shut it down, and a 3.2 t casing that stays attached.",
+        "inside": "About 205 tonnes of HTPB-based propellant fill a case built in three segments. The flexible nozzle swivels up to 8° on electro-hydraulic actuators.",
+        "analogy": "Like a giant torch you can tilt to aim the flame."
+      },
+      "vi": {
+        "what": "Tên lửa đẩy phụ (booster) nhiên liệu rắn cỡ lớn của Ấn Độ cho LVM3: rộng 3,2 m, dài 25 m, có vòi phun xoay được. Ở đây khoảng 870 kN ở mặt đất trong 64 giây.",
+        "why": "Hai chiếc tự nâng và tự lái LVM3 trong hai phút đầu; tầng lõi chỉ khởi động khoảng 110 s sau khi rời bệ. LVM3 đã phóng Chandrayaan-3, tàu đáp xuống gần cực nam Mặt Trăng năm 2023.",
+        "without": "Không có nó, tầng lõi tự nâng một mình. Có nó thì Isp thấp, không tắt được, và vỏ 3,2 tấn cứ dính theo tàu.",
+        "inside": "Khoảng 205 tấn thuốc phóng gốc HTPB nằm trong một vỏ ghép từ ba khúc. Vòi phun khớp mềm (flex nozzle) xoay tới 8° nhờ bộ đẩy điện-thủy lực.",
+        "analogy": "Giống một ngọn đuốc khổng lồ nghiêng được để hướng ngọn lửa.",
+        "name": "Tên lửa đẩy phụ rắn S200",
+        "pros": [
+          "Mỗi chiếc khoảng 870 kN lúc rời bệ",
+          "Vòi phun khớp mềm lái tới 8°"
+        ],
+        "cons": [
+          "Vỏ 3,2 tấn vẫn dính theo",
+          "Isp thấp",
+          "Không tắt được"
+        ],
+        "real": "S200 (LVM3, 2014–): ba khúc, đỉnh 5.150 kN, trung bình 3.578 kN, Isp 274,5 s, khoảng 205 tấn thuốc phóng gốc HTPB, khoảng 128–130 s, 25 m × 3,2 m, vòi phun khớp mềm ±8° với bộ đẩy điện-thủy lực 294 kN"
+      }
+    },
+    "part:booster_cbc_l": {
+      "en": {
+        "what": "A whole hydrogen first stage with its own RS-68 engine, clamped to the side: the side cores of Delta IV Heavy. Here about 740 kN at sea level for 80 seconds.",
+        "why": "Hydrogen gives it the highest Isp of any booster here, 360 s at sea level. Delta IV Heavy was three of these identical cores side by side.",
+        "without": "Without it the core lifts alone. It is the dearest booster here, its hydrogen tanks are bulky, and its empty shell stays attached.",
+        "inside": "Hydrogen and oxygen tanks over one RS-68 (the uprated RS-68A from 2012), the most powerful hydrogen engines ever flown, with an ablative nozzle and about 80 % fewer parts than the Shuttle's engine.",
+        "analogy": "Like coupling two more of the same bus to the sides of the first one."
+      },
+      "vi": {
+        "what": "Cả một tầng một chạy hydro, có động cơ RS-68 riêng, kẹp vào hông: các lõi bên của Delta IV Heavy. Ở đây khoảng 740 kN ở mặt đất trong 80 giây.",
+        "why": "Nhờ hydro, nó có Isp cao nhất trong các tên lửa đẩy phụ (booster) ở đây, 360 s ở mặt đất. Delta IV Heavy là ba lõi giống hệt nhau đặt cạnh nhau.",
+        "without": "Không có nó, tầng lõi tự nâng một mình. Đây là tên lửa đẩy phụ đắt nhất ở đây, bồn hydro cồng kềnh, và vỏ rỗng cứ dính theo tàu.",
+        "inside": "Bồn hydro và bồn oxy nằm trên một động cơ RS-68 (bản nâng cấp RS-68A từ năm 2012), loại động cơ hydro mạnh nhất từng bay, có vòi phun cháy mòn (ablative) và ít hơn khoảng 80 % chi tiết so với động cơ tàu con thoi.",
+        "analogy": "Giống ghép thêm hai chiếc xe buýt y hệt vào hai bên chiếc đầu tiên.",
+        "name": "Lõi hydro gắn hông",
+        "pros": [
+          "Isp 360 s ở mặt đất: tốt hơn hẳn nhiên liệu rắn",
+          "Hydro: Isp cao nhất trong các tên lửa đẩy phụ ở đây"
+        ],
+        "cons": [
+          "Tên lửa đẩy phụ đắt nhất",
+          "Bồn hydro cồng kềnh",
+          "Vỏ rỗng vẫn dính theo"
+        ],
+        "real": "Lõi đẩy chung (Common Booster Core) của Delta IV Heavy (2004–24): một RS-68 (2004–11) hoặc RS-68A (từ 2012; 3.137 kN ở mặt đất / 3.560 kN trong chân không, Isp 360 / 412 s), khoảng 200 tấn nhiên liệu, 40,8 m × 5,1 m, vòi phun cháy mòn"
+      }
+    },
+    "part:booster_f9_m": {
+      "en": {
+        "what": "A whole Falcon 9 first stage with nine engines, grid fins, legs and a nose cone, clamped to the side. Here about 975 kN at sea level for 77 seconds.",
+        "why": "Falcon Heavy is three Falcon 9 first stages side by side: 27 Merlin engines and 22.8 MN at liftoff. With nine engines in each booster, one can fail and the rest fly on.",
+        "without": "Without it the core lifts alone. It is dear, and because nothing separates in this hangar, its empty shell, legs and grid fins ride along.",
+        "inside": "Kerosene and oxygen tanks over nine Merlin engines, with folded legs and grid fins. On the real rocket the side boosters turn round, fly back and land side by side near the launch site.",
+        "analogy": "Like two friends on bikes pushing a third up a hill, then riding home on their own."
+      },
+      "vi": {
+        "what": "Cả một tầng một Falcon 9 với chín động cơ, vây lưới (grid fin), chân đáp và chóp mũi, kẹp vào hông. Ở đây khoảng 975 kN ở mặt đất trong 77 giây.",
+        "why": "Falcon Heavy là ba tầng một Falcon 9 đặt cạnh nhau: 27 động cơ Merlin và 22,8 MN lúc rời bệ. Mỗi tên lửa đẩy phụ có chín động cơ, nên hỏng một chiếc thì các chiếc kia vẫn bay tiếp.",
+        "without": "Không có nó, tầng lõi tự nâng một mình. Nó đắt, và vì trong xưởng này không có gì tách ra, vỏ rỗng, chân đáp và vây lưới đi theo đến cùng.",
+        "inside": "Bồn dầu hỏa và bồn oxy nằm trên chín động cơ Merlin, có chân đáp gập và vây lưới. Trên tên lửa thật, hai tên lửa đẩy phụ bên quay đầu, bay về và đáp cạnh nhau gần bãi phóng.",
+        "analogy": "Giống hai người bạn đạp xe đẩy người thứ ba lên dốc, rồi tự đạp xe về nhà.",
+        "name": "Tên lửa đẩy phụ hông Falcon 9",
+        "pros": [
+          "Isp 282 s ở mặt đất: tốt hơn hẳn nhiên liệu rắn",
+          "Đốt cùng dầu hỏa và oxy như tầng lõi"
+        ],
+        "cons": [
+          "Đắt",
+          "Vỏ rỗng, chân đáp và vây lưới vẫn dính theo"
+        ],
+        "real": "Tên lửa đẩy phụ hông của Falcon Heavy (2018–): chín Merlin 1D, khoảng 7.600 kN ở mặt đất, Isp 282 / 311 s, rộng 3,7 m, chóp mũi, vây lưới titan, bốn chân đáp; 14 chuyến Falcon Heavy tính tới tháng 10/2026"
+      }
+    },
+    "part:booster_blok_a_m": {
+      "en": {
+        "what": "One of Energia's four kerosene boosters, with an RD-170, the most powerful liquid engine ever flown. Here about 960 kN at sea level for 78 seconds.",
+        "why": "Its staged-combustion engine wastes nothing and gives Isp 309 s at sea level. Zenit later flew the same stage as its first stage.",
+        "without": "Without it the core lifts alone. It is dear, and its empty shell stays attached.",
+        "inside": "The RD-170 has four chambers fed by a single 170-megawatt turbopump, and was made to be reused up to ten times. The two-chamber RD-180, cut from the same design, powered Atlas V.",
+        "analogy": "Like one big pump feeding four garden hoses at once."
+      },
+      "vi": {
+        "what": "Một trong bốn tên lửa đẩy phụ (booster) chạy dầu hỏa của Energia, mang động cơ RD-170, động cơ nhiên liệu lỏng mạnh nhất từng bay. Ở đây khoảng 960 kN ở mặt đất trong 78 giây.",
+        "why": "Động cơ đốt theo tầng (staged combustion) của nó không phí chút nào và cho Isp 309 s ở mặt đất. Về sau tên lửa Zenit dùng chính tầng này làm tầng một.",
+        "without": "Không có nó, tầng lõi tự nâng một mình. Nó đắt, và vỏ rỗng cứ dính theo tàu.",
+        "inside": "RD-170 có bốn buồng đốt được một bơm tuabin 170 megawatt duy nhất cấp nhiên liệu, và được làm để dùng lại tới mười lần. RD-180 hai buồng đốt, cắt ra từ cùng thiết kế, là động cơ của Atlas V.",
+        "analogy": "Giống một chiếc máy bơm lớn cấp nước cho bốn vòi tưới cùng lúc.",
+        "name": "Tên lửa đẩy phụ Blok A của Energia",
+        "pros": [
+          "Isp 309 s ở mặt đất",
+          "Đốt theo tầng: không phí chút nào"
+        ],
+        "cons": [
+          "Đắt",
+          "Vỏ rỗng vẫn dính theo"
+        ],
+        "real": "Blok A của Energia (1987–88): một RD-170, 7.250 kN ở mặt đất / 7.900 kN trong chân không, Isp 309 / 338 s, 156 s, 39,5 m × 3,92 m, khoảng 340 tấn khi nạp đầy"
+      }
+    },
+    "part:booster_urm1_m": {
+      "en": {
+        "what": "A standard kerosene module with one RD-191 engine: Angara builds every size of rocket from the same module. Here about 645 kN at sea level for 80 seconds.",
+        "why": "It gives Isp 311 s at sea level, and its engine throttles from 27 to 105 %. Angara 1.2 flies one module; Angara A5 clusters five.",
+        "without": "Without it the core lifts alone. It is dear for its thrust, and its empty shell stays attached.",
+        "inside": "Kerosene and oxygen tanks over one RD-191, a one-chamber engine cut from the four-chamber RD-170.",
+        "analogy": "Like a Lego brick: the same brick builds a small tower or a big one."
+      },
+      "vi": {
+        "what": "Một mô-đun dầu hỏa tiêu chuẩn với một động cơ RD-191: Angara ghép mọi cỡ tên lửa từ cùng một mô-đun. Ở đây khoảng 645 kN ở mặt đất trong 80 giây.",
+        "why": "Nó cho Isp 311 s ở mặt đất, và động cơ chỉnh ga (throttle) được từ 27 đến 105 %. Angara 1.2 bay với một mô-đun; Angara A5 ghép năm mô-đun.",
+        "without": "Không có nó, tầng lõi tự nâng một mình. Nó đắt so với lực đẩy, và vỏ rỗng cứ dính theo tàu.",
+        "inside": "Bồn dầu hỏa và bồn oxy nằm trên một động cơ RD-191, loại một buồng đốt cắt ra từ RD-170 bốn buồng đốt.",
+        "analogy": "Giống viên gạch Lego: cùng một viên xây được tháp nhỏ lẫn tháp lớn.",
+        "name": "Mô-đun URM-1 của Angara",
+        "pros": [
+          "Isp 311 s ở mặt đất",
+          "Chỉnh ga sâu (động cơ thật, 27–105 %)"
+        ],
+        "cons": [
+          "Đắt so với lực đẩy",
+          "Vỏ rỗng vẫn dính theo"
+        ],
+        "real": "URM-1 của Angara (2014–): một RD-191, 1.920 kN ở mặt đất / 2.090 kN trong chân không, Isp 310,7 / 337 s, chỉnh ga 27–105 %, rộng khoảng 2,9 m"
+      },
+      "_todo": "Module length (about 25 m) unconfirmed; not stated here."
+    },
+    "part:booster_cz5_m": {
+      "en": {
+        "what": "A 3.35 m kerosene booster with two engines and a cone nose: four of them ring the Long March 5. Here about 690 kN at sea level for 80 seconds.",
+        "why": "It gives Isp 300 s at sea level with two engines per booster. Long March 5 launched China's first Mars mission, Tianwen-1, in July 2020, and the Chang'e 5 Moon sample return.",
+        "without": "Without it the core lifts alone. It is dear, and its empty shell stays attached.",
+        "inside": "Two YF-100 engines sit under the tanks: oxygen-rich staged-combustion kerosene engines that swivel in one plane.",
+        "analogy": "Like a helper who pushes with two hands instead of one."
+      },
+      "vi": {
+        "what": "Một tên lửa đẩy phụ (booster) chạy dầu hỏa rộng 3,35 m, có hai động cơ và mũi hình nón: bốn chiếc vây quanh Trường Chinh 5. Ở đây khoảng 690 kN ở mặt đất trong 80 giây.",
+        "why": "Nó cho Isp 300 s ở mặt đất, mỗi chiếc có hai động cơ. Trường Chinh 5 đã phóng sứ mệnh Sao Hỏa đầu tiên của Trung Quốc, Thiên Vấn 1 (Tianwen-1), vào tháng 7/2020, và sứ mệnh lấy mẫu Mặt Trăng Hằng Nga 5 (Chang'e 5).",
+        "without": "Không có nó, tầng lõi tự nâng một mình. Nó đắt, và vỏ rỗng cứ dính theo tàu.",
+        "inside": "Hai động cơ YF-100 nằm dưới bồn: động cơ dầu hỏa đốt theo tầng giàu oxy, xoay được trong một mặt phẳng.",
+        "analogy": "Giống một người phụ đẩy bằng hai tay thay vì một tay.",
+        "name": "Tên lửa đẩy phụ Trường Chinh 5",
+        "pros": [
+          "Isp 300 s ở mặt đất",
+          "Mỗi chiếc hai động cơ"
+        ],
+        "cons": [
+          "Đắt",
+          "Vỏ rỗng vẫn dính theo"
+        ],
+        "real": "Tên lửa đẩy phụ Trường Chinh 5 (2016–): hai YF-100, 2.400 kN ở mặt đất / 2.680 kN trong chân không, Isp 300 / 335 s, rộng 3,35 m"
+      },
+      "_todo": "Booster length (about 27.6 m) unconfirmed; not stated here."
     },
     "part:fin_s": {
       "en": {
@@ -572,6 +1158,59 @@
         "name": "Nắp che động cơ"
       }
     },
+    "part:fin_flap_l": {
+      "en": {
+        "what": "A big steel flap on a hinge beside Starship's engine bay. The ship has two at the tail and two near the nose.",
+        "why": "Falling back from space belly-first, Starship tilts its flaps to steer and stay stable, then flips upright just before landing. On the climb they lie still and add a little stability low on the tail.",
+        "without": "A fixed fin is lighter and simpler. A flap is heavy steel, and its windward face needs a heat shield.",
+        "inside": "A steel panel turns on a hinge sealed inside an aerodynamic cover, moved by motors.",
+        "analogy": "Like a skydiver's arms and legs: spread and tilted, they steer the fall."
+      },
+      "vi": {
+        "what": "Một tấm cánh lật (flap) bằng thép lớn gắn bản lề cạnh khoang động cơ Starship. Tàu có hai tấm ở đuôi và hai tấm gần mũi.",
+        "why": "Khi rơi về từ không gian với bụng hướng xuống, Starship nghiêng các cánh lật để lái và giữ thăng bằng, rồi lật dựng đứng ngay trước khi hạ cánh. Lúc bay lên chúng nằm yên và thêm một chút ổn định ở thấp trên đuôi.",
+        "without": "Vây cố định thì nhẹ và đơn giản hơn. Cánh lật là thép nặng, và mặt đón gió cần tấm chắn nhiệt.",
+        "inside": "Một tấm thép xoay trên bản lề được bọc kín trong vỏ khí động học, và được mô-tơ đẩy.",
+        "analogy": "Giống tay chân của người nhảy dù: dang ra và nghiêng đi là lái được cú rơi.",
+        "name": "Cánh lật sau",
+        "pros": [
+          "Thêm ổn định ở thấp trên đuôi",
+          "Lái tàu thật khi rơi về"
+        ],
+        "cons": [
+          "Thép nặng",
+          "Mặt đón gió cần tấm chắn nhiệt"
+        ],
+        "real": "Cánh lật sau của Starship (2023–): hai tấm, cạnh khoang động cơ và bồn oxy, bản lề bọc kín trong vỏ; một lớp lót cháy mòn phía sau được thêm cho chuyến bay thứ 6"
+      },
+      "_todo": "Flap length (about 9 m) and electric actuators unconfirmed; the text only says 'motors'."
+    },
+    "part:fin_aft_m": {
+      "en": {
+        "what": "One of four aft fins at the base of New Shepard’s booster, swung by hydraulic actuators.",
+        "why": "They steady the climb and steer the booster back to its landing pad, and they work even at Mach 4.",
+        "without": "A fixed fin has no hydraulics to fail. These add mass and drag.",
+        "inside": "Each fin turns on a pivot pushed by a hydraulic actuator. Higher up, a ring fin and four wedge fins steady the fall, and drag brakes open out of the ring.",
+        "analogy": "Like the rudder of a boat, working in air instead of water."
+      },
+      "vi": {
+        "what": "Một trong bốn vây đuôi (aft fin) ở đáy tầng đẩy New Shepard, được xoay bằng bộ đẩy thủy lực.",
+        "why": "Chúng giữ vững lúc bay lên và lái tầng đẩy bay về bãi đáp, hoạt động được cả ở tốc độ Mach 4.",
+        "without": "Vây cố định thì không có thủy lực để hỏng. Các vây này thêm khối lượng và lực cản.",
+        "inside": "Mỗi vây xoay quanh một trục, được đẩy bằng một bộ đẩy thủy lực. Ở phía trên, một vây vòng (ring fin) và bốn vây hình nêm (wedge fin) giữ vững lúc rơi, và các tấm phanh khí bung ra từ vây vòng.",
+        "analogy": "Giống bánh lái của con thuyền, nhưng lái trong không khí thay vì trong nước.",
+        "name": "Vây đuôi",
+        "pros": [
+          "Vây cử động: lái được trong không khí dày",
+          "Ở thấp trên đuôi: rất ổn định"
+        ],
+        "cons": [
+          "Thủy lực có thể hỏng",
+          "Thêm khối lượng và lực cản"
+        ],
+        "real": "Vây đuôi New Shepard (2015–): bốn chiếc, xoay bằng thủy lực ở tốc độ tới Mach 4 (Blue Origin); vây vòng và vây hình nêm ở gần đỉnh"
+      }
+    },
     "part:legs_m": {
       "en": {
         "what": "Four shock-absorbing legs with feet. They clamp around the engine so the feet reach the ground first.",
@@ -647,6 +1286,58 @@
         ],
         "real": "Chân đáp Falcon 9: sợi carbon và tổ ong nhôm, rộng khoảng 18 m khi mở, bung bằng pít-tông heli",
         "name": "Chân đáp gập ×4"
+      }
+    },
+    "part:legs_glenn_l": {
+      "en": {
+        "what": "Landing legs that lie flush along New Glenn's tail during the climb and swing out just before touchdown.",
+        "why": "New Glenn's first stage lands at sea on the ship Jacklyn, about 600 km out in the Atlantic, and its legs spread the weight of a 7 m booster on a moving deck. The first landing worked on 13 November 2025.",
+        "without": "Fewer legs are lighter: these are the heaviest legs here, and their opening mechanism must work.",
+        "inside": "Each leg folds flat into the tail for the climb, then swings out and locks; shock absorbers and feet take the touchdown.",
+        "analogy": "Like the legs of a camping table that fold underneath and pop out when you need them."
+      },
+      "vi": {
+        "what": "Chân đáp (landing legs) nằm sát dọc đuôi New Glenn khi bay lên và bung ra ngay trước khi chạm đất.",
+        "why": "Tầng một New Glenn đáp trên biển, xuống con tàu Jacklyn cách bờ khoảng 600 km giữa Đại Tây Dương, và các chân dàn sức nặng của tầng đẩy rộng 7 m trên một mặt boong chòng chành. Lần đáp đầu tiên thành công ngày 13/11/2025.",
+        "without": "Ít chân hơn thì nhẹ hơn: đây là bộ chân nặng nhất ở đây, và cơ cấu bung chân phải hoạt động.",
+        "inside": "Mỗi chân gập phẳng vào đuôi khi bay lên, rồi bung ra và khóa lại; bộ giảm chấn và bàn chân đỡ cú chạm đất.",
+        "analogy": "Giống chân chiếc bàn cắm trại: gập dưới mặt bàn, cần thì bật ra.",
+        "name": "Chân đáp ×6",
+        "pros": [
+          "Sáu chân: thế đứng rộng và vững",
+          "Nằm sát thân khi bay lên"
+        ],
+        "cons": [
+          "Chân nặng nhất ở đây",
+          "Cơ cấu bung phải hoạt động"
+        ],
+        "real": "Chân đáp tầng một New Glenn (2025–): sáu chân thủy lực, gập sát thân khi bay lên và bung ra trước khi đáp"
+      }
+    },
+    "part:legs_shepard_m": {
+      "en": {
+        "what": "Four short legs that swing down just before New Shepard's booster touches down.",
+        "why": "The booster falls back tail-first, opens its drag brakes, relights its engine low over the ground and settles on these legs. Nearly all of it flies again: one booster flew 17 times.",
+        "without": "Longer legs stand wider. These need flat ground, and they must swing down in time.",
+        "inside": "Each leg hinges at the base and drops into place before landing; shock absorbers take the touchdown.",
+        "analogy": "Like an aeroplane lowering its wheels just before it lands."
+      },
+      "vi": {
+        "what": "Bốn chân ngắn hạ xuống ngay trước khi tầng đẩy New Shepard chạm đất.",
+        "why": "Tầng đẩy rơi về đuôi xuống trước, bung phanh khí, đề lại động cơ khi đã sát mặt đất rồi đứng xuống trên các chân này. Gần như toàn bộ được bay lại: một tầng đẩy đã bay 17 lần.",
+        "without": "Chân dài hơn thì đứng rộng hơn. Bộ này cần mặt đất phẳng, và phải hạ xuống kịp lúc.",
+        "inside": "Mỗi chân gắn bản lề ở đáy và hạ vào vị trí trước khi đáp; bộ giảm chấn (shock absorber) đỡ cú chạm đất.",
+        "analogy": "Giống máy bay hạ bánh ngay trước khi hạ cánh.",
+        "name": "Càng đáp tầng đẩy ×4",
+        "pros": [
+          "Nhẹ",
+          "Đã qua hàng chục lần hạ cánh"
+        ],
+        "cons": [
+          "Thế đứng hẹp: cần mặt đất phẳng",
+          "Phải hạ xuống kịp lúc"
+        ],
+        "real": "Càng đáp New Shepard (2015–): bốn chân hạ xuống trước khi đáp; tầng đẩy NS4 bay 17 lần"
       }
     },
     "part:gimbal_ring": {
@@ -807,11 +1498,11 @@
     },
     "option:engine/cycle/sc": {
       "en": {
-        "what": "Staged combustion: the turbine's exhaust goes on into the main chamber, so nothing is wasted. Higher pressure and Isp, far harder to build."
+        "what": "Oxygen-rich staged combustion: an oxygen-rich preburner spins the turbine, then all its hot gas burns in the main chamber, so nothing is wasted. Kerosene engines such as the RD-180 work this way; the hot oxygen-rich gas eats ordinary metals, so the turbine needs special coatings."
       },
       "vi": {
-        "what": "Đốt theo tầng (staged combustion): khí thải của tuabin đi tiếp vào buồng đốt chính, nên không phí chút nào. Áp suất và Isp cao hơn, nhưng khó chế tạo hơn nhiều.",
-        "name": "Đốt theo tầng",
+        "what": "Đốt theo tầng giàu oxy (oxygen-rich staged combustion): một buồng đốt sơ bộ giàu oxy quay tuabin, rồi toàn bộ khí nóng của nó cháy tiếp trong buồng đốt chính, nên không phí chút nào. Các động cơ dầu hỏa như RD-180 làm theo cách này; khí nóng giàu oxy ăn mòn kim loại thường, nên tuabin cần lớp phủ đặc biệt.",
+        "name": "Đốt theo tầng, giàu oxy",
         "pros": [
           "Isp +12 s",
           "Không phí chút nào"
@@ -820,7 +1511,7 @@
           "Đường ống giàu oxy nóng đỏ",
           "Giá +40 %"
         ],
-        "real": "RS-25, RD-180, Raptor"
+        "real": "RD-170, RD-180, RD-191, NK-33, YF-100, BE-4"
       }
     },
     "option:engine/cycle/expander": {
@@ -925,18 +1616,18 @@
     },
     "option:engine/injector/coaxial": {
       "en": {
-        "what": "Hundreds of small elements, each with oxidizer in the middle and fuel swirling around it: smooth burning."
+        "what": "Shear coaxial: hundreds of elements, each a tube of oxygen inside a ring of fast fuel. The fast fuel shears the oxygen into droplets, for smooth burning."
       },
       "vi": {
-        "what": "Hàng trăm vòi nhỏ, mỗi vòi có chất oxy hóa ở giữa và nhiên liệu xoáy quanh: cháy êm.",
-        "name": "Xoáy đồng trục",
+        "what": "Đồng trục cắt (shear coaxial): hàng trăm phần tử phun, mỗi cái là một ống oxy nằm trong một vòng nhiên liệu chảy nhanh. Nhiên liệu chảy nhanh xé oxy thành giọt nhỏ, nên cháy êm.",
+        "name": "Đồng trục cắt",
         "pros": [
           "Cháy êm và hiệu quả"
         ],
         "cons": [
           "Hàng trăm chi tiết chính xác"
         ],
-        "real": "RS-25, RD-180"
+        "real": "RS-25, J-2, RL10, Vulcain"
       }
     },
     "option:engine/injector/pintle": {
@@ -1095,17 +1786,18 @@
     },
     "option:engine/igniter/pyro": {
       "en": {
-        "what": "A one-shot cartridge, like a firework fuse: the simplest igniter, one start only."
+        "what": "A one-shot cartridge, like a firework fuse: the simplest igniter, one start only, and a dud cannot be tried again."
       },
       "vi": {
-        "what": "Một ống mồi dùng một lần, giống ngòi pháo: bộ đánh lửa đơn giản nhất, chỉ khởi động được một lần.",
+        "what": "Một ống mồi dùng một lần, giống ngòi pháo: bộ đánh lửa đơn giản nhất, chỉ khởi động được một lần, và ống mồi tịt thì không thử lại được.",
         "name": "Ống mồi thuốc nổ",
         "pros": [
           "Đơn giản nhất",
           "−10 nghìn đô"
         ],
         "cons": [
-          "Chỉ đánh lửa một lần"
+          "Chỉ đánh lửa một lần",
+          "Ống mồi tịt thì không thử lại được (độ tin cậy −0,2 %)"
         ],
         "real": "F-1, Vulcain"
       }
@@ -1126,6 +1818,274 @@
         ],
         "real": "Merlin (chớp lửa xanh lục lúc đánh lửa)"
       }
+    },
+    "slot:engine/chamber": {
+      "en": {
+        "what": "The wall of the combustion chamber and how it survives gas at more than 3,000 °C: cooling channels, a wall of tubes, a cool film of fuel, or a lining that slowly burns away."
+      },
+      "vi": {
+        "what": "Thành buồng đốt (combustion chamber) và cách nó chịu được khí nóng hơn 3.000 °C: rãnh làm mát, thành ghép từ ống, một lớp nhiên liệu mát phủ thành, hay lớp lót cháy mòn dần.",
+        "name": "Thành buồng đốt và làm mát"
+      }
+    },
+    "slot:engine/contour": {
+      "en": {
+        "what": "The curve of the nozzle wall that turns hot gas into speed. How wide the nozzle opens (the expansion ratio: exit area divided by throat area) is set by choosing a sea-level or a vacuum nozzle."
+      },
+      "vi": {
+        "what": "Đường cong của thành vòi phun (nozzle), nơi biến khí nóng thành tốc độ. Độ loe của vòi (tỷ số giãn nở, expansion ratio: diện tích miệng chia cho diện tích cổ) được quyết định khi chọn vòi phun mặt đất hay vòi phun chân không.",
+        "name": "Hình dạng vòi phun"
+      }
+    },
+    "slot:engine/stability": {
+      "en": {
+        "what": "What stops the flame from ringing like a bell. If sound waves in the chamber fall in step with the burning they can shake it apart, as happened to some early F-1 engines."
+      },
+      "vi": {
+        "what": "Thứ giữ cho ngọn lửa không “ngân” như tiếng chuông. Nếu sóng âm trong buồng đốt cộng hưởng với nhịp cháy, chúng có thể rung vỡ buồng đốt, như đã xảy ra với vài động cơ F-1 thời đầu (combustion instability).",
+        "name": "Chống cháy rung"
+      }
+    },
+    "option:engine/cycle/sc_fuel": {
+      "en": {
+        "what": "Fuel-rich staged combustion: a hydrogen-rich preburner spins the turbine (the RS-25 has two, each with its own turbopump), then its warm gas burns in the main chamber. Hydrogen engines do it this way because hot hydrogen is gentle on turbines; with kerosene the turbines would clog with soot."
+      },
+      "vi": {
+        "what": "Đốt theo tầng giàu nhiên liệu (fuel-rich staged combustion): một buồng đốt sơ bộ giàu hydro quay tuabin (RS-25 có hai buồng, mỗi buồng một bơm tuabin riêng), rồi khí ấm của nó cháy tiếp trong buồng đốt chính. Động cơ hydro làm theo cách này vì hydro nóng hiền với tuabin; với dầu hỏa, tuabin sẽ bị đóng muội.",
+        "name": "Đốt theo tầng, giàu nhiên liệu",
+        "pros": [
+          "Isp +14 s",
+          "Không phí chút nhiên liệu nào"
+        ],
+        "cons": [
+          "Giá +50 %",
+          "Khối lượng ×1,15",
+          "Đường ống khí nóng phức tạp"
+        ],
+        "real": "RS-25 (tàu con thoi, SLS: 206 bar), RD-0120 (Energia), LE-7A (H-IIA)"
+      }
+    },
+    "option:engine/cycle/expander_bleed": {
+      "en": {
+        "what": "Expander bleed: hydrogen warmed in the chamber walls spins the turbine and is then dumped overboard instead of burned. Nothing burns before the chamber, so failures are mild; it is hard to scale up, and Japan's LE-9 brings it to first-stage thrust. It suits hydrogen: the fuel must boil and expand in the walls."
+      },
+      "vi": {
+        "what": "Giãn nở xả (expander bleed): hydro được hâm nóng trong thành buồng đốt quay tuabin rồi bị xả ra ngoài thay vì đem đốt. Không có gì cháy trước buồng đốt, nên khi hỏng thì hỏng nhẹ; chu trình này khó làm to, và LE-9 của Nhật đưa nó lên tới lực đẩy tầng một. Chu trình này hợp với hydro: nhiên liệu phải sôi và giãn nở trong vách.",
+        "name": "Giãn nở xả",
+        "pros": [
+          "Isp +2 s",
+          "Hỏng thì hỏng nhẹ (độ tin cậy +0,8 %)"
+        ],
+        "cons": [
+          "Lực đẩy −5 %: khó làm to",
+          "Giá +5 %"
+        ],
+        "real": "LE-9 (tầng một H3, 1.471 kN), LE-5B (tầng trên H-IIA), BE-3U (tầng trên New Glenn)"
+      }
+    },
+    "option:engine/injector/swirl": {
+      "en": {
+        "what": "Swirl coaxial: each element spins its propellant into a thin cone round the other, so they mix in a short, steady flame. Engines of the RD-170 family and Raptor 2 use it."
+      },
+      "vi": {
+        "what": "Đồng trục xoáy (swirl coaxial): mỗi phần tử phun xoáy chất đẩy thành một hình nón mỏng bao quanh chất kia, nên chúng trộn đều trong một ngọn lửa ngắn và ổn định. Họ động cơ RD-170 và Raptor 2 dùng loại này.",
+        "name": "Đồng trục xoáy",
+        "pros": [
+          "Isp +1 s",
+          "Ngọn lửa ngắn, ổn định (độ tin cậy +0,2 %)"
+        ],
+        "cons": [
+          "+10 nghìn đô",
+          "Hàng trăm chi tiết chính xác"
+        ],
+        "real": "Họ RD-170 / RD-180, Raptor 2"
+      }
+    },
+    "option:engine/igniter/ampoule": {
+      "en": {
+        "what": "A sealed capsule of a fluid that bursts into flame when it touches oxygen is pushed into the chamber at start. Certain and simple, but one capsule gives one start."
+      },
+      "vi": {
+        "what": "Một viên nang kín chứa chất lỏng tự bốc cháy khi chạm oxy (pyrophoric) được đẩy vào buồng đốt lúc khởi động. Chắc chắn và đơn giản, nhưng mỗi viên chỉ cho một lần khởi động.",
+        "name": "Viên nang tự cháy",
+        "pros": [
+          "Khởi động chắc chắn, không cần tia lửa hay dây điện (độ tin cậy +0,2 %)"
+        ],
+        "cons": [
+          "+10 nghìn đô: mỗi lần khởi động một viên nang kín và một van",
+          "Mỗi viên chỉ một lần khởi động"
+        ],
+        "real": "RD-170 (viên nang khởi động triethylaluminium), RD-191 (chất khởi động tự bốc cháy khi gặp oxy)"
+      }
+    },
+    "option:engine/chamber/channels": {
+      "en": {
+        "what": "A copper-alloy liner with hundreds of narrow channels cut into it and closed by an outer shell. Fuel runs through them before it burns and carries the heat away; the RS-25 has about 390."
+      },
+      "vi": {
+        "what": "Lớp lót hợp kim đồng có hàng trăm rãnh hẹp khoét vào, được bịt kín bằng một lớp vỏ ngoài. Nhiên liệu chảy qua các rãnh trước khi cháy và mang nhiệt đi (làm mát tái sinh, regenerative cooling); RS-25 có khoảng 390 rãnh.",
+        "name": "Rãnh làm mát khoét sẵn",
+        "pros": [
+          "Làm mát tốt nhất cho áp suất cao"
+        ],
+        "cons": [],
+        "real": "RS-25 (lót NARloy-Z, khoảng 390 rãnh), Raptor, Vulcain"
+      }
+    },
+    "option:engine/chamber/tubes": {
+      "en": {
+        "what": "The chamber and bell are hundreds of thin tubes brazed side by side, with fuel running down one tube and back up the next. The F-1 had 178. Light and proven, but slow hand work."
+      },
+      "vi": {
+        "what": "Buồng đốt và chuông vòi phun được ghép từ hàng trăm ống mảnh hàn vảy cạnh nhau (tube wall), nhiên liệu chảy xuống ống này rồi ngược lên ống kế bên. F-1 có 178 ống. Nhẹ và đã được chứng minh, nhưng làm thủ công rất lâu.",
+        "name": "Thành ghép ống",
+        "pros": [
+          "−20 kg"
+        ],
+        "cons": [
+          "+20 nghìn đô",
+          "Isp −1 s: áp suất buồng đốt thấp hơn"
+        ],
+        "real": "F-1 (178 ống, Inconel X-750), H-1, J-2, RL10"
+      }
+    },
+    "option:engine/chamber/film": {
+      "en": {
+        "what": "As well as the channels, a ring of small holes sprays fuel along the inside wall, so a cool layer of vapour hugs the metal. Safe for the wall, but that fuel burns badly, so Isp drops a little. The F-1 cooled its nozzle extension with a film of turbine exhaust in the same way."
+      },
+      "vi": {
+        "what": "Ngoài các rãnh, một vòng lỗ nhỏ phun nhiên liệu dọc mặt trong thành buồng đốt, tạo một lớp hơi mát ôm sát kim loại (film cooling). An toàn cho thành, nhưng phần nhiên liệu đó cháy kém nên Isp giảm một chút. F-1 cũng làm mát phần nối dài vòi phun bằng một lớp khí thải tuabin theo cách tương tự.",
+        "name": "Rãnh cộng màng nhiên liệu",
+        "pros": [
+          "Độ tin cậy +0,4 %",
+          "Thành buồng đốt mát"
+        ],
+        "cons": [
+          "Isp −2 s"
+        ],
+        "real": "Phần nối dài vòi phun của F-1, làm mát bằng một màng khí thải tuabin"
+      },
+      "_todo": "Named kerosene engines with fuel-film cooling unconfirmed; left out."
+    },
+    "option:engine/chamber/ablative": {
+      "en": {
+        "what": "No cooling channels: the chamber is lined with resin and silica that chars and wears away, carrying the heat off with it. Cheap, but it erodes, so it is good for one long burn. The Merlin 1A of Falcon 1 was built this way."
+      },
+      "vi": {
+        "what": "Không có rãnh làm mát: buồng đốt được lót bằng nhựa và silica, lớp lót cháy thành than rồi mòn dần, mang nhiệt đi theo (ablative). Rẻ, nhưng bị mòn, nên chỉ dùng được cho một lần cháy dài. Động cơ Merlin 1A của Falcon 1 được làm theo cách này.",
+        "name": "Buồng đốt cháy mòn",
+        "pros": [
+          "−60 nghìn đô",
+          "Không cần đường ống làm mát"
+        ],
+        "cons": [
+          "+40 kg",
+          "Isp −3 s",
+          "Bị mòn: không dùng lại được"
+        ],
+        "real": "Merlin 1A (Falcon 1, 2006)"
+      },
+      "_todo": "Apollo Service Propulsion System and NASA Fastrac as ablative chambers unconfirmed; left out."
+    },
+    "option:engine/contour/bell": {
+      "en": {
+        "what": "A curved bell about 80 % as long as a cone with the same opening: the shape almost every engine has used since the 1960s."
+      },
+      "vi": {
+        "what": "Một chuông cong (bell) dài khoảng 80 % so với hình nón có cùng độ loe: hình dạng mà gần như mọi động cơ dùng từ những năm 1960.",
+        "name": "Chuông",
+        "pros": [
+          "Ngắn và hiệu quả"
+        ],
+        "cons": [],
+        "real": "Merlin 1D (tỷ số giãn nở 16), RS-25 (69–78), Raptor (34), RL10B-2 (280)"
+      }
+    },
+    "option:engine/contour/conical": {
+      "en": {
+        "what": "A straight 15° cone: easy to make, but the exhaust spreads out, so about 1.7 % of the push goes sideways."
+      },
+      "vi": {
+        "what": "Một hình nón thẳng 15° (conical nozzle): dễ chế tạo, nhưng luồng khí xòe ra, nên khoảng 1,7 % lực đẩy đi chệch sang ngang.",
+        "name": "Nón 15°",
+        "pros": [
+          "−15 nghìn đô",
+          "Dễ chế tạo"
+        ],
+        "cons": [
+          "Isp −5 s"
+        ],
+        "real": "Vòi nón 15° mất (1 − cos 15°) ÷ 2 = 1,7 % lực đẩy ra hai bên (hệ số phân kỳ)"
+      },
+      "_todo": "Named engines and solid motors with conical nozzles unconfirmed; left out."
+    },
+    "option:engine/contour/aerospike": {
+      "en": {
+        "what": "The gas flows along the outside of a central spike instead of inside a bell, so the outside air shapes the jet and it suits every altitude. The XRS-2200 was fired at Stennis for the X-33, a small aerospike rocket flew in 2003 and one first lit in flight on a winged craft in 2024, but none has flown to orbit: the spike is heavy and hard to cool."
+      },
+      "vi": {
+        "what": "Khí chảy dọc mặt ngoài của một cái gai ở giữa thay vì bên trong chuông (aerospike), nên không khí bên ngoài nắn luồng phụt và nó hợp với mọi độ cao. XRS-2200 đã được đốt thử ở Stennis cho X-33, và một chiếc nhỏ lần đầu được đốt khi đang bay năm 2024, nhưng chưa chiếc nào bay lên quỹ đạo: cái gai nặng và khó làm mát.",
+        "name": "Aerospike",
+        "pros": [
+          "Isp +6 s: tự hợp với độ cao"
+        ],
+        "cons": [
+          "Khối lượng ×1,15",
+          "Giá +35 %",
+          "Chưa từng bay lên quỹ đạo (độ tin cậy −1,2 %)"
+        ],
+        "real": "XRS-2200 aerospike thẳng cho X-33 (909 kN ở mặt đất, Isp 339 / 436,5 s, ba chiếc được chế tạo và đốt thử ở Stennis, chương trình dừng năm 2001); một tên lửa nhỏ dùng aerospike đã bay năm 2003 (CSULB); lần đầu đốt aerospike khi đang bay trên một tàu có cánh: POLARIS MIRA-II, 29/10/2024"
+      }
+    },
+    "option:engine/stability/none": {
+      "en": {
+        "what": "No extra parts: a well-designed injector keeps the flame steady by itself, as on most modern engines."
+      },
+      "vi": {
+        "what": "Không thêm gì: một bộ phun (injector) thiết kế tốt tự giữ ngọn lửa ổn định, như ở hầu hết động cơ hiện đại.",
+        "name": "Chỉ nhờ thiết kế bộ phun",
+        "pros": [
+          "Không thêm gì"
+        ],
+        "cons": [],
+        "real": ""
+      }
+    },
+    "option:engine/stability/baffles": {
+      "en": {
+        "what": "Metal walls stand out from the injector face and split the chamber into pockets, so sound waves cannot sweep across it. The F-1 flew with them: its early chambers rang at 4,000 cycles a second and some blew apart, until engineers found a stable design in the early 1960s by setting off small bombs inside firing chambers."
+      },
+      "vi": {
+        "what": "Các vách kim loại (baffle) nhô ra từ mặt bộ phun, chia buồng đốt thành nhiều ngăn, nên sóng âm không quét ngang được. Buồng đốt F-1 thời đầu rung ở 4.000 lần mỗi giây và vài chiếc vỡ tung; các kỹ sư tìm ra cách chữa bằng cách kích nổ những quả bom nhỏ bên trong buồng đốt đang cháy để thử từng thiết kế.",
+        "name": "Vách ngăn bộ phun",
+        "pros": [
+          "Độ tin cậy +0,4 %"
+        ],
+        "cons": [
+          "+15 kg",
+          "+15 nghìn đô",
+          "Isp −1 s"
+        ],
+        "real": "F-1 (Dự án First, đầu những năm 1960: kim phun có vách ngăn, kiểm chứng bằng bom nhỏ kích nổ trong buồng đốt)"
+      }
+    },
+    "option:engine/stability/cavities": {
+      "en": {
+        "what": "A ring of small tuned pockets round the injector swallows sound at the dangerous pitch, like the silencer on a car exhaust."
+      },
+      "vi": {
+        "what": "Một vòng hốc nhỏ được “chỉnh âm” quanh bộ phun nuốt mất âm thanh ở cao độ nguy hiểm (acoustic cavity), giống bộ giảm thanh ở ống xả ô tô.",
+        "name": "Hốc tiêu âm",
+        "pros": [
+          "Độ tin cậy +0,3 %"
+        ],
+        "cons": [
+          "+10 kg",
+          "+20 nghìn đô"
+        ],
+        "real": "Bộ hấp thụ âm là cách chữa dao động cháy tiêu chuẩn (NASA SP-194, 1972)"
+      },
+      "_todo": "Named engines (Apollo Lunar Module ascent engine and others) unconfirmed; left out."
     },
     "slot:booster/grain": {
       "en": {
@@ -1671,14 +2631,415 @@
         "real": "Động cơ tầng đẩy MA-5 của Atlas, Merlin"
       }
     },
-    "shape:tail/single_engine": {
+    "slot:gimbal/power": {
       "en": {
-        "what": "One large engine on a cone-shaped thrust frame, with four fins and four graphite jet vanes in the exhaust to steer, like the Redstone.",
-        "why": "The classic layout of the first rockets, and still the simplest and cheapest way to lift a ship. With one engine, a single failure ends the flight. Real tails like this carry no landing legs."
+        "what": "Where the oil pressure that pushes the two gimbal rams comes from: a pump of its own, the engine's own kerosene, or a small hydrazine turbine."
       },
       "vi": {
-        "what": "Một động cơ lớn trên khung đỡ lực đẩy hình nón, bốn vây và bốn cánh lái phản lực (jet vane) bằng graphit trong luồng khí phụt để lái, giống tên lửa Redstone.",
-        "why": "Kiểu bố trí kinh điển của những tên lửa đầu tiên, và vẫn là cách đơn giản, rẻ nhất để nâng một con tàu. Chỉ một động cơ thì hỏng một lần là hết chuyến bay. Đuôi thật kiểu này không có chân đáp."
+        "what": "Áp suất dầu đẩy hai xi lanh của khớp xoay (gimbal) lấy từ đâu: một máy bơm riêng, chính dầu hỏa của động cơ, hay một tuabin hydrazin nhỏ.",
+        "name": "Nguồn thủy lực"
+      }
+    },
+    "option:gimbal/power/hpu": {
+      "en": {
+        "what": "A pump and a gas-filled accumulator keep oil at high pressure for the rams, driven by the engine or by an electric motor."
+      },
+      "vi": {
+        "what": "Một máy bơm và một bình tích áp chứa khí (accumulator) giữ dầu ở áp suất cao cho các xi lanh, được động cơ hoặc một mô-tơ điện quay.",
+        "name": "Bộ nguồn thủy lực",
+        "pros": [
+          "Đã dùng trên hầu hết các tầng tên lửa"
+        ],
+        "cons": [],
+        "real": "RS-68 trên Delta IV (khớp xoay thủy lực)"
+      },
+      "_todo": "Named examples (S-IVB pump driven by the J-2, with electric back-up) unconfirmed; left out."
+    },
+    "option:gimbal/power/fueldraulic": {
+      "en": {
+        "what": "High-pressure kerosene from the engine's own pump pushes the rams and then flows back to the pump: no separate oil system. Falcon 9's Merlin and the Saturn V's F-1 work this way, but only while the engine runs. It works with kerosene only."
+      },
+      "vi": {
+        "what": "Dầu hỏa áp suất cao lấy từ chính bơm của động cơ đẩy các xi lanh rồi chảy ngược về bơm (fueldraulic): không cần hệ dầu riêng. Merlin của Falcon 9 và F-1 của Saturn V làm theo cách này, nhưng chỉ khi động cơ đang chạy. Chỉ dùng được với dầu hỏa.",
+        "name": "Dùng nhiên liệu làm dầu thủy lực",
+        "pros": [
+          "−20 kg",
+          "Bớt một hệ thống (độ tin cậy +0,2 %)"
+        ],
+        "cons": [
+          "+15 nghìn đô: một đầu trích áp cao và bộ lọc trên bơm",
+          "Chỉ dùng cho động cơ dầu hỏa; chỉ hoạt động khi động cơ đang chạy"
+        ],
+        "real": "Merlin 1D (Falcon 9), F-1 (Saturn V)"
+      }
+    },
+    "option:gimbal/power/apu": {
+      "en": {
+        "what": "A small turbine spun by hydrazine gas drives the hydraulic pump, independent of the engine, so it can also steer a solid booster. Each Space Shuttle booster had two."
+      },
+      "vi": {
+        "what": "Một tuabin nhỏ quay bằng khí hydrazin chạy bơm thủy lực, độc lập với động cơ (APU), nên lái được cả tên lửa đẩy phụ nhiên liệu rắn. Mỗi tên lửa đẩy phụ của tàu con thoi có hai bộ.",
+        "name": "Bộ nguồn hydrazin",
+        "pros": [
+          "Hoạt động không cần động cơ chính (độ tin cậy +0,3 %)"
+        ],
+        "cons": [
+          "+30 kg",
+          "+25 nghìn đô",
+          "Hydrazin độc, tuabin nóng"
+        ],
+        "real": "Tên lửa đẩy phụ rắn của tàu con thoi (hai bộ hydrazin mỗi chiếc), tàu con thoi"
+      }
+    },
+    "slot:segmented/joint": {
+      "en": {
+        "what": "How the segments of a big solid booster, filled with propellant at the factory, are sealed together at the launch site. A leaking joint lets flame out through the side."
+      },
+      "vi": {
+        "what": "Cách các khúc của một tên lửa đẩy phụ rắn lớn, đã nhồi thuốc phóng ở nhà máy, được nối kín với nhau ở bãi phóng (field joint). Mối nối rò thì lửa sẽ phụt ra bên hông.",
+        "name": "Mối nối các khúc"
+      }
+    },
+    "slot:segmented/nozzle": {
+      "en": {
+        "what": "How the booster's thrust is pointed: a nozzle that tilts, a fixed nozzle with liquid squirted into the jet, or a fixed nozzle that leaves the steering to the core."
+      },
+      "vi": {
+        "what": "Cách hướng lực đẩy của tên lửa đẩy phụ: vòi phun nghiêng được, vòi phun cố định có chất lỏng phun vào luồng khí, hay vòi phun cố định để tầng lõi lo việc lái.",
+        "name": "Vòi phun và cách lái"
+      }
+    },
+    "slot:segmented/grain": {
+      "en": {
+        "what": "The shape of the hole cast through the propellant. The more surface burns, the harder it pushes, so the shape sets how the thrust changes during the burn."
+      },
+      "vi": {
+        "what": "Hình dạng lỗ đúc xuyên qua khối thuốc phóng (grain). Bề mặt cháy càng lớn thì đẩy càng mạnh, nên hình dạng này quyết định lực đẩy thay đổi thế nào trong lúc cháy.",
+        "name": "Khối thuốc phóng"
+      }
+    },
+    "option:segmented/joint/capture": {
+      "en": {
+        "what": "The joint NASA redesigned after Challenger: a third O-ring, and a tang that hooks into the clevis so the joint stays closed when the motor pressurises."
+      },
+      "vi": {
+        "what": "Mối nối NASA thiết kế lại sau thảm họa Challenger: thêm vòng đệm chữ O (O-ring) thứ ba, và một ngàm (tang) móc vào khe kẹp (clevis) để mối nối vẫn khép kín khi động cơ lên áp.",
+        "name": "Mối nối thiết kế lại, ba vòng O",
+        "pros": [
+          "Kín cả vào buổi sáng lạnh"
+        ],
+        "cons": [],
+        "real": "Tên lửa đẩy phụ tàu con thoi bản thiết kế lại (1988–2011), tên lửa đẩy phụ năm khúc của SLS: ba vòng O mỗi mối nối"
+      },
+      "_todo": "The capture feature and joint heaters are unconfirmed (only 'three O-rings after Challenger' is sourced); the text names the lip but not heaters."
+    },
+    "option:segmented/joint/tworing": {
+      "en": {
+        "what": "Pins hold the segments together and two O-rings with putty seal each joint. Under pressure the joint flexes open a little, and on a freezing morning stiff rubber cannot follow it: that destroyed Challenger on 28 January 1986."
+      },
+      "vi": {
+        "what": "Chốt giữ các khúc với nhau, và hai vòng đệm chữ O (O-ring) cùng lớp mát-tít bịt mỗi mối nối. Khi chịu áp suất, mối nối hé ra một chút, và vào buổi sáng giá lạnh, cao su cứng lại không kịp bám theo: đó là điều đã phá hủy tàu Challenger ngày 28/1/1986.",
+        "name": "Mối nối gốc, hai vòng O",
+        "pros": [
+          "−30 nghìn đô",
+          "−80 kg"
+        ],
+        "cons": [
+          "Độ tin cậy −0,8 %",
+          "Rò rỉ vào buổi sáng lạnh"
+        ],
+        "real": "Tên lửa đẩy phụ tàu con thoi 1981–86 (STS-51-L, 28/1/1986)"
+      }
+    },
+    "option:segmented/nozzle/flex": {
+      "en": {
+        "what": "The nozzle sits on a ring of rubber and steel layers that lets it tilt a few degrees, pushed by two actuators. The Shuttle, SLS, S200 and P120C boosters steer this way."
+      },
+      "vi": {
+        "what": "Vòi phun đặt trên một vòng gồm các lớp cao su và thép xen nhau (flexible bearing), cho phép nó nghiêng vài độ, được hai bộ đẩy đẩy. Tên lửa đẩy phụ của tàu con thoi, SLS, S200 và P120C lái theo cách này.",
+        "name": "Vòi phun khớp mềm",
+        "pros": [
+          "Tên lửa đẩy phụ tự lái được"
+        ],
+        "cons": [],
+        "real": "Tên lửa đẩy phụ tàu con thoi và SLS (thủy lực, bộ nguồn hydrazin), S200 (±8°, điện-thủy lực), P120C (điện)"
+      }
+    },
+    "option:segmented/nozzle/lit": {
+      "en": {
+        "what": "A fixed nozzle; valves squirt nitrogen tetroxide from a tank on the side into one side of the exhaust and bend the jet. The Titan III and IV boosters steered this way."
+      },
+      "vi": {
+        "what": "Vòi phun cố định; các van phun nitơ tetroxit từ một bồn bên hông vào một phía luồng khí thải và bẻ cong luồng phụt (liquid injection). Tên lửa đẩy phụ của Titan III và IV lái theo cách này.",
+        "name": "Lái bằng phun chất lỏng",
+        "pros": [
+          "Vòi phun không phải chuyển động"
+        ],
+        "cons": [
+          "+150 kg",
+          "+20 nghìn đô"
+        ],
+        "real": "Tên lửa đẩy phụ Titan III và IV (UA120x, khoang chứa N₂O₄ bên ngoài)"
+      }
+    },
+    "option:segmented/nozzle/fixed": {
+      "en": {
+        "what": "A nozzle bolted straight that does no steering: the core engine steers for the whole ship, as on Delta II’s GEM-40s and Japan’s H3 boosters."
+      },
+      "vi": {
+        "what": "Vòi phun bắt thẳng, không lái gì cả (fixed nozzle): động cơ lõi lo việc lái cho cả con tàu, như ở tên lửa đẩy phụ của H3 (Nhật Bản).",
+        "name": "Vòi phun cố định",
+        "pros": [
+          "−50 nghìn đô",
+          "−100 kg"
+        ],
+        "cons": [
+          "Độ tin cậy −0,3 %: tên lửa đẩy phụ không giúp lái"
+        ],
+        "real": "GEM-40 (Delta II; vòi phun cố định nghiêng 10°), SRB-3 (H3)"
+      }
+    },
+    "option:segmented/grain/star": {
+      "en": {
+        "what": "An 11-point star cut through the propellant of the front segment burns a big surface at liftoff; the round bore of the other segments keeps the thrust even."
+      },
+      "vi": {
+        "what": "Một ngôi sao nhiều cánh khoét xuyên khối thuốc phóng ở khúc đầu cho bề mặt cháy lớn lúc rời bệ; lỗ tròn ở các khúc còn lại giữ lực đẩy đều.",
+        "name": "Sao ở khúc đầu, lỗ tròn phía sau",
+        "pros": [
+          "Rời bệ mạnh"
+        ],
+        "cons": [],
+        "real": "Tên lửa đẩy phụ tàu con thoi (ngôi sao 11 cánh ở khúc trước)"
+      }
+    },
+    "option:segmented/grain/bucket": {
+      "en": {
+        "what": "The propellant is shaped so the push drops by about a third around 50 seconds after liftoff, when the air presses hardest, then rises again, as on the Space Shuttle’s boosters."
+      },
+      "vi": {
+        "what": "Khối thuốc phóng được tạo hình để lực đẩy giảm khoảng một phần ba vào quãng 50 giây sau khi rời bệ, khi không khí ép mạnh nhất (Max-Q), rồi tăng trở lại, như ở tên lửa đẩy phụ của tàu con thoi.",
+        "name": "Giảm lực đẩy lúc Max-Q",
+        "pros": [
+          "Tải nhẹ hơn lúc Max-Q (độ tin cậy +0,3 %)"
+        ],
+        "cons": [
+          "Lực đẩy trung bình −3 %"
+        ],
+        "real": "Tên lửa đẩy phụ tàu con thoi (lực đẩy giảm khoảng một phần ba vào quãng 50 s sau khi rời bệ)"
+      }
+    },
+    "option:segmented/grain/finocyl": {
+      "en": {
+        "what": "A round bore with long fins cut into the aft end: strong thrust at liftoff that tapers off through the sound barrier. The big solids of Ariane 5 and Vega used it."
+      },
+      "vi": {
+        "what": "Một lỗ tròn có các rãnh vây dài khoét ở đoạn cuối (finocyl): lực đẩy mạnh lúc rời bệ rồi nhỏ dần khi vượt vận tốc âm thanh. Các động cơ rắn lớn của Ariane 5 và Vega dùng kiểu này.",
+        "name": "Khối thuốc finocyl",
+        "pros": [
+          "Lực đẩy +5 %",
+          "Nhẹ nhàng hơn khi qua Max-Q"
+        ],
+        "cons": [
+          "+20 nghìn đô"
+        ],
+        "real": "P241 của Ariane 5, P80 của Vega"
+      }
+    },
+    "slot:ring/steer": {
+      "en": {
+        "what": "How a ring of engines bolted fixed points the rocket: by throttling opposite engines, or by letting the outer ones swivel."
+      },
+      "vi": {
+        "what": "Cách một vòng động cơ bắt cố định lái tên lửa: chỉnh ga các động cơ đối diện, hoặc cho các động cơ vòng ngoài xoay được.",
+        "name": "Lái vòng động cơ"
+      }
+    },
+    "option:ring/steer/throttle": {
+      "en": {
+        "what": "The flight computer throttles engines on opposite sides of the outer ring up and down to pitch and yaw, and a failed engine is shut down together with the one opposite so the push stays balanced. The N1 flew this way."
+      },
+      "vi": {
+        "what": "Máy tính bay tăng giảm ga các động cơ ở hai phía đối diện của vòng ngoài để chúc ngóc và đổi hướng, và một động cơ hỏng bị tắt cùng với chiếc đối diện để lực đẩy vẫn cân bằng. N1 bay theo cách này.",
+        "name": "Chỉnh ga lệch nhau",
+        "pros": [
+          "Không khớp xoay, không bộ đẩy"
+        ],
+        "cons": [],
+        "real": "N1 (1969–72): 24 động cơ NK-15 vòng ngoài được chỉnh ga để lái; KORD tắt động cơ theo từng cặp đối diện"
+      }
+    },
+    "option:ring/steer/gimbals": {
+      "en": {
+        "what": "Actuators swivel the engines of the outer ring, as on the outer engines of the Saturn V’s first stage, so a failed engine no longer takes its opposite partner with it."
+      },
+      "vi": {
+        "what": "Các bộ đẩy xoay những động cơ ở vòng ngoài, như bốn động cơ ngoài của tầng một Saturn V, nên một động cơ hỏng không còn kéo theo chiếc đối diện.",
+        "name": "Động cơ vòng ngoài xoay được",
+        "pros": [
+          "Hỏng một động cơ chỉ mất một, không mất hai (độ tin cậy +0,4 %)"
+        ],
+        "cons": [
+          "+400 kg bộ đẩy",
+          "+150 nghìn đô"
+        ],
+        "real": "Tầng S-IC của Saturn V và Saturn IB (động cơ vòng ngoài xoay được)"
+      }
+    },
+    "slot:ring/baseShield": {
+      "en": {
+        "what": "What protects the engine bay from the glowing exhaust that swirls back up under the engines."
+      },
+      "vi": {
+        "what": "Tấm chắn nhiệt đáy (base heat shield) bảo vệ khoang động cơ khỏi khí phụt nóng rực cuộn ngược lên dưới các động cơ.",
+        "name": "Tấm chắn nhiệt đáy"
+      }
+    },
+    "option:ring/baseShield/curtains": {
+      "en": {
+        "what": "Quilted boots of glass and ceramic cloth around the top of each engine: the engines can still swivel, and the gap is closed."
+      },
+      "vi": {
+        "what": "Những ống bọc chần bằng vải thủy tinh và gốm quanh đỉnh mỗi động cơ: động cơ vẫn xoay được, mà khe hở vẫn kín.",
+        "name": "Rèm cách nhiệt mềm",
+        "pros": [
+          "Nhẹ",
+          "Cho động cơ xoay tự do"
+        ],
+        "cons": [],
+        "real": "Rèm mềm của Saturn V S-IC, chăn chắn nhiệt quanh RS-25 của tàu con thoi"
+      }
+    },
+    "option:ring/baseShield/rigid": {
+      "en": {
+        "what": "A plate of heat-resistant metal and ceramic across the whole base, with a sealed hole for each engine. Where several jets heat each other, it matters most."
+      },
+      "vi": {
+        "what": "Một tấm kim loại và gốm chịu nhiệt trải khắp đáy, mỗi động cơ một lỗ kín. Ở nơi nhiều luồng khí nung nóng lẫn nhau, nó quan trọng nhất.",
+        "name": "Tấm chắn nhiệt đáy cứng",
+        "pros": [
+          "Độ tin cậy +0,4 %",
+          "Tốt nhất cho cụm động cơ lớn"
+        ],
+        "cons": [
+          "+80 kg",
+          "+30 nghìn đô"
+        ],
+        "real": "Tấm chắn nhiệt đáy của Saturn V S-IC, tấm chắn nhiệt Octaweb của Falcon 9 Block 5"
+      }
+    },
+    "option:ring/baseShield/none": {
+      "en": {
+        "what": "Bare beams and pipes: a single engine in thin air gets away with it, but a cluster cooks its own wiring. The Soviet N1's first two launches, in 1969, ended in fires among the 30 engines of its tail."
+      },
+      "vi": {
+        "what": "Dầm và ống để trần: một động cơ đơn trong không khí loãng còn qua được, nhưng một cụm động cơ sẽ tự nướng chín dây điện của mình. Hai lần phóng đầu tiên của tên lửa N1 Liên Xô, năm 1969, đều kết thúc bằng hỏa hoạn giữa 30 động cơ ở đuôi.",
+        "name": "Không có tấm chắn đáy",
+        "pros": [
+          "−40 kg",
+          "−10 nghìn đô"
+        ],
+        "cons": [
+          "Độ tin cậy −0,6 %"
+        ],
+        "real": "Tên lửa thám không đời đầu; hai lần phóng đầu tiên của N1 (1969) kết thúc bằng hỏa hoạn giữa 30 động cơ ở đuôi"
+      }
+    },
+    "slot:ring/feed": {
+      "en": {
+        "what": "The pipes that bring fuel and oxygen from the tanks to each engine."
+      },
+      "vi": {
+        "what": "Đường cấp nhiên liệu (propellant feed) đưa nhiên liệu và oxy từ bồn tới từng động cơ.",
+        "name": "Đường cấp nhiên liệu"
+      }
+    },
+    "option:ring/feed/lines": {
+      "en": {
+        "what": "One pipe of each propellant to each engine, opened at ignition and closed at the end."
+      },
+      "vi": {
+        "what": "Mỗi động cơ một ống cho mỗi loại nhiên liệu, mở lúc đánh lửa và đóng lúc kết thúc.",
+        "name": "Ống cấp riêng",
+        "pros": [
+          "Đơn giản"
+        ],
+        "cons": [
+          "Động cơ rò rỉ không cô lập được khỏi bồn"
+        ],
+        "real": "Phần lớn các tầng một động cơ"
+      }
+    },
+    "option:ring/feed/prevalves": {
+      "en": {
+        "what": "A ring pipe feeds every engine through its own shut-off valve, so the computer can close off a failing engine and the rest fly on."
+      },
+      "vi": {
+        "what": "Một ống vòng cấp cho mọi động cơ qua van khóa riêng, nên máy tính có thể cô lập một động cơ đang hỏng và các động cơ còn lại bay tiếp.",
+        "name": "Ống góp có van khóa",
+        "pros": [
+          "Độ tin cậy +0,5 %",
+          "Cô lập được động cơ hỏng"
+        ],
+        "cons": [
+          "+60 kg",
+          "+40 nghìn đô"
+        ],
+        "real": "Van khóa trước của Saturn V S-IC, việc tắt động cơ hỏng trên Falcon 9"
+      }
+    },
+    "slot:ring/pogo": {
+      "en": {
+        "what": "Stops the engines and the feed pipes from shaking each other like a pogo stick."
+      },
+      "vi": {
+        "what": "Bộ chống rung pogo (POGO suppressor) ngăn động cơ và ống cấp nhiên liệu làm nhau rung dọc như chiếc gậy nhảy pogo.",
+        "name": "Bộ chống rung pogo"
+      }
+    },
+    "option:ring/pogo/none": {
+      "en": {
+        "what": "Plain pipes: if the shaking of the thrust and the surging in the pipes fall into step, the whole stack bounces along its length."
+      },
+      "vi": {
+        "what": "Ống trơn: nếu nhịp rung của lực đẩy và nhịp dồn của nhiên liệu trong ống trùng nhau, cả thân tàu sẽ nảy dọc theo chiều dài.",
+        "name": "Ống trơn",
+        "pros": [
+          "Không thêm gì"
+        ],
+        "cons": [
+          "Thân tàu có thể tự rung (POGO)"
+        ],
+        "real": ""
+      }
+    },
+    "option:ring/pogo/accumulator": {
+      "en": {
+        "what": "Small gas-filled chambers on the oxygen lines act as shock absorbers and break the rhythm. Saturn V got them after Apollo 6 and Apollo 13 shook hard."
+      },
+      "vi": {
+        "what": "Những khoang nhỏ chứa khí trên ống oxy hoạt động như bộ giảm xóc, phá vỡ nhịp rung. Saturn V được lắp chúng sau khi Apollo 6 và Apollo 13 bị rung dữ dội.",
+        "name": "Bình tích khí",
+        "pros": [
+          "Độ tin cậy +0,4 %",
+          "Phi hành đoàn đi êm hơn"
+        ],
+        "cons": [
+          "+35 kg",
+          "+25 nghìn đô"
+        ],
+        "real": "Saturn V S-IC và S-II (sau Apollo 6 và 13), Titan II cho Gemini"
+      }
+    },
+    "shape:tail/single_engine": {
+      "en": {
+        "what": "One large engine, four fins and four graphite jet vanes in the exhaust, as on the Redstone that launched Alan Shepard in 1961.",
+        "why": "The layout of the first big rockets and the simplest tail there is. There is no engine-out, so one failure ends the flight, and the vanes slowly erode and cost a little thrust."
+      },
+      "vi": {
+        "what": "Một động cơ lớn, bốn vây và bốn cánh lái phản lực (jet vane) bằng than chì nằm trong luồng khí thải, như trên tên lửa Redstone đã phóng Alan Shepard năm 1961.",
+        "why": "Kiểu bố trí của những tên lửa lớn đầu tiên và là kiểu đuôi đơn giản nhất. Không chịu được mất động cơ, nên hỏng một lần là kết thúc chuyến bay, và các cánh lái mòn dần, làm mất một chút lực đẩy.",
+        "name": "Một động cơ lớn"
       }
     },
     "shape:tail/single_solids": {
@@ -1714,11 +3075,11 @@
     "shape:tail/titan_ii": {
       "en": {
         "what": "Two large engines on one cross-beam, like the Titan II that launched all ten crewed Gemini missions.",
-        "why": "Twice the thrust of one engine, with no boosters to carry. Two heavy engines eat into the Δv, and either failure ends the flight."
+        "why": "Twice the thrust of one engine, with no boosters to carry. Two heavy engines eat into the Δv, and either failure ends the flight. Its propellants lit on contact; here kerosene and oxygen stand in for them."
       },
       "vi": {
         "what": "Hai động cơ lớn trên một thanh dầm ngang, giống Titan II đã phóng cả mười chuyến Gemini có người.",
-        "why": "Lực đẩy gấp đôi một động cơ mà không phải chở tên lửa đẩy phụ. Hai động cơ nặng ăn bớt Δv, và hỏng chiếc nào cũng là hết chuyến bay."
+        "why": "Lực đẩy gấp đôi một động cơ mà không phải chở tên lửa đẩy phụ. Hai động cơ nặng ăn bớt Δv, và hỏng chiếc nào cũng là hết chuyến bay. Nhiên liệu thật của nó tự bốc cháy khi gặp nhau; ở đây dầu hỏa và oxy đứng thay."
       }
     },
     "shape:tail/vulcan": {
@@ -1744,32 +3105,34 @@
     "shape:tail/soyuz": {
       "en": {
         "what": "A four-chamber core with steering verniers, ringed by four cone-topped liquid boosters: the R-7 cross that launched Gagarin and every Soyuz since.",
-        "why": "Liquid boosters waste far less propellant than solids, and the layout has flown more than 1,900 times. Four boosters and four chambers must all work, so its reliability is only about 81 %, and it is one of the more expensive tails."
+        "why": "Liquid boosters waste far less propellant than solids, and the layout has flown more than 1,900 times. Four boosters and four chambers must all work."
       },
       "vi": {
         "what": "Tầng lõi bốn buồng đốt có động cơ lái phụ (vernier), quanh là bốn tên lửa đẩy phụ nhiên liệu lỏng đầu hình nón: “chữ thập R-7” đã đưa Gagarin lên và mọi chuyến Soyuz từ đó tới nay.",
-        "why": "Tên lửa đẩy phụ nhiên liệu lỏng phí nhiên liệu ít hơn hẳn loại rắn, và kiểu bố trí này đã bay hơn 1.900 lần. Bốn tên lửa đẩy phụ và bốn buồng đốt đều phải chạy tốt, nên độ tin cậy chỉ khoảng 81 %, và đây là một trong những kiểu đuôi đắt hơn."
+        "why": "Tên lửa đẩy phụ nhiên liệu lỏng phí nhiên liệu ít hơn hẳn loại rắn, và kiểu bố trí này đã bay hơn 1.900 lần. Bốn tên lửa đẩy phụ và bốn buồng đốt đều phải chạy tốt."
       }
     },
     "shape:tail/saturn_sic": {
       "en": {
         "what": "The Saturn V's tail, scaled down: four steering engines at the corners of a square around a fixed fifth. Each outer engine sits under a fairing with a big fin.",
-        "why": "It can lose an engine and keep flying, and four big fins low down make it very stable. Five engines cost five times as much as one."
+        "why": "It can lose an engine and keep flying, and four big fins low down make it very stable. Five engines cost about four times as much as one."
       },
       "vi": {
         "what": "Đuôi Saturn V thu nhỏ: bốn động cơ lái ở bốn góc hình vuông quanh động cơ thứ năm cố định. Mỗi động cơ vòng ngoài nằm dưới một nắp che có vây lớn.",
-        "why": "Mất một động cơ vẫn bay tiếp được, và bốn vây lớn ở thấp làm tàu rất ổn định. Năm động cơ tốn gấp năm lần một chiếc."
+        "why": "Mất một động cơ vẫn bay tiếp được, và bốn vây lớn ở thấp làm tàu rất ổn định. Năm động cơ tốn khoảng gấp bốn lần một chiếc."
       }
     },
     "shape:tail/new_glenn": {
       "en": {
-        "what": "Six methane engines in a ring around a seventh, under a wide base on folding legs, like New Glenn.",
-        "why": "Seven medium engines push like two large ones, and the ship can lose one and keep flying. Seven engines cost seven times as much as one."
+        "what": "Six methane engines in a ring round a seventh under a 7 m base, on folding legs.",
+        "why": "Seven engines can lose one and still fly. The real booster lands on a ship at sea; the first landing worked on the second flight, in November 2025."
       },
       "vi": {
-        "what": "Sáu động cơ metan xếp vòng quanh động cơ thứ bảy, dưới một đáy rộng có chân đáp gập, giống New Glenn.",
-        "why": "Bảy động cơ cỡ vừa đẩy ngang hai động cơ lớn, và tàu mất một chiếc vẫn bay tiếp được. Bảy động cơ tốn gấp bảy lần một chiếc."
-      }
+        "what": "Sáu động cơ methane xếp vòng quanh chiếc thứ bảy dưới một đáy rộng 7 m, đứng trên các chân đáp gập.",
+        "why": "Bảy động cơ có thể mất một chiếc mà vẫn bay. Tầng đẩy thật đáp xuống một con tàu trên biển; lần đáp đầu tiên thành công ở chuyến bay thứ hai, tháng 11/2025.",
+        "name": "Bảy động cơ"
+      },
+      "_todo": "Leg count (six) unconfirmed; the text says 'folding legs' only."
     },
     "shape:tail/octaweb": {
       "en": {
@@ -1779,6 +3142,226 @@
       "vi": {
         "what": "Chín động cơ, tám chiếc xếp vòng quanh một chiếc, dưới tấm chắn nhiệt đáy, có chân carbon gập dọc đuôi, giống Falcon 9.",
         "why": "Chín động cơ nhỏ có giá phải chăng, và tàu mất một chiếc vẫn bay tiếp. Gộp lại, chín động cơ nhỏ đẩy mạnh xấp xỉ một động cơ lớn."
+      }
+    },
+    "shape:tail/mercury_atlas": {
+      "en": {
+        "what": "Three engines in a row that all swivel to steer: two booster engines in bulging side fairings and a sustainer between them, while two small verniers only trimmed.",
+        "why": "Every engine starts on the pad. On the real Atlas the skirt with the two booster engines slid off after about two minutes; here nothing drops off, and all three are the same engine. John Glenn rode one into orbit in 1962."
+      },
+      "vi": {
+        "what": "Ba động cơ xếp thành hàng, cả ba xoay được để lái: hai động cơ đẩy trong hai ốp phình hai bên và một động cơ duy trì ở giữa, còn hai động cơ phụ (vernier) nhỏ chỉ để chỉnh tinh.",
+        "why": "Mọi động cơ khởi động trên bệ. Trên Atlas thật, váy đuôi cùng hai động cơ đẩy trượt rơi ra sau khoảng hai phút; ở đây không có gì rơi ra, và cả ba là cùng một loại động cơ. John Glenn đã bay lên quỹ đạo trên một chiếc như vậy năm 1962.",
+        "name": "Một tầng rưỡi"
+      }
+    },
+    "shape:tail/saturn_ib": {
+      "en": {
+        "what": "Eight engines in two squares under eight fins: the first stage of the Saturn IB.",
+        "why": "Eight engines can lose one and fly on, and eight fins make it very stable. Saturn IB launched the first crewed Apollo, three Skylab crews and Apollo–Soyuz."
+      },
+      "vi": {
+        "what": "Tám động cơ xếp thành hai hình vuông dưới tám cánh vây: tầng một của Saturn IB.",
+        "why": "Tám động cơ có thể mất một chiếc mà vẫn bay tiếp, và tám vây giúp nó rất ổn định. Saturn IB đã phóng chuyến Apollo có người đầu tiên, ba phi hành đoàn Skylab và chuyến Apollo–Soyuz.",
+        "name": "Tám động cơ, hai hình vuông"
+      }
+    },
+    "shape:tail/saturn_sii": {
+      "en": {
+        "what": "Five hydrogen engines with long vacuum bells on a cone of beams: the Saturn V's second stage.",
+        "why": "The real stage lit about 67 km up, so its bells are made for thin air and push weakly at sea level. On Apollo 13 the centre engine shut down early and the other four burned longer."
+      },
+      "vi": {
+        "what": "Năm động cơ hydro có chuông vòi phun chân không (vacuum nozzle) dài, gắn trên một hình nón bằng dầm: tầng hai của Saturn V.",
+        "why": "Tầng thật khởi động ở độ cao khoảng 67 km, nên chuông vòi phun dành cho không khí loãng và đẩy yếu ở mặt đất. Trên Apollo 13, động cơ giữa tắt sớm và bốn chiếc kia cháy lâu hơn để bù.",
+        "name": "Năm động cơ chân không"
+      }
+    },
+    "shape:tail/n1": {
+      "en": {
+        "what": "Twenty-four engines round the rim and six inside, none of them swivelling, with four lattice fins at the base.",
+        "why": "The flight control system steered by throttling engines on opposite sides of the outer ring, and the KORD system shut down any engine that failed together with the one opposite. All four launches failed, and with them went the Soviet plan to land people on the Moon."
+      },
+      "vi": {
+        "what": "Hai mươi bốn động cơ quanh mép và sáu chiếc bên trong, không chiếc nào xoay được, cùng bốn vây lưới (grid fin) ở đáy.",
+        "why": "Hệ điều khiển bay lái bằng cách chỉnh ga các động cơ ở hai phía đối diện của vòng ngoài, còn hệ KORD tắt mọi động cơ hỏng cùng với chiếc đối diện. Cả bốn lần phóng đều thất bại, và kế hoạch đưa người Liên Xô lên Mặt Trăng cũng chấm dứt theo.",
+        "name": "Ba mươi động cơ và vây lưới"
+      }
+    },
+    "shape:tail/titan_iiie": {
+      "en": {
+        "what": "A Titan core between two five-segment solid boosters that steer by squirting nitrogen tetroxide into their own exhaust.",
+        "why": "The solids did all the lifting for the first two minutes; the core engines only lit high up. A Titan IIIE launched both Viking landers to Mars and both Voyagers. Here kerosene and oxygen stand in for the core’s propellants, which light on contact."
+      },
+      "vi": {
+        "what": "Một lõi Titan giữa hai tên lửa đẩy phụ nhiên liệu rắn năm khúc, lái bằng cách phun nitơ tetroxit (N₂O₄) vào chính luồng khí thải của chúng.",
+        "why": "Hai tên lửa rắn tự nâng toàn bộ trong hai phút đầu; động cơ lõi chỉ khởi động khi đã lên cao. Một tên lửa Titan IIIE đã phóng cả hai tàu đổ bộ Viking lên Sao Hỏa và cả hai tàu Voyager. Ở đây dầu hỏa và oxy đứng thay cho nhiên liệu của tầng lõi, loại tự bốc cháy khi gặp nhau.",
+        "name": "Lõi đôi + hai tên lửa rắn tự lái"
+      }
+    },
+    "shape:tail/energia": {
+      "en": {
+        "what": "Four hydrogen engines under a 7.75 m core, ringed by four kerosene boosters, each with a four-chamber RD-170.",
+        "why": "The RD-170 is the most powerful liquid engine ever flown. The payload rode on the side: the Buran shuttle flew this way in 1988, uncrewed, and landed by itself."
+      },
+      "vi": {
+        "what": "Bốn động cơ hydro dưới một tầng lõi rộng 7,75 m, quanh là bốn tên lửa đẩy phụ chạy dầu hỏa, mỗi chiếc một động cơ RD-170 bốn buồng đốt.",
+        "why": "RD-170 là động cơ nhiên liệu lỏng mạnh nhất từng bay. Vật cần phóng gắn bên hông: tàu con thoi Buran bay theo cách này năm 1988, không người lái, và tự hạ cánh.",
+        "name": "Lõi hydro + bốn tên lửa đẩy dầu hỏa"
+      }
+    },
+    "shape:tail/delta_ii_7925": {
+      "en": {
+        "what": "One kerosene engine ringed by nine small solid motors.",
+        "why": "On the real rocket six lit on the pad and three in flight; here all nine light together. This version launched Mars Pathfinder, the Spirit rover and Phoenix."
+      },
+      "vi": {
+        "what": "Một động cơ dầu hỏa được vây quanh bởi chín động cơ nhiên liệu rắn nhỏ.",
+        "why": "Trên tên lửa thật, sáu chiếc khởi động trên bệ và ba chiếc khởi động giữa trời; ở đây cả chín cùng khởi động. Phiên bản này đã phóng Mars Pathfinder, xe tự hành Spirit và Phoenix.",
+        "name": "Một động cơ + chín tên lửa rắn"
+      }
+    },
+    "shape:tail/proton": {
+      "en": {
+        "what": "A ring of six engines, one under each of six fuel tanks, with nothing in the middle.",
+        "why": "Every engine swivels sideways to steer. The real propellants light on contact and keep for weeks, but they are poisonous; kerosene and oxygen stand in for them here."
+      },
+      "vi": {
+        "what": "Một vòng sáu động cơ, mỗi chiếc dưới một bồn nhiên liệu, ở giữa để trống.",
+        "why": "Động cơ nào cũng xoay ngang được để lái. Nhiên liệu thật tự bốc cháy khi gặp nhau (hypergolic) và để được hàng tuần, nhưng rất độc; ở đây dầu hỏa và oxy đứng thay.",
+        "name": "Sáu động cơ xếp vòng"
+      }
+    },
+    "shape:tail/delta_iv_heavy": {
+      "en": {
+        "what": "Three identical hydrogen cores side by side, each with one RS-68 engine (the uprated RS-68A from 2012).",
+        "why": "All three lit on the pad in a famous fireball that scorched their orange foam. Delta IV Heavy flew 16 times, including Parker Solar Probe and Orion's first test flight."
+      },
+      "vi": {
+        "what": "Ba lõi hydro giống hệt nhau đặt cạnh nhau, mỗi lõi một động cơ RS-68 (bản nâng cấp RS-68A từ năm 2012).",
+        "why": "Cả ba khởi động trên bệ trong một quả cầu lửa nổi tiếng làm cháy xém lớp xốp cam bọc ngoài. Delta IV Heavy bay 16 lần, trong đó có Parker Solar Probe và chuyến bay thử đầu tiên của Orion.",
+        "name": "Ba lõi hydro"
+      }
+    },
+    "shape:tail/angara_a5": {
+      "en": {
+        "what": "Five identical kerosene modules: one in the middle and four strapped round it, each with a single RD-191.",
+        "why": "Every module is the same, and the same module flies alone as Angara 1.2."
+      },
+      "vi": {
+        "what": "Năm mô-đun dầu hỏa giống hệt nhau: một ở giữa và bốn buộc quanh, mỗi mô-đun một động cơ RD-191.",
+        "why": "Mô-đun nào cũng như nhau, và chính mô-đun đó bay một mình thành tên lửa Angara 1.2.",
+        "name": "Một mô-đun + bốn mô-đun giống hệt"
+      }
+    },
+    "shape:tail/new_shepard": {
+      "en": {
+        "what": "One deep-throttling hydrogen engine, four hydraulic aft fins and four landing legs.",
+        "why": "The engine taps hot gas from its own chamber to spin its pumps and throttles down to 18 %. The booster falls back, relights and lands upright on its landing pad; one booster flew 17 times."
+      },
+      "vi": {
+        "what": "Một động cơ hydro giảm ga được rất sâu, bốn vây đuôi chạy thủy lực và bốn chân đáp.",
+        "why": "Động cơ trích khí nóng từ chính buồng đốt của nó để quay bơm (tap-off) và giảm ga xuống tới 18 %. Tầng đẩy rơi về, đề máy lại và đáp thẳng đứng xuống bãi đáp; một tầng đẩy đã bay 17 lần.",
+        "name": "Một động cơ hydro, vây đuôi và chân đáp"
+      }
+    },
+    "shape:tail/long_march_5": {
+      "en": {
+        "what": "Two hydrogen engines under a 5 m core, with four 3.35 m kerosene boosters, each with two engines and a cone nose.",
+        "why": "Ten engines fire at liftoff. Long March 5 launched China's first Mars mission, Tianwen-1, in July 2020."
+      },
+      "vi": {
+        "what": "Hai động cơ hydro dưới tầng lõi rộng 5 m, cùng bốn tên lửa đẩy phụ dầu hỏa rộng 3,35 m, mỗi chiếc hai động cơ và mũi hình nón.",
+        "why": "Mười động cơ cùng cháy lúc rời bệ. Trường Chinh 5 đã phóng sứ mệnh Sao Hỏa đầu tiên của Trung Quốc, Thiên Vấn 1 (Tianwen-1), vào tháng 7/2020.",
+        "name": "Lõi hydro + bốn tên lửa đẩy hai động cơ"
+      }
+    },
+    "shape:tail/lvm3": {
+      "en": {
+        "what": "Two engines under a 4 m core between two 3.2 m solid boosters with swivelling nozzles.",
+        "why": "On the real rocket the core only lights about 110 s after liftoff, so the solids lift and steer alone until then. LVM3 launched Chandrayaan-3 to the Moon in 2023. Here kerosene and oxygen stand in for the core’s propellants, which light on contact."
+      },
+      "vi": {
+        "what": "Hai động cơ dưới tầng lõi rộng 4 m, giữa hai tên lửa đẩy phụ nhiên liệu rắn rộng 3,2 m có vòi phun xoay được.",
+        "why": "Trên tên lửa thật, tầng lõi chỉ khởi động khoảng 110 s sau khi rời bệ, nên tới lúc đó hai tên lửa rắn tự nâng và tự lái. LVM3 đã phóng Chandrayaan-3 lên Mặt Trăng năm 2023. Ở đây dầu hỏa và oxy đứng thay cho nhiên liệu của tầng lõi, loại tự bốc cháy khi gặp nhau.",
+        "name": "Lõi đôi + hai tên lửa rắn lớn"
+      }
+    },
+    "shape:tail/electron": {
+      "en": {
+        "what": "Nine small engines whose pumps are spun by battery-powered electric motors, under a slim carbon-fibre stage.",
+        "why": "The engine parts are 3D printed and the pumps are the simplest there are. Electron is a small rocket, 1.2 m wide, built for small satellites."
+      },
+      "vi": {
+        "what": "Chín động cơ nhỏ có bơm quay bằng mô-tơ điện chạy pin, dưới một tầng mảnh bằng sợi carbon.",
+        "why": "Chi tiết động cơ được in 3D và bơm điện là loại bơm đơn giản nhất. Electron là tên lửa nhỏ, rộng 1,2 m, làm để phóng vệ tinh nhỏ.",
+        "name": "Chín động cơ bơm điện"
+      }
+    },
+    "shape:tail/falcon_heavy": {
+      "en": {
+        "what": "A Falcon 9 core between two more Falcon 9 first stages with nose cones: 27 engines at liftoff.",
+        "why": "On the real rocket the side boosters fly back and land side by side; on the first flight, in February 2018, they did, and the payload was a Tesla Roadster."
+      },
+      "vi": {
+        "what": "Một lõi Falcon 9 nằm giữa hai tầng một Falcon 9 khác có chóp mũi: 27 động cơ lúc rời bệ.",
+        "why": "Trên tên lửa thật, hai tên lửa đẩy phụ bên bay về và đáp cạnh nhau; ở chuyến bay đầu tiên, tháng 2/2018, chúng đã làm được, và vật được phóng là một chiếc xe Tesla Roadster.",
+        "name": "Ba lõi Falcon"
+      }
+    },
+    "shape:tail/sls": {
+      "en": {
+        "what": "Four Space Shuttle engines in a square inside a tapering boattail, between the two biggest solid boosters ever flown.",
+        "why": "The boosters give about four fifths of the thrust at liftoff and are not recovered. SLS launched Artemis I around the Moon in November 2022."
+      },
+      "vi": {
+        "what": "Bốn động cơ tàu con thoi xếp hình vuông trong một váy thu đuôi (boattail) thon dần, giữa hai tên lửa đẩy phụ rắn lớn nhất từng bay.",
+        "why": "Hai tên lửa đẩy phụ cho khoảng bốn phần năm lực đẩy lúc rời bệ và không được thu hồi. SLS đã phóng Artemis I bay vòng quanh Mặt Trăng vào tháng 11/2022.",
+        "name": "Bốn động cơ + hai tên lửa rắn năm khúc"
+      }
+    },
+    "shape:tail/h3_22": {
+      "en": {
+        "what": "Two hydrogen engines that spin their pumps with hydrogen warmed in the chamber walls, beside two simple solid boosters.",
+        "why": "This expander-bleed cycle is hard to scale up to first-stage thrust, but its failures are mild. H3 flies as the 22 (two engines, two solids), the 24 (four solids) or the 30 (three engines, no solids)."
+      },
+      "vi": {
+        "what": "Hai động cơ hydro quay bơm bằng hydro được hâm nóng trong thành buồng đốt, bên cạnh hai tên lửa đẩy phụ nhiên liệu rắn đơn giản.",
+        "why": "Chu trình giãn nở xả (expander bleed) này khó làm to đủ cho lực đẩy tầng một, nhưng khi hỏng thì hỏng nhẹ. H3 bay theo các bản 22 (hai động cơ, hai tên lửa rắn), 24 (bốn tên lửa rắn) hoặc 30 (ba động cơ, không có tên lửa rắn).",
+        "name": "Hai động cơ giãn nở xả + hai tên lửa rắn"
+      }
+    },
+    "shape:tail/super_heavy": {
+      "en": {
+        "what": "Thirty-three methane engines in three rings: 3 in the centre, 10 round them and 20 at the edge.",
+        "why": "The inner 13 swivel on electric actuators and relight to land; the outer 20 only push at launch. The real booster has no legs: the launch tower catches it with two arms, first done on 13 October 2024."
+      },
+      "vi": {
+        "what": "Ba mươi ba động cơ methane xếp thành ba vòng: 3 chiếc ở giữa, 10 chiếc quanh chúng và 20 chiếc ở mép.",
+        "why": "13 chiếc trong xoay được nhờ bộ đẩy điện (electric actuator) và đề máy lại để hạ cánh; 20 chiếc ngoài chỉ đẩy lúc phóng. Tầng đẩy thật không có chân đáp: tháp phóng bắt nó bằng hai cánh tay, lần đầu ngày 13/10/2024.",
+        "name": "Ba mươi ba động cơ"
+      }
+    },
+    "shape:tail/starship": {
+      "en": {
+        "what": "Three swivelling sea-level engines and three fixed vacuum engines, each in its own shielded bay, beside two steel flaps.",
+        "why": "The flaps steer the ship when it falls back belly-first. Here all six engines share one engine type."
+      },
+      "vi": {
+        "what": "Ba động cơ mặt đất xoay được và ba động cơ chân không cố định, mỗi chiếc trong một khoang chắn riêng, bên cạnh hai cánh lật (flap) bằng thép.",
+        "why": "Các cánh lật lái tàu khi nó rơi về với bụng hướng xuống. Ở đây cả sáu động cơ dùng chung một loại.",
+        "name": "Sáu động cơ và cánh lật sau"
+      }
+    },
+    "shape:tail/ariane_64": {
+      "en": {
+        "what": "One hydrogen engine under a 5.4 m core with four one-piece carbon-fibre solid boosters.",
+        "why": "The boosters are the same motor as Vega C's first stage, and their nozzles are steered by electric actuators. Ariane 64 first flew on 12 February 2026; Ariane 62 flies with two boosters."
+      },
+      "vi": {
+        "what": "Một động cơ hydro dưới tầng lõi rộng 5,4 m, cùng bốn tên lửa đẩy phụ nhiên liệu rắn vỏ sợi carbon liền khối.",
+        "why": "Các tên lửa đẩy phụ này chính là động cơ tầng một của Vega C, và vòi phun của chúng được lái bằng bộ đẩy điện (electric actuator). Ariane 64 bay lần đầu ngày 12/2/2026; Ariane 62 bay với hai chiếc.",
+        "name": "Lõi rộng + bốn tên lửa rắn vỏ carbon"
       }
     },
     "row:tail/thrust": {
@@ -1815,10 +3398,11 @@
     },
     "row:tail/fins": {
       "en": {
-        "what": "Fins and engine fairings low on the ship, which keep it flying nose first through the air."
+        "what": "Fins, flaps and engine fairings low on the ship: they keep it flying nose first through the air, and the moving ones steer."
       },
       "vi": {
-        "what": "Vây (fin) và nắp che động cơ ở thấp trên thân tàu, giữ cho tàu bay mũi đi trước khi xuyên qua không khí."
+        "what": "Vây (fin), cánh lật (flap) và nắp che động cơ ở thấp trên thân tàu: chúng giữ cho tàu bay mũi đi trước khi xuyên qua không khí, còn những chiếc cử động được thì lái.",
+        "name": "Vây, cánh lật và nắp che"
       }
     },
     "row:tail/landing": {
