@@ -49,6 +49,7 @@
     "blackout": {"from": "CAPCOM", "kind": "static", "text": "NO SIGNAL"},
     "afterBlackout": {"from": "CAPCOM", "text": "…copy, we have you. Chute is out."},
     "landed": { "from": "HQ", "delayMin": 11, "text": "Touchdown confirmed. We heard it eleven minutes after you did. Welcome to Jezero. Suit up when you're ready." },
+    "firstWords": { "from": "HQ", "delayMin": 11, "text": "We heard you. Your words reached Earth eleven minutes after you said them: “{words}” Nobody in this room is sitting down. Take a breath and look around. Halcyon-1 stood where you are standing." },
     "firstEva": { "from": "HQ", "delayMin": 11, "text": "Halcyon-1's lander should be about 170 metres north-west of you. First: scan the ground and get power running. Then go find them." },
     "scan": { "from": "HQ", "delayMin": 11, "text": "Scan data received. The radar shows layers under you: this crater floor was once the bottom of a lake." },
     "energy": { "from": "HQ", "delayMin": 11, "text": "Panels are up and the ice is mapped. With that, the ship can make oxygen and methane for the trip home." },

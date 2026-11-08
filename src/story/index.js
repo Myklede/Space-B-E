@@ -5,10 +5,12 @@ import { economy, events, getShip, getState, requestState, save } from '/src/cor
 import data from './data.json';
 import { fill } from './dom.js';
 import { showEnding } from './ending.js';
+import { ANSWER_PAUSE_MS, GUIDE_DELAY_MS, createFirstStepWatcher } from './firstStep.js';
 import { showPrelaunch } from './prelaunch.js';
 import { clearRadio, radio } from './radio.js';
 import { showReturn } from './returnTrip.js';
 import { showView } from './views.js';
+import * as surface from '/src/surface/index.js';
 import './story.css';
 
 // Ending -> lesson from real history (spec §10.2). Flight also sends historyHint for the two MVP lessons.
@@ -44,6 +46,28 @@ function afterBlackout() {
   if (once.has('blackout') && getState() !== 'ENDING') say('afterBlackout', { urgent: true });
 }
 
+// First step on Mars: radio silence while Role 2's moment plays, then Earth answers the player's words, then the orders.
+// window.__role4.firstWordsOverride exists only with ?debug=1 (test hook, as in ending.js).
+let stepTimers = [];
+let stepPoll = null;
+const later = (fn, ms) => stepTimers.push(setTimeout(fn, ms));
+const firstStep = createFirstStepWatcher({
+  getWords: typeof surface.getFirstWords === 'function' ? () => (window.__role4?.firstWordsOverride ?? surface.getFirstWords)() : undefined,
+  onPlain: () => say('firstEva'),
+  onWords: (words) => later(() => {
+    if (getState() !== 'SURFACE') return say('firstEva');
+    say('firstWords', { text: fill(data.radio.firstWords.text, { words }) });
+    say('firstEva');
+    later(() => getState() === 'SURFACE' && events.emit('guidebook:open', { entryId: 'first-step' }), GUIDE_DELAY_MS);
+  }, ANSWER_PAUSE_MS),
+});
+function stopFirstStep() {
+  clearInterval(stepPoll);
+  stepPoll = null;
+  stepTimers.forEach(clearTimeout);
+  stepTimers = [];
+}
+
 function listen() {
   events.on('ending:show', (payload) => {
     ending = payload;
@@ -57,7 +81,7 @@ function listen() {
     requestState('ENDING');
   });
 
-  events.on('ship:built', () => once.clear());
+  events.on('ship:built', () => { once.clear(); firstStep.reset(); });
   events.on('flight:landed', () => say('landed'));
   events.on('flight:event', ({ type }) => {
     if (type === 'maxq') say('maxq');
@@ -69,9 +93,12 @@ function listen() {
     else if (phase === 'entry') say('entry');
     else if (phase === 'landing') afterBlackout();
   });
-  events.on('state:changed', ({ to }) => {
+  events.on('state:changed', ({ from, to }) => {
+    if (from === 'SURFACE') { firstStep.leave(); clearInterval(stepPoll); stepPoll = null; }
     if (to === 'PRELAUNCH') {
       once.clear();
+      firstStep.reset();
+      stopFirstStep();
       clearTimeout(blackoutTimer);
       // No radio on entering PRELAUNCH: Role 2's GO/NO-GO poll says "You are cleared for launch." itself.
     }
@@ -79,7 +106,14 @@ function listen() {
     if (to === 'ENTRY') say('entry');
     if (to === 'ENDING' || to === 'REPORT') clearTimeout(blackoutTimer);
     if (to === 'SURFACE') {
-      say('firstEva');
+      firstStep.surface(from);
+      if (firstStep.waiting) {
+        clearInterval(stepPoll);
+        stepPoll = setInterval(() => {
+          firstStep.tick();
+          if (!firstStep.waiting) { clearInterval(stepPoll); stepPoll = null; }
+        }, 250);
+      }
     }
     if (to === 'CRUISE') {
       say('transfer');

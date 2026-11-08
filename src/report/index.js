@@ -2,6 +2,7 @@
 // A recommendation with a part opens the hangar and makes that part glow (builder:highlightPart, Role 1).
 import * as THREE from 'three';
 import * as flight from '/src/flight/index.js';
+import * as surface from '/src/surface/index.js';
 import { assets, createSpaceScene, graphics } from '/src/graphics/index.js';
 import { PLANETS, events, input, requestState, ui } from '/src/core/index.js';
 import { getReport, startBlackBox } from './blackbox.js';
@@ -74,6 +75,14 @@ function showReport() {
     r.outcome === 'success' ? 'Mission success' : r.outcome === 'failure' ? 'Mission lost' : 'Mission in progress');
   head.append(outcome);
   if (r.rootCause) head.append(el('div', 'role4-report-cause', `Root cause · ${r.rootCause}`));
+  // Role 2's getFirstWords: null until the first step on Mars this mission (window.__role4 override: ?debug=1 only)
+  let words = null;
+  try { words = (window.__role4?.firstWordsOverride ?? surface.getFirstWords)?.(); } catch { /* optional */ }
+  if (typeof words === 'string' && words.trim()) {
+    const quote = el('div', 'role4-muted', `First words on Mars · “${words.trim().slice(0, 200)}”`);
+    quote.dataset.section = 'firstWords';
+    head.append(quote);
+  }
   card.append(head);
 
   const cols = el('div', 'role4-report-cols');

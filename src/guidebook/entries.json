@@ -118,6 +118,13 @@
     "numbers": ["Voyager 1 photographed Earth as a 'pale blue dot' on 14 February 1990, from about 6 billion km", "From Mars, Earth looks like a bright evening or morning star"],
     "source": "Frank White, The Overview Effect (1987); NASA JPL, Pale Blue Dot"
   },
+  "first-step": {
+    "title": "First words on another world",
+    "category": "History",
+    "body": "On 21 July 1969 Neil Armstrong stepped off Apollo 11's lunar module and said: \"That's one small step for [a] man, one giant leap for mankind.\" The Moon is so close that people on Earth heard it almost as he said it. Nobody has stood on Mars yet. When someone does, their first words will reach Earth minutes later, and nobody will be able to answer in time.",
+    "numbers": ["Armstrong's first step: 21 July 1969, 02:56 UTC", "Radio delay Earth to Moon: about 1.3 seconds", "Radio delay Earth to Mars: about 3 to 22 minutes, one way", "An estimated 650 million people watched Apollo 11's moonwalk on TV"],
+    "source": "NASA, Apollo 11 Mission Overview; NASA Mars Exploration"
+  },
   "isru": {
     "title": "Living off the land (ISRU)",
     "category": "Science",
