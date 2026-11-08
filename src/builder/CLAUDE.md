@@ -334,6 +334,14 @@ Người dùng muốn làm lại giao diện trang thiết kế:
     - Sau đó agent kiểm tra soát lại, Claude tổng kiểm tra.
     - Đề bài chung: `src/builder/tools/blender/hangar/V5-BRIEF.md`.
 
+- **Đưa VAB vào game (người dùng chốt 2026-11-08, "Tui rất ưng thiết kế rồi"):** bỏ sảnh tròn cũ, HANGAR giờ là gian VAB v5.
+  - Code game: `hangarScene.js` viết lại; phần chuyển từ sandbox nằm ở `bay/vab/` (`load.js` nạp layout + mảnh, `hall.js` nhân bản InstancedMesh + LOD + sàn trượt + va chạm, `collars.js`, `access.js` cầu dẫn, `mount.js` bệ phóng mảnh, `consoles.js` 4 bàn máy, `shipOutline.js` đo hình tàu, `smoke.js` khói). Game không import gì từ `sandbox/`.
+  - Tàu đúng kích thước thật (không ×1,5), đứng trên bệ mảnh ở ML_TOP = 7. Gian giữ 44 × 44 m (người dùng huỷ việc nới tường gấp đôi).
+  - Chỉ còn 4 bàn máy (dãy 22 m): WINDOW & WEATHER → thẻ Bệ phóng; SPACECRAFT DESIGN → trang thiết kế; ENGINE TEST & SIM → thử động cơ; LAUNCH DIRECTOR → Go/No-Go. Bỏ các bàn propulsion, structures, crew, warehouse; sổ tay vẫn mở bằng phím H.
+  - Bấm E ở bàn: ngồi quay lưng về tàu, mở giao diện. Đóng giao diện: đứng dậy quay người, ngước lên thấy cả tàu.
+  - Phóng: CONFIRM trong Go/No-Go → đứng dậy quay lại, sàn rút từ trên xuống (~1,5 s), âm thanh có sẵn (`cockpit.lock`, `engine.rumble` chậm, `impact.small`), khói ở ray sàn → PRELAUNCH. Thử động cơ cũng rút sàn và cầu dẫn, xong thì đóng lại.
+  - Xoá `bay/room.js`, `bay/stations.js`, `bay/screen.js`. Thang máy và đi lên cầu dẫn để đợt sau.
+
 ## 5. Việc tồn đọng
 
 - **Đã làm cho Role 3 (2026-11-08):**
