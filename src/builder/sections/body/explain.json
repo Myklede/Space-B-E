@@ -4048,23 +4048,23 @@
     },
     "shape:body/dcss_icps": {
       "en": {
-        "what": "A cryogenic upper stage: a wide hydrogen tank and a small round oxygen tank hung below it on a truss, with helium bottles beside it.",
+        "what": "A cryogenic upper stage: a wide hydrogen tank finished white and a small oxygen tank in silver blankets hung below it on a truss, with helium bottles beside it.",
         "why": "Short and efficient. As the SLS Interim Cryogenic Propulsion Stage it pushed Orion out of Earth orbit on Artemis I and II."
       },
       "vi": {
         "name": "Tầng trên Delta IV (ICPS)",
-        "what": "Một tầng trên dùng nhiên liệu siêu lạnh: bồn hydro rộng và một bồn oxy tròn nhỏ treo bên dưới trên khung giàn, cạnh đó là các bình heli.",
+        "what": "Một tầng trên dùng nhiên liệu siêu lạnh: bồn hydro rộng màu trắng và một bồn oxy nhỏ bọc chăn bạc treo bên dưới trên khung giàn, cạnh đó là các bình heli.",
         "why": "Ngắn và hiệu quả. Với tên gọi tầng đẩy siêu lạnh tạm thời của SLS (ICPS), nó đã đẩy tàu Orion rời quỹ đạo Trái Đất trong Artemis I và II."
       }
     },
     "shape:body/atlas_v_ccb": {
       "en": {
-        "what": "The Atlas V booster: an isogrid aluminium oxygen tank, intertank and kerosene tank, bare metal with no foam, with the oxygen line and the avionics pod down the outside of the kerosene tank.",
+        "what": "The Atlas V booster: an isogrid aluminium oxygen tank, intertank and kerosene tank of bare metal with an anodised copper-tan finish and no foam, with the oxygen line and the avionics pod down the outside of the kerosene tank.",
         "why": "Unlike the old Atlas balloon it stands up empty, which made it easier to handle. It launched Curiosity, Perseverance and New Horizons."
       },
       "vi": {
         "name": "Tầng đẩy lõi chung Atlas V",
-        "what": "Tầng đẩy của Atlas V: bồn oxy, đoạn nối và bồn dầu hỏa đều bằng nhôm lưới tam giác, để trần không phủ xốp, với ống dẫn oxy và hộp thiết bị điện tử chạy dọc bên ngoài bồn dầu hỏa.",
+        "what": "Tầng đẩy của Atlas V: bồn oxy, đoạn nối và bồn dầu hỏa bằng nhôm lưới tam giác để trần, phủ lớp anod hóa màu nâu đồng, không có xốp, với ống dẫn oxy và hộp thiết bị điện tử chạy dọc bên ngoài bồn dầu hỏa.",
         "why": "Khác với bồn khí cầu của Atlas đời cũ, nó tự đứng vững khi rỗng, nên dễ vận chuyển hơn. Nó đã phóng Curiosity, Perseverance và New Horizons."
       }
     },
@@ -4750,7 +4750,7 @@
         "name": "Hệ quy chiếu quán tính, phần mềm dùng lại",
         "what": "Bộ quy chiếu quán tính dùng con quay laser, chạy phần mềm lấy từ một tên lửa cũ, chưa từng được thử với đường bay của chính tên lửa này.",
         "pros": [
-          "−$40k"
+          "−$100k"
         ],
         "cons": [
           "Độ tin cậy −1,2 %"
@@ -5396,6 +5396,39 @@
           "Độ tin cậy −0,4 %"
         ],
         "real": "Gemini 10 (1966): bồn chất oxy hóa đã cạn của tầng một bị vỡ ngay sau khi tách tầng, có thể do luồng khí của tầng hai"
+      }
+    },
+    "option:tank/insulation/tiodize": {
+      "en": {
+        "what": "Bare aluminium with anodised and conversion coatings against corrosion: the copper-tan finish of the Atlas V booster, with no foam."
+      },
+      "vi": {
+        "name": "Nhôm trần, lớp anod hóa màu đồng",
+        "what": "Nhôm để trần, được phủ lớp anod hóa và lớp chuyển hóa chống ăn mòn: màu nâu đồng của tầng đẩy Atlas V, không có xốp.",
+        "pros": [
+          "Bảo vệ kim loại trần khỏi ăn mòn: độ tin cậy +0,05 %"
+        ],
+        "cons": [
+          "Giá +2 %"
+        ],
+        "real": "Tầng đẩy lõi chung Atlas V (ULA): nhôm lưới tam giác để trần, không phủ xốp (sổ tay người dùng chỉ ghi xốp cho tầng Centaur); giám đốc điều hành ULA cho biết màu đồng đến từ các lớp anod hóa và lớp phủ chuyển hóa"
+      }
+    },
+    "option:tank_h2/insulation/foam_tan": {
+      "en": {
+        "what": "Sprayed foam plus bonded foam panels, tan as applied: a thicker, tougher coat for the long hydrogen tank of a booster core."
+      },
+      "vi": {
+        "name": "Xốp phun và xốp dán, màu nâu vàng",
+        "what": "Xốp phun cộng thêm các tấm xốp dán, màu nâu vàng khi mới phủ: một lớp dày và bền hơn cho bồn hydro dài của tầng đẩy lõi.",
+        "pros": [
+          "Độ tin cậy +0,15 %"
+        ],
+        "cons": [
+          "Khối lượng +1 %",
+          "Giá +6 %"
+        ],
+        "real": "Tầng đẩy lõi chung Delta IV: xốp phun và xốp dán (tài liệu Delta IV của ULA); tầng một H-IIA cũng mang lớp xốp màu nâu vàng tương tự"
       }
     }
   }

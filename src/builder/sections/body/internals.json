@@ -295,6 +295,20 @@
               "costF": 1.15,
               "rel": 0.001,
               "real": "Centaur, lunar landers"
+            },
+            {
+              "id": "tiodize",
+              "name": "Bare aluminium, anodised copper finish",
+              "note": "No foam: the bare metal gets anodised and conversion coatings against corrosion, which give it a copper-tan colour. Enough for kerosene; cryogenic oxygen boils off a little faster than under foam.",
+              "pros": [
+                "Protects the bare metal from corrosion: reliability +0.05 %"
+              ],
+              "cons": [
+                "+2 % cost"
+              ],
+              "costF": 1.02,
+              "rel": 0.0005,
+              "real": "Atlas V common core booster (ULA): bare isogrid aluminium with no foam (the user's guide lists foam only on Centaur); ULA's chief executive put the copper colour down to its anodise and conversion coatings"
             }
           ]
         },
@@ -463,12 +477,12 @@
               "name": "Inertial reference, reused software",
               "note": "A laser-gyro inertial reference running software carried over from an older rocket, never tested against this rocket's own flight.",
               "pros": [
-                "−$40k"
+                "−$100k"
               ],
               "cons": [
                 "Reliability −1.2 %"
               ],
-              "costD": -40000,
+              "costD": -100000,
               "rel": -0.012,
               "real": "Ariane 5 flight 501 (4 June 1996): the inertial reference system ran software reused from Ariane 4; converting a 64-bit number to 16 bits overflowed 36.7 s after main-engine ignition, about 30 s into the flight"
             }
@@ -1734,6 +1748,22 @@
               "costF": 1.02,
               "rel": 0.001,
               "real": "Shuttle External Tanks of STS-1 and STS-2 (paint dropped afterwards, saving about 272 kg); H-IIA second-stage LH2 tank painted white for long coasts"
+            },
+            {
+              "id": "foam_tan",
+              "name": "Sprayed and bonded foam, tan",
+              "note": "Sprayed foam plus bonded foam panels, tan as applied: a thicker, tougher coat for the long hydrogen tanks of a booster core.",
+              "pros": [
+                "Reliability +0.15 %"
+              ],
+              "cons": [
+                "+1 % mass",
+                "+6 % cost"
+              ],
+              "massF": 1.01,
+              "costF": 1.06,
+              "rel": 0.0015,
+              "real": "Delta IV common booster core: spray-on and bond-on insulation (ULA Delta IV documents); the H-IIA first stage wears a similar tan foam"
             }
           ]
         },

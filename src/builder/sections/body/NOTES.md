@@ -61,10 +61,14 @@ Owner: the body section agent (Role 1). Files: `parts.json`, `section.json`, `in
   - `pmd` option (screen channels) in every baffles slot.
   - `cold_helium`, `internal` (S-IVB internal foam) and `foam_white` options in the hydrogen kits.
   - `cooling` slot in `avionics`: passive (neutral) or cold plates with a sublimator (Saturn IU).
-  - `reused_sri` option in the avionics `imu` slot (Ariane 5 flight 501).
-- **Trade-offs:** every option has a real cost: no option is better in mass, cost and reliability at once.
+  - `reused_sri` option in the avionics `imu` slot (Ariane 5 flight 501): the cheapest inertial reference (−$100k), the least reliable (−1.2 %).
+  - Finishes in the insulation slot (review pass 2): `tiodize` in `tank` (bare aluminium, anodised copper finish: Atlas V) and `foam_tan` in `tank_h2` (sprayed and bonded foam, tan: Delta IV, H-IIA), beside `bare`, `foam` (orange), `foam_white`, `mli` and `internal`.
+- **Trade-offs:** every option has a real cost: no option is better in mass, cost and reliability at once (checked for every slot of the body kits).
 
 ## Data conventions
+
+- **Colour and finish come only from the insulation option** (lead rule, review pass 2), never from the wall stiffening: `bare`, `foam` (orange), `foam_white`, `foam_tan`, `tiodize` (copper-tan anodised aluminium), `mli` (gold or silver blanket), `internal` (bare metal outside). Shapes set it: Atlas V `tiodize`; Delta IV and H-IIA `foam_tan`; SLS and the Shuttle tank `foam`; Long March 5, Ariane 5 and the Delta IV upper stage's hydrogen tank `foam_white` (its oxygen tank `mli`); S-IVB `internal`; Vulcan `foam`.
+- **Materials.** The structure list is Al-Li 2195 (first, the modern default, flown from 1998), Al-Cu 2219, stainless, carbon and titanium. The historic new parts default to `al2219` (`defaultMaterial`): the S-IB and Proton clusters, the N1 spheres, Soyuz Blok A and Blok I, Titan II, PSLV, the Ariane 5 EPC, both Delta IV upper-stage tanks, the forward and aft skirts and both open lattices. Where the real alloy is another pre-Al-Li aluminium (2014 on Titan II and the Saturn upper stages, 7075/V95 skirts and lattices, AMg6 on the Soviet tanks) or was not found, 2219 is the nearest choice on the list. `centerbody_l` defaults to `carbon` (the Delta IV composite centerbody; the shape also sets it). `hotstage_ring_l` has no material family: welded stainless is its identity, like the other steel parts. Effect of 2219: mass ×1.07, cost ×0.8, reliability +0.2 %. The presets do not use these parts.
 
 - **Sizes** follow `src/builder/tools/blender/README.md`: under 2.5 m S, 2.5 to 4.5 m M, over 4.5 m L. So Titan II, PSLV, Soyuz, Atlas V, Zenit and H-IIA are M, and the rest are L. (The earlier `falcon9_s1` and `delta_core` stay L; their ids and numbers are kept.)
 - **Heights** keep the real height/diameter where a ship stays under about 25 m. Long stages are shortened along the barrel only; the tallest body is SLS at 18.6 m.
@@ -106,31 +110,31 @@ Owner: the body section agent (Role 1). Files: `parts.json`, `section.json`, `in
 | delta_core | text | l | 12.4 | 90.0 t | 5770 | 0.87 | 3447 |
 | hydrolox_core | text | l | 17.2 | 43.1 t | 5460 | 1.35 | 4520 |
 | falcon9_s1 | text | l | 10.4 | 67.0 t | 5467 | 1.15 | 3155 |
-| saturn_sic | rebuilt | l | 16.6 | 108.0 t | 6017 | 0.74 | 3263 |
-| saturn_sivb | rebuilt | l | 11.7 | 26.2 t | 4556 | 2.02 | 4998 |
+| saturn_sic | rebuilt | l | 16.6 | 108.0 t | 6013 | 0.74 | 3250 |
+| saturn_sivb | rebuilt | l | 11.7 | 26.2 t | 4550 | 2.02 | 4986 |
 | atlas_balloon | text | m | 9.2 | 57.5 t | 5471 | 1.34 | 3011 |
-| soyuz_blok_a | rebuilt | m | 12.5 | 56.0 t | 4966 | 1.33 | 3134 |
+| soyuz_blok_a | rebuilt | m | 12.5 | 56.0 t | 4916 | 1.32 | 3065 |
 | starship_steel | kept | l | 9.2 | 56.0 t | 5473 | 1.37 | 3082 |
 | electron_carbon | text | s | 5.6 | 20.0 t | 3252 | 3.03 | 2846 |
 | centaur_balloon | text | m | 9.6 | 19.7 t | 4345 | 2.62 | 3681 |
-| saturn_sii | new | l | 12.0 | 26.2 t | 4648 | 2.05 | 4132 |
-| saturn_ib_sib | new | l | 9.4 | 54.0 t | 4623 | 1.34 | 2867 |
-| titan_ii | new | m | 8.6 | 62.0 t | 5400 | 1.24 | 2881 |
+| saturn_sii | new | l | 12.0 | 26.2 t | 4636 | 2.04 | 4106 |
+| saturn_ib_sib | new | l | 9.4 | 54.0 t | 4563 | 1.33 | 2817 |
+| titan_ii | new | m | 8.6 | 62.0 t | 5354 | 1.23 | 2811 |
 | sls_core | new | l | 18.6 | 43.1 t | 5277 | 1.33 | 4657 |
-| dcss_icps | new | l | 8.2 | 16.8 t | 3796 | 2.83 | 3767 |
-| atlas_v_ccb | new | m | 11.2 | 62.5 t | 5227 | 1.21 | 3144 |
-| delta_iv_cbc | new | l | 17.0 | 43.1 t | 5566 | 1.37 | 4758 |
-| h2a_s1 | new | m | 9.2 | 17.5 t | 3681 | 2.66 | 3717 |
+| dcss_icps | new | l | 8.2 | 16.8 t | 3757 | 2.81 | 3622 |
+| atlas_v_ccb | new | m | 11.2 | 62.5 t | 5227 | 1.21 | 3154 |
+| delta_iv_cbc | new | l | 17.0 | 43.1 t | 5572 | 1.37 | 4951 |
+| h2a_s1 | new | m | 9.2 | 17.5 t | 3674 | 2.66 | 3775 |
 | long_march_5 | new | l | 17.2 | 43.1 t | 5501 | 1.36 | 4489 |
 | energia_core | new | l | 17.2 | 43.1 t | 5524 | 1.36 | 4642 |
 | zenit_s1 | new | m | 11.2 | 62.5 t | 5241 | 1.21 | 3113 |
-| pslv_ps2 | new | m | 8.0 | 54.5 t | 5021 | 1.37 | 2821 |
-| soyuz_blok_i | new | m | 6.5 | 31.5 t | 3854 | 2.11 | 2851 |
-| proton_s1 | new | l | 10.0 | 45.0 t | 4568 | 1.59 | 2872 |
-| n1_blok_a | new | l | 6.9 | 18.0 t | 2938 | 3.18 | 2741 |
+| pslv_ps2 | new | m | 8.0 | 54.5 t | 4974 | 1.36 | 2765 |
+| soyuz_blok_i | new | m | 6.5 | 31.5 t | 3818 | 2.10 | 2796 |
+| proton_s1 | new | l | 10.0 | 45.0 t | 4525 | 1.59 | 2814 |
+| n1_blok_a | new | l | 6.9 | 18.0 t | 2918 | 3.16 | 2708 |
 | super_heavy | new | l | 10.0 | 56.0 t | 5343 | 1.35 | 3142 |
 | vulcan_booster | new | l | 10.4 | 64.0 t | 5785 | 1.22 | 3161 |
-| ariane5_epc | new | l | 11.6 | 28.0 t | 4920 | 1.98 | 3847 |
+| ariane5_epc | new | l | 11.6 | 28.0 t | 4859 | 1.96 | 3629 |
 
 - Reliable, Workhorse, Cold Morning and Thin Skin keep exactly the same cost, masses, Δv, TWR and reliability.
 - The N1 cone holds only 18 t: the real lesson of spheres in a cone.
@@ -138,7 +142,7 @@ Owner: the body section agent (Role 1). Files: `parts.json`, `section.json`, `in
 
 ## For the body modeller (stage 2)
 
-**Planned models.** No GLB exists yet, so no part has `model` in its data. Add `"model": { "builder": "body/<slug>" }` to a part only when its file is in `public/assets/models/builder/body/`.
+**Models.** All 20 models exist in `public/assets/models/builder/body/` (commit 3ce7d9f) and the 20 parts carry `"model": { "builder": "body/<slug>" }`. The table below is what they were built to.
 
 | Slug | Part | Size, height | Real | Generator |
 |---|---|---|---|---|
@@ -175,7 +179,7 @@ Owner: the body section agent (Role 1). Files: `parts.json`, `section.json`, `in
   - `look.bulkheadAt` (PSLV).
 - New slot art keys: `grid` (wall stiffening), `coldplate` (avionics cooling), `shield` (hot-staging heat shield).
 - `centerbody_l` in the `BETWEEN` set, with the LOX tank above (`look.fuelAbove: false`).
-- The `foam_white` insulation option should draw white foam.
+- The finish follows the insulation option only (see Data conventions): `foam` orange, `foam_white` white, `foam_tan` tan, `tiodize` copper-tan bare aluminium, `mli` blanket, `internal` and `bare` bare metal. The wall option (`isogrid`, `orthogrid`, `waffle`) changes only the rib pattern, never the colour.
 
 **Shapes that share tanks must look different:**
 

@@ -216,9 +216,19 @@
       "diameter": "l",
       "icon": "tank_l_hydrolox_stretch",
       "stack": [
-        "tank_l_hydrolox",
+        {
+          "type": "tank_l_hydrolox",
+          "options": {
+            "insulation": "foam"
+          }
+        },
         "intertank_l",
-        "tank_l_hydrolox_stretch"
+        {
+          "type": "tank_l_hydrolox_stretch",
+          "options": {
+            "insulation": "foam"
+          }
+        }
       ],
       "radial": [
         {
@@ -752,7 +762,8 @@
         {
           "type": "tank_l_hydrolox",
           "options": {
-            "wall": "orthogrid"
+            "wall": "orthogrid",
+            "insulation": "foam"
           },
           "material": "al2219"
         },
@@ -760,7 +771,8 @@
         {
           "type": "tank_l_hydrolox_stretch",
           "options": {
-            "wall": "orthogrid"
+            "wall": "orthogrid",
+            "insulation": "foam"
           },
           "material": "al2219"
         }
@@ -791,7 +803,7 @@
       "id": "dcss_icps",
       "name": "Delta IV upper stage (ICPS)",
       "real": "Delta Cryogenic Second Stage, 5 m (Delta IV 2002–24), flown on Artemis I and II as the SLS Interim Cryogenic Propulsion Stage",
-      "desc": "A wide hydrogen tank on top and a small round oxygen tank hung below it on a truss, with helium bottles beside it. During the climb the oxygen tank rides inside the skirt.",
+      "desc": "A wide hydrogen tank finished white on top and a small oxygen tank in silver blankets hung below it on a truss, with helium bottles beside it. During the climb the oxygen tank rides inside the skirt.",
       "pros": [
         "Best Isp with a hydrolox engine",
         "Short: 7.2 m"
@@ -809,7 +821,12 @@
             "insulation": "foam_white"
           }
         },
-        "tank_l_lox_hung"
+        {
+          "type": "tank_l_lox_hung",
+          "options": {
+            "insulation": "mli"
+          }
+        }
       ],
       "radial": [
         {
@@ -831,7 +848,7 @@
       "id": "atlas_v_ccb",
       "name": "Atlas V common core booster",
       "real": "Atlas V first stage (Lockheed Martin, then ULA; 2002–)",
-      "desc": "An isogrid aluminium stage of bare metal, with no foam: the oxygen tank, the intertank and the kerosene tank, with the oxygen line and the avionics pod down the outside of the kerosene tank. Unlike the old Atlas balloon, these tanks stand up empty.",
+      "desc": "An isogrid aluminium stage of bare metal with an anodised copper-tan finish and no foam: the oxygen tank, the intertank and the kerosene tank, with the oxygen line and the avionics pod down the outside of the kerosene tank. Unlike the old Atlas balloon, these tanks stand up empty.",
       "pros": [
         "Stiff isogrid: stands up empty",
         "Launched Curiosity, Perseverance and New Horizons"
@@ -846,7 +863,8 @@
         {
           "type": "tank_m_kerolox_stretch",
           "options": {
-            "wall": "isogrid"
+            "wall": "isogrid",
+            "insulation": "tiodize"
           }
         },
         {
@@ -858,7 +876,8 @@
         {
           "type": "tank_m_kerolox",
           "options": {
-            "wall": "isogrid"
+            "wall": "isogrid",
+            "insulation": "tiodize"
           }
         }
       ],
@@ -901,19 +920,22 @@
         {
           "type": "tank_l_hydrolox",
           "options": {
-            "wall": "isogrid"
+            "wall": "isogrid",
+            "insulation": "foam_tan"
           }
         },
         {
           "type": "centerbody_l",
           "options": {
             "construction": "composite"
-          }
+          },
+          "material": "carbon"
         },
         {
           "type": "tank_l_hydrolox_stretch",
           "options": {
-            "wall": "isogrid"
+            "wall": "isogrid",
+            "insulation": "foam_tan"
           }
         }
       ],
@@ -957,14 +979,16 @@
         {
           "type": "tank_m_hydrolox",
           "options": {
-            "wall": "isogrid"
+            "wall": "isogrid",
+            "insulation": "foam_tan"
           }
         },
         "intertank_m",
         {
           "type": "tank_m_hydrolox",
           "options": {
-            "wall": "isogrid"
+            "wall": "isogrid",
+            "insulation": "foam_tan"
           }
         }
       ],
