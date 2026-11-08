@@ -14,4 +14,5 @@ export const fmtMoneyShort = (n) => {
 };
 export const fmtMass = (kg) => (Number.isFinite(kg) ? (Math.abs(kg) >= 1000 ? `${(kg / 1000).toFixed(1)} t` : `${Math.round(kg)} kg`) : '—');
 export const fmtKN = (n) => (Number.isFinite(n) ? `${Math.round(n / 1000).toLocaleString('en-US')} kN` : '—');
-export const fmtPct = (x) => (Number.isFinite(x) ? `${Math.round(x * 100)} %` : '—');
+// one decimal from 99 % up, so a 99.8 % part never reads 100 % (its pros say 99.8 %); 100 % only when it is
+export const fmtPct = (x) => (Number.isFinite(x) ? (x >= 0.99 && x < 1 ? `${(Math.floor(x * 1000) / 10).toFixed(1)} %` : `${Math.round(x * 100)} %`) : '—');
