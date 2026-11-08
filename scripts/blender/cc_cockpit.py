@@ -195,6 +195,12 @@ def cut_shell(ctx, style, hull_mat, grp):
             bmc = prism_bm(pts, w['c'], w['t'], w['b'], w['n'], -0.25, 0.25)
             cm = bpy.data.meshes.new('cut'); bmc.to_mesh(cm); bmc.free()
             co = bpy.data.objects.new('cut', cm); C.col.objects.link(co); cutters.append(co)
+    if ctx.cid == 'apollo':
+        import cc_aft
+        ac, ar = cc_aft.cut_hole(ctx)
+        bmc = prism_bm(rrect_outline(2 * ar, 2 * ar, 0.0, circle=True, nc=40), ac, Vector((1, 0, 0)), Vector((0, 1, 0)), Vector((0, 0, 1)), -0.25, 0.25)
+        cm = bpy.data.meshes.new('cut'); bmc.to_mesh(cm); bmc.free()
+        co = bpy.data.objects.new('cut', cm); C.col.objects.link(co); cutters.append(co)
     for co in cutters:
         md = ob.modifiers.new('b', 'BOOLEAN'); md.object = co; md.operation = 'DIFFERENCE'; md.solver = 'EXACT'; md.use_hole_tolerant = True
         bpy.context.view_layer.update()
@@ -509,6 +515,8 @@ def build_capsule(cid, lay, out):
         if cid == 'apollo':
             import cc_apollo
             cc_apollo.build(ctx, root, mats, groups, tops, z_end)
+            import cc_aft
+            cc_aft.build(ctx, root, mats)
         worst, bad = fit_check(ctx)
         C.log(f'attempt {attempt}: crew scale {ctx.k:.2f}, worst wall overshoot {worst * 100:.1f} cm in {bad}')
         if worst < 0.012 or (ctx.k <= 0.6 and ctx.kl <= 0.5):

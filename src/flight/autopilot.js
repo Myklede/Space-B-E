@@ -55,6 +55,7 @@ export function createAutopilot(options = {}) {
   let landedOn = null; // planet the mission touched down on (the ascent guide never runs there)
   let dodgeId = null, dodgeStart = 0, dodgeDone = false;
   let slamBurns = 0; // hoverslam burns made this descent (a relight after a short stop lights at the floor)
+  let guided = false; // the guided powered descent has started (stays on until the ground)
   let slamBrake = false, slamBraked = false; // a hoverslam ship drifting fast first brakes the drift high up, then lands
   let prevQ = null, prevQT = 0, dqdt = 0; // dynamic pressure and its rate of rise (Pa/s): the look-ahead of the burn limiter
 
@@ -80,7 +81,7 @@ export function createAutopilot(options = {}) {
 
   function set(id, n = 0) { step = id; arg = n; }
   function reset() {
-    step = 'standby'; arg = 0; burning = false; coastLatch = false; circ = false; landedOn = null; dodgeId = null; dodgeStart = 0; dodgeDone = false; slamBurns = 0; slamBrake = false; slamBraked = false; prevQ = null; dqdt = 0;
+    step = 'standby'; arg = 0; burning = false; coastLatch = false; circ = false; landedOn = null; dodgeId = null; dodgeStart = 0; dodgeDone = false; slamBurns = 0; slamBrake = false; slamBraked = false; guided = false; prevQ = null; dqdt = 0;
     input.aim = undefined; input.throttleTarget = undefined; input.brake = false; input.trim = 0;
   }
 
@@ -173,6 +174,7 @@ export function createAutopilot(options = {}) {
 
     // ---- Descent through the air ----
     if (alt > 3000) {
+      guided = false;
       if (burning) { input.throttleTarget = 0; burning = false; }
       set(fc.chuteOpen ? 'chute' : 'entry');
       return input;
@@ -184,10 +186,7 @@ export function createAutopilot(options = {}) {
     const floor = fc.ship?.minThrottle ?? 0;
     const aFull = fc.thrustNow() / fc.mass;
     if (floor > 0 && aFull * floor > tel.gravity * SL.hoverMargin) return slam(fc, tel, floor, aFull);
-    if ((assistReadout(fc).burnNow || tel.horizontalSpeed > 2) && vz < -4) {
-      input.brake = true; set('burn');
-      return input;
-    }
+    if (guided || ((assistReadout(fc).burnNow || guidedDue(fc, tel, aFull)) && vz < -4)) return guidedDescent(fc, tel, floor, aFull);
     input.aim = fc.up;
     // an engine with a throttle floor (part effects, wave 5) that can still hover stays lit at its floor rather than
     // cut and relight: each relight costs a start (a TEA-TEB cluster would spend them all); floor 0 as before. High up
@@ -202,6 +201,64 @@ export function createAutopilot(options = {}) {
       input.throttleTarget = keepLitHere ? floor : 0;
     }
     set('descent');
+    return input;
+  }
+
+  // ---- Guided powered descent (Apollo / Falcon 9 style) ----
+  // Kill the sideways speed high up, follow a vertical-speed profile that ends at ~1.5 m/s and pitch over to near vertical
+  // for touchdown. Thrust direction = desired acceleration minus gravity, its tilt from the local vertical limited by
+  // altitude (a retrograde brake would fly nearly horizontal while the ship still drifts sideways).
+  function tiltLimitDeg(alt) { return alt > 2000 ? 45 : alt > 1000 ? 30 : alt > 200 ? 20 : alt > 30 ? 8 : 3; }
+  function descentProfile(alt, tel, aFull) {
+    const aD = Math.max(0.3, 0.55 * 0.9 * aFull - tel.gravity); // a deceleration the engines can really hold with margin
+    return -Math.max(1.5, Math.min(Math.sqrt(2 * aD * Math.max(0, alt - 3)), 200));
+  }
+  function guidedDue(fc, tel, aFull) {
+    const vzT = descentProfile(tel.altitude, tel, aFull);
+    if (tel.verticalSpeed < vzT) return true;
+    return tel.altitude < 2500 && tel.horizontalSpeed > 3; // time to kill the drift before the last kilometre
+  }
+  function guidedDescent(fc, tel, floor, aFull) {
+    guided = true;
+    const up = fc.up, alt = tel.altitude, vz = tel.verticalSpeed, g = tel.gravity;
+    const vh = v3(fc.vel.x - up.x * vz, fc.vel.y - up.y * vz, fc.vel.z - up.z * vz);
+    const vhm = len(vh);
+    const vzT = descentProfile(alt, tel, aFull);
+    // a drift far too fast to turn away within the height left (a ship that arrives without its parachute doing much):
+    // full thrust toward "no drift, sinking 10 m/s" until it is within reach of the tilt limits below
+    const hard = alt > 30 && vhm > 3 + 0.5 * Math.tan((tiltLimitDeg(alt) * Math.PI) / 180) * g * (alt / Math.max(10, -vz));
+    let T, azNeed;
+    if (hard) {
+      const err = v3(-vh.x - up.x * (10 + vz), -vh.y - up.y * (10 + vz), -vh.z - up.z * (10 + vz));
+      const e = norm(err), eu = e.x * up.x + e.y * up.y + e.z * up.z, tmax = 0.95 * aFull;
+      const a = Math.min(len(err) / 1.5, -g * eu + Math.sqrt(Math.max(0, (g * eu) ** 2 + tmax * tmax - g * g)));
+      T = v3(up.x * g + e.x * a, up.y * g + e.y * a, up.z * g + e.z * a);
+      azNeed = Math.max(0.1, T.x * up.x + T.y * up.y + T.z * up.z);
+    } else {
+      const aD = Math.max(0.3, 0.55 * 0.9 * aFull - g);
+      const ff = vzT < -1.6 && vzT > -199 ? aD * clamp01(1 - (vz - vzT) / 3) : 0; // the profile's own deceleration (feed-forward)
+      azNeed = Math.max(0.1, g + ff + (vzT - vz) / 1.0); // vertical thrust acceleration wanted
+      if (alt > 400 && vhm > 2) azNeed = Math.max(azNeed, 1.1 * g); // at least hover thrust while turning the drift away high up
+      const tgo = Math.max(0, alt - 300) / Math.max(10, -vz);
+      const tauH = Math.max(2, Math.min(15, 0.5 * tgo));
+      const azAim = Math.max(azNeed, g); // (a coasting ship keeps its nose up instead of swinging with the drift)
+      const ahNeed = Math.min(vhm / tauH, Math.tan((tiltLimitDeg(alt) * Math.PI) / 180) * azAim);
+      const dirH = vhm > 0.05 ? scale(vh, -1 / vhm) : v3();
+      T = v3(up.x * azAim + dirH.x * ahNeed, up.y * azAim + dirH.y * ahNeed, up.z * azAim + dirH.z * ahNeed);
+    }
+    input.aim = norm(T);
+    // the thrust's vertical share: what the nose really has once lit
+    const cosNose = Math.max(0.5 * azNeed / len(T), fc.forward.x * up.x + fc.forward.y * up.y + fc.forward.z * up.z);
+    const thr = Math.min(1, azNeed / cosNose / aFull);
+    if (fc.engineLit || alt < 500 || vz < vzT || (alt > 400 && vhm > 2)) {
+      if (!fc.engineLit) { // light once the nose is within reach of the aim, a far-off nose would push the wrong way
+        const cosA = fc.forward.x * input.aim.x + fc.forward.y * input.aim.y + fc.forward.z * input.aim.z;
+        if (cosA < Math.cos((35 * Math.PI) / 180) && alt > 400) { input.throttleTarget = 0; set('descent'); return input; }
+      }
+      input.throttleTarget = Math.max(floor, 0.02, Math.min(1, thr));
+      burning = true;
+    } else input.throttleTarget = 0;
+    set('burn');
     return input;
   }
 
