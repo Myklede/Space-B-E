@@ -24,6 +24,12 @@ const LOOKS = {
   steel: { color: 0xeef1f3, roughness: 0.24, metalness: 0.5, frame: 0xb7bdc3, bump: 0.003, pattern: 'rings' },
   honeycomb: { color: 0xe6e3da, roughness: 0.5, metalness: 0.3, frame: 0xa3a19a, bump: 0.004, pattern: 'bonded', tile: 1.6 },
 };
+/** The tank finishes an equipment bay may wear, in the colours sections/body/art.js gives the tanks. */
+const BAY_FINISH = {
+  tiodize: { color: 0xc4916a, roughness: 0.5, metalness: 0.35 },
+  foam: { color: 0xc46a2c, roughness: 0.95, metalness: 0 },
+  foam_white: { color: 0xefebe3, roughness: 0.85, metalness: 0 },
+};
 const PAINT = 0xf1f0ec; // the white of the nose covers (sections/nose/art.js), for fairings, cork and pods
 const lookOf = (id) => LOOKS[id] ?? LOOKS.al2219;
 
@@ -170,7 +176,9 @@ function segmentArt(seg, index) {
   const tile = lookOf(seg.material).tile ?? TILE;
   const around = (TAU * Math.max(rb, rt)) / tile;
   const painted = seg.kind === 'fairing' || !!seg.cork;
-  const shell = new THREE.Mesh(new THREE.LatheGeometry([new THREE.Vector2(rb, seg.y0), new THREE.Vector2(rt, seg.y1)], 72), skinMaterial(seg.material, Math.max(1, Math.round(around)), Math.max(0.5, slant / tile), painted));
+  // an equipment bay in a stage with one finish end to end wears that finish (sections/body/art.js draws the tanks)
+  const finish = seg.kind === 'bay' ? BAY_FINISH[seg.finish] : null;
+  const shell = new THREE.Mesh(new THREE.LatheGeometry([new THREE.Vector2(rb, seg.y0), new THREE.Vector2(rt, seg.y1)], 72), finish ? new THREE.MeshStandardMaterial(finish) : skinMaterial(seg.material, Math.max(1, Math.round(around)), Math.max(0.5, slant / tile), painted));
   g.add(shell);
   const look = lookOf(seg.material);
   const frameMat = new THREE.MeshStandardMaterial({ color: painted ? 0xc9ccd0 : look.frame, roughness: 0.45, metalness: seg.material === 'carbon' ? 0.3 : 0.5 });

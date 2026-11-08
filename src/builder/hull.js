@@ -108,6 +108,8 @@ function profileAt(points, R, h, yLocal) {
 
 /** The id of the automatic equipment bay's virtual element. */
 export const BAY_ID = 'equipment-bay';
+/** Tank finishes (insulation options) a stage wears end to end, so its equipment bay wears them too. */
+const BAY_FINISHES = new Set(['foam', 'foam_white', 'tiodize']);
 
 /** Elements of the axial stack, top first: { id, entry, def, section, kind, y0, y1, h, R, rT, rB, need, bareT, bareB, climb, rAt }. */
 function elementsOf(layout) {
@@ -115,7 +117,7 @@ function elementsOf(layout) {
   const bay = layout.equipmentBay;
   if (bay) {
     // the automatic equipment bay is a plain cylinder of skin in the stack (no part: the layout left room for it)
-    const def = { id: BAY_ID, name: 'Equipment bay', section: bay.section, size: 'm', height: bay.y1 - bay.y0, aero: { sideArea: 0 }, flags: {} };
+    const def = { id: BAY_ID, name: 'Equipment bay', section: bay.section, size: 'm', height: bay.y1 - bay.y0, aero: { sideArea: 0 }, flags: {}, finish: bay.finish ?? null };
     axial.push({ id: BAY_ID, type: BAY_ID, def, attach: 'axial', y: bay.y0, height: bay.y1 - bay.y0, radius: bay.R });
   }
   axial.sort((a, b) => b.y - a.y);
@@ -353,7 +355,7 @@ function buildSkinNow(layout) {
 
   // 5. the automatic equipment bay is skin all round; the open lower part of a single-engine thrust frame (Redstone,
   // Delta II) gets its skirt
-  for (const el of els) if (el.kind === 'bay') segments.push({ section: el.section, kind: 'bay', y0: el.y0, y1: el.y1, r0: el.R, r1: el.R, covers: [] });
+  for (const el of els) if (el.kind === 'bay') segments.push({ section: el.section, kind: 'bay', y0: el.y0, y1: el.y1, r0: el.R, r1: el.R, covers: [], finish: el.def.finish ?? null });
   for (const el of els) {
     if (el.kind !== 'shell' || !el.openBelow) continue;
     segments.push({ section: el.section, kind: 'skirt', y0: el.y0, y1: el.y0 + el.h * el.openBelow, r0: el.R, r1: el.R, covers: [el.id], openFrame: true });
@@ -648,7 +650,11 @@ export function planEquipmentBay(layout, skin = buildSkin(layout)) {
     dy += ring.h + B.headroom;
   }
   const section = spot?.section ?? (below.section === 'nose' || below.section === 'tail' ? 'body' : below.section ?? 'body');
-  return { y0: spot?.y0 ?? below.y1, height, R, section, slots };
+  // a bay in a stage whose tanks wear one finish end to end (the Atlas V core's copper Tiodize, the orange foam of the
+  // Shuttle tank and SLS, Long March 5's white foam) wears it too, as the intertank does, so the stage stays one colour
+  const finishOf = (el) => (el?.def?.fuel ? el.entry?.options?.insulation : null);
+  const fin = [above, below].map(finishOf).find((f) => BAY_FINISHES.has(f)) ?? null;
+  return { y0: spot?.y0 ?? below.y1, height, R, section, slots, finish: fin };
 }
 
 /** Lifts everything above the equipment bay by its height and records the bay on the layout (layout.equipmentBay). */
@@ -656,7 +662,7 @@ export function applyEquipmentBay(layout, plan) {
   const lifted = new Set();
   for (const e of layout) if (e.attach === 'axial' && e.y >= plan.y0 - 1e-6) { e.y += plan.height; e.centerY += plan.height; lifted.add(e.id); }
   for (const e of layout) if (e.attach === 'radial' && lifted.has(e.parentId)) { e.y += plan.height; e.centerY += plan.height; }
-  Object.defineProperty(layout, 'equipmentBay', { value: { y0: plan.y0, y1: plan.y0 + plan.height, R: plan.R, section: plan.section, slots: plan.slots }, enumerable: false });
+  Object.defineProperty(layout, 'equipmentBay', { value: { y0: plan.y0, y1: plan.y0 + plan.height, R: plan.R, section: plan.section, slots: plan.slots, finish: plan.finish ?? null }, enumerable: false });
   return layout;
 }
 
@@ -865,6 +871,7 @@ export function computeHull(layout, { catalog = null, hull = {} } = {}) {
       section: s.section, kind: s.kind, y0: round(s.y0, 1000), y1: round(s.y1, 1000), r0: round(s.r0, 1000), r1: round(s.r1, 1000),
       material: mat.id, area, mass: area * mat.massPerM2 + heat.corkMass, cost: area * mat.costPerM2 + heat.corkCost,
       sideArea: Math.max(0, projected - coveredArea), centerY: (s.y0 + s.y1) / 2, covers: [...s.covers], peakTempC: heat.peak, heatFactor: f, cork: heat.cork, corkMass: heat.corkMass,
+      ...(s.finish ? { finish: s.finish } : {}),
     };
   });
   const segments = ring;
