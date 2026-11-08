@@ -3,13 +3,15 @@
 // docs/DECISIONS.md); FlightController calls the hooks below. One file per group (propulsion.js, structure.js,
 // landing.js); each exports any of:
 //   begin(flight)                         once per launch (LAUNCH from the pad), to roll what this flight holds
-//   params(p, flight)          → p        adjust shipParams() (limits, thrust, ignitions…)
+//   params(p, ctx, flight)     → p        adjust shipParams() (limits, thrust, ignitions…)
 //   thrust(N, ctx, flight)     → N        the thrust this step (an engine out, the pad holding the ship back…)
 //   ignite(ok, ctx, flight)    → ok       may an ignition fail?
 //   maxQ(pa, ctx, flight)      → pa       the dynamic pressure the structure stands
 //   heatLimit(x, ctx, flight)  → x        the entry heating the shield stands (game units, see atmosphere.js)
 //   touchdownLimit(v, ctx, flight) → v    the touchdown speed the legs stand (m/s)
 //   turnAccel(a, ctx, flight)  → a        how fast the ship can start and stop turning (rad/s²): gimbal, RCS
+//   chuteDeploy(lim, ctx, flight) → lim  { maxSpeed, maxAltitude } at which the chutes may open (canopy type, Mach limit)
+//   chuteCdA(m², ctx, flight)  → m²       the drag area of the canopies open and whole
 //   debrisHit(r, ctx, flight)  → r        r = { absorbed, damage }: what a hit does (armour, skin, shield)
 //   step(ctx, flight)          → failure? every physics step; may return { endingId, cause, historyHint? }
 //   liftoff(ctx, flight)                  at liftoff
@@ -79,13 +81,18 @@ function persist() {
 }
 
 /**
- * The record kept in save: save.partEffects = { flights: [the last MAX_KEPT records] } (newest last).
+ * The record kept in save: save.partEffects = { flights: [the last MAX_KEPT records] } (newest last). The cruise and the
+ * surface append their notes to the last record directly, marked via: 'save', and may add their own fields (life).
  * For src/flight/index.js: recordInSave(save) returns the recorder function.
  */
 export function recordInSave(save) {
   return (rec) => {
-    const kept = (save.load().partEffects?.flights ?? []).filter((x) => x.id !== rec.id);
-    save.update({ partEffects: { flights: [...kept, rec].slice(-MAX_KEPT) } });
+    const flights = save.load().partEffects?.flights ?? [];
+    const old = flights.find((x) => x.id === rec.id);
+    // notes the cruise and the surface appended straight to save (via: 'save') and their own fields (e.g. life) stay
+    const added = (old?.notes ?? []).filter((n) => n.via === 'save');
+    const kept = flights.filter((x) => x.id !== rec.id);
+    save.update({ partEffects: { flights: [...kept, { ...old, ...rec, notes: [...rec.notes, ...added].slice(-300) }].slice(-MAX_KEPT) } });
   };
 }
 

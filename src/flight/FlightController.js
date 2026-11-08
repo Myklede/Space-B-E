@@ -40,7 +40,7 @@ export const WARP_THIN_DENSITY = 1e-4; // kg/m³
 export const TRIM_ACCEL = 6; // m/s²: RCS-style corridor trim before entry (W/S), costs real fuel
 
 // Local notice → contract flight:event type (contract.js FLIGHT_EVENT_TYPES). Others stay local.
-const BUS_FLIGHT_EVENTS = { maxq_warning: 'maxq', debris_hit: 'debris_hit', blackout: 'blackout', skip_off: 'skip_off' };
+const BUS_FLIGHT_EVENTS = { maxq_warning: 'maxq', debris_hit: 'debris_hit', blackout: 'blackout', skip_off: 'skip_off', part_failure: 'part_failure' }; // part_failure: a chosen part failed (./effects/)
 
 // Plain-sentence causes for flight:failed (contract: "cause is one plain sentence").
 const CAUSES = {
@@ -237,7 +237,8 @@ export class FlightController {
     const rho = airDensity(this.planet, alt);
     const r = len(this.pos);
     const orb = this.orbit();
-    const thrust = this.thrustNow(alt) * this.throttle;
+    const fxCtx = { fc: this, dt: 0, alt, speed, phase: this.phase };
+    const thrust = Math.max(0, this.fx.value('thrust', this.thrustNow(alt) * this.throttle, fxCtx)); // what the engines really give (an engine out, the pad holding back)
     const gLocal = this.mu / (r * r);
     const hf = vVert < 0 ? heatFlux(this.planetId, rho, speed, this.ship.noseRadius) : 0;
     return {
@@ -254,7 +255,7 @@ export class FlightController {
       deltaVLeft: this.deltaVLeft(),
       isp: this.isp(alt),
       thrust,
-      twr: this.thrustNow(alt) / (this.mass * gLocal),
+      twr: Math.max(0, this.fx.value('thrust', this.thrustNow(alt), fxCtx)) / (this.mass * gLocal),
       gravity: gLocal,
       airDensity: rho,
       dynamicPressure: dynamicPressure(rho, speed),
@@ -377,7 +378,7 @@ export class FlightController {
       this._event('fairing_sep');
     }
     const bodyCdA = this.inFairing ? this.ship.ascentCdA : this.ship.cdA;
-    const cdA = bodyCdA + (this.chuteOpen ? this.ship.chuteCdA : 0);
+    const cdA = bodyCdA + (this.chuteOpen ? this.fx.value('chuteCdA', this.ship.chuteCdA, fxCtx) : 0); // only the canopies open and whole (./effects/landing.js)
     const dragN = 0.5 * rho * speed * speed * cdA;
     const dragAcc = speed > 0 ? scale(norm(this.vel), -dragN / this.mass) : v3();
     const nonGrav = add(thrustAcc, dragAcc);
@@ -488,7 +489,8 @@ export class FlightController {
   _updateParachute(alt, speed) {
     if (this.chuteOpen || !this.ship.chuteCdA || this.inFairing) return;
     if (this.onGround || dot(this.vel, this.up) >= 0) return;
-    if (alt < TUNING.chuteMaxAltitude && speed < TUNING.chuteMaxSpeed && airDensity(this.planet, alt) > 0) {
+    const lim = this.fx.value('chuteDeploy', { maxSpeed: TUNING.chuteMaxSpeed, maxAltitude: TUNING.chuteMaxAltitude }, { fc: this, alt, speed }); // the chutes the player chose (./effects/landing.js)
+    if (alt < lim.maxAltitude && speed < lim.maxSpeed && airDensity(this.planet, alt) > 0) {
       this.chuteOpen = true;
       this._event('parachute', { altitude: alt, speed });
     }
@@ -534,7 +536,7 @@ export class FlightController {
         if (hit.absorbed) {
           this.armorLeft = Math.max(0, this.armorLeft - (hit.armorUsed ?? 0));
           this._flags.debris_hit = false;
-          this._event('debris_hit', { id: o.id, armorLeft: this.armorLeft, radius: o.radius });
+          this._event('debris_hit', { id: o.id, armorLeft: this.armorLeft, radius: o.radius, armorUsed: hit.armorUsed ?? 0 }); // armorUsed 0: the skin or wall took it
           continue; // absorbed: the piece is gone
         }
         this._fail('rud', 'debris_impact', { id: o.id, radius: o.radius });
@@ -636,6 +638,8 @@ export class FlightController {
     this.pos = scale(up, this.planet.radius);
     if (speed <= limit && upright) {
       this.landingSpeed = speed;
+      this.throttle = 0; // engine cut at contact (Apollo's contact light, Falcon's shutdown): a landed ship stays down
+      this.engineLit = false;
       this.vel = v3();
       this.omega = v3();
       this.onGround = true;

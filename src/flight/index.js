@@ -58,7 +58,7 @@ const CALLOUT_SECONDS = 3.5;
 const CALLOUTS = {
   liftoff: 'Liftoff! We have liftoff.', maxq_warning: 'Max-Q: throttle down through the thick air.',
   fairing_sep: 'Fairing separation.', orbit_achieved: 'Orbit achieved.', fuel_empty: 'MECO: main engine cut-off, tanks dry.',
-  parachute: 'Parachute deployed.', debris_hit: 'Debris strike! Armor took the hit.', no_ignition: 'Engine will not relight: no ignitions left.',
+  parachute: 'Parachute deployed.', debris_hit: 'Debris strike! Armor took the hit.', debris_hit_bare: 'Debris strike!', no_ignition: 'Engine will not relight: no ignitions left.',
 };
 const MAX_MOUSE_STEP = 300; // px per frame: ignore the jump some browsers report right after pointer lock // m: below this the view switches to Role 3's detailed Mars terrain
 const TELEMETRY_EVERY = 0.5; // s (contract: flight:telemetry about twice per second)
@@ -562,8 +562,10 @@ export default {
         onScrub: () => requestState('HANGAR'),
       });
     }
-    fc.onNotice = (type) => {
-      if (CALLOUTS[type]) s.callout = { text: CALLOUTS[type], t: CALLOUT_SECONDS };
+    fc.onNotice = (type, data) => {
+      // a hit the skin or a tank wall took (no armour used) is not 'Armor took the hit' (part effects)
+      const key = type === 'debris_hit' && data && data.armorUsed === 0 ? 'debris_hit_bare' : type;
+      if (CALLOUTS[key]) s.callout = { text: CALLOUTS[key], t: CALLOUT_SECONDS };
       if (['maxq_warning', 'fuel_empty', 'parachute', 'debris_near_miss', 'engine_hot', 'g_high'].includes(type)) s.pacer.event(type, fc.t); // key events: back to 1×
       if (type === 'debris_hit' || type === 'parachute' || type === 'fairing_sep') audio.play('impact.small');
       if (['maxq_warning', 'g_high', 'heat_warning', 'engine_hot'].includes(type)) audio.play('alarm.master');
