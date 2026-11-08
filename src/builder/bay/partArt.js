@@ -92,7 +92,9 @@ function singleArt(entry) {
       applyChoices(model, entry.options);
       model.userData.width = entry.attach === 'radial' ? Math.min(1.2, def?.height ?? 0.8) : undefined;
       if (def?.booster && entry.attach === 'radial') model.userData.srb = true;
-      return model;
+      // the section's art may dress the model (a booster dropped to its clamp and given struts, a bell tinted by fuel)
+      const wrapped = def?.section && SECTION_ART[def.section]?.wrapModel?.(model, entry);
+      return wrapped ?? model;
     }
   }
   const own = def?.section && SECTION_ART[def.section]?.partArt?.(entry);
