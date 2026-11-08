@@ -8,6 +8,7 @@ Cập nhật file này sau mỗi lần trao đổi có quyết định mới. Gh
 
 - Người dùng: Quoc Thai Nguyen (Michael, GitHub Myklede), **Role 1: Rocket Builder** của game SpaceB&E (4 người, hackathon). Trao đổi bằng tiếng Việt.
 - Nhánh làm việc: `role1-builder`. Đưa lên `dev` chỉ khi người dùng bảo: `git merge origin/dev`, `npm run check`, `git push origin HEAD:dev`. Không bao giờ push `main`, không force-push, không `--no-verify`.
+- **Người dùng chốt (2026-11-07):** nhánh `dev` của cả nhóm phải giữ nguyên. AI không tự gộp `dev` vào `role1-builder` và không đụng vào `dev`, chỉ làm khi người dùng bảo. Khi kiểm tra thì chạy các test builder và `check:boot`. Dòng "branch does not contain origin/dev" của `check:static` là bình thường.
 - Chỉ sửa: `src/builder/**`, `src/core/balance.json`, `README.md`, `CREDITS.md`, `docs/DECISIONS.md`, `docs/SHARE_PROBLEMS.md`, `public/assets/**`. Lỗi ở phần người khác thì ghi vào `docs/SHARE_PROBLEMS.md`.
 - Không tự đặt tên event, state, ending, task, station mới: tất cả nằm trong `src/core/contract.js`. Thêm trường phụ vào `ShipSpec.stats` / `ShipSpec.launch` thì được (Role 2 bỏ qua trường lạ), nhưng phải ghi vào DECISIONS.
 - Luật kiểm tra: chuột/bàn phím chỉ qua `core/input.js` (trong builder chỉ dùng `click`, `wheel`, `drag*`); không `requestAnimationFrame`; không viết số `9.81 / 3.71 / 9.80665`; `localStorage` chỉ qua `save`.
