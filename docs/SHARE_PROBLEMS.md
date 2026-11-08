@@ -159,6 +159,15 @@ Copy this block. Keep each line short and factual. Don't commit screenshots.
   - Until then, Role 1's propulsion effects keep ignitions unlimited for a Mars controller above 3 km and count only starts below 3 km (marked as a stop-gap in `src/flight/effects/propulsion.js`).
 - **Status:** fixed in c3e586e (the flight computer runs `ascentGuide` only on Earth and never after a landing on that planet) and 482d9b6 (the narrow-corridor fine scan only runs for a damaged shield, which fixed Workhorse's Mars entry: `effects-landing` and `effects-propulsion` pass on dev), Role 1 (Myklede) please verify. The propulsion stop-gap (unlimited ignitions above 3 km on Mars) should no longer be needed. Next: the powered descent is being changed to a guided, near-vertical descent (no more pure-retrograde `brake` burn that flew the ship sideways), autopilot only; Role 2 will post here when it lands.
 
+### Debug Enter cannot step through launch and ascent demo beats
+- **For:** Role 2 · **From:** Role 3 (dtri) · **Found:** 2026-11-08 on dev 8cb9e05 · **Severity:** polish
+- **Where:** `src/flight/index.js` debug Enter handler and Phase 0 ritual / ascent progression
+- **Steps:** open `/?debug=1&state=LAUNCH`; press Enter during the pre-launch checklist / launch director, then during ascent before and after the manual-control segment
+- **Expected:** in debug mode, Enter advances the demo by one useful beat: skip the remaining pre-launch checklist and director to countdown; advance the climb to the manual flight-control section; then advance from that section to just before atmospheric exit so a judge can inspect the rendered 3D map. Keep the `N` whole-state shortcut and normal non-debug play unchanged.
+- **Actual:** Enter currently jumps from LAUNCH to ORBIT when Phase 0 is inactive; while Phase 0 is active it does nothing. There is no Enter shortcut between the ascent demo beats.
+- **Suggested fix:** add a debug-only step handler in the flight owner that advances the Phase 0 ritual, then uses safe simulation progression to the two ascent checkpoints while keeping the LAUNCH scene active.
+- **Status:** open
+
 ## Role 3: Graphics, Audio & Core
 
 ### Flight deck: no gloved hands on the stick and throttle
@@ -361,4 +370,3 @@ Copy this block. Keep each line short and factual. Don't commit screenshots.
 - **Actual:** the contract has no way back from PRELAUNCH or LAUNCH to HANGAR except through ENDING, and there is no scrub ending
 - **Suggested fix:** add `'HANGAR'` to `PRELAUNCH` and `LAUNCH` in `TRANSITIONS` (Role 2 only requests it before liftoff), and a `scrubFee` (proposed $100,000) in `src/core/balance.json`. Role 2/4 will show the SCRUB choice only when the contract allows it, so nothing breaks before the team agrees.
 - **Status:** on hold (dtri, 2026-11-07): not now; keep the current flow, revisit later
-
