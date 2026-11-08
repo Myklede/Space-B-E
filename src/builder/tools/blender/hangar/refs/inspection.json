@@ -1,0 +1,49 @@
+{
+  "date": "2026-11-08T09:57:14.607Z",
+  "browser": "156.0.8078.80",
+  "viewport": [
+    1280,
+    800
+  ],
+  "errors": [],
+  "httpErrors": [],
+  "lod": {
+    "triangles": 250560,
+    "drawCalls": 30,
+    "geometries": 133,
+    "fps": 117,
+    "structuralCalls": 26
+  },
+  "completeFull": {
+    "triangles": 384684,
+    "drawCalls": 35,
+    "geometries": 135,
+    "fps": 165,
+    "structuralCalls": 25
+  },
+  "completeLod": {
+    "triangles": 266964,
+    "drawCalls": 37,
+    "geometries": 135,
+    "fps": 165,
+    "structuralCalls": 27
+  },
+  "motion": {
+    "cabY": 47,
+    "tipX": -1.25,
+    "trolleyX": 6,
+    "hookY": -12,
+    "doorY": 20
+  },
+  "walk": [
+    -1.2760819647113992e-16,
+    1.7,
+    -8.333100000000004
+  ],
+  "sandboxErrors": [],
+  "game": {
+    "state": "HANGAR",
+    "frames": 7
+  },
+  "gameErrors": []
+}
