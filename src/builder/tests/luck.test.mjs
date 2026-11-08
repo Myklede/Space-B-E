@@ -16,6 +16,7 @@ const { computeShipSpec } = await imp('src/builder/stats.js');
 const SEC = await imp('src/builder/sections.js');
 const { evaluate, holdPlan, owed, thinConsoles, weatherCalls } = await imp('src/builder/gonogo.js');
 const L = await imp('src/builder/asBuilt.js');
+const H = await imp('src/builder/hull.js');
 
 const files = Object.fromEntries(SEC.SECTION_IDS.map((id) => [id, { parts: read(`src/builder/sections/${id}/parts.json`), internals: read(`src/builder/sections/${id}/internals.json`), section: read(`src/builder/sections/${id}/section.json`) }]));
 const { partsJson, internalsJson } = SEC.mergeSectionData(read('src/builder/data/families.json'), files);
@@ -178,6 +179,28 @@ const N = 3000;
   } else ok('octaweb shape not found: cluster scrub check skipped');
 }
 
+// ---------- the engine trouble the flight plays out (stats.asBuiltDefects, for src/flight/effects/propulsion.js) ----------
+{
+  const a = build(preset('reliable'));
+  const base = computeShipSpec(a, deps);
+  const shape = (d) => Object.keys(d).join() === 'kind,partId,unit,count,pct' && ['out', 'outPair', 'debris'].includes(d.kind) && Number.isFinite(d.pct);
+  const plain = (x) => JSON.stringify(JSON.parse(JSON.stringify(x))) === JSON.stringify(x);
+  const hit = flyMany({ ...base, breakdown: { ...base.breakdown, padFx: { ...base.breakdown.padFx, holdDownCatch: 0, damageChance: 1 } } }, a, 50).filter((f) => !f.scrub);
+  check(hit.length && hit.every((f) => Array.isArray(f.spec.stats.asBuiltDefects) && f.spec.stats.asBuiltDefects.some((d) => d.kind === 'debris') && f.spec.stats.asBuiltDefects.every(shape) && plain(f.spec.stats.asBuiltDefects)), 'pad debris goes to stats.asBuiltDefects as plain { kind, partId, unit, count, pct }');
+  const clean = flyMany(base, a, 200).filter((f) => !f.scrub);
+  check(clean.every((f) => Array.isArray(f.spec.stats.asBuiltDefects) && f.spec.stats.asBuiltDefects.length === f.defects.filter((d) => ['out', 'outPair', 'debris'].includes(d.kind)).length), 'every flown ship carries the list, empty when nothing will quit');
+  check(!('asBuiltDefects' in L.buildAsFlown(base, ctxOf(a, { stage: 'stand' })).spec.stats), 'the static fire does not carry it (nothing flies)');
+  const shape9 = sections.tail.shapes.find((x) => x.id === 'octaweb');
+  if (shape9) {
+    const nine = build(preset('reliable'));
+    SEC.applyShape(nine, sections.tail, shape9);
+    const r9 = computeShipSpec(nine, deps);
+    const out = flyMany(r9, nine, 1500).find((f) => !f.scrub && f.defects.some((d) => d.kind === 'out' || d.kind === 'outPair'));
+    const d = out?.defects.find((x) => x.kind === 'out' || x.kind === 'outPair');
+    check(!!out && out.spec.stats.asBuiltDefects.some((x) => x.kind === d.kind && x.partId === d.partId && x.unit === d.unit && x.count === 9) && out.asBuilt.thrust < r9.spec.stats.thrust, `an engine that will quit on the climb is listed (${d?.kind}, engine ${(d?.unit ?? 0) + 1}/9), its thrust already out of the flown totals`);
+  }
+}
+
 // ---------- the pad: hold-down clamps, debris; the weather ----------
 {
   const a = build(preset('reliable'));
@@ -277,10 +300,77 @@ const N = 3000;
   for (let i = 0; i < 6; i++) { wear = L.wearAfterFlight(wear, { layout: a.layout(), hull: a.hull }); means.push(L.meanWear(wear)); }
   check(means.every((m, i) => i === 0 || m > means[i - 1]), `wear grows per flight: ${means.map(pc).join(', ')}`);
   check(L.defectChance(0.97, 0.3) > L.defectChance(0.97, 0) && L.wornRisk(0, 0.3) > 0, 'wear makes defects and skin failures more likely');
+  // (wave 5: wear adds risk as wear⁴, so six flights add almost nothing, as with real boosters; a ship near the end of
+  // its rated life, 20 flights here, shows the extra defects)
+  const old = (() => { let x = null; for (let i = 0; i < 20; i++) x = L.wearAfterFlight(x, { layout: a.layout(), hull: a.hull }); return x; })();
   const fresh = flyMany(r, a, N, { stage: 'stand' }).filter((f) => f.defects.length).length;
-  const worn = flyMany(r, a, N, { stage: 'stand', wear }).filter((f) => f.defects.length).length;
-  check(worn > fresh, `a ship flown six times has more defects (${worn} against ${fresh} in ${N} builds)`);
+  const six = flyMany(r, a, N, { stage: 'stand', wear }).filter((f) => f.defects.length).length;
+  const worn = flyMany(r, a, N, { stage: 'stand', wear: old }).filter((f) => f.defects.length).length;
+  check(worn > fresh && six >= fresh && six - fresh < (worn - fresh) / 2, `a ship near the end of its life (20 flights) has more defects: ${worn} against ${fresh} new, ${six} after six flights, in ${N} builds`);
   check(L.staticFireFee(r.breakdown) > 0 && L.staticFireFee(r.breakdown) < cost * 0.1, `a static fire is a small fee ($${L.staticFireFee(r.breakdown).toLocaleString('en-US')})`);
+}
+
+// ---------- wear follows the material and what the flight did (wave 5) ----------
+{
+  const a = build(preset('reliable'));
+  const r = computeShipSpec(a, deps);
+  const layout = a.layout();
+  const ctx = { layout, hull: a.hull, breakdown: r.breakdown, materials };
+  const tank = layout.find((e) => e.id === 'p3'), engine = layout.find((e) => e.id === 'p4');
+  const tankWear = (m, loads = {}) => L.partWear({ ...tank, material: m }, loads, { materials }).delta;
+  const tw = Object.fromEntries(['titanium', 'stainless', 'al2219', 'al_li', 'carbon'].map((m) => [m, tankWear(m)]));
+  // Al-Li resists fatigue cracks a little better than 2219, as the skins in hull.json have it (2195 3 %, 2219 4 %)
+  check(tw.titanium < tw.stainless && tw.stainless < tw.al_li && tw.al_li < tw.al2219 && tw.al2219 < tw.carbon, `tank wear per flight by metal: titanium ${pc(tw.titanium)} < steel ${pc(tw.stainless)} < Al-Li ${pc(tw.al_li)} < Al 2219 ${pc(tw.al2219)} < carbon ${pc(tw.carbon)}`);
+  check(Math.abs(1 / L.WEAR.tank.base - 40) < 1e-9 && Math.abs(1 / L.WEAR.engine.base - 25) < 1e-9 && Math.abs(1 / L.WEAR.capsule - 15) < 1e-9, 'rated lives: a stage 40 flights (Falcon 9), an engine 25 (the number in SpaceX accounts), a capsule 15 (Crew Dragon)');
+  const ew = Object.fromEntries(['inconel', 'copper', 'printed'].map((m) => [m, L.partWear({ ...engine, material: m }, {}, { materials }).delta]));
+  check(ew.inconel < ew.copper && ew.copper < ew.printed && Math.abs(ew.copper - L.WEAR.engine.base) < 1e-9, `engine wear per flight: Inconel ${pc(ew.inconel)} < copper ${pc(ew.copper)} < printed ${pc(ew.printed)}`);
+  check(tankWear('al_li', { peakQ: 40000 }) > tankWear('al_li', { peakQ: 30000 }) && tankWear('al_li', { peakQ: 30000 }) > tankWear('al_li', { peakQ: 15000 }), 'a harder Max-Q wears the tanks faster (fatigue ∝ stress³)');
+  const starts = (n, hot) => L.partWear(engine, { starts: n, engineTempPeak: hot }, { materials }).delta;
+  check(starts(6, 0.5) > starts(3, 0.5) && starts(3, 0.95) > starts(3, 0.5), 'every engine start past three, and running near the heat limit, wears the engine faster');
+  // the skin: its own fatigue rate, heat near its limit, hits by toughness
+  const mats = Object.fromEntries(H.hullChoices('body').map((m) => [m.id, m]));
+  const sw = (id, loads) => L.skinWear(mats[id], 'body', loads, { info: r.breakdown.hull.bySection.body }).delta;
+  check(sw('steel', {}) < sw('al2219', {}) && sw('al2219', {}) < sw('honeycomb', {}), `skin wear per flight: steel ${pc(sw('steel', {}))} < Al 2219 ${pc(sw('al2219', {}))} < honeycomb ${pc(sw('honeycomb', {}))}`);
+  check(sw('al2195', { skinTempC: { body: 145 } }) > 1.5 * sw('al2195', { skinTempC: { body: 60 } }), 'a skin near its rated temperature wears faster (Al-Li at 145 °C against 60 °C)');
+  const hit = { hits: [{ section: 'body', damage: 1 }] };
+  check(sw('carbon', hit) - sw('carbon', {}) > sw('steel', hit) - sw('steel', {}), 'a hit wears a carbon skin more than a steel one (toughness)');
+  check(L.skinToughness(mats.al2219, 'body', { structure: { skin: { body: { toughness: 3 } } } }) === 3 && L.skinToughness(mats.al2219, 'body', { structure: { skin: { body: { toughness: 80 } } } }) === 5, 'the structure group may give the skin its own toughness (a bounded factor)');
+  // heat shields: an ablator is consumed and replaced; tiles stay and crack
+  const shield = layout.find((e) => e.def.flags?.heatShield && !e.def.flags?.capsule);
+  const ab = L.partWear(shield, {}, { materials });
+  check(ab.consumed === L.WEAR.shield.ablator.avcoat && !(L.wearOfFlight(ctx).parts[shield.id] > 0) && L.wearOfFlight(ctx).consumed[shield.id] === ab.consumed, `an Avcoat ablator is consumed (${pc(ab.consumed)}) and replaced, not carried as wear`);
+  check(L.partWear({ ...shield, options: { ...(shield.options ?? {}), ablator: 'pica' } }, {}, { materials }).consumed < ab.consumed, 'PICA burns away less than Avcoat');
+  check(L.partWear(shield, { entered: false }, { materials }).consumed === 0 && L.partWear(shield, { shieldUse: 0.8 }, { materials }).consumed === 0.8, 'a shield that never entered is not used; a measured use is taken as it is');
+  const tiles = { ...shield, def: { ...shield.def, flags: { ...shield.def.flags, fragileShield: true } } };
+  check(L.partWear(tiles, { hits: [{ section: 'nose' }] }, { materials, sectionOf: () => 'nose' }).delta > L.partWear(tiles, {}, { materials }).delta && !(L.partWear(tiles, {}, { materials }).consumed > 0), 'tiles stay on the ship and crack more for each hit');
+  const legs = layout.find((e) => e.def.flags?.legs);
+  check(L.partWear(legs, { landed: false }, {}).delta === 0 && L.partWear(legs, { touchdownSpeed: 2.8, touchdownLimit: 3 }, {}).delta > L.partWear(legs, { touchdownSpeed: 1, touchdownLimit: 3 }, {}).delta, 'legs wear only on a touchdown, more on a hard one');
+  // a section without skin does not wear; with no flight given, the old nominal wear stays
+  const d = L.wearOfFlight(ctx);
+  check(!('tail' in d.hull) && d.hull.body > 0, 'only the sections with a skin wear');
+  // the refurbishment follows the wear; what was consumed is paid for in full
+  const cost = r.spec.stats.cost;
+  let w = null;
+  const fees = [];
+  for (let i = 0; i < 8; i++) { w = L.wearAfterFlight(w ? { parts: w.parts, hull: w.hull } : null, ctx); fees.push(L.refurbFee(cost, i + 1, { wear: w, breakdown: r.breakdown })); }
+  check(fees.every((x, i) => i === 0 || x > fees[i - 1]) && fees[0] < cost * 0.4 && fees.at(-1) <= cost * L.LUCK.refurb.max, `refurbishment follows the wear: ${fees.map((x) => `$${(x / 1e6).toFixed(2)}M`).join(', ')} (new: $${(cost / 1e6).toFixed(2)}M)`);
+  const plan = L.refurbish(cost, { wear: w, breakdown: r.breakdown });
+  check(plan.lines.some((l) => l.kind === 'replace' && l.partId === shield.id) && plan.lines.some((l) => l.kind === 'repair' && l.partId === 'p4') && plan.lines.some((l) => l.kind === 'skin'), 'the refurbishment bill: inspection, repairs by wear, the skin, a new ablator');
+  const steel = build(preset('reliable')); steel.setHull('body', 'steel'); steel.setHull('nose', 'steel');
+  for (const t of ['p3', 'p21']) steel.setMaterial(t, 'titanium');
+  const rs = computeShipSpec(steel, deps);
+  const ws = L.wearAfterFlight(null, { layout: steel.layout(), hull: steel.hull, breakdown: rs.breakdown, materials });
+  const wa = L.wearAfterFlight(null, ctx);
+  check(L.meanWear(ws) < L.meanWear(wa), `a steel skin with titanium tanks wears less per flight (${pc(L.meanWear(ws))} against ${pc(L.meanWear(wa))})`);
+  // reliability falls with wear, as buildAsFlown rolls it
+  const rel = r.spec.stats.reliability;
+  const r1 = L.wornReliability(rel, r.breakdown, { parts: w.parts, hull: w.hull }, layout);
+  check(L.wornReliability(rel, r.breakdown, null, layout) === rel && r1 < rel, `reliability with wear after 8 flights: ${pc(r1)} (new ${pc(rel)})`);
+  // wear-out: almost no added risk for most of a part's life, climbing near its end (Weibull shape about 4)
+  const extra = (w) => L.defectChance(0.97, w) - L.defectChance(0.97, 0);
+  check(extra(0.3) < 0.002 && extra(0.5) < 0.01 && extra(0.9) > 5 * extra(0.5) && L.wornRisk(0, 1) === L.LUCK.wearFloor, `wear-out curve: added defect chance ${pc(extra(0.3))} at 30 % of life, ${pc(extra(0.5))} at half, ${pc(extra(0.9))} at 90 %`);
+  const relAfter = (k) => { let x = null; for (let i = 0; i < k; i++) x = L.wearAfterFlight(x ? { parts: x.parts, hull: x.hull } : null, ctx); return L.wornReliability(rel, r.breakdown, { parts: x.parts, hull: x.hull }, layout); };
+  check(rel - relAfter(10) < 0.01 && relAfter(20) < relAfter(10) - 0.03, `like a Falcon 9 booster: reliability ${pc(relAfter(5))} after 5 flights, ${pc(relAfter(10))} after 10, ${pc(relAfter(20))} after 20 (new ${pc(rel)})`);
 }
 
 // ---------- the investigation ----------

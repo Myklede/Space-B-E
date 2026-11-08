@@ -261,6 +261,7 @@ export function createHangarScreen({ assembly, catalog, sections, materials, eng
         item('Blueprints', 'save and load your designs', () => hooks.onBlueprints?.());
         item('Share code', 'copy a code for a friend, or paste one', () => hooks.onShare?.());
         item('Redo', 'put back what you undid', () => { if (assembly.redo()) { sound('ui.click'); changed(); } });
+        if (hooks.hasAnalysis?.()) item('Last flight analysis', 'what each part did on the last flight, and how it wore', () => hooks.onAnalysis?.());
         if (hooks.hasRecords?.()) item('Last investigation', 'what the board found after the last failed flight', () => hooks.onRecords?.());
         b.append(list);
       },

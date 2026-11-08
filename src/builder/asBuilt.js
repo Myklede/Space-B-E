@@ -35,11 +35,78 @@ export const LUCK = Object.freeze({
   debris: [0.05, 0.2], // an engine hit by pad debris loses this share of its thrust
   buckleDrag: 1.25, // a skin panel wrinkled at max-Q: the ascent drag area grows by this factor
   lightningHit: 0.9, // a lightning strike on the climb (Apollo 12, 1969): the electronics took it, reliability × 0.9
-  wearDefect: 4, // a defect is (1 + 4 · wear) times as likely on a worn part…
-  wearFloor: 0.1, // … plus 0.1 · wear on its own (a 30 %-worn skin cracks 3 % of the time even if it was perfect)
-  wearPerFlight: Object.freeze({ engine: 0.05, tank: 0.02, booster: 0.02, other: 0, hull: 0.03 }),
+  // Wear-out (the end of the bathtub curve): a worn part adds almost no risk for most of its rated life, then the risk
+  // climbs near the end. Wear-out failures follow a Weibull law with a shape above 4, "old age, rapid wear-out"
+  // (R. Abernethy, The New Weibull Handbook), so the hazard grows as wear⁴. That matches the record: Falcon 9 boosters
+  // are "engineered and demonstrated to support up to 40" flights (SpaceX counts on 25 in its accounts) and show no loss
+  // of reliability for most of that; the RS-25 was rated for 55 missions. A part at the end of its life (wear 1) is a
+  // defect (1 + 4) times as likely, plus 0.05 on its own; at half its life only (1 + 0.25) times, plus 0.003.
+  wearDefect: 4, // a defect is (1 + 4 · wear⁴) times as likely on a worn part…
+  wearFloor: 0.05, // … plus 0.05 · wear⁴ on its own (a skin at the end of its life cracks 5 % of the time even if it was perfect)
+  wearOut: 4, // the exponent: wear⁴
+  wearPerFlight: Object.freeze({ engine: 0.05, tank: 0.02, booster: 0.02, other: 0, hull: 0.03 }), // the old flat rates; WEAR below sets them now
   staticFire: Object.freeze({ base: 80000, perEngine: 10000 }), // a test day on the stand: crew, propellant, range
-  refurb: Object.freeze({ base: 0.25, step: 0.05, max: 0.9 }), // share of the ship's price to refly it
+  // share of the ship's price to refly it. Without the wear known: base + step per flight. With it (refurbish()):
+  // inspection and recovery (inspect × price), each part's price × its wear × wearCost, and what the flight consumed
+  // (an ablator) at its full price. The repairs follow the wear the ship has built up, not this flight's alone, so the
+  // upkeep grows as the ship ages. Falcon 9: the first reflight cost "substantially less than half" of a new stage
+  // (G. Shotwell, 2017), later about a tenth of it; the Shuttle's turnaround cost far more.
+  refurb: Object.freeze({ base: 0.25, step: 0.05, max: 0.9, inspect: 0.15, wearCost: 1 }),
+});
+
+/**
+ * Wear per flight (wave 5, src/builder/CLAUDE.md §8): the share of a part's life one flight uses, set by its material
+ * and scaled by what this flight did to it (the structure group's notes, else the flight telemetry, else a nominal
+ * flight). Real basis, in short (game scaling stated where it applies):
+ *  - q: fatigue damage per load cycle grows as the stress to the power m = 3 (the S-N slope of welded joints, IIW
+ *    Recommendations for Fatigue Design of Welded Joints, Hobbacher 2016); the stress follows the dynamic pressure. ref
+ *    30 kPa is a typical real Max-Q (Falcon 9 about 30–35 kPa, Saturn V about 33 kPa).
+ *  - heat: aluminium alloys lose strength fast above about 60 % of their rated temperature (MMPDS-2019, 2219-T87 and
+ *    2195-T8 elevated-temperature curves); the wear grows as the square of how far past that knee the skin got, ×3 at
+ *    its limit (game estimate).
+ *  - skin and tank metals, per flight relative to aluminium 2219: Ti-6Al-4V keeps about 55 % of its tensile strength as
+ *    fatigue strength at 10⁷ cycles, 2219-T87 about 25 % (MMPDS; ASM Handbook vol. 2 and 19), so titanium about ½;
+ *    stainless 304L about ½ and tougher still when cold (Starship's reason for steel); aluminium-lithium 2195 a little
+ *    less than 2219 (×0.85: Al-Li alloys resist fatigue crack growth better, by crack deflection and closure; Rioja and
+ *    Liu, Metall. Mater. Trans. A 43, 2012), as the skins in data/hull.json have it (2195 3 %, 2219 4 % a flight);
+ *    carbon-fibre cryotanks 1.5 (the X-33 hydrogen tank failed from microcracking, NASA X-33 Liquid Hydrogen Tank Test
+ *    Investigation report, 2000).
+ *  - tanks 2.5 % a flight (a life of 40): Falcon 9 first stages are "engineered and demonstrated to support up to 40"
+ *    flights (SpaceX, 2024).
+ *  - engines 4 % a flight with a copper (GRCop) liner (a life of 25, the number SpaceX uses in its accounts for a
+ *    booster; Merlin 1D has flown 25+ times; the RS-25 was rated for 55 missions but was rebuilt between them);
+ *    regeneratively cooled liners crack from low-cycle thermal fatigue at every start (NASA TM-2005-213566,
+ *    GRCop-84), so each start past the nominal three adds 15 %, and running near the heat limit doubles it; an Inconel
+ *    718 chamber keeps its strength hot (×0.7), a printed chamber has porosity and a rough surface (×1.4, estimate).
+ *  - solid motor cases: the Shuttle's D6AC steel SRB segments were recovered and refilled many times (×0.8); a
+ *    filament-wound composite case is not reusable in practice (×2, estimate).
+ *  - heat shields: an ablator is consumed (charred and receded) and replaced before a reflight, at its price: Avcoat
+ *    about half of its margin on a Mars entry (Orion Artemis I char loss, NASA OIG IG-24-011, 2024, estimate), PICA less
+ *    (Stardust, the fastest entry flown, receded only about 1 cm of 5.8 cm), SLA-561V more (light cork and silica,
+ *    Viking, MER); a beryllium heat sink soaks the heat and stays (Mercury-Redstone); an inflatable (LOFTID, 2022) is
+ *    single use. Shuttle tiles stay and slowly crack: about 140 debris dings per flight on the orbiter, about 30 over an
+ *    inch (Columbia Accident Investigation Board report, 2003, vol. 1 ch. 6), so 4 % a flight plus 12 % per hit.
+ *  - a crew capsule about 1/15 a flight (Crew Dragon: certified for 5 flights, an extension to 15 in work), a third
+ *    each for the launch, the entry and the landing; landing legs 2 % at half their rated touchdown speed, growing as
+ *    the energy, the speed squared.
+ *  - toughness (hits): the energy a skin absorbs before a hole grows with its strength × elongation (ballistic-limit
+ *    equations, NASA JSC Hypervelocity Impact Technology); 1 = aluminium 2219. The structure group may give its own.
+ */
+export const WEAR = Object.freeze({
+  q: Object.freeze({ ref: 30000, exp: 3, min: 0.3, max: 4 }),
+  heat: Object.freeze({ knee: 0.6, k: 2 }),
+  hit: 0.05, // one full hit on a skin of toughness 1 (a hit that bounced off still dents it: 20 % of that)
+  toughness: Object.freeze({ al2219: 1, al2195: 0.9, carbon: 0.6, steel: 2, honeycomb: 0.75, titanium: 2.5 }),
+  skin: 0.03, // a skin material with no fatiguePerFlight of its own
+  engine: Object.freeze({ base: 0.04, material: Object.freeze({ copper: 1, inconel: 0.7, printed: 1.4 }), starts: 3, perStart: 0.15, hot: 2 }),
+  tank: Object.freeze({ base: 0.025, material: Object.freeze({ al_li: 0.85, al2219: 1, stainless: 0.6, titanium: 0.5, carbon: 1.5 }) }),
+  booster: Object.freeze({ base: 0.02, material: Object.freeze({ steel_case: 0.8, composite_case: 2, titanium_case: 1 }) }),
+  capsule: 1 / 15,
+  legs: Object.freeze({ base: 0.02, exp: 2, min: 0.25, max: 4 }),
+  shield: Object.freeze({
+    ablator: Object.freeze({ avcoat: 0.5, avcoat_blocks: 0.55, pica: 0.3, sla: 0.6, phenolic_glass: 0.6, silicone: 0.5, bla: 0.45, carbon_phenolic: 0.35 }),
+    ablatorDefault: 0.5, tiles: 0.04, tilesHit: 0.12, heatSink: 0.05, inflatable: 1,
+  }),
 });
 
 // ---------- seeded randomness ----------
@@ -94,17 +161,47 @@ export function partQuality({ reliability = 1, baseReliability = null, costRatio
 /** ± share by which this quality of part differs from its rating. */
 export const spreadFor = (quality) => LUCK.spreadMax - (LUCK.spreadMax - LUCK.spreadMin) * clamp01(quality);
 /** Chance that one unit comes out of the factory bad: the factory's share of (1 − reliability), raised by wear. */
-export const defectChance = (reliability, wear = 0) => Math.min(0.95, LUCK.factoryShare * Math.max(0, 1 - reliability) * (1 + LUCK.wearDefect * wear) + LUCK.wearFloor * wear);
+/** How much of a part's wear counts as risk: wear⁴ (little for most of its life, climbing near the end). */
+export const wearOutOf = (wear = 0) => Math.min(1, Math.max(0, Number(wear) || 0)) ** LUCK.wearOut;
+export const defectChance = (reliability, wear = 0) => Math.min(0.95, LUCK.factoryShare * Math.max(0, 1 - reliability) * (1 + LUCK.wearDefect * wearOutOf(wear)) + LUCK.wearFloor * wearOutOf(wear));
 /** A risk from hull.js (0..1) on a skin with this much wear. */
-export const wornRisk = (risk, wear = 0) => Math.min(0.95, Math.max(0, risk || 0) * (1 + LUCK.wearDefect * wear) + LUCK.wearFloor * wear);
+export const wornRisk = (risk, wear = 0) => Math.min(0.95, Math.max(0, risk || 0) * (1 + LUCK.wearDefect * wearOutOf(wear)) + LUCK.wearFloor * wearOutOf(wear));
 
 // ---------- money ----------
 /** Static fire on the stand: a test day (crew, propellant, range) plus a little per engine to inspect. */
 export const staticFireFee = (breakdown) => LUCK.staticFire.base + LUCK.staticFire.perEngine * Math.max(1, breakdown?.engineCount ?? 1);
-/** Price to fly a ship that came home again, after `flown` flights (1 = it has flown once). Grows with every flight. */
-export function refurbFee(cost, flown) {
+/**
+ * Price to fly a ship that came home again, after `flown` flights (1 = it has flown once). With the wear and the
+ * breakdown known it follows the wear (refurbish()); without, it grows by a fixed step with every flight.
+ */
+export function refurbFee(cost, flown, { wear = null, breakdown = null } = {}) {
+  if (wear && breakdown?.parts) return refurbish(cost, { wear, breakdown }).fee;
   const share = Math.min(LUCK.refurb.max, LUCK.refurb.base + LUCK.refurb.step * Math.max(0, flown - 1));
   return Math.round(cost * share);
+}
+/**
+ * What refurbishing a ship that came home costs, part by part: inspection and recovery, each worn part's price × its
+ * wear (repairs and spares), each skin section's price × its wear, and what the flight consumed (an ablator) at its
+ * price. → { fee, lines: [{ kind: 'inspect' | 'repair' | 'skin' | 'replace', partId?, section?, wear?, amount }] }
+ */
+export function refurbish(cost, { wear = null, breakdown = null } = {}) {
+  const R = LUCK.refurb;
+  const lines = [{ kind: 'inspect', amount: cost * R.inspect }];
+  const parts = new Map((breakdown?.parts ?? []).map((p) => [p.id, p]));
+  for (const [id, w] of Object.entries(wear?.parts ?? {})) {
+    const p = parts.get(id);
+    if (p?.cost > 0 && w > 0) lines.push({ kind: 'repair', partId: id, wear: w, amount: p.cost * w * R.wearCost });
+  }
+  for (const s of HULL_SECTIONS) {
+    const w = wear?.hull?.[s] ?? 0, c = breakdown?.hull?.bySection?.[s]?.cost ?? 0;
+    if (w > 0 && c > 0) lines.push({ kind: 'skin', section: s, wear: w, amount: c * w * R.wearCost });
+  }
+  for (const [id, share] of Object.entries(wear?.consumed ?? {})) {
+    const p = parts.get(id);
+    if (p?.cost > 0 && share > 0) lines.push({ kind: 'replace', partId: id, wear: share, amount: p.cost * Math.min(1, share) });
+  }
+  const total = lines.reduce((t, l) => t + l.amount, 0);
+  return { fee: Math.round(Math.min(cost * R.max, total)), lines };
 }
 
 // ---------- reuse and wear ----------
@@ -114,25 +211,200 @@ export function designSignature(json) {
   const text = parts.map((p) => [p.id, p.type, p.parent ?? '', p.node ?? '', p.angle ?? 0, p.yFrac ?? 0.5, p.material ?? '', stable(p.options), engineKey(p.engine)].join(',')).join(';') + '#' + stable(json?.hull);
   return hash32(text).toString(36);
 }
-const kindOf = (entry) => (entry?.def?.engine ? 'engine' : entry?.def?.booster ? 'booster' : entry?.def?.fuel ? 'tank' : 'other');
+/** What kind of wear a part has: engine, booster, tank, shield, capsule, legs, or other (none). */
+export function wearKind(entry) {
+  const d = entry?.def, f = d?.flags ?? {};
+  if (d?.engine) return 'engine';
+  if (d?.booster) return 'booster';
+  if (d?.fuel) return 'tank';
+  if (f.capsule) return 'capsule';
+  if (f.heatShield) return 'shield';
+  if (f.legs) return 'legs';
+  return 'other';
+}
+/** How a heat shield wears: 'ablator' (consumed), 'tiles' (crack), 'heatSink' (stays), 'inflatable' (single use). */
+export function shieldType(entry) {
+  const d = entry?.def ?? {};
+  if (d.flags?.fragileShield) return 'tiles';
+  if (d.flags?.inflatable || /hiad|inflat/i.test(String(d.id ?? ''))) return 'inflatable';
+  if (entry?.options?.ablator === 'heat_sink') return 'heatSink';
+  return 'ablator';
+}
+const clampTo = (x, lo, hi) => Math.min(hi, Math.max(lo, x));
+const fin = (x) => Number.isFinite(x);
+/** The material id a part is made of (materials.json family), its own or the part's default. */
+const materialIdOf = (entry, materials) => {
+  const fam = materials?.families?.[entry?.def?.materialFamily];
+  const ok = (id) => (fam ? fam.options.some((o) => o.id === id) : !!id);
+  return [entry?.material, entry?.def?.defaultMaterial].find((id) => id && ok(id)) ?? fam?.options?.[0]?.id ?? entry?.material ?? null;
+};
 /**
- * Wear after one more flight. wear = { parts: { partId: 0..1 }, hull: { nose, body, tail } }: engines +5 %, tanks and
- * solid motors +2 % a flight; the skin by its material's fatiguePerFlight (hull.js), 3 % if it has none.
+ * The loads of one flight as the wear model reads them (flightAnalysis.js flightLoads builds this from the flight's
+ * notes and telemetry). Every field is optional; a missing one means a nominal flight.
+ *   { measured, peakQ (Pa), skinTempC: { nose, body, tail }, hits: [{ section, partId, damage 0..1 }], shieldUse
+ *     (0..1, or { partId: 0..1 }), starts, engineTempPeak (0..1 of the heat limit), touchdownSpeed, touchdownLimit,
+ *     landed (false: never touched down), entered (false: never reached an atmosphere entry) }
  */
-export function wearAfterFlight(wear, { layout = [], hull = {} } = {}) {
+const NOMINAL = Object.freeze({});
+const qFactor = (loads) => (fin(loads?.peakQ) && loads.peakQ > 0 ? clampTo((loads.peakQ / WEAR.q.ref) ** WEAR.q.exp, WEAR.q.min, WEAR.q.max) : 1);
+const heatFactor_ = (tempC, maxTempC) => {
+  if (!fin(tempC) || !(maxTempC > 0)) return 1;
+  const x = Math.max(0, (tempC - WEAR.heat.knee * maxTempC) / ((1 - WEAR.heat.knee) * maxTempC));
+  return 1 + WEAR.heat.k * x * x;
+};
+/** A skin material's toughness against hits (1 = aluminium 2219): the structure group's, the material's, else the table. */
+export function skinToughness(material, section, traits = null) {
+  const t = traits?.structure?.skin?.[section]?.toughness;
+  if (fin(t) && t > 0) return clampTo(t, 0.25, 5); // bounded: a factor, not an energy
+  if (fin(material?.toughness) && material.toughness > 0) return material.toughness;
+  return WEAR.toughness[material?.id] ?? 1;
+}
+/** The hits a flight landed on one section's outer skin (a hit on a named part, a tank or the cabin, is that part's). */
+const onSkin = (h) => !h.partId || String(h.partId).startsWith('skin:');
+const hitsOn = (loads, section, sectionOfPart = () => null, fallback = 'body') => (loads?.hits ?? []).filter((h) => onSkin(h) && (h.section ?? sectionOfPart(h.partId) ?? fallback) === section);
+const hitsOnPart = (loads, id) => (loads?.hits ?? []).filter((h) => h.partId === id).length;
+const hitWear = (hits, toughness) => hits.reduce((t, h) => t + WEAR.hit * (0.2 + 0.8 * clampTo(fin(h.damage) ? h.damage : 1, 0, 1)), 0) / Math.max(0.1, toughness);
+
+/**
+ * One section's skin, one flight: { base, q, heat, hits, tempC, delta } (delta = the share of its life this flight used).
+ * material: hull.json entry; info: computeHull's bySection[section] (peakTempC predicted for the reference climb).
+ */
+export function skinWear(material, section, loads = NOMINAL, { info = null, traits = null, sectionOfPart, fallback } = {}) {
+  const base = fin(Number(material?.fatiguePerFlight)) ? Number(material.fatiguePerFlight) : WEAR.skin;
+  const tempC = fin(loads?.skinTempC?.[section]) ? loads.skinTempC[section] : info?.peakTempC ?? null;
+  const q = qFactor(loads);
+  const heat = heatFactor_(tempC, material?.maxTempC);
+  const hits = hitsOn(loads, section, sectionOfPart, fallback);
+  const hitW = hitWear(hits, skinToughness(material, section, traits));
+  return { base, q, heat, hits: hits.length, hitWear: hitW, tempC, delta: base * q * heat + hitW };
+}
+
+/**
+ * One part, one flight: { kind, base, factor, delta, consumed } (consumed: the share of it used up, replaced at the
+ * refurbishment instead of wearing). ctx: { materials, sectionOf(partId), fallback (the section a hit nobody placed
+ * struck) }.
+ */
+export function partWear(entry, loads = NOMINAL, { materials = null, sectionOf = () => null, fallback = 'body' } = {}) {
+  const kind = wearKind(entry);
+  const out = { kind, base: 0, factor: 1, delta: 0, consumed: 0 };
+  const mat = materialIdOf(entry, materials);
+  const q = qFactor(loads);
+  if (kind === 'engine') {
+    const E = WEAR.engine;
+    out.base = E.base * (E.material[mat] ?? 1);
+    const starts = fin(loads?.starts) ? clampTo(1 + E.perStart * (loads.starts - E.starts), 0.7, 2.5) : 1;
+    const hot = fin(loads?.engineTempPeak) ? 1 + E.hot * Math.max(0, loads.engineTempPeak - 0.8) / 0.2 : 1;
+    out.factor = starts * hot;
+  } else if (kind === 'tank') {
+    out.base = WEAR.tank.base * (WEAR.tank.material[mat] ?? 1);
+    out.factor = q * (1 + 0.5 * hitsOnPart(loads, entry.id)); // a hit on the tank wall itself
+  } else if (kind === 'booster') {
+    out.base = WEAR.booster.base * (WEAR.booster.material[mat] ?? 1);
+    out.factor = q;
+  } else if (kind === 'capsule') {
+    out.base = WEAR.capsule;
+    // a third each for the launch, the entry and the landing it really went through; more for a hit on it
+    const legs = 1 + (loads?.entered === false ? 0 : 1) + (loads?.landed === false ? 0 : 1);
+    out.factor = (legs / 3) * (1 + 0.5 * hitsOnPart(loads, entry.id));
+  } else if (kind === 'legs') {
+    const L = WEAR.legs;
+    out.base = L.base;
+    if (loads?.landed === false) out.factor = 0;
+    else if (fin(loads?.touchdownSpeed) && loads.touchdownLimit > 0) out.factor = clampTo((loads.touchdownSpeed / (0.5 * loads.touchdownLimit)) ** L.exp, L.min, L.max);
+  } else if (kind === 'shield') {
+    const S = WEAR.shield, type = shieldType(entry);
+    const own = typeof loads?.shieldUse === 'object' && loads.shieldUse ? loads.shieldUse[entry.id] : loads?.shieldUse;
+    const used = loads?.entered === false ? 0 : fin(own) ? clampTo(own, 0, 1) : null;
+    const nominal = S.ablator[entry?.options?.ablator] ?? S.ablatorDefault;
+    // consumed, not worn: what it used is replaced (and paid for) before the next flight
+    if (type === 'ablator') { out.base = nominal; out.factor = 0; out.consumed = used ?? nominal; }
+    else if (type === 'inflatable') { out.base = S.inflatable; out.factor = 0; out.consumed = used == null || used > 0 ? S.inflatable : 0; }
+    else if (type === 'heatSink') { out.base = S.heatSink; out.factor = used == null ? 1 : used > 0 ? 1 : 0; }
+    else { // tiles: a steady few cracked per flight, more for each hit on the nose, more on a hot entry
+      out.base = S.tiles;
+      const hits = hitsOn(loads, sectionOf(entry.id) ?? 'nose', sectionOf, fallback).length + hitsOnPart(loads, entry.id); // a hit nobody placed lands where the skin is
+      out.factor = (used == null ? 1 : used === 0 ? 0.3 : 0.5 + used) + (S.tilesHit / S.tiles) * hits;
+    }
+    out.shieldType = type;
+  }
+  out.delta = out.base * out.factor;
+  return out;
+}
+
+/**
+ * What one flight did to each part and each skin section: { parts: { id: delta }, hull: { s: delta }, consumed:
+ * { id: share }, why: { id or 'skin:<s>': details } }. A section without skin (no area in breakdown.hull) does not wear.
+ */
+export function wearOfFlight({ layout = [], hull = {}, flight = null, breakdown = null, materials = null, traits = null } = {}) {
+  const loads = flight ?? NOMINAL;
+  const sectionOfPart = (id) => layout.find((e) => e.id === id)?.def?.section ?? null;
+  const by = breakdown?.hull?.bySection ?? null;
+  const skinned = HULL_SECTIONS.filter((s) => !by || (by[s]?.area ?? 0) > 0);
+  const fallback = skinned.includes('body') ? 'body' : skinned[0] ?? 'body';
+  const parts = {}, consumed = {}, skin = {}, why = {};
+  for (const e of layout) {
+    const w = partWear(e, loads, { materials, sectionOf: sectionOfPart, fallback });
+    if (w.delta > 0 && !(w.consumed > 0)) parts[e.id] = w.delta;
+    if (w.consumed > 0) consumed[e.id] = w.consumed;
+    if (w.kind !== 'other') why[e.id] = w;
+  }
+  for (const s of HULL_SECTIONS) {
+    if (!skinned.includes(s)) continue;
+    const w = skinWear(hullMaterial(hull, s), s, loads, { info: by?.[s] ?? null, traits, sectionOfPart, fallback });
+    skin[s] = w.delta;
+    why[`skin:${s}`] = w;
+  }
+  return { parts, hull: skin, consumed, why };
+}
+
+/**
+ * Wear after one more flight. wear = { parts: { partId: 0..1 }, hull: { nose, body, tail }, consumed: { partId: share } }.
+ * With no flight given, a nominal flight: engines 5 % (copper liner), tanks and solid motors about 2 %, the skin its
+ * material's fatiguePerFlight (hull.js); with one, the material and the flight's loads set it (WEAR, wearOfFlight).
+ * consumed holds what this flight used up (an ablator), to be replaced at the refurbishment; it does not carry over.
+ */
+export function wearAfterFlight(wear, { layout = [], hull = {}, flight = null, breakdown = null, materials = null, traits = null } = {}) {
+  const d = wearOfFlight({ layout, hull, flight, breakdown, materials, traits });
   const parts = {};
-  for (const e of layout) parts[e.id] = Math.min(1, (wear?.parts?.[e.id] ?? 0) + (LUCK.wearPerFlight[kindOf(e)] ?? 0));
+  for (const e of layout) {
+    const before = wear?.parts?.[e.id] ?? 0;
+    const after = Math.min(1, before + (d.parts[e.id] ?? 0));
+    if (after > 0 || e.id in (wear?.parts ?? {})) parts[e.id] = after;
+  }
   const skin = {};
   for (const s of HULL_SECTIONS) {
-    const f = Number(hullMaterial(hull, s)?.fatiguePerFlight);
-    skin[s] = Math.min(1, (wear?.hull?.[s] ?? 0) + (Number.isFinite(f) ? f : LUCK.wearPerFlight.hull));
+    if (!(s in d.hull) && !(s in (wear?.hull ?? {}))) continue;
+    skin[s] = Math.min(1, (wear?.hull?.[s] ?? 0) + (d.hull[s] ?? 0));
   }
-  return { parts, hull: skin };
+  return { parts, hull: skin, consumed: d.consumed };
 }
-/** Average wear of the parts that wear (engines, tanks, solids) and the skin, 0..1. */
+/** Average wear of the parts that wear (engines, tanks, solids, capsule, tiles…) and the skin, 0..1. */
 export function meanWear(wear) {
-  const xs = [...Object.values(wear?.parts ?? {}).filter((w) => w > 0), ...Object.values(wear?.hull ?? {})];
+  const xs = [...Object.values(wear?.parts ?? {}), ...Object.values(wear?.hull ?? {})].filter((w) => w > 0);
   return xs.length ? xs.reduce((t, w) => t + w, 0) / xs.length : 0;
+}
+/**
+ * The ship's reliability with this wear, as buildAsFlown rolls it: each worn engine, tank and solid motor is a defect
+ * more likely (defectChance), a worn skin cracks more often (wornRisk). The other parts' wear costs money only (the
+ * refurbishment). Tiles already fly as a fragile shield (stats.js), so their wear is money too. A plain number to show.
+ */
+export function wornReliability(reliability, breakdown, wear, layout = null) {
+  let r = Number.isFinite(reliability) ? reliability : 1;
+  const parts = new Map((breakdown?.parts ?? []).map((p) => [p.id, p]));
+  const kinds = layout ? new Map(layout.map((e) => [e.id, wearKind(e)])) : null;
+  for (const [id, w] of Object.entries(wear?.parts ?? {})) {
+    const p = parts.get(id);
+    if (!p || !(w > 0)) continue;
+    const k = kinds?.get(id);
+    if (kinds && !['engine', 'tank', 'booster'].includes(k)) continue; // the others' wear costs money, not luck
+    const r0 = p.reliability ?? 1;
+    const rw = Math.max(0, r0 - (defectChance(r0, w) - defectChance(r0, 0))); // the extra chance wear adds to a defect
+    r *= r0 > 0 ? rw / r0 : 1;
+  }
+  // the skin: buildAsFlown rolls Max-Q and heating once each on the most worn section
+  const hw = Math.max(0, ...Object.values(wear?.hull ?? {}));
+  if (hw > 0) r *= (1 - wornRisk(0, hw)) ** 2;
+  return Math.max(0, r);
 }
 
 // ---------- the ship as built ----------
@@ -358,6 +630,13 @@ export function buildAsFlown(result, ctx = {}) {
   }
 
   if (hasUnits) Object.assign(stats, pickStats(built));
+  // the engine trouble the flight plays out at its moment (src/flight/effects/propulsion.js): an engine of a cluster
+  // that quits on the climb ('out', 'outPair') and pad debris that hits one ('debris'). Their thrust is already out of
+  // the flown totals above; the flight gives it back until that moment. Plain JSON; an empty list on a clean ship.
+  if (stage === 'flight') {
+    stats.asBuiltDefects = defects.filter((d) => ['out', 'outPair', 'debris'].includes(d.kind))
+      .map((d) => ({ kind: d.kind, partId: d.partId ?? null, unit: d.unit ?? 0, count: d.count ?? 1, pct: Number.isFinite(d.pct) ? d.pct : 0 }));
+  }
   const flown = {
     ...spec,
     stats,

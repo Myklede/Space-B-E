@@ -737,6 +737,336 @@
     "debrisMissed": {
       "en": "Flying concrete missed the engines this time.",
       "vi": "Lần này bê tông văng ra không trúng động cơ."
+    },
+    "toAnalysis": {
+      "en": "HOW EACH PART DID →",
+      "vi": "TỪNG BỘ PHẬN →"
+    }
+  },
+  "analysis": {
+    "title": {
+      "en": "Flight analysis",
+      "vi": "Phân tích chuyến bay"
+    },
+    "flight": {
+      "en": "Flight {n} · {ship}",
+      "vi": "Chuyến bay {n} · {ship}"
+    },
+    "outcome": {
+      "home": {
+        "en": "Home safe",
+        "vi": "Về nhà an toàn"
+      },
+      "lost": {
+        "en": "Lost: {ending}",
+        "vi": "Mất tàu: {ending}"
+      },
+      "flying": {
+        "en": "Still flying",
+        "vi": "Vẫn đang bay"
+      }
+    },
+    "sections": {
+      "ship": {
+        "en": "The whole ship",
+        "vi": "Cả con tàu"
+      },
+      "nose": {
+        "en": "Nose",
+        "vi": "Mũi tàu"
+      },
+      "body": {
+        "en": "Body",
+        "vi": "Thân tàu"
+      },
+      "tail": {
+        "en": "Tail",
+        "vi": "Đuôi tàu"
+      },
+      "pad": {
+        "en": "Launch pad",
+        "vi": "Bệ phóng"
+      }
+    },
+    "cols": {
+      "part": {
+        "en": "Part",
+        "vi": "Bộ phận"
+      },
+      "did": {
+        "en": "This flight",
+        "vi": "Chuyến này"
+      },
+      "wear": {
+        "en": "Wear",
+        "vi": "Hao mòn"
+      }
+    },
+    "dvUsed": {
+      "en": "Δv: used {used} of the {had} m/s in the tanks ({pct} %).",
+      "vi": "Δv: dùng {used} trong số {had} m/s có trong bồn ({pct} %)."
+    },
+    "dvLeg": {
+      "en": "{leg} {mps}",
+      "vi": "{leg} {mps}"
+    },
+    "legs": {
+      "climb": {
+        "en": "climb",
+        "vi": "bay lên"
+      },
+      "orbit": {
+        "en": "orbit and transfer",
+        "vi": "quỹ đạo và chuyển quỹ đạo"
+      },
+      "entry": {
+        "en": "entry",
+        "vi": "vào khí quyển"
+      },
+      "landing": {
+        "en": "landing",
+        "vi": "hạ cánh"
+      }
+    },
+    "dvBuilt": {
+      "en": "As built, the tanks held {built} m/s ({diff} against the {paper} m/s on paper).",
+      "vi": "Thực tế bồn chứa {built} m/s ({diff} so với {paper} m/s trên giấy)."
+    },
+    "refly": {
+      "en": "To fly it again: {fee} of refurbishment (new: {cost}); reliability {now} (new: {fresh}).",
+      "vi": "Bay lại: tân trang {fee} (đóng mới: {cost}); độ tin cậy {now} (khi mới: {fresh})."
+    },
+    "nothing": {
+      "en": "Nothing to report.",
+      "vi": "Không có gì đáng kể."
+    },
+    "asBuilt": {
+      "en": "Out of the factory: {list}.",
+      "vi": "Lúc xuất xưởng: {list}."
+    },
+    "engineHot": {
+      "en": "Ran up to {pct} % of its heat limit.",
+      "vi": "Có lúc nóng tới {pct} % giới hạn nhiệt."
+    },
+    "starts": {
+      "en": "{n} engine starts.",
+      "vi": "{n} lần khởi động động cơ."
+    },
+    "skinQ": {
+      "en": "Max-Q {q} kPa; this skin takes about {limit} kPa.",
+      "vi": "Áp suất động lớn nhất (Max-Q) {q} kPa; lớp vỏ này chịu được khoảng {limit} kPa."
+    },
+    "skinQRated": {
+      "en": "Takes about {limit} kPa at Max-Q.",
+      "vi": "Chịu được khoảng {limit} kPa ở Max-Q."
+    },
+    "skinTemp": {
+      "en": "Hottest point on the climb {temp} °C; it is good to {limit} °C.",
+      "vi": "Chỗ nóng nhất khi bay lên {temp} °C; vật liệu chịu được {limit} °C."
+    },
+    "shieldUsed": {
+      "en": "Entry burned away {pct} % of the ablator. It is replaced before the next flight ({money}).",
+      "vi": "Lúc vào khí quyển, lớp vật liệu tự cháy mòn hết {pct} %. Phải thay trước chuyến sau ({money})."
+    },
+    "shieldNominal": {
+      "en": "An ablator burns away on entry, about {pct} % on a Mars entry, and is replaced before each reflight ({money}).",
+      "vi": "Lớp vật liệu tự cháy mòn khi vào khí quyển, khoảng {pct} % khi vào khí quyển Sao Hỏa, và phải thay trước mỗi chuyến bay lại ({money})."
+    },
+    "shieldUnused": {
+      "en": "Not used: the flight ended before any entry.",
+      "vi": "Chưa dùng tới: chuyến bay kết thúc trước khi vào khí quyển."
+    },
+    "tiles": {
+      "en": "Tiles stay on the ship and crack little by little.",
+      "vi": "Gạch chịu nhiệt ở lại trên tàu và nứt dần theo từng chuyến."
+    },
+    "heatSink": {
+      "en": "A heat sink soaks up the heat and stays: it hardly wears.",
+      "vi": "Khối hấp thụ nhiệt giữ nhiệt lại rồi vẫn ở nguyên: gần như không mòn."
+    },
+    "inflatable": {
+      "en": "An inflatable shield flies once: a new one each flight ({money}).",
+      "vi": "Tấm chắn bơm phồng chỉ bay một lần: mỗi chuyến cần một cái mới ({money})."
+    },
+    "touchdown": {
+      "en": "Touched down at {v} m/s; the legs take {limit} m/s.",
+      "vi": "Chạm đất ở {v} m/s; chân đáp chịu được {limit} m/s."
+    },
+    "noTouchdown": {
+      "en": "Never touched down: no wear on the legs.",
+      "vi": "Không chạm đất lần nào: chân đáp không mòn."
+    },
+    "pad": {
+      "held": {
+        "en": "The pad takes {limit} kN and the ship pushed {thrust} kN: the engines were held at {throttle} % for the first 7 s, so about {mps} m/s of Δv went on a slow climb off the pad.",
+        "vi": "Bệ chịu được {limit} kN mà tàu đẩy {thrust} kN: động cơ bị giữ ở {throttle} % lực đẩy trong 7 giây đầu, nên khoảng {mps} m/s Δv mất vào lúc rời bệ chậm."
+      },
+      "full": {
+        "en": "The pad takes {limit} kN and the ship pushed {thrust} kN: it left the pad at full thrust at once.",
+        "vi": "Bệ chịu được {limit} kN và tàu đẩy {thrust} kN: tàu rời bệ ngay với toàn bộ lực đẩy."
+      },
+      "repairs": {
+        "en": "Pad repairs before the next launch: {money}.",
+        "vi": "Tiền sửa bệ trước lần phóng sau: {money}."
+      },
+      "scrubs": {
+        "en": "{n} launch attempts were stopped on the pad first.",
+        "vi": "Trước đó có {n} lần phóng bị dừng trên bệ."
+      },
+      "scrubOne": {
+        "en": "A launch attempt was stopped on the pad first.",
+        "vi": "Trước đó có một lần phóng bị dừng trên bệ."
+      }
+    },
+    "wear": {
+      "delta": {
+        "en": "+{pct} %",
+        "vi": "+{pct} %"
+      },
+      "total": {
+        "en": "{pct} % in all",
+        "vi": "tổng {pct} %"
+      },
+      "consumed": {
+        "en": "{pct} % used",
+        "vi": "dùng {pct} %"
+      },
+      "replaced": {
+        "en": "replaced",
+        "vi": "thay mới"
+      },
+      "trendBar": {
+        "en": "Flight {n}: {pct} %",
+        "vi": "Chuyến {n}: {pct} %"
+      },
+      "trend": {
+        "en": "after each flight",
+        "vi": "sau mỗi chuyến"
+      },
+      "legend": {
+        "en": "Bars: wear after each flight of this ship.",
+        "vi": "Cột: mức mòn sau mỗi chuyến của con tàu này."
+      }
+    },
+    "whatIf": {
+      "wear": {
+        "en": "{alt} instead: wear {altWear} instead of {wear}{extra}.",
+        "vi": "Nếu dùng {alt}: mòn {altWear} thay vì {wear}{extra}."
+      },
+      "cheaper": {
+        "en": "{alt} would have saved {money}, but worn {altWear} instead of {wear}{extra}.",
+        "vi": "{alt} rẻ hơn {money}, nhưng mòn {altWear} thay vì {wear}{extra}."
+      },
+      "heat": {
+        "en": "{alt} is good to {limit} °C only: at {temp} °C on this climb it would have failed.",
+        "vi": "{alt} chỉ chịu được {limit} °C: với {temp} °C ở chuyến này nó đã hỏng."
+      },
+      "q": {
+        "en": "{alt} takes only about {limit} kPa: at this Max-Q ({q} kPa) it would have buckled.",
+        "vi": "{alt} chỉ chịu được khoảng {limit} kPa: với Max-Q của chuyến này ({q} kPa) nó đã bị móp gãy."
+      },
+      "shield": {
+        "en": "{alt} instead: about {altUse} % burned away instead of {use} %{extra}.",
+        "vi": "Nếu dùng {alt}: cháy mòn khoảng {altUse} % thay vì {use} %{extra}."
+      },
+      "padBetter": {
+        "en": "On {alt} (takes {limit} kN) it would have left at full thrust and kept those {mps} m/s{extra}.",
+        "vi": "Ở {alt} (chịu được {limit} kN) tàu đã rời bệ với toàn bộ lực đẩy và giữ được {mps} m/s đó{extra}."
+      },
+      "padWorse": {
+        "en": "On {alt} (takes only {limit} kN) the engines would have been held back: about {mps} m/s lost{extra}.",
+        "vi": "Ở {alt} (chỉ chịu được {limit} kN) động cơ đã bị giữ lại: mất khoảng {mps} m/s{extra}."
+      },
+      "fail": {
+        "en": "With {alt} instead of {mine}, this would have failed ({altLimit} against {value}).",
+        "vi": "Nếu dùng {alt} thay cho {mine}, chỗ này đã hỏng ({altLimit} so với {value})."
+      },
+      "pass": {
+        "en": "With {alt} instead of {mine}, it would have held ({altLimit} against {value}).",
+        "vi": "Nếu dùng {alt} thay cho {mine}, chỗ này đã trụ được ({altLimit} so với {value})."
+      },
+      "heavier": {
+        "en": ", {kg} kg heavier",
+        "vi": ", nặng hơn {kg} kg"
+      },
+      "lighter": {
+        "en": ", {kg} kg lighter",
+        "vi": ", nhẹ hơn {kg} kg"
+      },
+      "dearer": {
+        "en": ", {money} dearer",
+        "vi": ", đắt hơn {money}"
+      },
+      "cheaperBy": {
+        "en": ", {money} cheaper",
+        "vi": ", rẻ hơn {money}"
+      },
+      "dvMore": {
+        "en": ", Δv +{mps} m/s",
+        "vi": ", Δv +{mps} m/s"
+      },
+      "dvLess": {
+        "en": ", Δv −{mps} m/s",
+        "vi": ", Δv −{mps} m/s"
+      },
+      "feesMore": {
+        "en": ", pad fees +{money}",
+        "vi": ", phí bệ +{money}"
+      },
+      "feesLess": {
+        "en": ", pad fees −{money}",
+        "vi": ", phí bệ −{money}"
+      },
+      "repairs": {
+        "en": ", and about {money} of pad repairs",
+        "vi": ", và khoảng {money} tiền sửa bệ"
+      }
+    },
+    "back": {
+      "en": "← INVESTIGATION",
+      "vi": "← ĐIỀU TRA"
+    },
+    "close": {
+      "en": "CLOSE",
+      "vi": "ĐÓNG"
+    },
+    "hitOnce": {
+      "en": "Struck once by debris.",
+      "vi": "Bị mảnh vỡ va một lần."
+    },
+    "hits": {
+      "en": "Struck {n} times by debris.",
+      "vi": "Bị mảnh vỡ va {n} lần."
+    },
+    "groups": {
+      "propulsion": {
+        "en": "Engines and pad",
+        "vi": "Động cơ và bệ phóng"
+      },
+      "structure": {
+        "en": "Structure",
+        "vi": "Kết cấu"
+      },
+      "life": {
+        "en": "Crew and life support",
+        "vi": "Phi hành đoàn và hệ thống sống"
+      },
+      "landing": {
+        "en": "Landing, power and radio",
+        "vi": "Hạ cánh, điện và liên lạc"
+      }
+    },
+    "dvUsedLegs": {
+      "en": "Δv: used {used} of the {had} m/s in the tanks ({pct} %): {list}.",
+      "vi": "Δv: dùng {used} trong số {had} m/s có trong bồn ({pct} %): {list}."
+    },
+    "startOne": {
+      "en": "1 engine start.",
+      "vi": "1 lần khởi động động cơ."
+    },
+    "more": {
+      "en": "Click a part for the details and what the other choices would have done.",
+      "vi": "Bấm vào một bộ phận để xem chi tiết và các lựa chọn khác sẽ ra sao."
     }
   }
 }

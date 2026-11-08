@@ -18,7 +18,8 @@ import { internalsJson, partsJson, sections, traitsData } from './catalogData.js
 import { computeShipSpec, engineStats } from './stats.js';
 import { evaluate, holdPlan, owed } from './gonogo.js';
 import { buildAsFlown, describeDefect, designSignature, meanWear, partGroups, refurbFee, staticFireFee, wearAfterFlight } from './asBuilt.js';
-import { createInvestigation } from './investigation.js';
+import { createFlightAnalysis, createInvestigation } from './investigation.js';
+import { closeFlight, createFlightLog, matchEffects } from './flightAnalysis.js';
 import { fmtInt, fmtMoney, fmtMoneyShort } from './format.js';
 import { createHangarScene } from './hangarScene.js';
 import { createDesignScene } from './designScene.js';
@@ -74,6 +75,7 @@ const saveLuck = (patch) => save.update({ builder: { ...builderSave(), luck: { .
 const unitsKey = () => JSON.stringify(Object.entries(luck().units).sort());
 const isFailure = (endingId) => !!endingId && endingId !== contract.ENDINGS.homecoming && endingId !== contract.ENDINGS.bankrupt;
 const lastFailed = () => [...luck().flights].reverse().find((f) => f.outcome?.final && isFailure(f.outcome.endingId)) ?? null;
+const lastFlown = () => [...luck().flights].reverse().find((f) => f.outcome?.final && f.design) ?? null; // records from before the analysis have no design
 
 /** A part taken off the stand and put back later is a new unit from the warehouse, so it rolls again. */
 function trackUnits() {
@@ -93,7 +95,7 @@ function reuseOf(a, l = luck()) {
   if (!f || f.sig !== designSignature(a.toJSON())) return null;
   const parts = Object.fromEntries(Object.entries(f.wear?.parts ?? {}).filter(([id]) => (l.units[id] ?? 0) === (f.units?.[id] ?? 0)));
   const wear = { parts, hull: { ...(f.wear?.hull ?? {}) } };
-  return { flights: f.flights ?? 1, wear, serial: f.serial ?? l.serial, mean: meanWear(wear) };
+  return { flights: f.flights ?? 1, wear, consumed: { ...(f.wear?.consumed ?? {}) }, serial: f.serial ?? l.serial, mean: meanWear(wear) };
 }
 /** Everything asBuilt.js needs to roll this build: the same build always gives the same ship. */
 function luckCtx(a, stage = 'flight') {
@@ -108,7 +110,7 @@ function compute() {
   const fee = result.breakdown.launchFee ?? result.breakdown.slot?.fee ?? 0;
   const l = luck();
   const reuse = reuseOf(a, l);
-  const price = reuse ? refurbFee(result.spec.stats.cost, reuse.flights) : result.spec.stats.cost;
+  const price = reuse ? refurbFee(result.spec.stats.cost, reuse.flights, { wear: { ...reuse.wear, consumed: reuse.consumed }, breakdown: result.breakdown }) : result.spec.stats.cost;
   const pending = owed(l.pending);
   const poll = evaluate(result.spec, { blocks: result.blocks, money: economy.getMoney(), fee, extra: pending, price, text, oneWay: result.breakdown.oneWay, roundTrip: result.breakdown.roundTrip, breakdown: result.breakdown });
   return { ...result, poll, fee, pending, price, reuse };
@@ -122,18 +124,22 @@ function recordFlight(result, flown, a) {
   const n = (l.flights.at(-1)?.n ?? 0) + 1;
   const sig = designSignature(a.toJSON());
   const record = {
-    n, at: Date.now(), name: a.name, sig, serial: l.serial, seed: flown.seed,
+    n, at: Date.now(), name: a.name, sig, serial: l.serial, seed: flown.seed, design: a.toJSON(),
     designed: flown.designed, asBuilt: flown.asBuilt, need: flown.need, defects: flown.defects, notes: flown.notes, units: flown.units,
     weather: flown.weather, pad: flown.pad, scrubs: l.scrubs, overridden: result.poll.needsOverride ? [...result.poll.warnings, ...(result.poll.calls ?? [])] : [],
     paid: { vehicle: result.price, fees: result.fee, owed: result.pending, total: result.poll.total },
     reflight: reuse ? { flights: reuse.flights, wear: reuse.mean } : null,
     groups: partGroups(layout), partNames: Object.fromEntries(layout.map((e) => [e.id, e.def.name])),
     // what the fleet holds if the ship comes home: the same physical ship, one flight older
-    home: { sig, name: a.name, serial: reuse?.serial ?? l.serial, flights: (reuse?.flights ?? 0) + 1, wear: wearAfterFlight(reuse?.wear ?? null, { layout, hull: a.hull }), units: { ...l.units } },
+    // (a nominal flight's wear for now: closeFlight replaces it with what the flight really did, at the ending)
+    home: { sig, name: a.name, serial: reuse?.serial ?? l.serial, flights: (reuse?.flights ?? 0) + 1, before: reuse?.wear ?? null, wear: wearAfterFlight(reuse?.wear ?? null, { layout, hull: a.hull, breakdown: result.breakdown, materials }), units: { ...l.units } },
     outcome: null, seen: false,
   };
   saveLuck({ serial: l.serial + 1, flights: [...l.flights, record].slice(-12), current: n, pending: [], scrubs: [] });
+  flightLog.reset();
 }
+/** What the flight did, from the telemetry every flight scene sends (Δv left, Max-Q, engine heat, hits, touchdown). */
+const flightLog = createFlightLog();
 
 /** How a flight ended (ending:show, with Role 2's causeId from flight:failed when there was one). */
 let lastFailure = null;
@@ -152,6 +158,8 @@ function noteEnding(p) {
   const f = lastFailure && lastFailure.endingId === p.endingId ? lastFailure : null;
   rec.outcome = { endingId: p.endingId, cause: p.cause ?? '', cost: p.cost ?? 0, causeId: f?.causeId ?? null, t: Number.isFinite(f?.t) ? f.t : null, final: true };
   lastFailure = null;
+  // what the flight did and the wear it caused; the outcome and the fleet are saved whatever happens here
+  try { Object.assign(rec, closeFlight(rec, { effects: matchEffects(rec, save.load().partEffects?.flights ?? []), flown: flightLog.summary(), catalog, deps })); } catch (e) { console.warn('[builder] flight analysis:', e.message); }
   saveLuck({ flights: l.flights, current: null, fleet: p.endingId === contract.ENDINGS.homecoming ? rec.home : null });
 }
 function markSeen(n) {
@@ -245,6 +253,8 @@ function enterHangar() {
       unitsKey,
       hasRecords: () => !!lastFailed(),
       onRecords: () => { hangar.closeDialog(); const rec = lastFailed(); if (rec) openBoard(rec); },
+      hasAnalysis: () => !!lastFlown(),
+      onAnalysis: () => { hangar.closeDialog(); const rec = lastFlown(); if (rec) openAnalysis(rec); },
       onStationOpen: (id) => {
         input.unlockPointer();
         audio.play('ui.click');
@@ -424,11 +434,10 @@ function enterHangar() {
     refresh();
   }
 
-  // ---------- the accident investigation board (after a failed flight) ----------
+  // ---------- the accident investigation board (after a failed flight) and the flight analysis (after every flight) ----------
   let board = null, boardRec = null;
-  function openBoard(rec) {
+  function standBack(rec) {
     closeBoard();
-    if (!rec) return;
     boardRec = rec;
     hangar.closeStation();
     input.unlockPointer();
@@ -437,7 +446,19 @@ function enterHangar() {
     const x = Math.cos(deg) * r, z = Math.sin(deg) * r;
     b.player.teleport(x, z, Math.atan2(x, z) + 0.3);
     b.player.setPitch(0.3);
-    board = createInvestigation({ record: rec, text, onHighlight: highlight, onSound: (id) => audio.play(id), onClose: () => { dismissBoard(); audio.play('ui.click'); } });
+  }
+  function openBoard(rec) {
+    if (!rec) return;
+    standBack(rec);
+    board = createInvestigation({ record: rec, text, onHighlight: highlight, onSound: (id) => audio.play(id), onClose: () => { dismissBoard(); audio.play('ui.click'); }, onAnalysis: rec.design ? () => openAnalysis(rec, { back: () => openBoard(rec) }) : null });
+    hangar.el.append(board.el);
+  }
+  function openAnalysis(rec, { back = null } = {}) {
+    if (!rec) return;
+    standBack(rec);
+    const l = luck();
+    const next = l.flights.find((x) => x.n === rec.n + 1) ?? null;
+    board = createFlightAnalysis({ record: rec, effects: matchEffects(rec, save.load().partEffects?.flights ?? [], next), history: l.flights, catalog, deps, traitsData, text, onHighlight: highlight, onSound: (id) => audio.play(id), onClose: () => { dismissBoard(); audio.play('ui.click'); }, onBack: back });
     hangar.el.append(board.el);
   }
   function closeBoard() {
@@ -460,7 +481,7 @@ function enterHangar() {
   const invertY = () => !!save.load().invertY;
   // ?debug=1: let the console (and screenshot scripts) walk to a machine and open it: window.__game.builder.placeAt('propulsion')
   if (new URLSearchParams(location.search).get('debug') === '1' && window.__game) {
-    window.__game.builder = { openStation: hangar.openStation, closeStation: hangar.closeStation, placeAt: (id) => b.placeAtStation(id), startTest, bay: b, scene3d, assembly: a, catalog, sections, icons, refresh, requestArt, reloadArt: (ids) => { ids.forEach((id) => artRequested.delete(id)); return requestArt(ids); }, nasa: { hasNasaArt, nasaFailures, NASA_PARTS }, luck, investigate: () => openBoard(lastFailed()), closeBoard };
+    window.__game.builder = { openStation: hangar.openStation, closeStation: hangar.closeStation, placeAt: (id) => b.placeAtStation(id), startTest, bay: b, scene3d, assembly: a, catalog, sections, icons, refresh, requestArt, reloadArt: (ids) => { ids.forEach((id) => artRequested.delete(id)); return requestArt(ids); }, nasa: { hasNasaArt, nasaFailures, NASA_PARTS }, luck, investigate: () => openBoard(lastFailed()), analysis: () => openAnalysis(lastFlown()), closeBoard };
   }
   const lockOnClick = () => { if (!hangar.station && !b.test.active && !board) input.lockPointer(); };
   window.addEventListener('click', lockOnClick);
@@ -516,9 +537,12 @@ function enterHangar() {
     },
   };
   refresh();
-  // back from a failed flight: the investigation board opens beside the stand
+  // back from a flight: the investigation board (a failure) or the flight analysis (a success) opens beside the stand
   const due = luck().flights.at(-1);
-  if (due?.outcome?.final && isFailure(due.outcome.endingId) && !due.seen) openBoard(due);
+  if (due?.outcome?.final && !due.seen) {
+    if (isFailure(due.outcome.endingId)) openBoard(due);
+    else if (due.outcome.endingId === contract.ENDINGS.homecoming && due.design) openAnalysis(due);
+  }
   // ?debug=1&station=integration: open a machine straight away (handy while the page reloads on every change)
   const startAt = new URLSearchParams(location.search).get('station');
   if (window.__game?.builder && startAt && b.stations.some((st) => st.id === startAt)) { b.placeAtStation(startAt); hangar.openStation(startAt); }
@@ -681,6 +705,9 @@ export default {
     events.on('builder:highlightPart', ({ partId }) => bay?.highlight([partId]));
     // how our flight ended: the record gets its outcome; a ship that came home may fly again (reuse with wear)
     events.on('flight:failed', (p) => noteFailure(p));
+    events.on('flight:telemetry', (t) => flightLog.telemetry(t));
+    events.on('flight:event', (e) => flightLog.event(e));
+    events.on('flight:landed', (p) => flightLog.landed(p));
     events.on('ending:show', (p) => { save.update({ lastEnding: p.endingId }); noteEnding(p); });
     const volume = save.load().volume;
     if (typeof volume === 'number') audio.setVolume(volume);
