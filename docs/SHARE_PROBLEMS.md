@@ -120,6 +120,7 @@ Copy this block. Keep each line short and factual. Don't commit screenshots.
 - **Actual:** about 20 s after touchdown the HUD switches to "FLIGHT / ASCENT · Gravity turn: tipping 14° toward the horizon", the ship climbs (5.8 km at 415 m/s, then 27 km), FUEL LOW, then NO FUEL; the state stays LANDING and the objective still says "Touch down under 3 m/s". At touchdown the cockpit camera also tilts sideways onto the FLIGHT MODE panel. No console errors. Screenshots: `~/SpaceB-E-tools/shots/land-*.jpg` on dtri's machine.
 - **Suggested fix:** once `fc.landed` is true, keep the flight computer idle (throttle 0, no ascent program) until the state changes; probably related to "F toggles manual control any time" (1aba680)
 - **Status:** **Taken by Role 3 (dtri)** (all four agreed, 2026-11-08, docs/DECISIONS.md): Role 3 changes the files named here. Role 2/4: please don't start it; tell dtri before touching the same lines. Before: open (camera only). Checked by Role 3 on dev af00548: the liftoff is fixed (25 s after touchdown: altitude 0, throttle 0, still landed). Still happens: at touchdown the camera's forward drops from 90° (straight up the ship's nose) to about 30° above the horizon while `look` stays (0, 0), so the view sits close and slanted on the console instead of the normal seat view; same with the flight deck and the Apollo capsule, so it comes from the landed camera, not the cockpit model. **How to see it:** `/?debug=1&state=LANDING`, wait for touchdown, compare with the descent view.
+- **More (2026-11-08, Role 2):** the Mars powered descent is now guided and near-vertical (2b3db6f, autopilot only, no camera code touched): max tilt 9.6° below 1 km, 4.6° below 200 m, touchdown upright (0.0°, drift 0.03 m/s). Part of the slanted view after touchdown came from the ship landing tilted; please re-check the landed camera on top of it.
 
 ### `stats.reliability` never matters in flight
 - **For:** Role 2 · **From:** Role 1 (Myklede) · **Found:** 2026-11-07 on dev 3d4fa59 · **Severity:** decision
@@ -128,7 +129,7 @@ Copy this block. Keep each line short and factual. Don't commit screenshots.
 - **Expected:** TEAM_PROMPT §5.3: "cheap parts have a higher hidden failure chance (shown as a reliability %)". The builder now spends real design on it: cheap seals, materials, engine clusters (`r^n`, or engine-out), pad equipment and escape towers all move the number
 - **Actual:** both ships fly exactly the same; the reliability the player paid for never shows up
 - **Suggested fix:** one roll per flight phase, e.g. a chance of `(1 − reliability) / 3` at liftoff, max-Q and staging/entry, that triggers an existing failure (`rud`, or an engine-out that cuts thrust); `spec.engines.length > 1` could mean the ship survives losing one engine. Needs agreement on which ending a random failure uses
-- **Status:** open
+- **Status:** open (decision). **Role 2 + Role 4 (Minh Vuong) agree** with Role 1's per-phase roll, using no new names. Proposal: one roll per flight phase from `stats.reliability` r, seeded per mission so a retry of the same ship is fair: ascent 50 % × (1 − r), entry 25 % × (1 − r), landing 15 % × (1 − r) (cruise stays Role 4's malfunction event). A hit emits `flight:event { type: 'part_failure' }` and: **ascent / landing** with more than one engine = engine-out (thrust × (n − 1)/n, the flight computer flies on); with one engine = `rud`. **Entry** = the heat shield loses part of its margin; if the entry then overheats, `burnup`. Never `theFoam`/`coldMorning`/other tribute endings for a random roll (those come only from the player's own choices). The demo build never rolls. Also yes to `stats.maxQKPa` / `stats.maxSkinTempC` as optional ShipSpec extras that flight reads when present. **Waiting for Role 3 (dtri)**; Role 2 builds it in `FlightController` only (not the camera/orbit/launch areas Role 3 took) once Role 3 agrees.
 - **More (2026-11-08, Role 1):** dev's c3e586e now runs the ascent guide on Earth only. Role 1 will re-check Workhorse's Mars entry with it and drop the propulsion stop-gap once it holds.
 - **More (2026-11-07, Role 1):** the builder now flies an as-built ship (src/builder/asBuilt.js: factory spread and rare defects already lower thrust, Isp or propellant, set `heatShieldDamaged` or raise `ascentCdA`). What only flight can do, proposed for the whole team: (1) a per-phase roll from `stats.reliability` (for example 50 % of 1 − reliability on ascent, 10 % cruise, 25 % entry, 15 % landing) that emits `part_failure` and the matching ending (no new names); (2) skin limits as ShipSpec extras `stats.maxQKPa` and `stats.maxSkinTempC` (from `hull.js` limits, ignored if absent) so an overloaded skin can break up on the climb instead of the fixed 40 kPa.
 
@@ -156,7 +157,7 @@ Copy this block. Keep each line short and factual. Don't commit screenshots.
   - Now that engines have real ignition counts (wave 5, TEA-TEB cartridges), those pulses would use up the landing relights.
 - **Suggested fix:** guard ascentGuide to Earth (or to the ascent phase) and retune Workhorse's Mars entry corridor or the entry autopilot so it no longer relies on the pulses.
   - Until then, Role 1's propulsion effects keep ignitions unlimited for a Mars controller above 3 km and count only starts below 3 km (marked as a stop-gap in `src/flight/effects/propulsion.js`).
-- **Status:** open
+- **Status:** fixed in c3e586e (the flight computer runs `ascentGuide` only on Earth and never after a landing on that planet) and 482d9b6 (the narrow-corridor fine scan only runs for a damaged shield, which fixed Workhorse's Mars entry: `effects-landing` and `effects-propulsion` pass on dev), Role 1 (Myklede) please verify. The propulsion stop-gap (unlimited ignitions above 3 km on Mars) should no longer be needed. Next: the powered descent is being changed to a guided, near-vertical descent (no more pure-retrograde `brake` burn that flew the ship sideways), autopilot only; Role 2 will post here when it lands.
 
 ## Role 3: Graphics, Audio & Core
 
@@ -229,6 +230,15 @@ Copy this block. Keep each line short and factual. Don't commit screenshots.
   - put each new area as a named prop in `userData.props` with its interaction point (`sleepStation`, `galley`, `hygiene`, `waterRecovery`, `treadmill`, `resistanceDevice`, `eclss`, `fireExtinguisher`, `dustZone`, `glovebox`, `sampleFreezer`, `plantGrowth`, `medKit`, `stormShelter`, `calendar`, `familyPhoto`): Role 2 will show a short real fact for each (no contract change needed, props are local notices);
   - export the furniture footprints as `userData.walkBoxes = [{ x, z, hx, hz }]` (cabin-local, half sizes) so the player can't walk through them (Role 2 already supports boxes);
   - optional: `userData.setLightMode(mode)` as above.
+- **Status:** open
+
+### Post-landing egress (E after a Mars touchdown): reuse your capsule hatch and float/walk path, or keep it off?
+- **For:** Role 3 · **From:** Role 2 (Minh Vuong) · **Found:** 2026-11-08 on dev 05cbd7f · **Severity:** decision (Role 2 + Role 3)
+- **Where:** `src/flight/index.js` (`EGRESS_CINEMATIC = false`, `startEgress`), `src/flight/egress.js`, `src/surface/egressArrival.js`; your capsule cockpits (1f7ad3d) and the orbit-to-cabin route you took over (hatch behind the seats, passage, `attachCabin`)
+- **Steps:** `/?debug=1&state=LANDING`, then `__role2flight.egress()` (the cinematic is switched off in normal play)
+- **Expected:** after touchdown, E plays one continuous scene: harness off, stand up in 0.38 g, through the hatch behind the seats, down into the cabin. Your orbit-to-cabin route already goes through the same hatch and passage (in zero g), so the two should look and work the same.
+- **Actual:** Role 2's egress was written for the old flight deck (`aft` node, cabin `ladderTopCabin`/`ladderBottom`); your capsules now have their own hatch, passage and harness hooks, and you own the orbit-to-cabin code in `src/flight/`
+- **Suggested fix:** your call, since you are building the same route: either (a) you extend your hatch/passage hooks with a gravity variant and Role 2 switches `EGRESS_CINEMATIC` on and drives it, or (b) you take the post-landing egress into your orbit-to-cabin work and Role 2 removes its version. Until you answer, Role 2 keeps it off and changes nothing there.
 - **Status:** open
 
 ## Role 4: Story, Cruise & Knowledge
