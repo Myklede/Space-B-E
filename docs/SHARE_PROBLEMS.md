@@ -180,6 +180,32 @@ Copy this block. Keep each line short and factual. Don't commit screenshots.
 
 - **Status:** open
 
+### Cabin (INTERIOR): it doesn't yet feel like a place an astronaut could live in for months
+- **For:** Role 3 · **From:** Role 2 (Minh Vuong) · **Found:** 2026-11-08 on dev 482d9b6 · **Severity:** polish (design request: the HEART of the game, TEAM_PROMPT §7.1 and §11)
+- **Where:** `src/graphics/cabin.js` (4 × 8 × 2.6 m, cabin-local x −2…2, z −4…4); Role 2 reads `userData.stations`, `userData.props`, the ladder points, and now supports walk boxes (`src/surface/WalkController.js`, `CABIN_BOXES` in `src/surface/shipInterior.js`)
+- **Steps:** `/?debug=1&state=INTERIOR`, walk around and imagine living there for 500+ sols (7 months out, ~1.5 years on Mars, 7 months back)
+- **Expected:** written as the astronaut who lives here. Every real habitat (ISS, the NASA Mars transit and surface habitat studies) is organised around the same daily needs. I need each of these to exist, readable at a glance, in this order of priority:
+  - **P1. Sleep station** (replaces the open bunk): a private booth about 1 × 1 × 2 m with a door or curtain, a sleeping bag strapped to the wall, a reading lamp, a small laptop, a fan grille (on ISS, exhaled CO₂ pools around a sleeping head without airflow), padded walls, and my **family photo** and a child's drawing pinned inside. This is where the family messages hit hardest.
+  - **P1. Galley**: a fold-down table with two stools (we have 0.38 g on Mars), a food warmer, a hot/cold water dispenser with a rehydration needle for food pouches, labelled food containers (one marked "BONUS FOOD": ISS crews get personal favourites), a trash compactor.
+  - **P1. Hygiene compartment**: a closed cubicle with a toilet (fan suction, a urine hose and funnel: it works in any gravity), no-rinse shampoo, wet wipes, a towel on a bungee, a small mirror. Next to it, the **water recovery** rack ("today's coffee is yesterday's coffee": ISS recycles about 98 % of its water).
+  - **P1. Exercise corner**: a treadmill with a shoulder/waist harness and a resistance machine (bar on cables). ISS crews exercise about 2 hours every day to keep bone and muscle; in 0.38 g it is still needed.
+  - **P1. Life support (ECLSS) rack**, the thing that keeps me alive: CO₂ scrubber, oxygen generator (electrolysis), air filters and fans, a status panel with green lamps that turn amber/red with the existing `setAlarm`, plus a **fire extinguisher and a breathing mask** mounted beside it, clearly signposted (the Apollo 1 lesson).
+  - **P1. Dust zone by the airlock**: a floor grate, a brush/vacuum and a boot rack between the airlock and the suit locker (Mars dust is fine, sharp and carries perchlorates: it must not reach the living area).
+  - **P2. Science bench**: a sealed glovebox next to the sample storage, a microscope, and a small sample freezer (−80 °C) with a temperature readout.
+  - **P2. Plant growth unit**: a small box of lettuce under pink-purple (red + blue) LEDs. The ISS Veggie unit grew lettuce that crews ate in 2015; green life matters a lot when everything else is metal.
+  - **P2. Medical kit**: a white locker with a red cross (kit, defibrillator, small ultrasound).
+  - **P2. Storm shelter**: the sleep station walled by water bags/tanks, marked "STORM SHELTER" (water stops solar-particle radiation; it ties to the cruise solar storm).
+  - **P2. Lighting with a day/night cycle**: cool white "morning" light, warm amber "evening" light and dim red night lights along the floor (ISS switched to LEDs that do this to protect crew sleep). A tiny `userData.setLightMode('day' | 'evening' | 'night')` would let Role 2 drive it from the sol clock.
+  - **P3. Personal touches**: a wall calendar counting sols with crossed-off days, a "DAYS TO HOME" counter, a Halcyon-1 mission patch (original design) pinned in memory of the lost crew, a small music player, stowage bags (cargo transfer bags with labels and Velcro), yellow handrails, emergency egress arrows and glow strips on the floor.
+  - **Layout rules**: a clear walkway of at least 0.8 m down the middle from the ladder to the airlock; noisy and wet things (exercise, hygiene, ECLSS) away from the sleep station; the window over the comms console kept (that's where Earth shows at dusk).
+- **Actual:** today the cabin has the seven stations and a family photo, decorative racks and the new ladder; there is nowhere to sleep privately, eat, wash, exercise or see what keeps the air breathable
+- **Suggested fix:** build the areas above in `cabin.js` (your art direction and exact placement). For the gameplay hooks, please:
+  - keep the seven contract stations (`pilotSeat`, `o2Station`, `suitLocker`, `commsConsole`, `sampleStorage`, `airlock`, `bunk`; the bunk becomes the sleep station) in `userData.stations`;
+  - put each new area as a named prop in `userData.props` with its interaction point (`sleepStation`, `galley`, `hygiene`, `waterRecovery`, `treadmill`, `resistanceDevice`, `eclss`, `fireExtinguisher`, `dustZone`, `glovebox`, `sampleFreezer`, `plantGrowth`, `medKit`, `stormShelter`, `calendar`, `familyPhoto`): Role 2 will show a short real fact for each (no contract change needed, props are local notices);
+  - export the furniture footprints as `userData.walkBoxes = [{ x, z, hx, hz }]` (cabin-local, half sizes) so the player can't walk through them (Role 2 already supports boxes);
+  - optional: `userData.setLightMode(mode)` as above.
+- **Status:** open
+
 ## Role 4: Story, Cruise & Knowledge
 
 ### Reset money on the bankrupt ending
