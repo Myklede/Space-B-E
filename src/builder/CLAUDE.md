@@ -207,10 +207,12 @@ Người dùng muốn làm lại giao diện trang thiết kế:
   - Mesh đặt tên `m_<node>`.
   - `wrapModel` của từng phần thêm thứ mô hình không biết trước (váy trong suốt của fairing).
   - Mô hình mặt đất dựng cho tàu mẫu 20 × 2,5 m, kéo giãn theo một trục.
-- **Kiểm tra lần 2** (soát trong game):
-  - Bệ phóng xong, đã sửa (`3bdcf11`).
-  - Thân: dữ liệu (`daaaaac`) và khoang thiết bị (`2f3e0ac`) đã sửa; màu mô hình đang làm lại.
-  - Đuôi và Mũi đang chạy.
+- **Kiểm tra lần 2 xong cả 4 phần (2026-11-08)**, đều "chấp nhận kèm lỗi cần sửa", tất cả đã sửa và commit:
+  - Bệ phóng `3bdcf11`.
+  - Thân: `daaaaac`, `2f3e0ac`, `df0a16c`; khoang thiết bị mang màu của tầng `da46195`.
+  - Đuôi: `408af2a` (chân đáp giữ lại khi đổi đuôi; đổi kiểu không còn đứng hình), `2a23870` (lựa chọn sai nhiên liệu bị làm mờ), `5b021c7`.
+  - Mũi: `8e5e41b` (hết rò bộ nhớ; không bộ phận nào đạt 100 %; Voskhod không xoá O₂), `816c256` (Orion, Dragon, tấm chắn nhiệt, ngân sách).
+  - Ảnh thẻ vẽ lại `be26ade` (563 ảnh).
 
 ## 8. Đợt 5 (2026-11-08): bộ phận ảnh hưởng thật khi bay (ĐÃ CHỐT)
 
