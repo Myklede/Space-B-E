@@ -271,7 +271,7 @@ Người dùng muốn làm lại giao diện trang thiết kế:
   - **Tầng phi hành đoàn** là tầng ngang cửa khoang lái của con tàu đang lắp: có cầu dẫn (crew access arm) bắc tới cửa. Đi qua cầu, bấm E ở cửa → Readiness Poll → xác nhận → sàn rút ra (khoảng 1–2 s, âm thanh rầm rầm, khói) → sang phần bay của Role 2 như hiện nay.
   - Dãy 7 bàn máy tính đặt trên sàn nhà cạnh bệ tàu, quay mặt về tàu.
 - **Chia việc:**
-  - Codex dựng mô hình Blender theo mô-đun (dùng nhân bản InstancedMesh) và `layout.json`, kèm sandbox `sandbox/role1.hangar.html`. Codex làm trên nhánh `role1-hangar-vab`, trong thư mục riêng `C:/Users/Thainguyen/Downloads/SpaceB-E-hangar`, commit đứng tên Myklede, không có dòng Co-Authored-By, không push `dev`.
+  - Codex dựng mô hình Blender theo mô-đun (dùng nhân bản InstancedMesh) và `layout.json`, kèm sandbox `sandbox/role1.hangar.html`. Codex chạy trong VS Code **chung thư mục** với Claude. Vì vậy Codex không chạy lệnh git nào làm thay đổi trạng thái (không add, commit, checkout, stash, push), không chạy `npm install`, chỉ ghi vào `tools/blender/hangar/`, `public/assets/models/builder/hangar/`, `sandbox/role1.hangar.*` và `tests/hangar-models.test.mjs`. Dev server của Codex dùng cổng 5280; cổng 5173 là của người dùng. Claude kiểm tra rồi commit (đứng tên Myklede, không có dòng Co-Authored-By).
   - Claude kiểm tra rồi lắp vào game: hangarScene, thang máy, sàn rút, cầu dẫn, bàn máy, âm thanh và khói.
   - Prompt gửi Codex: `C:/Users/Thainguyen/Downloads/CODEX-PROMPT-VAB-HANGAR.md`.
 
