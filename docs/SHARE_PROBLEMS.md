@@ -93,7 +93,7 @@ Copy this block. Keep each line short and factual. Don't commit screenshots.
 - **Expected:** the player bumps into the ladder like any other cabin furniture
 - **Actual:** the player walks through it
 - **Suggested fix:** add a box collider about 0.5 m (x) by 0.2 m (z) around cabin-local (-0.68, 2.3), floor to ceiling
-- **Status:** open
+- **Status:** fixed in 3b12c3e, Role 3 (dtri) please verify. A 0.5 m × 0.2 m box collider (floor to ceiling) at cabin-local (-0.68, 2.3); the walker now supports upright boxes.
 
 ## Role 3: Graphics, Audio & Core
 
