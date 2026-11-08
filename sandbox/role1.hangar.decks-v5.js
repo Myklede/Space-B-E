@@ -4,7 +4,7 @@
 // with its sliding deck segment (platform.userData.offset x slide axis). Geometry is rebuilt only in fit() (ship change).
 import {fitCollarSmooth} from '/src/builder/tools/blender/hangar/collarSmooth.mjs';
 
-const COLOURS = {top: 0x848e90, under: 0x5d6a70, lens: 0xdfe9ef, yellow: 0xd7a024, beam: 0x67747a, rail: 0xc6cdcc, cap: 0x7b8587};
+const COLOURS = {top: 0x7f8585, under: 0x5d6a70, lens: 0xdfe9ef, yellow: 0xd7a024, beam: 0x67747a, rail: 0xc6cdcc, cap: 0x7b8587};
 
 export function createDeckCollars(ctx) {
   const {THREE, scene, layout} = ctx, fragment = ctx.fragment ?? {};
@@ -35,11 +35,16 @@ export function createDeckCollars(ctx) {
           vec2 g = vDeckPos.xz * .5, f = abs(fract(g) - .5), w = fwidth(g) * 1.5;
           float line = max(smoothstep(.49 - w.x, .49, f.x), smoothstep(.49 - w.y, .49, f.y));
           float hash = fract(sin(dot(floor(g), vec2(12.9898, 78.233))) * 43758.5453);
-          diffuseColor.rgb *= mix(.88 + .12 * hash, .6, line * .65);
+          // Soft value noise standing in for the baked CC0 plate texture (worn paint), so the band blends in.
+          vec2 q = vDeckPos.xz * 2.7, i = floor(q), u = fract(q); u = u * u * (3. - 2. * u);
+          #define DH(p) fract(sin(dot(p, vec2(127.1, 311.7))) * 43758.5453)
+          float vn = mix(mix(DH(i), DH(i + vec2(1., 0.)), u.x), mix(DH(i + vec2(0., 1.)), DH(i + vec2(1., 1.)), u.x), u.y);
+          float fade = 1. - smoothstep(.15, .5, max(w.x, w.y) * 6.);
+          diffuseColor.rgb *= mix(.88 + .12 * hash, .6, line * .65) * (1. + (vn - .5) * .16 * fade);
         }`)
       .replace('#include <emissivemap_fragment>', '#include <emissivemap_fragment>\ntotalEmissiveRadiance += vec3(.86, .94, 1.) * vGlow * 1.6;');
   };
-  material.customProgramCacheKey = () => 'deck-collar-v5b-' + bands.length;
+  material.customProgramCacheKey = () => 'deck-collar-v5c-' + bands.length;
   const mesh = new THREE.Mesh(new THREE.BufferGeometry(), material);
   mesh.name = 'deck_collar_v5'; mesh.frustumCulled = false; mesh.matrixAutoUpdate = false;
   scene.add(mesh);
@@ -68,7 +73,7 @@ export function createDeckCollars(ctx) {
     let bandIndex = 0, rgb = colour.top, glow = 0;
     const tri = (a, b, c) => { P.push(...a, ...b, ...c); for (let i = 0; i < 3; i++) { C.push(...rgb); B.push(bandIndex); L.push(glow); } };
     const quad = (a, b, c, d) => { tri(a, b, c); tri(a, c, d); };
-    const F = cfg.fasciaDepth ?? .45, T = .004, toe = cfg.toeHeight ?? .13, Rout = cfg.outerRadius ?? 6.04, R = cfg.notchRadius ?? 6;
+    const D = cfg.deckTop ?? 0, F = cfg.fasciaDepth ?? .45, T = D + .004, toe = D + (cfg.toeHeight ?? .13), Rout = cfg.outerRadius ?? 6.04, R = cfg.notchRadius ?? 6;
     bands.forEach((b, i) => {
       bandIndex = i; b.start = P.length / 3;
       const f = fits[b.level]?.[b.segment];
@@ -128,10 +133,18 @@ export function createDeckCollars(ctx) {
         // Double handrail with posts and toe board, continuing the deck's slot rail up to the ship.
         const rail = cfg.rail ?? {offset: .06, top: 1.07, mid: .53}, ro = rail.offset;
         rgb = colour.rail;
-        const ustart = re + .18, posts = Math.max(1, Math.ceil((u1 - ustart) / 1.6));
-        for (let p = 0; p <= posts; p++) { const u = ustart + (u1 - ustart) * p / posts; box(u - .025, u + .025, ro - .025, ro + .025, 0, 1.1); }
-        for (const h of [rail.top, rail.mid]) box(ustart, u1, ro - .0225, ro + .0225, h - .0225, h + .0225);
-        rgb = colour.yellow; box(re + .05, u1, .015, .035, T, .11);
+        // Runs between the stair gates (u from the ship axis along the slot line), each closed by end posts.
+        const gates = (rail.gates?.[b.segment] ?? []).map(([g0, g1]) => [Math.max(g0, re), Math.min(g1, u1)]).filter(([g0, g1]) => g1 > g0).sort((p, q) => p[0] - q[0]);
+        const runs = []; let from = re + .18;
+        for (const [g0, g1] of gates) { if (g0 - from > .05) runs.push([from, g0]); from = Math.max(from, g1); }
+        if (u1 - from > .05) runs.push([from, u1]);
+        for (const [r0, r1] of runs) {
+          rgb = colour.rail;
+          const posts = Math.max(1, Math.ceil((r1 - r0) / 1.6));
+          for (let p = 0; p <= posts; p++) { const u = r0 + (r1 - r0) * p / posts; box(u - .025, u + .025, ro - .025, ro + .025, D, D + 1.1); }
+          for (const h of [rail.top, rail.mid]) box(r0, r1, ro - .0225, ro + .0225, D + h - .0225, D + h + .0225);
+          rgb = colour.yellow; box(Math.max(r0 - .13, re + .05), r1, .015, .035, T, D + .11);
+        }
       }
       b.end = P.length / 3;
     });

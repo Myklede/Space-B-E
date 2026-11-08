@@ -133,6 +133,19 @@ test('oversize retracts only the arcs it reaches', () => {
   for (const p of fragment.placements.filter(p => p.dynamic === 'wrapSegment')) assert.ok(p.retracted >= 6, p.id);
 });
 
+test('slot-face rail gates follow the access stairs', () => {
+  const accessFile = path.join(v5, 'access.json');
+  const expected = {fr: [], bl: []};
+  if (existsSync(accessFile)) for (const g of JSON.parse(readFileSync(accessFile, 'utf8')).railGates ?? []) if (expected[g.segment]) expected[g.segment].push([g.along - g.width / 2, g.along + g.width / 2]);
+  for (const id of ['fr', 'bl']) {
+    const got = (cfg.rail.gates?.[id] ?? []).map(g => g.map(v => +v.toFixed(3))).sort((a, b) => a[0] - b[0]);
+    const want = expected[id].map(g => g.map(v => +v.toFixed(3))).sort((a, b) => a[0] - b[0]);
+    assert.deepEqual(got, want, id + ' gates');
+    for (const [g0, g1] of got) assert.ok(g1 - g0 >= .6 && g0 >= 0 && g1 <= 14 + 1e-6, id + ' gate width/range');
+  }
+  assert.ok(cfg.deckTop > .01 && cfg.deckTop < .06, 'deck top lifted a few cm above the catwalk plane');
+});
+
 test('fragment and module sanity', () => {
   const decks = fragment.placements.filter(p => p.module === 'deck_quad_v5'), tracks = fragment.placements.filter(p => p.module === 'deck_track_v5');
   assert.equal(decks.length, 33); assert.equal(tracks.length, 33);

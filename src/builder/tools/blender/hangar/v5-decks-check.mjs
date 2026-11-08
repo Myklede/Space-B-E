@@ -88,6 +88,43 @@ try {
     }
     await toggle(true); await h(() => { window.hangarInspect.params.autoResolution = true; });
   });
+  // Tone: band top (r 5.4) vs baked deck plate (r 6.8) at the same angle, from screen pixels; median ratio per channel.
+  await step('tone', async () => {
+    report.tone = {};
+    const lv = 17;
+    for (const [label, pos, target] of [['near', [-5, lv + 7, -5], [3, lv, 3]], ['mid', [-9, lv + 14, -9], [3, lv, 3]], ['high', ...overview.slice(0, 2)]]) {
+      await look(pos, target, 66);
+      await h(() => { const x = window.hangarInspect; x.params.autoResolution = false; x.setResolution(1); });
+      await pause(1500);
+      const pts = await h(lv => {
+        const x = window.hangarInspect, THREE = x.camera.constructor, out = [];
+        for (const a of [15, 25, 35, 45, 55, 65, 75, 285, 295, 305, 315, 325, 335, 345, 195, 205, 215, 225, 235, 245, 255]) {
+          const t = a * Math.PI / 180, p = r => { const v = x.camera.position.clone().set(r * Math.cos(t), lv + .04, -r * Math.sin(t)).project(x.camera); return [(v.x + 1) / 2 * innerWidth, (1 - v.y) / 2 * innerHeight, v.z]; };
+          out.push([a, p(5.3), p(6.9)]);
+        }
+        return out;
+      }, lv);
+      const style = await page.addStyleTag({content: '.lil-gui,header,#info,aside{visibility:hidden!important}'});
+      const png = await page.screenshot(); await style.evaluate(e => e.remove());
+      const result = await h(async ([encoded, pts]) => {
+        const im = new Image(); im.src = 'data:image/png;base64,' + encoded; await im.decode();
+        const c = document.createElement('canvas'); c.width = im.width; c.height = im.height; const g = c.getContext('2d'); g.drawImage(im, 0, 0);
+        const avg = ([x, y, z]) => { if (z > 1 || x < 4 || y < 4 || x > c.width - 5 || y > c.height - 5) return null; const d = g.getImageData(Math.round(x) - 3, Math.round(y) - 3, 7, 7).data; const s = [0, 0, 0]; for (let i = 0; i < d.length; i += 4) for (let k = 0; k < 3; k++) s[k] += d[i + k]; return s.map(v => v / 49); };
+        return pts.map(([a, b, d]) => [a, avg(b), avg(d)]).filter(r => r[1] && r[2]);
+      }, [png.toString('base64'), pts]);
+      const lum = c => .2126 * c[0] + .7152 * c[1] + .0722 * c[2];
+      const ratios = result.map(([, b, d]) => lum(d) / Math.max(1, lum(b))).sort((p, q) => p - q);
+      report.tone[label] = {samples: result.length, medianDeckOverBand: ratios[Math.floor(ratios.length / 2)], pairs: result.map(([a, b, d]) => [a, b.map(Math.round), d.map(Math.round)])};
+      console.log('tone', label, result.length, report.tone[label].medianDeckOverBand?.toFixed(3), JSON.stringify(report.tone[label].pairs.slice(0, 6)));
+      await h(() => { window.hangarInspect.params.autoResolution = true; });
+    }
+  });
+  // Rail gates where the access stairs step off the slot faces (level 02, Y 17).
+  await step('gate', async () => {
+    await look([-4.6, 20.2, -8.6], [.3, 17.3, -11.6], 64); await shot('gate-fr');
+    await look([-4.6, 20.2, -2.2], [.2, 17.3, -5.2], 64); await shot('gate-fr-band');
+    await look([-8.6, 20.2, -4.6], [-9.65, 17.3, .3], 64); await shot('gate-bl');
+  });
   // 3. Under-deck look-up from the ground under fr, outside the launcher.
   await step('underdeck', async () => { await look([10.5, 1.7, -1.5], [4, 22, -7], 72); await shot('underdeck'); });
   // 4. Closed vs retracted per segment: a tall cylinder keeps every level closed.
