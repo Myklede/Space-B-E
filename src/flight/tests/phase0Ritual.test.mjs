@@ -2,12 +2,12 @@ import assert from 'node:assert/strict';
 import test from 'node:test';
 import { createPhase0Ritual } from '../phase0Ritual.js';
 
-function rig({ attempt = 1, data, warnings = [], site = {}, allowScrub = false, pendingFade = false, funds = true, o2Sound = false } = {}) {
+function rig({ attempt = 1, data, warnings = [], site = {}, allowScrub = false, pendingFade = false, funds = true, o2Sound = false, reach, hasButton } = {}) {
   let time = 0, resolve, resolveFade, count = 0, stopCount = 0, scrubCount = 0;
   const handlers = new Map(), calls = [], panel = { root: { dataset: {} } };
-  for (const name of ['setChecklist', 'setFact', 'setKeys', 'setSkip', 'setCaption', 'setPoll', 'showAsk', 'answer', 'finish', 'dispose']) panel[name] = (...args) => calls.push([name, ...args]);
+  for (const name of ['setChecklist', 'setFact', 'setKeys', 'setSkip', 'setCaption', 'setPoll', 'showAsk', 'answer', 'finish', 'dispose', 'setReticle']) panel[name] = (...args) => calls.push([name, ...args]);
   const camera = {}, buttons = [];
-  site = site && { camera, rocketBase: { x: 0, y: 3, z: 0 }, eyeY: 14, cockpit: { userData: { setButton: (...args) => buttons.push(args), press: (id) => buttons.push(['press', id]) } }, ...site };
+  site = site && { camera, rocketBase: { x: 0, y: 3, z: 0 }, eyeY: 14, cockpit: { userData: { ...(reach && { reach: (id) => { buttons.push(['reach', id]); return reach; } }), setButton: (...args) => buttons.push(args), press: (id) => buttons.push(['press', id]) } }, ...site };
   const input = { onPress(key, fn) { handlers.set(key, fn); return () => handlers.delete(key); } };
   const sounds = [], stoppedSounds = [], fades = [], spent = [];
   const ritual = createPhase0Ritual({
@@ -17,7 +17,7 @@ function rig({ attempt = 1, data, warnings = [], site = {}, allowScrub = false, 
     cinematic: { play: () => new Promise((r) => { resolve = r; }), stop: () => { stopCount++; resolve?.(); } },
     contract: { TRANSITIONS: { LAUNCH: allowScrub ? ['ORBIT', 'HANGAR'] : ['ORBIT'] } },
     economy: { balance: { scrubFee: 123 }, canAfford: () => funds, spend: (...args) => spent.push(args) },
-    ship: { warnings, launch: { tempC: 2 } }, attempt, data, getSite: () => site,
+    ship: { warnings, launch: { tempC: 2 } }, attempt, data, hasButton, getSite: () => site,
     setBoardingView: () => {}, onCountdown: () => count++, onScrub: () => scrubCount++,
     now: () => time, createPanel: () => panel,
   });
@@ -100,4 +100,36 @@ test('Phase0 owns only its O2 loop and stops it on finish, quick skip or state e
   const fallback = rig(); await toChecklist(fallback);
   fallback.press('Digit1'); fallback.press('Digit2'); fallback.press('Digit3'); fallback.ritual.dispose();
   assert.deepEqual(fallback.stoppedSounds, [], 'ui.click fallback never claims ownership of another loop');
+});
+
+test('aim and click: next button works, wrong order errors, elsewhere does nothing', async () => {
+  const r = rig({ o2Sound: false }); await toChecklist(r);
+  const reticle = () => r.calls.filter(([n]) => n === 'setReticle').at(-1)[1];
+  r.ritual.setAim('cabin'); assert.deepEqual(reticle(), { tone: 'warn', label: 'CABIN · close the hatch first' });
+  r.press('Mouse0'); assert.equal(r.ritual.nextButton, 'hatch'); assert.ok(r.sounds.includes('ui.click'));
+  assert.ok(!r.buttons.some(([id]) => id === 'press'));
+  r.ritual.setAim(null); r.press('Mouse0'); assert.equal(r.ritual.nextButton, 'hatch');
+  r.ritual.setAim('hatch'); assert.equal(reticle().tone, 'ok'); r.press('Mouse0');
+  assert.equal(r.ritual.nextButton, 'cabin'); assert.deepEqual(r.buttons.filter(([id]) => id === 'press'), [['press', 'btn:hatch']]);
+  for (const id of ['cabin', 'o2', 'arm']) { r.ritual.setAim(id); assert.equal(r.ritual.click(), true); }
+  assert.equal(r.ritual.stage, 'poll'); assert.equal(r.ritual.nextButton, null);
+});
+
+test('aim and click: reach() delays the action and the cockpit presses itself', async () => {
+  const r = rig({ reach: 0.5 }); await toChecklist(r);
+  r.ritual.setAim('hatch'); const sounds = r.sounds.length; r.press('Mouse0');
+  assert.deepEqual(r.buttons.filter(([id]) => id === 'reach'), [['reach', 'hatch']]);
+  assert.equal(r.sounds.length, sounds); r.press('Mouse0'); // a second click while the glove is moving is ignored
+  r.advance(0.49); assert.equal(r.sounds.length, sounds);
+  r.advance(0.02); assert.equal(r.sounds.length, sounds + 1);
+  assert.ok(!r.buttons.some(([id]) => id === 'press')); assert.equal(r.ritual.nextButton, 'cabin');
+});
+
+test('aim and click: keys 1-4 still work, and a missing mesh is not clickable', async () => {
+  const r = rig({ hasButton: (id) => id !== 'cabin' }); await toChecklist(r);
+  r.press('Digit1'); assert.equal(r.ritual.nextButton, 'cabin');
+  r.ritual.setAim('cabin'); assert.equal(r.ritual.click(), false); assert.equal(r.ritual.nextButton, 'cabin');
+  const rows = r.calls.filter(([n]) => n === 'setChecklist').at(-1)[1];
+  assert.deepEqual(rows.map((x) => x.fallback), [false, true, false, false]);
+  r.press('Digit2'); assert.equal(r.ritual.nextButton, 'o2');
 });

@@ -1,11 +1,11 @@
-import { CHECKLIST_STEPS, PHASE0_TIMING as T, boardingPath, buildPoll, createChecklist, phase0Plan, pollLinesShown, promptAt, scrubAvailable, scrubFee } from './phase0.js';
+import { CHECKLIST_STEPS, PHASE0_TIMING as T, aimInfo, boardingPath, buildPoll, createChecklist, fallbackLabel, nextButtonId, phase0Plan, pollLinesShown, promptAt, scrubAvailable, scrubFee } from './phase0.js';
 import phase0Data from './phase0.json' with { type: 'json' };
 const copy = phase0Data.copy;
 
 import { createPhase0Panel } from './hud/phase0Panel.js';
 
 // Wall-clock timing is deliberate: the game loop clamps dt on slow renderers.
-export function createPhase0Ritual({ parent, hud, input, audio, graphics, cinematic, contract, economy, ship, attempt, data, getSite, setBoardingView, onCountdown, onScrub, now = () => performance.now() / 1000, createPanel = createPhase0Panel }) {
+export function createPhase0Ritual({ parent, hud, input, audio, graphics, cinematic, contract, economy, ship, attempt, data, getSite, getCockpit, hasButton, setBoardingView, onCountdown, onScrub, now = () => performance.now() / 1000, createPanel = createPhase0Panel }) {
   const panel = createPanel({ parent, flightHud: hud });
   const checklist = createChecklist();
   const poll = buildPoll(ship, { needDv: Object.values(economy.balance.deltaVKmS ?? {}).reduce((a, b) => a + b, 0) * 1000 || 5400 });
@@ -18,10 +18,13 @@ export function createPhase0Ritual({ parent, hud, input, audio, graphics, cinema
     audio.play(chosen);
   };
   const stopO2Flow = () => { if (o2FlowStarted) { audio.stop('suit.o2flow'); o2FlowStarted = false; } };
-  const setStage = (value) => { stage = value; since = now(); panel.root.dataset.stage = value; };
-  const buttons = () => getSite()?.cockpit?.userData;
+  const setStage = (value) => { stage = value; since = now(); panel.root.dataset.stage = value; if (value !== 'checklist') panel.setReticle?.(null); };
+  const buttons = () => (getCockpit?.() ?? getSite()?.cockpit)?.userData;
+  const found = (step) => !hasButton || hasButton(step.id) !== false; // no mesh found for this id: that item falls back to its key
+  let aimId = null, pending = null, pulseOn = null;
   const drawChecklist = () => {
-    panel.setChecklist(CHECKLIST_STEPS.map((step, i) => ({ ...step, status: checklist.status(i) })));
+    panel.setChecklist(CHECKLIST_STEPS.map((step, i) => ({ ...step, status: checklist.status(i), fallback: !found(step), fallbackText: fallbackLabel(step).split(' · ')[1] })));
+    pulseOn = null;
     CHECKLIST_STEPS.forEach((step, i) => buttons()?.setButton?.(step.button, checklist.status(i) === 'done' ? (step.id === 'arm' ? 'red' : 'green') : checklist.status(i) === 'current' ? 'amber' : 'off'));
   };
   const stopBoarding = () => { generation++; if (stage === 'boarding') cinematic.stop(); panel.setCaption(null); };
@@ -55,14 +58,51 @@ export function createPhase0Ritual({ parent, hud, input, audio, graphics, cinema
     if (!economy.canAfford(fee)) { panel.setFact(copy.insufficientFunds, { hint: true }); return; }
     economy.spend(fee, 'launch scrub'); onScrub();
   };
-  const offs = CHECKLIST_STEPS.map((step, i) => input.onPress(`Digit${step.key}`, () => {
+  // Hand animation hook (Role 3's glove): cockpit.userData.reach?.(id) -> seconds until the glove touches the button; the cockpit
+  // then presses it itself. Without it the button is pressed here, at once.
+  const reachSeconds = (step) => {
+    const r = buttons()?.reach?.(step.id);
+    return Number.isFinite(r) && r > 0 ? { delay: r, handled: true } : { delay: 0, handled: typeof buttons()?.reach === 'function' };
+  };
+  const apply = (step, handled) => {
     if (disposed || stage !== 'checklist') return;
+    sound(step.sound); if (!handled) buttons()?.press?.(step.button); drawChecklist(); panel.setFact(step.fact);
+    if (checklist.done) { setStage('poll'); panel.setChecklist([], false); panel.setReticle?.(null); panel.setKeys(null); panel.setSkip(null); panel.setPoll([]); }
+  };
+  // i: 0-based item. Shared by the aim-and-click path and the hidden number-key fallback.
+  const trigger = (i) => {
+    if (disposed || stage !== 'checklist' || pending) return;
     const result = checklist.press(i + 1);
-    if (result.result === 'wrong' && result.hint) panel.setFact(result.hint, { hint: true });
+    if (result.result === 'wrong') {
+      sound('ui.error'); panel.setFact(copy.wrongOrder.replace('{next}', result.expected.name), { hint: true });
+    }
     if (result.result !== 'ok') return;
-    sound(step.sound); buttons()?.press?.(step.button); drawChecklist(); panel.setFact(step.fact);
-    if (checklist.done) { setStage('poll'); panel.setChecklist([], false); panel.setKeys(null); panel.setSkip(null); panel.setPoll([]); }
-  }));
+    const { delay, handled } = reachSeconds(result.step);
+    if (delay > 0) { pending = { at: now() + delay, step: result.step, handled }; setAim(aimId); }
+    else apply(result.step, handled);
+  };
+  const showAim = () => {
+    if (stage !== 'checklist' || pending) { panel.setReticle?.(stage === 'checklist' ? { tone: null, label: null } : null); return; }
+    const step = CHECKLIST_STEPS.find((st) => st.id === aimId);
+    const info = aimInfo(checklist, aimId);
+    panel.setReticle?.({ tone: info.tone, label: info.label && step && found(step) ? info.label : null });
+  };
+  const setAim = (id) => { aimId = id ?? null; showAim(); };
+  const click = () => {
+    if (disposed || stage !== 'checklist' || !aimId) return false;
+    const i = CHECKLIST_STEPS.findIndex((st) => st.id === aimId);
+    if (i < 0 || !found(CHECKLIST_STEPS[i])) return false;
+    trigger(i);
+    return true;
+  };
+  const pulse = () => { // the next button blinks between its pending lamp colour and off
+    const step = CHECKLIST_STEPS[checklist.index];
+    if (!step || pending || !found(step)) return;
+    const on = Math.floor(now() * 2.5) % 2 === 0;
+    if (on !== pulseOn) { pulseOn = on; buttons()?.setButton?.(step.button, on ? 'amber' : 'off'); }
+  };
+  const offs = CHECKLIST_STEPS.map((step, i) => input.onPress(`Digit${step.key}`, () => trigger(i)));
+  offs.push(input.onPress('Mouse0', click));
   offs.push(input.onPress('Enter', () => {
     if (disposed) return;
     if (stage === 'ask') go();
@@ -79,8 +119,12 @@ export function createPhase0Ritual({ parent, hud, input, audio, graphics, cinema
     get boarding() { return stage === 'boarding'; },
     get objective() { return ['poll', 'ask', 'cleared', 'quick'].includes(stage) ? copy.objectiveGo : copy.objectiveChecklist; },
     skip: quick,
+    setAim, click,
+    get nextButton() { return nextButtonId(checklist); },
     update() {
       if (disposed || stage === 'done') return;
+      if (pending && now() >= pending.at) { const p = pending; pending = null; apply(p.step, p.handled); showAim(); }
+      if (stage === 'checklist') pulse();
       const elapsed = now() - since;
       if (stage === 'waiting') {
         const site = getSite();
@@ -92,7 +136,7 @@ export function createPhase0Ritual({ parent, hud, input, audio, graphics, cinema
         } else if (elapsed >= 5) seat(); // failed or slow site warm-up must never trap the player
       } else if (stage === 'boarding' && elapsed >= T.board) seat();
       else if (stage === 'seat' && elapsed >= T.seatDark + T.seatFade + T.seatSettle) {
-        setStage('checklist'); panel.setFact(copy.checklistFact, { seconds: 0 }); drawChecklist(); panel.setKeys(copy.checklistKeys);
+        setStage('checklist'); panel.setFact(copy.checklistFact, { seconds: 0 }); drawChecklist(); panel.setKeys(copy.checklistKeys); showAim();
       } else if (stage === 'poll') {
         const count = pollLinesShown(elapsed, poll.length);
         if (count > shown) { shown = count; panel.setPoll(poll.slice(0, shown)); sound('gonogo.tick'); }

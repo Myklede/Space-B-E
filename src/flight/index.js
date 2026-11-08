@@ -36,6 +36,7 @@ import { createEgressOverlay } from './hud/egressOverlay.js';
 import { createEgress, markEgressPending } from './egress.js';
 import { createSteeringDisplay, createGuidanceReference } from './steering.js';
 import { createPhase0Ritual } from './phase0Ritual.js';
+import { buttonCentre, hasButton as cockpitHasButton, pickButton } from './phase0Aim.js';
 import { stackParts } from './rocketStack.js';
 import { ZOOM_DEFAULT, ZOOM_PAD, applyMouse, createChaseState, createOrbit, horizonFrame, liftAboveGround, resetOrbit, stepZoom, updateChase } from './chaseCam.js';
 
@@ -566,6 +567,18 @@ export default {
     if (new URLSearchParams(location.search).get('debug') === '1') window.__role2flight = {
       get look() { return s?.look; }, get fc() { return s?.fc; }, get orbit() { return s?.orbit; }, get session() { return s; },
       skipPhase0() { s?.phase0?.skip(); },
+      // Phase 0 aim-and-click: aimAt(id) turns the look so the reticle sits on that button ('hatch'|'cabin'|'o2'|'arm'); clickAim() clicks it
+      aimAt(id) {
+        const v = s && (s.site ?? s.view);
+        if (!v?.cockpit || !s.look) return false;
+        v.rig.updateMatrixWorld(true);
+        const p = buttonCentre(v.cockpit, id);
+        if (!p) return false;
+        v.rig.worldToLocal(p); p.normalize();
+        s.look.pitch = Math.asin(p.y); s.look.yaw = Math.atan2(-p.x, -p.z);
+        return true;
+      },
+      clickAim() { return !!s?.phase0?.click(); },
       egress() { startEgress(); return !!s?.egress; }, // start the first-person egress now (landed or not)
       // set the outside camera for screenshots: orbit(yawDeg, pitchDeg, dist); `wheel` fakes a wheel step; chase(on) toggles the view
       orbit(yawDeg, pitchDeg, dist) { if (s) { s.orbit.yaw = THREE.MathUtils.degToRad(yawDeg); s.orbit.pitch = THREE.MathUtils.degToRad(pitchDeg); if (dist) s.orbit.dist = dist; s.cam.ready = false; } return s?.orbit; },
@@ -647,6 +660,8 @@ export default {
       const session = s;
       s.phase0 = createPhase0Ritual({ parent: hudLayer, hud: s.hud, input, audio, graphics, cinematic, contract, economy,
         ship: getShip(), attempt: ++launchAttempts, data,
+        getCockpit: () => (session.site ?? session.view)?.cockpit,
+        hasButton: (id) => cockpitHasButton((session.site ?? session.view)?.cockpit, id),
         getSite: () => {
           if (!siteCache.ready) return null;
           session.site ??= buildSiteView();
@@ -715,6 +730,8 @@ export default {
       ritualView.camera.position.set(0, 0, 0); ritualView.camera.up.set(0, 1, 0);
       ritualView.camera.quaternion.setFromEuler(new THREE.Euler(s.look.pitch, s.look.yaw, 0, 'YXZ'));
       graphics.setView(ritualView.scene, ritualView.camera);
+      ritualView.rig.updateMatrixWorld(true);
+      s.phase0.setAim(pickButton(ritualView.cockpit, ritualView.camera)); // the centre reticle: which checklist button is under it
       return; // no physics, pacing, ratings, body or telemetry time during the ritual
     }
     if (s.countdown > 0) {

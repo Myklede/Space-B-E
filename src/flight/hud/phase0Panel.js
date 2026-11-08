@@ -35,14 +35,18 @@ export function createPhase0Panel({ parent, flightHud }) {
 .p0 .ask button:hover,.p0 .ask button:focus-visible{background:#7dffa833;outline:none}
 .p0 .ask button.scrub{border-color:var(--amber);background:#ffbe7512;color:var(--amber)}.p0 .ask button.scrub:hover{background:#ffbe7530}
 .p0 .ask .ok{color:var(--green)}.p0 .ask .note{color:#ffe3b3;font-size:13px;line-height:1.5}
+.p0 .reticle{position:absolute;left:50%;top:50%;width:14px;height:14px;margin:-7px 0 0 -7px;border:2px solid #ffffffcc;border-radius:50%;box-shadow:0 0 6px #000a;opacity:0;transition:opacity .4s,transform .15s,border-color .15s,background .15s}
+.p0 .reticle.on{opacity:1}.p0 .reticle.ok{transform:scale(2.2);border-color:var(--cyan);background:#72e6e033}.p0 .reticle.warn{transform:scale(2.2);border-color:var(--amber);background:#ffbe7522}.p0 .reticle.done{transform:scale(1.6);border-color:var(--green)}
+.p0 .rlabel{position:absolute;left:calc(50% + 26px);top:50%;transform:translateY(-50%);padding:4px 10px;border:1px solid #72e6e066;background:#071419e6;color:var(--cyan);font-size:12px;letter-spacing:.08em;white-space:nowrap;opacity:0;transition:opacity .15s}
+.p0 .rlabel.on{opacity:1}.p0 .rlabel.warn{border-color:#ffbe7588;color:var(--amber)}.p0 .rlabel.done{border-color:#7dffa866;color:var(--green)}
 @keyframes p0in{from{opacity:0;transform:translateX(-8px)}to{opacity:1;transform:none}}
 @media(max-width:700px){.p0 .box{left:16px;top:84px;width:min(300px,calc(100% - 32px))}.p0 .fact{bottom:80px;font-size:12px}.p0 .keys{font-size:9px}}
 </style>
-<div class="box checklist"></div><div class="box poll"></div><div class="fact"></div><div class="keys"></div><div class="skip"></div><div class="caption"></div>`;
+<div class="box checklist"></div><div class="box poll"></div><div class="fact"></div><div class="keys"></div><div class="skip"></div><div class="caption"></div><div class="reticle"></div><div class="rlabel"></div>`;
   parent.append(root);
   flightHud?.root?.classList.add('p0-on');
   const q = (c) => root.querySelector(`.${c}`);
-  const els = { list: q('checklist'), poll: q('poll'), fact: q('fact'), keys: q('keys'), skip: q('skip'), caption: q('caption') };
+  const els = { list: q('checklist'), poll: q('poll'), fact: q('fact'), keys: q('keys'), skip: q('skip'), caption: q('caption'), reticle: q('reticle'), rlabel: q('rlabel') };
   let factTimer = 0;
   let ask = null;
   const text = (tag, cls, str) => { const e = document.createElement(tag); if (cls) e.className = cls; e.textContent = str; return e; };
@@ -56,7 +60,7 @@ export function createPhase0Panel({ parent, flightHud }) {
       const rows = steps.map((st) => {
         const row = document.createElement('div');
         row.className = `step ${st.status}`;
-        row.append(text('span', 'key', st.key), text('span', null, st.label), text('span', 'tick', '✓'));
+        row.append(text('span', 'key', st.fallback ? st.key : '•'), text('span', null, st.fallback ? `${st.label} · ${st.fallbackText}` : st.label), text('span', 'tick', '✓'));
         return row;
       });
       els.list.replaceChildren(text('small', null, copy.checklistHeading), ...rows);
@@ -67,6 +71,14 @@ export function createPhase0Panel({ parent, flightHud }) {
       els.fact.classList.toggle('hint', hint);
       els.fact.classList.toggle('on', !!str);
       if (str && seconds) factTimer = setTimeout(() => els.fact.classList.remove('on'), seconds * 1000);
+    },
+    // reticle: null hides it; else { tone: null|'ok'|'warn'|'done', label }
+    setReticle(r) {
+      els.reticle.classList.toggle('on', !!r);
+      for (const t of ['ok', 'warn', 'done']) els.reticle.classList.toggle(t, r?.tone === t);
+      els.rlabel.textContent = r?.label ?? '';
+      els.rlabel.classList.toggle('on', !!r?.label);
+      for (const t of ['warn', 'done']) els.rlabel.classList.toggle(t, r?.tone === t);
     },
     setKeys(str) { els.keys.textContent = str ?? ''; els.keys.classList.toggle('on', !!str); },
     setSkip(str) { els.skip.textContent = str ?? ''; els.skip.classList.toggle('on', !!str); },
