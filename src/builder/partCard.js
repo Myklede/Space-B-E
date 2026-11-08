@@ -570,8 +570,8 @@ export function createPartCard(ctx = {}) {
     } else if (o.heatKN > 0) lines.push({ id: 'heatLimit', label: labelFor('heatLimit', L()), value: kNValue(o.heatKN * 1000, L()), words: thrustWords(o.heatKN * 1000, g0(), L()), note: vi ? 'riêng nó' : 'on its own' });
     if (fig?.holdFee > 0 || o.holdFee > 0) { const hf = fig?.holdFee ?? o.holdFee; lines.push({ id: 'holdFee', label: labelFor('holdFee', L()), value: moneyValue(hf, L()), words: priceWords(hf, { lang: L() }) }); }
     if (o.catch > 0) lines.push({ id: 'catch', label: labelFor('catch', L()), value: pctValue(o.catch, L()), words: o.holdBy === 'weight'
-      ? (vi ? `Các tay đỡ giữ tàu bằng chính sức nặng của nó khoảng ${num(o.holdS ?? 0, 'vi')} giây trong lúc động cơ tăng dần lực đẩy, đủ để thấy khoảng ${num(Math.round(o.catch * 10), 'vi')} trong 10 động cơ hỏng trước khi tàu bay lên.` : `The arms hold the ship by its own weight for about ${num(o.holdS ?? 0, 'en')} s while the engines come up: enough to catch about ${num(Math.round(o.catch * 10), 'en')} in 10 bad engines before it rises.`)
-      : (vi ? `Kẹp giữ tàu thêm ${num(o.holdS ?? 0, 'vi')} giây khi động cơ đã chạy, đủ để thấy khoảng ${num(Math.round(o.catch * 10), 'vi')} trong 10 động cơ hỏng trước khi thả.` : `Holds the ship ${num(o.holdS ?? 0, 'en')} s with the engines running: enough to catch about ${num(Math.round(o.catch * 10), 'en')} in 10 bad engines before letting go.`) });
+      ? (vi ? `Các tay đỡ giữ tàu bằng chính sức nặng của nó khoảng ${num(o.holdS ?? 0, 'vi')} giây trong lúc động cơ tăng dần lực đẩy, đủ để thấy khoảng ${num(Math.round(o.catch * 100), 'vi')} trong 100 động cơ hỏng trước khi tàu bay lên.` : `The arms hold the ship by its own weight for about ${num(o.holdS ?? 0, 'en')} s while the engines come up: enough to catch about ${num(Math.round(o.catch * 100), 'en')} in 100 bad engines before it rises.`)
+      : (vi ? `Kẹp giữ tàu thêm ${num(o.holdS ?? 0, 'vi')} giây khi động cơ đã chạy, đủ để thấy khoảng ${num(Math.round(o.catch * 100), 'vi')} trong 100 động cơ hỏng trước khi thả.` : `Holds the ship ${num(o.holdS ?? 0, 'en')} s with the engines running: enough to catch about ${num(Math.round(o.catch * 100), 'en')} in 100 bad engines before letting go.`) });
     if (o.reliability) lines.push({ id: 'padRel', label: labelFor('padRel', L()), value: `${o.reliability > 0 ? '+' : '−'}${num(Math.abs(o.reliability) * 100, L(), 1)} %`, words: '' });
     if (Number.isFinite(fig?.forecastC)) lines.push({ id: 'tempC', label: labelFor('forecast', L()), value: `${num(fig.forecastC, L())} °C`, words: [fig.climate, weatherWords(fig.forecastC, L())].filter(Boolean).join(': ') });
     else if (Number.isFinite(o.climate?.meanC)) lines.push({ id: 'climate', label: labelFor('climate', L()), value: `${num(o.climate.meanC, L())} °C`, words: [o.climate.name, weatherWords(o.climate.meanC, L())].filter(Boolean).join(': ') });
@@ -637,11 +637,11 @@ export function createPartCard(ctx = {}) {
     const exEq = explain(eqKey) ?? {};
     const exOpt = optKey ? explain(optKey) ?? {} : {};
     const eqName = nameOf(eqKey, eq?.name ?? tg.key);
-    const out = { kicker: `${T('equipKicker')} · ${eqName}`, title: o ? nameOf(optKey, o.name) : eqName, sub: exEq.what ?? (L() === 'en' ? eq?.role : '') ?? '', img: o ? ctx.equipIcon?.(tg.key, o) ?? '' : '' };
+    const out = { kicker: `${T('equipKicker')} · ${eqName}`, title: o ? nameOf(optKey, o.name) : eqName, sub: (exOpt.why ? exOpt.what : null) ?? exEq.what ?? (L() === 'en' ? eq?.role : '') ?? '', img: o ? ctx.equipIcon?.(tg.key, o) ?? '' : '' };
     const b1 = block(1, T('b1equip'));
     b1.append(...[
       said(T('thisChoice'), exOpt.what ?? (L() === 'en' ? o?.note : null) ?? null),
-      said(T('why'), exEq.why ?? null),
+      said(T('why'), exOpt.why ?? exEq.why ?? null),
       said(T('without'), exOpt.without ?? exEq.without ?? null),
       said(T('analogy'), exOpt.analogy ?? exEq.analogy ?? null, 'pc-said--analogy'),
       optKey ? prosCons(listOf(optKey, 'pros', o?.pros), listOf(optKey, 'cons', o?.cons)) : null,

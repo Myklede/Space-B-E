@@ -120,6 +120,7 @@ function normalise(source, cfg, height) {
     if (o.material.length === 1) o.material = o.material[0];
   });
   out.userData.nasa = cfg.model;
+  out.traverse((o) => { o.userData.sharedGeometry = true; }); // copies share these buffers: disposeObject keeps them
   return out;
 }
 
@@ -160,6 +161,7 @@ export async function preloadNasaParts(catalog, ids = Object.keys(NASA_PARTS)) {
 /** A Blender model built to the contract: used as exported (origin, scale and orientation are already the game's). */
 function builderProto(scene) {
   const proto = scene.clone(true);
+  proto.traverse((o) => { o.userData.sharedGeometry = true; }); // copies share these buffers: disposeObject keeps them
   proto.updateMatrixWorld(true);
   proto.traverse((o) => { if (o.isMesh) { o.castShadow = true; o.receiveShadow = true; } });
   return proto;
@@ -206,6 +208,7 @@ export function applyChoices(object, options = null) {
 export function loadGroundModel(slug) {
   return loadFile(`builder:${slug}`, `${BUILDER_BASE}${slug}.glb`).then((scene) => {
     scene?.updateMatrixWorld(true);
+    scene?.traverse((o) => { o.userData.sharedGeometry = true; }); // pieces cloned from it share its buffers
     return scene;
   });
 }
