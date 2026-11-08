@@ -173,8 +173,11 @@ function builderProto(scene) {
  */
 export function applyChoices(object, options = null) {
   const slots = new Map();
+  // only the outermost slot_ nodes count: three.js names the per-material children of a node after its mesh data, which
+  // Blender often names like the node (slot_x__y_1, slot_x__y_2…)
+  const insideSlot = (o) => { for (let p = o.parent; p; p = p.parent) if (p.name?.startsWith('slot_')) return true; return false; };
   object.traverse((o) => {
-    if (!o.name?.startsWith('slot_')) return;
+    if (!o.name?.startsWith('slot_') || insideSlot(o)) return;
     const [key, variant] = o.name.slice(5).split('__');
     if (!slots.has(key)) slots.set(key, { base: null, variants: new Map() });
     const s = slots.get(key);
@@ -192,6 +195,19 @@ export function applyChoices(object, options = null) {
     for (const key of [].concat(hides ?? [])) { const other = shown.get(key); if (other) other.visible = false; }
   }
   return object;
+}
+
+/**
+ * A ground model of the Launch pad card (public/assets/models/builder/pad/<slug>.glb, built to the "Ground models"
+ * rules of src/builder/tools/blender/README.md, used whole: sections/pad/art.js places and scales its nodes). Resolves
+ * to the loaded scene, shared: copy it with clone() and never change it. Resolves to null when the file is missing;
+ * each file loads once; never throws.
+ */
+export function loadGroundModel(slug) {
+  return loadFile(`builder:${slug}`, `${BUILDER_BASE}${slug}.glb`).then((scene) => {
+    scene?.updateMatrixWorld(true);
+    return scene;
+  });
 }
 
 /** Is this part drawn by one of Role 1's Blender models (when loaded)? */
