@@ -97,24 +97,6 @@ Copy this block. Keep each line short and factual. Don't commit screenshots.
 
 ## Role 3: Graphics, Audio & Core
 
-### Flight deck: the centre display can't show the debris conjunction view (many objects) for the new debris-dodge window
-- **For:** Role 3 · **From:** Role 2 (Minh Vuong) · **Found:** 2026-11-08 on dev 0b0c0bd · **Severity:** polish
-- **Where:** `src/graphics/flightDeck.js` / `src/graphics/cockpitScreens.js` (centre display; `setAim` draws one target and one aim only)
-- **Steps:** (Role 2 feature in progress) in ORBIT, about 20 s after orbit the debris field arrives; press F to dodge. Debug: `/?debug=1&state=ORBIT`, then `__role2flight.debris()`
-- **Expected:** the player dodges orbital debris on the centre display: a view along the velocity with the ship in the centre (x = orbit normal, y = radial up, ±range metres), each incoming piece a red circle at its predicted miss point with its danger radius, growing as it gets close, a countdown on the nearest one, the player's aim ○ (the sideways RCS push), and a line with Δv used and hits
-- **Actual:** only one target + and one ○ can be drawn, so Role 2 draws this view as an HTML overlay placed over the display (it works, but it doesn't look like part of the cockpit)
-- **Suggested fix:** add `cockpit.userData.setConjunction({ objects: [{ x, y, r, t }], aim: { x, y }, range, label, dv, hits, passed })` or `setConjunction(null)`: `x, y, r` in display units 0…1 with y UP (same convention as `setAim`), `t` = seconds to closest approach, `range` = metres from the centre to the plot edge (for a scale label), `dv` in m/s. Draw it like the trajectory page (title CONJUNCTION, red circles, amber countdown, cyan ○). Role 2 will call `setConjunction?.()` every frame during the window and drop its overlay as soon as it exists.
-- **Status:** fixed in 48310c4, Role 2 (Minh Vuong) please verify. `cockpit.userData.setConjunction({ objects:[{x,y,r,t}], aim:{x,y}, range, label, dv, hits, passed } | null)` exists (units 0…1, y up, like setAim); null gives the display back. **How to verify:** call `cockpit.userData.setConjunction?.({...})` every frame from the debris-dodge window instead of the HTML overlay, and `setConjunction(null)` when it ends.
-
-### Flight deck: setAim has no marker for where the ship's nose really points
-- **For:** Role 3 · **From:** Role 2 (Minh Vuong) · **Found:** 2026-11-08 on dev 0b0c0bd · **Severity:** polish
-- **Where:** `src/graphics/cockpitScreens.js` (`normaliseAim`, the manual aim drawing)
-- **Steps:** `/?debug=1&state=LAUNCH`, after liftoff press F, move the mouse quickly
-- **Expected:** besides the target + and the aim ○ (where the player wants the nose), a small amber triangle shows where the nose points now; it lags the ○ because the ship turns at a limited rate (ships without RCS lag a lot), which is the skill of the manual window
-- **Actual:** only + and ○ are drawn, so the player can't see the ship catching up
-- **Suggested fix:** accept an optional `nose: { x, y }` in `setAim` (same 0…1 units, y UP) and draw a small amber triangle there; omitted = not drawn. Role 2 will start sending `nose` right away (ignored until then).
-- **Status:** fixed in 48310c4, Role 2 (Minh Vuong) please verify. `setAim({ ..., nose:{x,y} })` draws an amber triangle at the nose; omitted = not drawn. **How to verify:** add `nose: { x, y }` to the `setAim` call you already make; the amber triangle should lag the ○ when you move the mouse fast.
-
 ### Flight deck: no gloved hands on the stick and throttle
 - **For:** Role 3 · **From:** Role 2 (Minh Vuong) · **Found:** 2026-11-08 on dev 0b0c0bd · **Severity:** polish
 - **Where:** `public/assets/models/flightdeck.glb` / `src/graphics/flightDeck.js` (`stick`, `throttle` parts moved by `setControls`)
@@ -124,15 +106,6 @@ Copy this block. Keep each line short and factual. Don't commit screenshots.
 - **Suggested fix:** parent the suit gloves (and short sleeves) from the procedural cockpit, or new ones, to the `stick` and `throttle` nodes so they follow `setControls`
 - **Status:** open
 
-### Flight deck pages: please read the new flight:telemetry fields (attitude, thrust, TWR, Isp, Δv, throttle)
-- **For:** Role 3 · **From:** Role 2 (Minh Vuong) · **Found:** 2026-11-08 on dev 0b0c0bd · **Severity:** polish
-- **Where:** `src/graphics/cockpitScreens.js` (header comment says attitude is "GUESSED") and `src/graphics/flightDeck.js` (`live` fills thrust, TWR, Isp, Δv from the static ship stats)
-- **Steps:** `/?debug=1&state=LAUNCH`, watch the propulsion and attitude displays during the ascent
-- **Expected:** live values. Since 65a3dbf Role 2 sends, about twice a second in `flight:telemetry`: `verticalSpeed` (m/s), `throttle` (0…1, 0 when not thrusting), `fuelMax` (kg), `fuelFrac` (0…1), `thrust` (N, current), `twr` (current), `isp` (s, current), `deltaVLeft` (m/s), `maxQ` (Pa), `pitch` (deg above the local horizon, 90 = straight up), `yaw` (deg, heading in the orbit plane, 0 = along the horizontal velocity / launch east, + toward the orbit normal), `roll` (deg, -180…180, 0 = pilot's head away from the planet), `pitchRate`, `rollRate`, `yawRate` (deg/s)
-- **Actual:** the pages may still show the static ship numbers and the guessed attitude convention
-- **Suggested fix:** prefer the live telemetry values when present (fall back to the ship stats before the first telemetry), check the ADI signs against the convention above, and remove "GUESSED" from the header
-- **Status:** fixed in 48310c4, Role 2 (Minh Vuong) please verify. The pages prefer the live telemetry (thrust, twr, isp, deltaVLeft, throttle, fuelFrac, pitch/yaw/roll and rates); ship stats only before the first telemetry; "GUESSED" removed. **How to verify:** `/?debug=1&state=LAUNCH`, fly the ascent: PROPULSION (thrust, TWR, delta-v, throttle, propellant) and ATT (pitch/yaw/roll and rates) follow your telemetry; nothing to change on your side.
-
 ### New spaceship interior: the post-landing egress needs an aft hatch and a ladder down to the mid-deck
 - **For:** Role 3 · **From:** Role 2 (Minh Vuong) · **Found:** 2026-11-08 on dev 0b0c0bd · **Severity:** polish (for the new spaceship design)
 - **Where:** the new spaceship design (flight deck GLB + the INTERIOR cabin)
@@ -141,15 +114,6 @@ Copy this block. Keep each line short and factual. Don't commit screenshots.
 - **Actual:** the flight deck has an `aft` node but no openable hatch or ladder, and the cabin has no ceiling hatch or ladder where the climb-down ends
 - **Suggested fix:** in the new design: a floor or aft hatch on the flight deck named `aftHatch` (pivot set so it can swing open; optional `userData.openHatch(t 0…1)`), an empty `ladderTop` at the top of the ladder (standing eye position, facing the hatch), and in the cabin a ceiling hatch + ladder with an empty `ladderBottom` (standing eye position at the foot of the ladder, facing into the cabin). Role 2 will drive the camera between these points, so exact sizes are your call.
 - **Status:** cabin side fixed in 71375b2: ceiling hatch + ladder on the left of the aisle; `cabin.userData.ladderBottom` (cabin-local (-0.68, 1.65, 1.68), facing -Z) and `userData.ladderTopCabin` ((-0.68, 2.48, 2.04), facing +Z); children of the cabin group, so use getWorldPosition. No collider for the ladder yet (src/surface/shipInterior.js is Role 2's). The cockpit side (aftHatch, ladderTop) comes with the new capsule cockpits. Role 2 (Minh Vuong) please verify the cabin part. **How to verify (cabin part):** `/?debug=1&state=INTERIOR`, place the camera at `cabin.userData.ladderTopCabin` and `ladderBottom` (world positions via getWorldPosition) for the climb-down.
-
-### Cockpit sounds for the manual-control and debris-dodge windows
-- **For:** Role 3 · **From:** Role 2 (Minh Vuong) · **Found:** 2026-11-08 on dev 0b0c0bd · **Severity:** polish
-- **Where:** `src/audio/index.js` (Role 2 uses `radio.blip` for the offer and `cockpit.switch` for take/lock today)
-- **Steps:** after liftoff press F, then Space at LOCK READY; in ORBIT `__role2flight.debris()` and dodge
-- **Expected:** `cockpit.manualOffer` (short two-tone chime when a scored window opens), `cockpit.lock` (confirm beep when guidance locks), `rcs.puff` (short thruster hiss, retriggerable, while the player pushes sideways on RCS), `debris.whoosh` (a piece passing close)
-- **Actual:** none of these exist
-- **Suggested fix:** add the four ids (CC0 or synthesised like the Phase 0 sounds). Role 2 will play them by these names and fall back to the current sounds while they are missing.
-- **Status:** fixed in 48310c4, Role 2 (Minh Vuong) please verify. `cockpit.manualOffer`, `cockpit.lock`, `rcs.puff` (retriggerable), `debris.whoosh` are synthesised in src/audio/index.js. **How to verify:** nothing to change; your calls by these ids now play the new sounds instead of the fallbacks.
 
 ### Flight deck: a gloved hand should reach out and press each pre-launch checklist button (HATCH, CABIN, O2, ARM ENGINE)
 - **For:** Role 3 · **From:** Role 2 (Minh Vuong) · **Found:** 2026-11-08 on dev 9db4cd6 · **Severity:** polish
