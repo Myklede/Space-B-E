@@ -142,6 +142,15 @@ Copy this block. Keep each line short and factual. Don't commit screenshots.
 - **Suggested fix:** add the four ids (CC0 or synthesised like the Phase 0 sounds). Role 2 will play them by these names and fall back to the current sounds while they are missing.
 - **Status:** open
 
+### Flight deck: a gloved hand should reach out and press each pre-launch checklist button (HATCH, CABIN, O2, ARM ENGINE)
+- **For:** Role 3 · **From:** Role 2 (Minh Vuong) · **Found:** 2026-11-08 on dev 9db4cd6 · **Severity:** polish
+- **Where:** `src/graphics/flightDeck.js` (and the procedural fallback in `cockpitParts.js`): a new `cockpit.userData.reach(id)`; the gloves themselves are the entry "Flight deck: no gloved hands on the stick and throttle" above
+- **Steps:** `/?debug=1&state=LAUNCH`, the Phase 0 checklist: look at the HATCH button (screen-centre reticle) and click
+- **Expected:** the player's design (replaces keys 1–4): when the player clicks a checklist button, the pilot's gloved hand reaches out from below the view, flips/presses that button, and returns, about 1 s in total (reach ~0.45 s, press, return ~0.4 s); right hand for buttons right of the centre, left hand for the others. The button's own press-in and lamp change happen at the moment the glove touches it
+- **Actual:** Role 2 now does the aim + click and the lamps (in progress on role2-flight, coming to dev soon), but there is no hand, so the button just changes by itself
+- **Suggested fix:** add `cockpit.userData.reach(id) → seconds` (ids `hatch`, `cabin`, `o2`, `arm`, any `btn:` id is a bonus): it plays the glove reach/press/return animation itself, calls its own `press(id)` at contact, and returns the seconds until contact. Role 2 already calls `reach?.(id)` and delays its lamp/sound by the returned seconds; when `reach` is missing it presses at once, so nothing breaks in between. Ease-in/out, the glove may also release the stick during the reach and go back to it
+- **Status:** open
+
 ## Role 4: Story, Cruise & Knowledge
 
 ### Reset money on the bankrupt ending
