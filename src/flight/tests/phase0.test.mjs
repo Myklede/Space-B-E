@@ -2,7 +2,7 @@
 import assert from 'node:assert/strict';
 import { readFileSync } from 'node:fs';
 import * as contract from '../../core/contract.js';
-import { CHECKLIST_STEPS, PHASE0_TIMING, boardingPath, buildPoll, createChecklist, hasNoGo, phase0Plan, aimInfo, buttonIdOfName, fallbackLabel, nextButtonId, pollLinesShown, promptAt, scrubAvailable, scrubFee } from '../phase0.js';
+import { CABIN_OPTIONS, CHECKLIST_STEPS, PHASE0_TIMING, boardingPath, buildPoll, createChecklist, hasNoGo, phase0Plan, aimInfo, buttonIdOfName, fallbackLabel, nextButtonId, pollLinesShown, promptAt, scrubAvailable, scrubFee } from '../phase0.js';
 
 const results = [];
 const test = (name, fn) => { try { fn(); results.push(['ok', name]); } catch (e) { results.push(['FAIL', name, e]); } };
@@ -143,6 +143,22 @@ test('aim: fallback label names the key only for that item', () => {
 test('no on-screen copy mentions keys 1-4', () => {
   const copy = JSON.parse(readFileSync(new URL('../phase0.json', import.meta.url))).copy;
   assert.doesNotMatch(`${copy.checklistKeys} ${copy.checklistFact}`, /\b[1-4]\b|1–4/);
+});
+
+test('poll: pure oxygen + wiring fault adds an ECLSS NO-GO, only when asked for; no ShipSpec warning does', () => {
+  const clean = buildPoll(mock('ship.reliable'));
+  assert.ok(!clean.some((x) => x.station === 'ECLSS'));
+  const p = buildPoll(mock('ship.reliable'), { pureOxygenFault: true });
+  const e = p.find((x) => x.station === 'ECLSS');
+  assert.equal(e.go, false); assert.equal(e.reason, 'pure-oxygen cabin with a wiring fault'); assert.equal(p.filter((x) => !x.go).length, 1);
+  const cold = buildPoll(mock('ship.coldMorning'), { pureOxygenFault: true });
+  assert.ok(cold.find((x) => x.station === 'Weather' && !x.go) && cold.find((x) => x.station === 'ECLSS' && !x.go));
+});
+
+test('cabin options: air mix 20 s, pure oxygen 5 s, keys 1 and 2', () => {
+  assert.equal(CABIN_OPTIONS.air.simSeconds, 20); assert.equal(CABIN_OPTIONS.pure.simSeconds, 5);
+  assert.deepEqual([CABIN_OPTIONS.air.key, CABIN_OPTIONS.pure.key], ['1', '2']);
+  assert.ok(PHASE0_TIMING.fillAir > PHASE0_TIMING.fillPure && PHASE0_TIMING.fillAir <= 6 && PHASE0_TIMING.purge <= 6);
 });
 
 let failed = 0;

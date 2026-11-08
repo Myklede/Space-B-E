@@ -8,7 +8,14 @@
     "pollEvery": 1,
     "promptDelay": 0.9,
     "cleared": 1.6,
-    "quickNoGo": 2
+    "quickNoGo": 2,
+    "fillAir": 6,
+    "fillPure": 1.5,
+    "purge": 6
+  },
+  "cabin": {
+    "air": { "key": "1", "label": "Air mix (N₂/O₂), 20 s to fill", "simSeconds": 20 },
+    "pure": { "key": "2", "label": "Pure oxygen, fills in 5 s (saves time)", "simSeconds": 5 }
   },
   "steps": [
     {
@@ -81,6 +88,19 @@
     "goButton": "GO (Enter)",
     "scrubButton": "SCRUB (S)",
     "wrongOrder": "Not yet. Do it in order: next is {next}.",
-    "pressHint": "press {key}"
+    "pressHint": "press {key}",
+    "cabinTitle": "CABIN ATMOSPHERE",
+    "cabinFact": "Choose what fills the cabin. Click an option or press 1 or 2.",
+    "fillAir": "Filling the cabin with air mix… {s} s",
+    "fillPure": "Filling the cabin with pure oxygen… {s} s",
+    "airFact": "Cabin holds a normal air mix of nitrogen and oxygen.",
+    "pureFact": "Cabin filled with pure oxygen.",
+    "cautionLamp": "CAUTION · WIRING · intermittent short under the left seat",
+    "cautionPurge": "Vent and purge with air (costs 60 s)",
+    "cautionKey": "F",
+    "purging": "Venting the cabin and purging with air… {s} s",
+    "purgedFact": "Cabin purged with air. The wiring fault is no longer a danger.",
+    "eclssStation": "ECLSS",
+    "eclssReason": "pure-oxygen cabin with a wiring fault"
   }
 }

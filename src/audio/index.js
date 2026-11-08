@@ -117,6 +117,28 @@ const SYNTHS = {
     click(c, o, { time: 0.46, pitch: 1000, volume: 0.34, ring: 0.1 });
     tone(c, o, { frequency: 90, type: 'triangle', length: 0.14, time: 0.46, volume: 0.3, slide: 55 });
   } },
+  // Zero-g cabin (Role 3): ventilation loop, a soft push-off and a glove grabbing a handrail. All on the 'ui' bus.
+  'cabin.fans': { bus: 'ui', loop: (c, o) => {
+    const a = noiseLoop(c, o, { type: 'bandpass', frequency: 330, q: 0.45, volume: 0.045, wobble: 0.008, wobbleRate: 0.17 });
+    const b = noiseLoop(c, o, { type: 'bandpass', frequency: 1250, q: 0.7, volume: 0.011, wobble: 0.004, wobbleRate: 0.31 });
+    const hum = c.createOscillator(); const hg = c.createGain();
+    hum.type = 'sine'; hum.frequency.value = 118; hg.gain.value = 0.006;
+    hum.connect(hg).connect(o); hum.start();
+    return { nodes: [...a.nodes, ...b.nodes, hum] };
+  } },
+  // Push off a surface: a soft body thump with a short suit-fabric rustle.
+  'crew.push': { bus: 'ui', play: (c, o) => {
+    tone(c, o, { frequency: 110, type: 'sine', length: 0.16, volume: 0.22, slide: 55 });
+    noiseBurst(c, o, { type: 'lowpass', frequency: 700, sweep: 220, q: 0.6, attack: 0.01, length: 0.1, volume: 0.1 });
+    noiseBurst(c, o, { type: 'bandpass', frequency: 3200, q: 1.2, time: 0.03, attack: 0.02, length: 0.22, volume: 0.04 });
+    noiseBurst(c, o, { type: 'bandpass', frequency: 2300, q: 1.0, time: 0.17, attack: 0.02, length: 0.12, volume: 0.025 });
+  } },
+  // Glove closing on a metal rail: a light clack and a short high ring.
+  'handrail.grab': { bus: 'ui', play: (c, o) => {
+    click(c, o, { pitch: 2800, volume: 0.15, ring: 0.05 });
+    tone(c, o, { frequency: 420, type: 'triangle', length: 0.05, volume: 0.07, slide: 300 });
+    noiseBurst(c, o, { type: 'bandpass', frequency: 1800, q: 1.4, time: 0.012, attack: 0.008, length: 0.05, volume: 0.03 });
+  } },
   // Pressurise: valve pop, air hiss rising in pitch for about 1.4 s, then fading away over 2.8 s in total.
   'cockpit.pressurise': { bus: 'ui', play: (c, o) => {
     click(c, o, { pitch: 1400, volume: 0.15, ring: 0.05 });

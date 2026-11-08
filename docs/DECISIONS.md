@@ -101,4 +101,9 @@ Choices the spec left open. Add a line whenever you pick the simplest option: th
     - everyone recognises it.
   - **Demo ship:** the builder has an **Apollo** preset (More → Preset vehicles): Titan II body, one large engine, two small solids, an extra kerosene tank. It costs $4.91M with fees, has Δv 5,409 m/s against 5,400 needed, and gives no warnings.
   - **`ShipSpec.stats.cabin`:** `{ type, windows, hatch, docking, couches, atmosphere, suits, volumeM3 }`, the cabin the player chose and how it is fitted. `type` is a part id, `capsule_apollo` for the demo. It is optional for readers: a missing field means the default cabin.
+- **2026-11-08, all four agreed (told by dtri): Role 3 finishes the whole space experience, including the code in Role 2's and Role 4's folders.**
+  - **Scope:** after a stable orbit the player unbuckles, floats through the hatch behind the seats into the cabin, spends CRUISE floating in the cabin (zero-g controller, windows, stations), floats back and straps in before ENTRY; the slanted camera after a Mars touchdown; the lander's size and hatch from the built ship; Role 1's launch pad and skin in the launch scene.
+  - **Files Role 3 may change for this:** `src/flight/` (orbit timeline, camera, `buildRocket`, launch pad), `src/surface/` (lander colliders and hatch, the zero-g float controller next to `WalkController`), `src/cruise/` (CRUISE inside the cabin). Pushes that touch them use `ALLOW_OWNERSHIP_CHANGE=1` for these items only.
+  - **Why:** the experience crosses three folders and has to feel like one scene; one owner avoids three half-joins.
+  - **Role 2 and Role 4:** keep owning your folders; tell dtri before changing the same lines, and review Role 3's commits there.
 
