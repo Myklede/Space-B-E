@@ -69,6 +69,8 @@ const outsideMatch = INSIDE.outsideMatch ? new RegExp(INSIDE.outsideMatch) : nul
 /** Does this radial part ride inside the skin wherever it is clamped (data/hull.json "inside")? */
 export function ridesInside(def) {
   if (!def || def.attach !== 'radial') return false;
+  if (def.hullSide === 'outside') return false; // a part may say where it rides (parts.json hullSide)
+  if (def.hullSide === 'inside') return true;
   if (INSIDE.alwaysInside?.includes(def.id)) return true;
   if (INSIDE.outsideBoosters && def.booster) return false;
   if (INSIDE.outsideIds?.includes(def.id)) return false;
@@ -147,12 +149,19 @@ function elementsOf(layout) {
     }
     return el;
   });
-  // a nose cover becomes a fairing when the part right under it is a capsule narrow enough to fit inside it (the same
-  // rule as sections/nose/art.js capsuleBelow); otherwise it seats on the capsule's docking ring with a boat-tail
+  // a nose cover becomes a fairing when a capsule narrow enough to fit inside it sits under it, right below or under
+  // modules that fit too (Soyuz: fairing, orbital module, descent capsule); otherwise it seats on the capsule's docking
+  // ring with a boat-tail. entry.shrouded tells sections/nose/art.js (capsuleBelow) to stop the cover at its base ring.
   els.forEach((el, i) => {
     if (el.kind !== 'cover') return;
-    const below = els[i + 1];
-    el.shroud = !!(below && below.def.flags?.capsule && below.R <= el.R + 0.01);
+    let k = i + 1, cap = null;
+    while (els[k] && els[k].R != null && els[k].R <= el.R + 0.01 && els[k].section === el.section && els[k].kind !== 'engine' && els[k].kind !== 'tower') {
+      if (els[k].def.flags?.capsule) { cap = els[k]; break; }
+      k += 1;
+    }
+    el.shroud = !!cap;
+    el.shroudTo = cap ? k : null;
+    if (el.entry) el.entry.shrouded = el.shroud;
     if (el.shroud) { el.rB = el.R; el.bareB = el.R; } else {
       el.rB = NECK; el.bareB = NECK; el.climb = el.bt;
       el.rAt = (y) => (y >= el.bt ? el.R : NECK + ((el.R - NECK) * y) / el.bt);
@@ -211,8 +220,8 @@ function buildSkinNow(layout) {
   for (let i = 0; i < els.length; i++) {
     const cover = els[i];
     if (cover.kind !== 'cover' || !cover.shroud) continue;
-    let j = i + 1;
-    const inside = [els[j]]; // the capsule
+    let j = cover.shroudTo ?? i + 1;
+    const inside = els.slice(i + 1, j + 1); // the capsule and any modules between it and the cover
     while (els[j + 1] && (els[j + 1].kind === 'inner' || els[j + 1].heatShield)) { j += 1; inside.push(els[j]); }
     const yTop = cover.y0, yBot = els[j].y0;
     const Rf = Math.max(cover.R, ...inside.map((e) => (e.kind === 'inner' ? e.need : e.R)));

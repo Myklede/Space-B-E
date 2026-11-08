@@ -297,6 +297,7 @@ const SIZE_RADIUS = { s: 0.9375, m: 1.25, l: 1.6875 };
 const NOSE_DEFS = Object.fromEntries((noseParts.parts ?? []).map((p) => [p.id, p]));
 /** The capsule right under this part, when it is narrow enough for a shroud of radius R to enclose: { h, r } or null. */
 function capsuleBelow(entry, R) {
+  if (entry?.shrouded) return { h: 0, r: R }; // hull.js found a capsule further down, under modules that fit inside
   const d = NOSE_DEFS[entry?.below];
   if (!d?.flags?.capsule) return null;
   const r = SIZE_RADIUS[d.size] ?? 1.25;
