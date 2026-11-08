@@ -40,6 +40,12 @@ export const PREBREATHE_MAX_DISTANCE = 3; // m from the airlock: walking away ca
 // Once per Mars visit-day: after a completed prebreathe, later exits in the same mission skip it.
 const missionPrebreathe = { done: false };
 export const resetPrebreathe = () => { missionPrebreathe.done = false; };
+// The cabin air the player chose (Role 1 wave 5, ShipSpec.stats.traits.life.cabin.prebreathe): 1 = sea-level air, the
+// full prebreathe; 0 = pure oxygen at a third of an atmosphere (Mercury, Gemini, Apollo), no nitrogen to purge, none.
+const cabinAir = { prebreathe: 1 };
+export const setCabinAir = ({ prebreathe } = {}) => { cabinAir.prebreathe = Number.isFinite(prebreathe) ? Math.min(1, Math.max(0, prebreathe)) : 1; };
+/** The prebreathe this ship's cabin air needs, in game seconds. */
+export const prebreatheFor = (full = PREBREATHE_S) => full * cabinAir.prebreathe;
 
 const xyz = (v) => ({ x: v.x, y: v.y, z: v.z });
 
@@ -49,7 +55,7 @@ export function resolveStations(stations) {
   return out;
 }
 
-export function createShipInterior({ bus, interactables, oxygen, stations, props, canExit = () => true, prebreatheSeconds = PREBREATHE_S, prebreatheState = missionPrebreathe, onSeat, onExit, onNotice } = {}) {
+export function createShipInterior({ bus, interactables, oxygen, stations, props, canExit = () => true, prebreatheSeconds = prebreatheFor(), prebreatheState = missionPrebreathe, onSeat, onExit, onNotice } = {}) {
   bus = bus ?? { emit() {} };
   const notify = onNotice ?? (() => {});
   const st = { suited: false, airlock: null, prebreathe: null, offs: [] }; // airlock: null | { t }; prebreathe: null | { t }
@@ -141,6 +147,7 @@ export function createShipInterior({ bus, interactables, oxygen, stations, props
       notify('airlock', { stage: progress < 1 ? 'cycling' : 'open', progress });
       if (progress >= 1) {
         st.airlock = null;
+        oxygen?.useAirlock?.(); // the air let out to Mars is made up from the spare oxygen (kg model only)
         onExit?.();
       }
     },

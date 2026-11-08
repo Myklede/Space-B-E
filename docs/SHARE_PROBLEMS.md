@@ -86,6 +86,43 @@ Copy this block. Keep each line short and factual. Don't commit screenshots.
 - **Suggested fix:** once `fc.landed` is true, keep the flight computer idle (throttle 0, no ascent program) until the state changes; probably related to "F toggles manual control any time" (1aba680)
 - **Status:** fixed in c3e586e, Role 3 (dtri) please verify. Root cause: the autopilot's last hover throttle (~10 %) stayed on after touchdown, Mars gravity let it lift off, and the Earth ascent program then took over. Now touchdown shuts the engine down (throttle 0, not lit), a landed ship ignores throttle commands, the ascent program only runs on Earth before landing, and a landed ship levels itself upright on its legs within ~1 s (that should also cure the sideways camera; please check).
 
+### `stats.reliability` never matters in flight
+- **For:** Role 2 · **From:** Role 1 (Myklede) · **Found:** 2026-11-07 on dev 3d4fa59 · **Severity:** decision
+- **Where:** `src/flight/` (nothing reads `spec.stats.reliability`; only the builder's Go/No-Go uses it for `LOW_RELIABILITY`)
+- **Steps:** `/?debug=1`, build Cold Morning (reliability under 80 %) and Reliable (about 91 %), launch both
+- **Expected:** TEAM_PROMPT §5.3: "cheap parts have a higher hidden failure chance (shown as a reliability %)". The builder now spends real design on it: cheap seals, materials, engine clusters (`r^n`, or engine-out), pad equipment and escape towers all move the number
+- **Actual:** both ships fly exactly the same; the reliability the player paid for never shows up
+- **Suggested fix:** one roll per flight phase, e.g. a chance of `(1 − reliability) / 3` at liftoff, max-Q and staging/entry, that triggers an existing failure (`rud`, or an engine-out that cuts thrust); `spec.engines.length > 1` could mean the ship survives losing one engine. Needs agreement on which ending a random failure uses
+- **Status:** open
+- **More (2026-11-08, Role 1):** dev's c3e586e now runs the ascent guide on Earth only. Role 1 will re-check Workhorse's Mars entry with it and drop the propulsion stop-gap once it holds.
+- **More (2026-11-07, Role 1):** the builder now flies an as-built ship (src/builder/asBuilt.js: factory spread and rare defects already lower thrust, Isp or propellant, set `heatShieldDamaged` or raise `ascentCdA`). What only flight can do, proposed for the whole team: (1) a per-phase roll from `stats.reliability` (for example 50 % of 1 − reliability on ascent, 10 % cruise, 25 % entry, 15 % landing) that emits `part_failure` and the matching ending (no new names); (2) skin limits as ShipSpec extras `stats.maxQKPa` and `stats.maxSkinTempC` (from `hull.js` limits, ignored if absent) so an overloaded skin can break up on the climb instead of the fixed 40 kPa.
+
+### The launch scene's tower and pad dwarf the ship: use Role 1's launch pad and skin
+- **For:** Role 2 · **From:** Role 1 (Myklede) · **Found:** 2026-11-07 on dev 3d4fa59 · **Severity:** bug (the whole team agreed on the fix: the pad is part of the ship Role 1 builds and pays for)
+- **Where:** `src/flight/` LAUNCH / PRELAUNCH scene (the orange tower, the concrete pad and the two white tanks), outside camera (C)
+- **Steps:** `/?debug=1&state=LAUNCH`, press C
+- **Expected:** a ship that fills its pad like a real one: towers about 1.1–1.3 × the ship's height, the mount about 1.5–2 × its diameter, and the launch complex the player chose in the hangar (LC-39A, SLC-40, Starbase, Gagarin's Start… with its trench, water, clamps and tower)
+- **Actual:** the ship is a thin column hidden inside a tower several times its width; the hardstand and tanks are huge next to it
+- **Suggested fix:** Role 1 registers two assets from the builder's `init` (through the public `assets.register`, no contract change):
+  - `assets.get('builder:launchPad')` → the chosen complex sized to the confirmed ship: origin on the ground at the launch mount's centre, the ship's axis on y; `userData.top` is the height (m) where the ship's base sits; the tower stands on +x. Drop your tower and tanks and place the ship's base at `userData.top`.
+  - `assets.get('builder:rocketSkin')` → the outer skin (fairings, skirts, interstage cones that make the stack one smooth body) in ShipSpec coordinates (stack base at y = 0, axis at x = z = 0); add it to the rocket group with the parts. Empty group when the ship has no skin.
+  - Role 1 also calls `assets.setRocketPartArt`, so `rocketPart:<type>` returns the hangar's own models (Role 3's row in the README, as dtri asked). Equipment that rides inside the skin returns an empty object.
+- **Status:** open (Role 1 ships the two assets next; Role 2 places them)
+
+### ascentGuide fires one-frame burns on a lofted Mars entry
+- **For:** Role 2 · **From:** Role 1 (Myklede, wave-5 propulsion agent) · **Found:** 2026-11-08 on dev 66d5e5d · **Severity:** bug
+- **Where:** `src/flight/autopilot.js` (`ascentGuide(fc)` is used on any planet) together with the coast ↔ entry phase switch in `FlightController._computePhase`
+- **Steps:** autopilot on Workhorse from `STARTS.marsEntry` (FPA −22.8°, 5,389 kg fuel). The lofted entry flattens at about 33.6–33.7 km (vertical speed about 0, Mach about 5).
+- **Expected:** no engine burn while the ship coasts through the upper atmosphere on entry
+- **Actual:**
+  - The phase flips coast ↔ entry every few metres, and each flip makes `ascentGuide()` return 'circularise'. The autopilot commands full throttle for one frame, then cuts.
+  - That is one engine start each time: 9 starts at 4× warp, 17 at 2×, 35 at 1×. The count depends on the frame rate.
+  - The pulses add about 20 m/s prograde, and that is what keeps Workhorse from blacking out later. With a guard (`fc.planetId === 'earth' ? ascentGuide(fc) : null`, as `steering.js` already does), Workhorse blacks out on entry instead.
+  - Now that engines have real ignition counts (wave 5, TEA-TEB cartridges), those pulses would use up the landing relights.
+- **Suggested fix:** guard ascentGuide to Earth (or to the ascent phase) and retune Workhorse's Mars entry corridor or the entry autopilot so it no longer relies on the pulses.
+  - Until then, Role 1's propulsion effects keep ignitions unlimited for a Mars controller above 3 km and count only starts below 3 km (marked as a stop-gap in `src/flight/effects/propulsion.js`).
+- **Status:** open
+
 ## Role 3: Graphics, Audio & Core
 
 ### Flight deck: the centre display can't show the debris conjunction view (many objects) for the new debris-dodge window
@@ -140,6 +177,23 @@ Copy this block. Keep each line short and factual. Don't commit screenshots.
 - **Expected:** `cockpit.manualOffer` (short two-tone chime when a scored window opens), `cockpit.lock` (confirm beep when guidance locks), `rcs.puff` (short thruster hiss, retriggerable, while the player pushes sideways on RCS), `debris.whoosh` (a piece passing close)
 - **Actual:** none of these exist
 - **Suggested fix:** add the four ids (CC0 or synthesised like the Phase 0 sounds). Role 2 will play them by these names and fall back to the current sounds while they are missing.
+
+### The demo cabin is Apollo: `ShipSpec.stats.cabin` and an Apollo preset are ready (information)
+- **For:** Role 3 · **From:** Role 1 (Myklede) · **Found:** 2026-11-08 · **Severity:** polish
+- **Where:** `getShip().stats.cabin` (`src/builder/stats.js`); the preset is `src/builder/data/presets/apollo.json` (More → Preset vehicles → Apollo)
+- **Steps:** open the hangar, More → Preset vehicles → Apollo, then the readiness poll and launch; in INTERIOR read `getShip().stats.cabin`
+- **Expected:** the walkable interior matches the Apollo command module:
+  - 3 couches;
+  - 5 windows (2 forward, 2 side, 1 in the hatch);
+  - the side hatch;
+  - the docking tunnel overhead.
+
+  The window and hatch pieces of the outside model are on branch `role1-cabins-for-role3` (`public/assets/models/builder/nose/capsule_apollo.glb`: `slot_windows*`, `slot_hatch*`).
+- **Actual:** nothing wrong. `stats.cabin` for the preset reads `{ type: 'capsule_apollo', windows: 'small', hatch: 'outward', docking: 'probe_drogue', couches: 'shock', atmosphere: 'pad_mix', suits: 'pressure', volumeM3: 6.17 }`.
+- **Suggested fix:**
+  - Use `stats.cabin.type === 'capsule_apollo'` to pick the Apollo interior, and keep your current cabin for every other type.
+  - Real references: the Smithsonian CC0 scan at https://3d.si.edu (Apollo 11 command module, interior included) and NASA's Apollo Operations Handbook.
+  - Keep all seven `STATIONS`.
 - **Status:** open
 
 ## Role 4: Story, Cruise & Knowledge
@@ -154,6 +208,53 @@ Copy this block. Keep each line short and factual. Don't commit screenshots.
 - **Status:** fixed on `role4-story` (`endingId: 'bankrupt'` or money below $0 resets to `balance.startMoney` and returns to HANGAR), Role 1 please verify
 
 ## Needs the whole team
+
+### Role 1 is adding part effects in flight, on Mars and in the cruise (information: all four agreed)
+- **For:** all four roles · **From:** Role 1 (Myklede) · **Found:** 2026-11-08 on dev 66d5e5d · **Severity:** decision (agreed by all four, told by Myklede)
+- **Where:**
+  - New files: `src/builder/traits/` (what each chosen part does, computed into `ShipSpec.stats.traits`) and `src/flight/effects/` (one file per group).
+  - Hooks in `src/flight/FlightController.js` (marked "part effects").
+  - Wave-5 agents will also edit `src/surface/oxygen.js`, `astronaut.js`, `RoverController.js`, `rovers.js`, `src/cruise/index.js` and `src/missions/` comms.
+- **Steps:** build a cheap ship and an expensive one with the same Δv and fly both
+- **Expected:** each part's real characteristics show in play, with real physics and trade-offs, not "dearer is better":
+  - engine throttle depth, restarts, steering, and an engine failing in flight by its reliability;
+  - a cheap pad holding the ship back at liftoff;
+  - skin strength at max-Q, heating, and what a debris hit does to titanium versus aluminium;
+  - heat shield capacity;
+  - suit and cabin oxygen in kilograms, CO₂ scrubbing and the radiation dose behind the shelter;
+  - leg touchdown limits, power for the rovers and antenna data rates.
+
+  The game shows no new messages in flight; a flight analysis in the hangar explains afterwards.
+- **Actual:** today most part choices change only the builder's numbers
+- **Suggested fix:** nothing to do for you.
+  - Every new field is optional, so a missing trait means "as before".
+  - No contract name changes: failures use existing `ENDINGS` and `flight:failed`.
+  - The flight's record is kept in `save.partEffects`.
+  - Role 1 runs Role 2's and Role 4's tests before each commit and will list every touched file here when it lands on dev. Please tell Myklede if a hook gets in your way.
+- **Files Role 1 changed outside `src/builder` (please read before you edit them):**
+  - **Role 2:**
+    - `src/flight/FlightController.js`: the hooks marked "part effects"; the engine cut at touchdown; `part_failure` in `BUS_FLIGHT_EVENTS`; telemetry `thrust` and `twr` through the thrust hook; `armorUsed` on `debris_hit`.
+    - `src/flight/autopilot.js`:
+      - the hoverslam block (`SLAM`) for engines with a throttle floor;
+      - `avoidDebris()`: dodge if it can burn, otherwise nose into the stream; it also runs on the coast after MECO;
+      - `throttleTarget = 0` once landed;
+      - the status line "Debris ahead: nose into the stream".
+    - `src/flight/index.js`: the record setter, and the debris callout "Debris strike!" when no armour was used.
+    - `src/flight/objectives.js`: the touchdown line shows the chosen legs' limit.
+    - `src/flight/steering.js`: prediction copies use the quiet effects.
+    - `src/flight/effects/*` (new).
+    - `src/surface/oxygen.js`, `astronaut.js`, `shipInterior.js`: oxygen in kg, nitrogen, prebreathe by cabin air.
+    - `src/surface/RoverController.js`, `rovers.js`: battery from the ship's power, charging at the lander.
+  - **Role 4:**
+    - `src/cruise/index.js`, `data.json` and the new `life.js`: storm dose by shielding, a scrubber failure with backups, the cabin leak, the tank emergency venting real kg, `co2` in mmHg in telemetry.
+    - `src/missions/index.js`: the log upload takes time by antenna; with no working antenna, the existing `beagle` ending. The hint line shows "Uploading … %".
+  - **Tests:** every Role 2 and Role 4 test passes; new tests in `src/flight/tests/effects-*.test.mjs`, `src/surface/tests/lifeEffects.test.mjs` and `src/cruise/tests/life.test.mjs`.
+  - **Contract:** no new events, states, endings, tasks or stations.
+- **Notes for Role 2:**
+  - The HUD throttle shows the commanded throttle, while the pad holds real thrust at 92 % for the first seconds. If you want, show `thrust / thrustNow(alt)`.
+  - `corridor.js` still uses `TUNING.heatLimit` rather than `fc._heatLimit()`, which now follows the chosen shield.
+- **Note for Role 4:** telemetry `co2` is in mmHg (NASA's long-mission limit is about 3 mmHg; Apollo 13 reached about 15). The report mock's `peakCo2: 0.6` looks like a percentage.
+- **Status:** done on `role1-builder` (wave 5); please tell Myklede if a hook gets in your way
 
 ### Allow PRELAUNCH → HANGAR (and LAUNCH → HANGAR before liftoff) so the player can SCRUB a launch
 - **For:** all four roles · **From:** Role 2 + Role 4 (Minh Vuong) · **Found:** 2026-11-07 on dev 3d4fa59 · **Severity:** decision
