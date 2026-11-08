@@ -48,14 +48,15 @@ T.render = () => renderer.render(scene, camera);
 
 // ---- interactive walkthrough (local test page, not shipped) ----
 // click = capture mouse, mouse = look, WASD = float, Space/C = up/down, Shift = faster
-// H harness, O hatch, P play the float path seat -> hatch -> passage -> cabin, R back to the seat, G zero-g items, K cabin on/off
+// H harness, O aft hatch, B cabin bulkhead door, P play the float path seat -> over the couch -> hatch -> down the aisle, R back to the seat,
+// V view from the couch looking back through the open hatch, G zero-g items, K cabin on/off
 const hud = document.createElement('div');
 hud.style.cssText = 'position:fixed;left:12px;top:12px;color:#cfe;font:13px/1.5 monospace;background:#0009;padding:8px 10px;border-radius:6px;pointer-events:none;white-space:pre';
 document.body.appendChild(hud);
 const look = { yaw: 0, pitch: 0 };
 const vel = new THREE.Vector3();
 const keys = new Set();
-const anim = { harness: { v: 0, to: 0 }, hatch: { v: 0, to: 0 } };
+const anim = { harness: { v: 0, to: 0 }, hatch: { v: 0, to: 0 }, bulk: { v: 0, to: 0 } };
 let zeroG = false, path = null;
 T.attach();
 const wp = () => (cockpit.userData.floatPath ?? []).map((o) => o.getWorldPosition(new THREE.Vector3()));
@@ -65,9 +66,14 @@ function toSeat() {
   look.yaw = 0; look.pitch = 0;
 }
 toSeat();
+// from the couch eye: harness off, both doors open, looking back over the shoulder (+Z) through the hatch
+function lookBack() {
+  toSeat(); anim.harness.to = 1; anim.hatch.to = 1; anim.bulk.to = 1;
+  look.yaw = Math.PI - 0.2; look.pitch = 0.1;
+}
 function playPath() {
   const p = wp(); if (p.length < 2) return;
-  anim.harness.to = 1; anim.hatch.to = 1;
+  anim.harness.to = 1; anim.hatch.to = 1; anim.bulk.to = 1;
   path = { curve: new THREE.CatmullRomCurve3([camera.position.clone(), ...p.slice(1)], false, 'centripetal'), t: -1.2, dur: 10 }; // t in seconds: 1.2 s to unbuckle first
 }
 renderer.domElement.addEventListener('click', () => renderer.domElement.requestPointerLock());
@@ -79,6 +85,8 @@ addEventListener('keydown', (e) => {
   keys.add(e.code);
   if (e.code === 'KeyH') anim.harness.to = anim.harness.to ? 0 : 1;
   if (e.code === 'KeyO') anim.hatch.to = anim.hatch.to ? 0 : 1;
+  if (e.code === 'KeyB') anim.bulk.to = anim.bulk.to ? 0 : 1;
+  if (e.code === 'KeyV') lookBack();
   if (e.code === 'KeyP') playPath();
   if (e.code === 'KeyR') toSeat();
   if (e.code === 'KeyG') { zeroG = !zeroG; T.cabin?.userData.zeroG?.(zeroG); }
@@ -92,6 +100,7 @@ function loop() {
   const t = performance.now(); const dt = Math.min(0.05, (t - last) / 1000); last = t;
   cockpit.userData.harness?.(step(anim.harness, dt, 0.8));
   cockpit.userData.openHatch?.(step(anim.hatch, dt, 0.6));
+  T.cabin?.userData.openBulkheadHatch?.(step(anim.bulk, dt, 0.6));
   if (path) {
     path.t += dt;
     const u = Math.max(0, Math.min(1, path.t / path.dur));
@@ -118,7 +127,7 @@ function loop() {
   camera.rotation.set(look.pitch, look.yaw, 0, 'YXZ');
   cockpit.userData.onFrame?.(dt, t / 1000);
   T.cabin?.userData.onFrame?.(dt);
-  hud.textContent = `Click: bắt chuột · chuột: nhìn · WASD: trôi · Space/C: lên/xuống · Shift: nhanh\nP: tự trôi ghế → cửa → lối đi → cabin   R: về ghế\nH: dây an toàn (${anim.harness.to ? 'mở' : 'cài'})   O: cửa (${anim.hatch.to ? 'mở' : 'đóng'})   G: đồ lơ lửng (${zeroG ? 'bật' : 'tắt'})   K: cabin (${T.cabin ? 'gắn' : 'tháo'})`;
+  hud.textContent = `Click: bắt chuột · chuột: nhìn · WASD: trôi · Space/C: lên/xuống · Shift: nhanh\nP: tự trôi ghế → cửa → hành lang cabin   R: về ghế   V: nhìn lại   B: cửa vách cabin\nH: dây an toàn (${anim.harness.to ? 'mở' : 'cài'})   O: cửa (${anim.hatch.to ? 'mở' : 'đóng'})   G: đồ lơ lửng (${zeroG ? 'bật' : 'tắt'})   K: cabin (${T.cabin ? 'gắn' : 'tháo'})`;
   if (!T.paused) renderer.render(scene, camera);
   requestAnimationFrame(loop);
 }
