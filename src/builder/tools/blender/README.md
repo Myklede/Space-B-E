@@ -41,3 +41,23 @@ the code-drawn parts, in the design studio, on the hangar stand, in the explanat
   at most about 12 MB of models per section.
 - Licences: your own geometry; NASA (public domain) and CC0 models may be cut and reused; CC BY only with a credit line in
   the section's `ASSETS.md`. Reference photos with other licences are for measuring only.
+
+## Ground models (the Launch pad card)
+Pad hardware is not a catalogue part: `sections/pad/art.js` builds the complex from pieces and fits it to the ship.
+- Output: `public/assets/models/builder/pad/<slug>.glb`, built for a **reference ship 20 m tall and 2.5 m wide**
+  (radius 1.25 m), the game's typical ship.
+- Origin: on the ground (y = 0) at the piece's own anchor, stated in the piece's entry in `sections/pad/NOTES.md`
+  (a tower: the centre of its base, its face toward the rocket on -X; a mount: centred on the rocket's axis).
+- Scaling: `art.js` scales a piece along one axis family only, so details keep their shape: towers and masts in
+  height with the ship's height (H / 20), mounts, rings, trenches and arms across with its width (D / 2.5); far-field
+  structures (water towers, lightning towers, spheres) keep their real size.
+- Named nodes: `attach_<name>` marks a point the art uses (an arm's pivot, the deck of a mobile platform);
+  `pose_<name>` is a part that moves (an arm swung back or forward). Same name rules as `slot_` nodes.
+- Ratio rules (measured on real photos; the user asked that a ship never looks tiny next to its pad):
+  - umbilical or service tower: about 1.10 × the ship's height above the deck it stands on;
+  - catch tower: mount top + 1.05 × the ship's height;
+  - strongback: 1.02 × height;
+  - service-tower footprint about 3 × the ship's width;
+  - the mount ring 1.8–2 × the ship's width; a mobile platform deck about 3 × the width;
+  - a flame trench 1.8–2.1 × the width.
+- Budget: the same 20k triangles and 400 KB per file; about 12 MB for the pad section.

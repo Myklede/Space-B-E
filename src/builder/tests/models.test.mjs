@@ -91,6 +91,20 @@ for (const def of modelled) {
     ok(/^[a-z0-9]+(_[a-z0-9]+)*(__[a-z0-9_]+)?$/i.test(n), `${def.id}: ${n} is a clean node name`);
   }
 }
+// ground models of the launch pad (not catalogue parts): budget only
+const padDir = path.join(ROOT, 'public/assets/models/builder/pad');
+if (existsSync(padDir)) {
+  const { readdirSync } = await import('node:fs');
+  for (const name of readdirSync(padDir).filter((n) => n.endsWith('.glb'))) {
+    const file = path.join(padDir, name);
+    const bytes = statSync(file).size;
+    perSection.pad = (perSection.pad ?? 0) + bytes;
+    ok(bytes <= MAX_BYTES, `pad/${name}: ${Math.round(bytes / 1024)} KB (≤ 400 KB)`);
+    const m = measure(file);
+    ok(m.tris <= MAX_TRIS, `pad/${name}: ${m.tris} triangles (≤ ${MAX_TRIS})`);
+    ok(m.min[1] >= -0.05 || /trench|pit/.test(name), `pad/${name}: stands on the ground (min y ${m.min[1].toFixed(2)})`);
+  }
+}
 for (const [sec, bytes] of Object.entries(perSection)) ok(bytes <= SECTION_BYTES, `${sec}: ${(bytes / 1048576).toFixed(1)} MB of models (≤ 12 MB)`);
 console.log(failures ? `\n${failures} model check(s) failed.` : '\nAll model checks passed.');
 process.exit(failures ? 1 : 0);
