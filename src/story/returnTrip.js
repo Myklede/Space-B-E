@@ -1,11 +1,14 @@
 // RETURN (spec §6.3 step 7): an automatic cinematic home. Mars liftoff → cruise → Earth entry → splashdown, with
 // captions and Halcyon-1's final log, then the Homecoming ending. Enter skips.
 import { cinematic, graphics } from '/src/graphics/index.js';
-import { contract, economy, events, input, requestState, ui } from '/src/core/index.js';
+import { contract, economy, events, getShip, input, requestState, ui } from '/src/core/index.js';
 import data from './data.json';
 import { button, el, wait } from './dom.js';
-import { SILENT_RETURN_CAPTION, choiceFromKey, failureForChoice } from './tributeFlow.js';
+import { SILENT_RETURN_CAPTION, choiceFromKey, failureForChoice, tributeFor } from './tributeFlow.js';
+import { playLastDescent, showClosingCard, useLastDescent } from './lastDescent.js';
 import { radio } from './radio.js';
+import { showTribute } from './tribute.js';
+import tributes from './tributes.json';
 import { showView } from './views.js';
 
 // Camera moves per backdrop, in the view's own coordinates (the planet sits below and ahead).
@@ -27,8 +30,31 @@ const PATHS = {
   ],
 };
 
+export const LAST_DESCENT_CAUSE = 'The main parachute never left its container and the reserve tangled with the drogue; the parachute had never been proven.';
+
+/**
+ * Reconstruction, then the memorial for soyuz1 (when tributes.json has it), then the closing card, then onDone().
+ * The memorial is shown here, so the ending flow must not repeat it (the lastDescent failure carries no history lesson).
+ */
+export function playLastDescentFlow({ onDone = () => {}, withTribute = true } = {}) {
+  const stops = [];
+  stops.push(playLastDescent({
+    onDone: () => {
+      if (!withTribute) return onDone();
+      const tribute = tributeFor(tributes, 'soyuz1');
+      const closing = () => stops.push(showClosingCard({ onDone }));
+      if (tribute) stops.push(showTribute(tribute, { onDone: closing }));
+      else closing();
+    },
+  }));
+  return () => stops.forEach((f) => f());
+}
+
 export function showReturn() {
   let alive = true;
+  // Decided once: the player overrode the unproven-parachute warning (needs the contract names; otherwise the normal return).
+  const unproven = useLastDescent({ contract, ship: getShip() });
+  let stopDescent = null;
   const root = el('div', 'role4-screen');
   root.dataset.screen = 'RETURN';
   root.style.pointerEvents = 'none';
@@ -89,6 +115,17 @@ export function showReturn() {
       if (alive) caption.style.opacity = '1';
       await playing;
       if (doomed) return fail();
+      if (unproven && shot.choice === 'suitUp') {
+        choosing = true; // Enter must not skip the reconstruction
+        stopDescent = playLastDescentFlow({
+          onDone: () => {
+            if (!alive) return;
+            alive = false;
+            events.emit('flight:failed', { endingId: contract.ENDINGS.lastDescent, cause: LAST_DESCENT_CAUSE });
+          },
+        });
+        return;
+      }
     }
     graphics.fade({ to: 0, duration: 0.6 });
     finish();
@@ -96,6 +133,7 @@ export function showReturn() {
 
   return () => {
     alive = false;
+    stopDescent?.();
     cinematic.stop();
     graphics.fade({ to: 0, duration: 0.3 });
   };
