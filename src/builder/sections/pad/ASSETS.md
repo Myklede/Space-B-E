@@ -13,7 +13,7 @@ when a complex that uses it is shown, and the code-drawn piece shows meanwhile (
   `lightning_tower`, `egress`, `weather_gear`. Licence: ours, like the game's code.
 - **`ml1`** (LC-39B's Mobile Launcher 1): NASA's model "Mobile Launcher" from NASA 3D Resources
   (github.com/nasa/NASA-3D-Resources), already in the repo as `public/assets/nasa/mobile_launcher.glb`; public domain
-  (NASA media guidelines). Re-cut by `src/builder/tools/blender/pad/ml1.py`: split into the platform and its tower,
+  (NASA media guidelines). Re-cut by `src/builder/tools/blender/pad/ml1.py`: cut at its deck into the platform and its tower,
   rescaled to the reference ship, its colour map lightened toward ML-1's grey. Credit: NASA.
 - Reference photos used to measure and compare (not shipped, not traced): NASA images listed in the wave-4 research
   folder (`spaceb-wave4/pad/refs/index.json`); the two SpaceX photos there were looked at only.

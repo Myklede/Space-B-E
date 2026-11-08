@@ -73,7 +73,7 @@ const TOWER = { red: M.red, white: M.white, grey: M.grey, dark: M.steelDark };
  */
 export const PAD_MODELS = Object.freeze({
   mount: { slab: 'pad/slab', trench: 'pad/trench', raised: 'pad/mount_raised', deflector: 'pad/pit', mlp: 'pad/mlp_shuttle' },
-  mountBySite: { lc39a: 'pad/mlp_saturn', wenchang: 'pad/mlp_saturn', jiuquan: 'pad/mlp_saturn', lc39b: 'pad/ml1', ela3: 'pad/table_ela3', lc34: 'pad/pedestal_lc34', starbase2: 'pad/mount_olm2' },
+  mountBySite: { lc39a: 'pad/mlp_saturn', lc39b: 'pad/ml1', ela3: 'pad/table_ela3', lc34: 'pad/pedestal_lc34', starbase2: 'pad/mount_olm2' },
   tower: { strongback: 'pad/strongback', gantry: 'pad/soyuz_gantry', fixed: 'pad/tower_fixed', rss: 'pad/tower_fixed', catch: 'pad/catch_tower', mst: 'pad/mst' },
   rss: 'pad/rss',
   clamps: { tulip: 'pad/soyuz_launcher', hold: 'pad/holddown', release: 'pad/holddown' },
@@ -85,10 +85,15 @@ export const PAD_MODELS = Object.freeze({
   propellant: { auto: ['pad/sphere', 'pad/sphere_lox'], loadgo: ['pad/sphere', 'pad/sphere_lox'] },
   weather: { radar: 'pad/weather_gear' },
 });
-/** The model ids one pad uses ({ mount, trench, tower, rss, tulip, holddown, crewArm, water, lightning, egress, spheres, weather }). */
-export function padModelIds(o, siteId) {
+/** Complexes whose mobile platform rolls to a fixed tower standing at the pad (Wenchang LC-101, Jiuquan LC-43/921). */
+const TOWER_AT_PAD = new Set(['wenchang', 'jiuquan']);
+/**
+ * The model ids one pad uses ({ mount, trench, tower, rss, tulip, holddown, crewArm, water, lightning, egress, spheres,
+ * weather }). At sea (Sea Launch) the code's steel deck stays and there is no shore gear.
+ */
+export function padModelIds(o, siteId, sea = false) {
   const bySite = o.mount === 'mlp' || o.mount === 'raised' || o.mount === 'deflector' ? PAD_MODELS.mountBySite[siteId] : null;
-  const mount = bySite ?? (o.mount === 'mlp' && o.tower === 'fixed' ? 'pad/mlp_saturn' : PAD_MODELS.mount[o.mount] ?? null);
+  const mount = sea ? null : bySite ?? (o.mount === 'mlp' && o.tower === 'fixed' && !TOWER_AT_PAD.has(siteId) ? 'pad/mlp_saturn' : PAD_MODELS.mount[o.mount] ?? null);
   return {
     mount,
     trench: o.mount === 'trench' || (o.mount === 'mlp' && mount !== 'pad/table_ela3') ? 'pad/trench' : null,
@@ -100,8 +105,8 @@ export function padModelIds(o, siteId) {
     water: PAD_MODELS.deluge[o.deluge] ?? null,
     lightning: PAD_MODELS.lightning[o.lightning] ?? null,
     egress: PAD_MODELS.access[o.access] ?? null,
-    spheres: PAD_MODELS.propellant[o.propellant] ?? [],
-    weather: PAD_MODELS.weather[o.weather] ?? null,
+    spheres: sea ? [] : PAD_MODELS.propellant[o.propellant] ?? [],
+    weather: sea ? null : PAD_MODELS.weather[o.weather] ?? null,
   };
 }
 
@@ -111,7 +116,7 @@ function requestGround(id) {
   if (!groundModels.has(id)) {
     const entry = { scene: null, settled: false, promise: null };
     entry.promise = loadGroundModel(id).then(
-      (scene) => { entry.scene = scene; entry.settled = true; return scene; },
+      (scene) => { entry.scene = scene; entry.box = scene ? new THREE.Box3().setFromObject(scene) : null; entry.settled = true; return scene; },
       () => { entry.settled = true; return null; },
     );
     groundModels.set(id, entry);
@@ -137,6 +142,15 @@ function copyOf(source, nodeName = null) {
   // map ripple across it)
   c.getObjectByName('hardstand')?.traverse((o) => { if (o.isMesh) o.castShadow = false; });
   return c;
+}
+/** Shrinks a placed model across (x, z) where it would reach past the ground disc of radius r (a long flame trench). */
+function keepInside(obj, id, r) {
+  const b = groundModels.get(id)?.box;
+  if (!b) return obj;
+  const ex = Math.max(-b.min.x, b.max.x) * obj.scale.x, ez = Math.max(-b.min.z, b.max.z) * obj.scale.z;
+  if (ex > r - 1) obj.scale.x *= (r - 1) / ex;
+  if (ez > r - 1) obj.scale.z *= (r - 1) / ez;
+  return obj;
 }
 /** Recolours a model's `paint` material (a tower's colour). */
 function paint(obj, color) {
@@ -499,7 +513,7 @@ export function padArt(state, opts = {}) {
   const site = state?.site ?? null;
   const kit = new Kit();
   // the Blender models this pad uses: the loaded ones replace code pieces; pending ones redraw the pad when they arrive
-  const ids = padModelIds(o, site?.id);
+  const ids = padModelIds(o, site?.id, site?.climate?.ground === 'ocean');
   const wanted = icon || near || bare ? [] : [...new Set([ids.mount, ids.trench, ids.tower, ids.rss, ids.tulip, ids.holddown, ids.crewArm, ids.water, ids.lightning, ids.egress, ...ids.spheres, ids.weather].filter(Boolean))];
   const pending = [];
   const modelOf = (id) => {
@@ -523,14 +537,21 @@ export function padArt(state, opts = {}) {
   let towerW = Math.min(5, Math.max(2.2, D * 1.3)), towerD = Math.max(R + D + towerW / 2, ship.clearance(FACING_DEG, towerW / 2) + towerW / 2 + 0.5);
   if (ids.mount === 'pad/ml1') { towerW = 3.67 * across; towerD = Math.max(5.94 * across, towerD); } // ML-1's own tower (NASA model)
   // a mobile platform deck about 3 × the width; a launch umbilical tower rides on it, so the deck reaches under the tower
-  const towerOnDeck = o.tower === 'fixed';
+  const towerOnDeck = o.tower === 'fixed' && !TOWER_AT_PAD.has(site?.id);
   const mlpHZ = D * 1.5, mlpX0 = -D * 1.5, mlpX1 = towerOnDeck ? towerD + towerW / 2 + 0.4 : D * 1.5;
   // hardstand radius (a card picture keeps it tight)
   const RH = Math.max(icon ? R * 3.4 : Math.max(8.5, R * 5.5), o.mount === 'mlp' ? Math.hypot(Math.max(-mlpX0, mlpX1), mlpHZ) + 0.8 : 0);
   // Sea Launch: the pad is a steel platform deck on the open sea
   const sea = site?.climate?.ground === 'ocean';
   const C = sea ? M.deck : M.concrete;
-  // Blender models, when the caller has them (none yet): placed instead of the procedural piece
+  // far-field placement (pass 2): a mobile service tower rolls back at least 1.3 × the ship's height (ELS 80 m, Vostochny
+  // 80-140 m, ELA-4 120 m beside 46-63 m rockets), lightning towers stand at least 1.2 × its height out (Pad 39B); the
+  // ground disc grows to hold them
+  const F_MST = D * 3;
+  const mstX0 = o.tower !== 'mst' ? 0 : Math.max(R + 1.4, ship.clearance(FACING_DEG, F_MST / 2) + 0.6) + (icon ? F_MST * 0.6 : 0);
+  const mstFace = o.tower === 'mst' && !icon ? Math.max(mstX0, 1.3 * H) : mstX0;
+  const farR = Math.max(8.5, 1.2 * H);
+  const groundR = Math.max(26, RH + 14, o.tower === 'mst' && !icon ? mstFace + F_MST + 3 : 0, o.lightning === 'mast' || o.lightning === 'catenary' ? farR + 5 : 0);
   let peak = null; // the top of the tallest tower drawn: { x, y, z } (a lightning rod goes there)
 
   // the complex's land (no ground on a card picture)
@@ -538,7 +559,7 @@ export function padArt(state, opts = {}) {
     const tex = groundTexture(site?.climate?.ground ?? site?.id, !sea && (state?.slot?.tempC ?? 10) < 0);
     const groundMat = new THREE.MeshStandardMaterial({ color: tex ? 0xffffff : 0x8a8466, map: tex, transparent: !!tex, roughness: 1, metalness: 0 });
     groundMat.userData.flat = true;
-    disc(kit, groundMat, Math.max(26, RH + 14), 0, 0.015, 0, 64);
+    disc(kit, groundMat, groundR, 0, 0.015, 0, 64);
   }
 
   // ----- launch mount and flame trench -----
@@ -578,16 +599,19 @@ export function padArt(state, opts = {}) {
     if (mm) {
       const c = copyOf(mm);
       c.scale.set(across, sy, across);
-      extras.push(c);
+      extras.push(keepInside(c, ids.mount, groundR));
     } else {
     prism(kit, C, clip(oct, 1, 0, hole / 2), 0, hs);
     prism(kit, C, clip(clip(oct, -1, 0, -hole / 2), 0, 1, pitW / 2), 0, hs);
     prism(kit, C, clip(clip(oct, -1, 0, -hole / 2), 0, -1, pitW / 2), 0, hs);
     // the pit: a dark floor running out past the pad, its earth walls sloping up and out like a quarry's
     const pitL = RH + (icon ? 4 : 16), end = hole / 2 - pitL;
-    box(kit, M.trench, pitL, 0.1, pitW, (hole / 2 + end) / 2, 0.05, 0);
-    for (const s of [-1, 1]) box(kit, M.earth, -RH - end, 0.3, 6.5, (-RH + end) / 2, 1.05, s * (pitW / 2 + 3.0), 0, -s * 0.33);
-    if (!icon) box(kit, M.scorch, 9, 0.03, pitW * 1.6, end - 2.5, 0.03, 0);
+    if (!sea) {
+      // (at sea the fire falls off the platform's edge into the water: no pit, no banks)
+      box(kit, M.trench, pitL, 0.1, pitW, (hole / 2 + end) / 2, 0.05, 0);
+      for (const s of [-1, 1]) box(kit, M.earth, -RH - end, 0.3, 6.5, (-RH + end) / 2, 1.05, s * (pitW / 2 + 3.0), 0, -s * 0.33);
+      if (!icon) box(kit, M.scorch, 9, 0.03, pitW * 1.6, end - 2.5, 0.03, 0);
+    }
     // a sloped steel deflector under the ship
     const run = hole + 1.6, drop = hs - 0.15;
     box(kit, M.steelDark, Math.hypot(run, drop), 0.3, pitW - 0.1, hole / 2 - run / 2, (hs + 0.15) / 2, 0, 0, 0, Math.atan2(drop, run));
@@ -634,7 +658,7 @@ export function padArt(state, opts = {}) {
     if (mm) {
       const c = copyOf(mm);
       c.scale.setScalar(across);
-      extras.push(c);
+      extras.push(keepInside(c, ids.mount, groundR));
     } else {
       prism(kit, C, clip(oct, 1, 0, trenchW / 2), 0, hs);
       prism(kit, C, clip(oct, -1, 0, trenchW / 2), 0, hs);
@@ -653,7 +677,7 @@ export function padArt(state, opts = {}) {
       c.scale.set(st, hs / 3.0, st);
       if (o.mount !== 'trench') hide(c, 'table');
       hide(c, site?.id === 'lc39b' ? 'deflector_wedge' : 'deflector_ramp');
-      extras.push(c);
+      extras.push(keepInside(c, ids.trench, groundR));
     } else {
     prism(kit, C, clip(oct, 1, 0, trenchW / 2), 0, hs);
     prism(kit, C, clip(oct, -1, 0, trenchW / 2), 0, hs);
@@ -812,14 +836,16 @@ export function padArt(state, opts = {}) {
       c.position.set(towerD, base, 0);
       c.scale.set(sw, 1, sw);
       c.getObjectByName('body').scale.y = (towerTop - base) / 22;
-      c.getObjectByName('head').position.y = towerTop - base;
+      const head = c.getObjectByName('head');
+      head.position.y = towerTop - base;
+      head.scale.y = (towerTop - base) / 22;
       extras.push(c);
     } else if (!mlTower) {
       lattice(kit, tm, { x: towerD, w: towerW, y0: base, y1: towerTop, bay: 2.4, t: 0.18 });
       box(kit, tm, towerW * 2.4, 0.35, 0.4, towerD - towerW * 0.5, towerTop + 0.2, 0); // hammerhead crane
       box(kit, tm, 0.6, 1.2, 0.6, towerD, towerTop + 0.6, 0);
     }
-    peak = { x: towerD, y: towerTop + 1.2, z: 0 };
+    peak = { x: towerD, y: towerTop + 1.2 * ((towerTop - base) / 22), z: 0 };
     // swing arms at three levels, each moved onto the flank of a part and reaching that part's own hull
     const x0 = towerD - towerW / 2;
     const used = access ? [crewH] : [];
@@ -891,11 +917,13 @@ export function padArt(state, opts = {}) {
     if (mc) {
       // the model (3.85 m wide, 26 m tall beside a 5 m mount at H 20): body stretched to mount top + 1.05 H, the
       // carriage at the catch height, the chopsticks turned to pass either side of the ship, the QD arm at its height
-      const c = copyOf(mc), sw = W / 3.85, sy = (catchTop - base) / 26;
+      const c = copyOf(mc), sw = W / 3.85, sy = (catchTop - base) / 30.5; // 26.5 m of tower and a 4 m rod at H 20
       c.position.set(towerD, base, 0);
       c.scale.set(sw, 1, sw);
       c.getObjectByName('body').scale.y = sy;
-      c.getObjectByName('head').position.y = 26.5 * sy;
+      const head = c.getObjectByName('head');
+      head.position.y = 26.5 * sy;
+      head.scale.y = sy;
       c.getObjectByName('pose_carriage').position.y = yc - base;
       for (const [name, s] of [['pose_chopstick_a', -1], ['pose_chopstick_b', 1]]) {
         const arm = c.getObjectByName(name);
@@ -910,7 +938,7 @@ export function padArt(state, opts = {}) {
         if (empty) qd.rotation.y = -Math.PI / 2;
       }
       extras.push(c);
-      peak = { x: towerD, y: catchTop + 4.5 * sy, z: 0, rod: true };
+      peak = { x: towerD, y: catchTop, z: 0, rod: true };
     } else {
       lattice(kit, M.steelDark, { x: towerD, w: W, y0: base, y1: catchTop, bay: 2.6, t: 0.22 });
       box(kit, M.steelDark, W + 0.4, 0.4, W + 0.4, towerD, catchTop + 0.2, 0);
@@ -1006,8 +1034,8 @@ export function padArt(state, opts = {}) {
   } else if (o.tower === 'mst') {
     // a mobile service tower, rolled back along its rails before launch: about 3 × the ship's width square and 1.15 × its
     // height (Vostochny 48 m and 24.5 m square beside a 46 m Soyuz; ELS 52 m), its doors open toward the pad
-    const F = D * 3, mH = H * 1.15, back = F * 0.6;
-    const x0 = Math.max(R + 1.4, ship.clearance(FACING_DEG, F / 2) + 0.6) + back, xc = x0 + F / 2;
+    const F = F_MST, mH = H * 1.15;
+    const x0 = mstFace, xc = x0 + F / 2;
     for (const s of [-1, 1]) box(kit, M.steel, xc + F / 2 + 2, 0.12, 0.2, (xc + F / 2 + 2) / 2 - 1, base + 0.06, s * F * 0.36); // its rails
     const mm = modelOf(ids.tower);
     if (mm) {
@@ -1283,7 +1311,7 @@ export function padArt(state, opts = {}) {
     let mx, mz, mt;
     if (peak && (o.tower === 'fixed' || o.tower === 'rss' || o.tower === 'catch')) { mx = peak.x; mz = 0; mt = peak.y; }
     else {
-      [mx, mz] = polar(o.tower === 'mst' ? -115 : -30, icon ? RH * 0.8 : 8.5); // clear of a rolled-back service tower
+      [mx, mz] = polar(o.tower === 'mst' ? 160 : -30, icon ? RH * 0.8 : farR); // clear of a rolled-back service tower and of the camera's line
       mt = towerTop;
       const ml = modelOf(ids.lightning);
       if (ml) {
@@ -1293,8 +1321,9 @@ export function padArt(state, opts = {}) {
         extras.push(c);
       } else lattice(kit, M.grey, { x: mx, z: mz, w: 1.1, y0: 0, y1: mt, bay: 2.6, t: 0.14 });
     }
-    const mh = Math.max(5, H * 0.28);
-    if (!(peak && (o.tower === 'fixed' || o.tower === 'rss' || o.tower === 'catch')) && modelOf(ids.lightning)) { /* the model has its own fibreglass mast */ } else kit.add(CONE, M.white, trs(mx, mt + mh / 2, mz, 0.22, mh, 0.22));
+    const onTower = !!(peak && (o.tower === 'fixed' || o.tower === 'rss' || o.tower === 'catch'));
+    const mh = onTower ? H * 0.12 : Math.max(5, H * 0.28);
+    if (!onTower && modelOf(ids.lightning)) { /* the model has its own fibreglass mast */ } else kit.add(CONE, M.white, trs(mx, mt + mh / 2, mz, 0.22, mh, 0.22));
     // the cable from the mast tip to an anchor on each side
     const dir = o.tower === 'fixed' || o.tower === 'rss' || o.tower === 'catch' ? [0, 1] : [-Math.sin(30 * DEG), Math.cos(30 * DEG)];
     for (const s of [-1, 1]) {
@@ -1312,7 +1341,7 @@ export function padArt(state, opts = {}) {
       post(kit, M.steel, 0.05, rh, px, ph, pz, CYL8);
     }
   } else if (o.lightning === 'catenary') {
-    const Rc = icon ? RH + 1.5 : Math.max(12.5, R * 7.5), hc = top + H * (icon ? 1.15 : 1.45) + 3, mh = Math.max(5, H * 0.3);
+    const Rc = icon ? RH + 1.5 : Math.max(12.5, farR), hc = top + H * (icon ? 1.15 : 1.45) + 3, mh = Math.max(5, H * 0.3);
     const tops = [];
     for (const a of [20, 140, 260]) {
       const [cx, cz] = polar(a, Rc);
@@ -1329,7 +1358,7 @@ export function padArt(state, opts = {}) {
       }
       tops.push([cx, hc + mh * 0.8, cz]);
       if (!icon) {
-        const [ox, oz] = polar(a, Rc + 9);
+        const [ox, oz] = polar(a, Rc + 3.5);
         cable(kit, M.wire, [cx, hc + mh * 0.8, cz], [ox, 0.5, oz], 1.0, 0.035);
         box(kit, M.concreteOld, 0.9, 0.6, 0.9, ox, 0.3, oz);
       }
@@ -1338,7 +1367,7 @@ export function padArt(state, opts = {}) {
   }
 
   // ----- propellant loading (left out of a complex's card picture; drawn close in for its own picture) -----
-  const showFar = !icon || near;
+  const showFar = (!icon || near) && !(sea && !near); // at sea: no storage, tanker or weather station on the water
   const feed = (x, z, r = 0.2) => {
     // a pipe along the ground from storage to the pad's edge, then up to the umbilical
     if (near) return;
@@ -1402,7 +1431,7 @@ export function padArt(state, opts = {}) {
     kit.add(CONE, M.red, trs(1.1, 5.6, 0, 0.45, 2.2, 0.45, 0, 0, -Math.PI / 2 + 0.2));
   }
   if (showFar && (o.weather === 'balloons' || o.weather === 'radar')) {
-    const [hx, hz] = polar(-50, far(11));
+    const [hx, hz] = polar(-50, near ? far(11) : Math.min(groundR - 4, Math.max(11, farR)));
     box(kit, M.white, 2.2, 1.8, 1.8, hx, 0.9, hz);
     box(kit, M.grey, 2.5, 0.15, 2.1, hx, 1.88, hz);
     // a weather balloon on its way up, and wind towers with cup anemometers

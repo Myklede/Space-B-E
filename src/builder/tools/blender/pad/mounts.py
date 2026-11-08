@@ -103,7 +103,7 @@ def _trench_hardstand(p, hs, w, slope, r, closed_back, top, side):
             p.loft(side, clip(clip(lo, s, 0, w / 2), 0, 1, -closed_back), clip(clip(hi, s, 0, w / 2), 0, 1, -closed_back), 0, hs, top=top)
         # behind the back wall (z < closed_back) the hardstand is whole
         p.loft(side, clip(lo, 0, -1, -closed_back), clip(hi, 0, -1, -closed_back), 0, hs, top=top)
-    L = 2 * (r + slope) + 6
+    L = 2 * (r + slope) + 3
     z0 = -L / 2 if closed_back is None else closed_back
     z1 = L / 2
     p.box('trench', w, 0.1, z1 - z0, 0, 0.05, (z0 + z1) / 2)
@@ -119,7 +119,7 @@ def _trench_hardstand(p, hs, w, slope, r, closed_back, top, side):
         p.box('brick', w, hs - 0.35, 0.08, 0, 0.1 + (hs - 0.35) / 2, closed_back + 0.04)
     # scorched ground where the trench lets the fire out
     for zz in ((z1 - 1.0,) if closed_back is not None else (z1 - 1.0, z0 + 1.0)):
-        scorch(p, 0, zz + (3.0 if zz > 0 else -3.0), 8.0, w * 1.9, ax=90, seed=int(abs(zz)))
+        scorch(p, 0, zz + (1.8 if zz > 0 else -1.8), 6.0, w * 1.7, ax=90, seed=int(abs(zz)))
     return z0, z1
 
 

@@ -16,6 +16,7 @@ SRC = os.path.join(P.HERE, '..', '..', '..', '..', '..', 'public', 'assets', 'na
 DECK_U = 0.338      # the deck top in the model's units (measured: the platform's top slice)
 HOLE_X_U = 0.20     # the exhaust hole's size along x in model units (the SLS core's direction)
 TOWER_U = (0.293, 0.555)  # the tower's x span in model units
+LOW_U = 0.08          # deck fittings lower than this (about 0.85 m at the reference size) stay with the platform
 
 
 class Imported:
@@ -42,30 +43,23 @@ def ml1():
     src.matrix_world.identity()
     sxz = 1.12 * P.REF_D / HOLE_X_U          # as the SLS core (8.4 m) over its 9.4 m hole: 14 m per unit
     sy = 1.1 * P.REF_H / (2.464 - DECK_U)    # the tower 1.10 H above the deck
-    # split the mesh into connected pieces; the tower is every piece above the deck reaching over the tower's footprint
+    # cut the mesh at the deck (members that run through it are split there), then everything above the deck goes to
+    # the tower except the low things standing on the deck (under about 0.85 m: railings, posts, hatches), which stay
+    # with the platform; the platform must end at the deck
     bm = bmesh.new()
     bm.from_mesh(src.data)
+    geom = list(bm.verts) + list(bm.edges) + list(bm.faces)
+    bmesh.ops.bisect_plane(bm, geom=geom, dist=1e-6, plane_co=(0, 0, DECK_U + 0.002), plane_no=(0, 0, 1))
+    bmesh.ops.remove_doubles(bm, verts=bm.verts, dist=1e-5)
+    bmesh.ops.dissolve_degenerate(bm, edges=bm.edges, dist=1e-5)
     bm.faces.ensure_lookup_table()
-    seen, tower_faces = set(), []
+    tower_faces = []
     for f in bm.faces:
-        if f.index in seen:
-            continue
-        stack, comp = [f], []
-        seen.add(f.index)
-        while stack:
-            g = stack.pop()
-            comp.append(g)
-            for e in g.edges:
-                for h in e.link_faces:
-                    if h.index not in seen:
-                        seen.add(h.index)
-                        stack.append(h)
-        vs = {v for g in comp for v in g.verts}
-        zmin = min(v.co.z for v in vs)
-        zmax = max(v.co.z for v in vs)
-        xmax = max(v.co.x for v in vs)
-        if zmin >= DECK_U - 0.006 and zmax > DECK_U + 0.08 and xmax > TOWER_U[0] - 0.02:
-            tower_faces += comp
+        c = f.calc_center_median()
+        if c.z > DECK_U + 0.003:
+            hi = max(v.co.z for v in f.verts)
+            if hi > DECK_U + LOW_U or c.x > TOWER_U[0] - 0.03:
+                tower_faces.append(f)
     tower_set = {f.index for f in tower_faces}
     root = bpy.data.objects.new('ml1', None)
     bpy.context.scene.collection.objects.link(root)
@@ -86,6 +80,14 @@ def ml1():
         bpy.context.scene.collection.objects.link(o)
         o.parent = root
         parts[name] = o
+        if name == 'base':
+            mod = o.modifiers.new('planar', 'DECIMATE')
+            mod.decimate_type = 'DISSOLVE'
+            mod.angle_limit = 0.0175  # 1 degree: only coplanar faces merge
+            bpy.context.view_layer.objects.active = o
+            o.select_set(True)
+            bpy.ops.object.modifier_apply(modifier=mod.name)
+            o.select_set(False)
     bm.free()
     bpy.data.objects.remove(src, do_unlink=True)
     # NASA's colour map is dark for the studio's lights: lift it toward ML-1's grey paint (a fixed curve, stable output)
@@ -113,6 +115,9 @@ def ml1():
                 v.co -= off
             o.location = off
         me.update()
+    base_top = max((v.co.z for v in parts['base'].data.vertices), default=0.0)
+    print(f'[pad] ml1: platform top {base_top:.2f} m, deck {deck_y:.2f} m')
+    assert base_top <= deck_y + 1.0, f'ml1: the platform reaches {base_top:.2f} m, above its deck {deck_y:.2f} m + 1 m'
     for nm, pos in (('attach_deck', (0, 0, deck_y)), ('attach_tower', (tx * sxz, 0, deck_y))):
         e = bpy.data.objects.new(nm, None)
         bpy.context.scene.collection.objects.link(e)

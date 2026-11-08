@@ -226,14 +226,14 @@ pieces at the centre of their base. Named nodes: `attach_*` points the art uses,
 | `pad/mount_olm2` | Starbase Pad 2: square mount on four legs over a dug trench, diverter | mount `deflector` at `starbase2` | `hardstand` | 1,224, 77 |
 | `pad/pedestal_lc34` | LC-34's concrete pedestal, open on four sides, eight arms, wedge deflector on rails | mount `raised` at `lc34` | `holddown` (hidden: clamps fit the ship), `deflector_wedge` | 1,514, 44 |
 | `pad/pit` | Gagarin's Start: platform at the pit's edge, steel-faced slope, green ring on four legs | mount `deflector` (every other complex) | `attach_ring`, `hardstand` | 900, 48 |
-| `pad/mlp_saturn` | Saturn V mobile launcher base, its tower stands on the deck | mount `mlp` with a fixed tower (LC-39A, Wenchang, Jiuquan) | `attach_tower`, `holddown` and `tsm` (hidden) | 2,188, 50 |
-| `pad/mlp_shuttle` | Shuttle-era platform: three holes, rainbirds, posts | mount `mlp` otherwise (SLC-41, Tanegashima) | `rainbirds`, `posts` and `tsm` (hidden) | 3,428, 58 |
-| `pad/ml1` | NASA's Mobile Launcher 1 (public domain), split in `base` and `tower` | mount `mlp` at `lc39b` (brings its own tower) | `base`, `tower` (stretched to 1.10 H), `attach_tower` | 19,296, 197 |
+| `pad/mlp_saturn` | Saturn V mobile launcher base, its tower stands on the deck | mount `mlp` with a fixed tower riding on it (LC-39A) | `attach_tower`, `holddown` and `tsm` (hidden) | 2,188, 50 |
+| `pad/mlp_shuttle` | Shuttle-era platform: three holes, rainbirds, posts | mount `mlp` otherwise (SLC-41, Tanegashima; Wenchang and Jiuquan, whose platforms roll to fixed towers at the pad, `TOWER_AT_PAD`) | `rainbirds`, `posts` and `tsm` (hidden) | 3,428, 58 |
+| `pad/ml1` | NASA's Mobile Launcher 1 (public domain), cut at its deck into `base` (ends within 1 m of the deck; `ml1.py` checks it) and `tower` | mount `mlp` at `lc39b` (brings its own tower) | `base`, `tower` (stretched to 1.10 H), `attach_tower` | 19,296, 197 |
 | `pad/table_ela3` | Ariane 5's launch table on its pad over the flame duct, two yellow masts | mount `mlp` at `ela3` | `masts`, `hardstand` | 4,600, 119 |
 | `pad/holddown` | Falcon-style clamp, Saturn V hold-down arm (each base, column, head), SLS post, tail service mast | clamps `hold` / `release`; the TSMs | `clamp_*`, `arm_saturn_*` (column stretched to the grip height), `tsm` | 896, 28 |
-| `pad/tower_fixed` | umbilical tower 1.3 D wide, floors, stairs, lift, hammerhead crane, three swing arms | tower `fixed`, `rss` | `body`, `head`, `pose_arm_1` (copied to each fitted arm), `top_mast` (hidden), `paint` recoloured | 7,694, 98 |
+| `pad/tower_fixed` | umbilical tower 1.3 D wide, floors, stairs, lift, hammerhead crane, three swing arms | tower `fixed`, `rss` | `body` (1.10 H), `head` (grows with the tower), `pose_arm_1` (copied to each fitted arm), `top_mast` (hidden: the lightning mast on a tower is 0.12 H), `paint` recoloured | 7,694, 98 |
 | `pad/rss` | the Shuttle's rotating service structure on its hinge column | tower `rss` (beside `tower_fixed`) | `pose_rss` (swung −120°), `rail` | 1,732, 42 |
-| `pad/catch_tower` | Starbase tower, carriage, chopsticks, ship QD arm, rod | tower `catch` | `body`, `head`, `pose_carriage`, `pose_chopstick_a/b`, `pose_arm_qd` | 3,466, 57 |
+| `pad/catch_tower` | Starbase tower, carriage, chopsticks, ship QD arm, rod | tower `catch` (the whole tower, rod included, mount top + 1.05 H) | `body`, `head`, `pose_carriage`, `pose_chopstick_a/b`, `pose_arm_qd` | 3,466, 57 |
 | `pad/strongback` | Falcon 9 transporter-erector: frame, clamps, lines, pistons | tower `strongback` | `pose_frame` (leaned 4°), `body`, `pose_clamp_1..3` | 2,604, 29 |
 | `pad/soyuz_gantry` | one half of the Soyuz service gantry, green, yellow floors | tower `gantry` (two copies) | whole, in the code's turned and tilted frame | 2,140, 32 |
 | `pad/mst` | enclosed mobile service tower, clad, doors, bogies | tower `mst` | `pose_door_a/b` (swung open) | 4,336, 46 |
@@ -244,6 +244,13 @@ pieces at the centre of their base. Named nodes: `attach_*` points the art uses,
 | `pad/lightning_tower` | Pad 39B's catenary tower (184 m real) | lightning `mast`, `catenary` | whole; wires by code | 3,874, 50 |
 | `pad/sphere`, `pad/sphere_lox` | LC-39's LH2 (1.25 M gal) and LOX (900,000 gal) spheres | propellant `auto`, `loadgo` | whole | 5,964 / 5,868, 67 / 66 |
 | `pad/weather_gear` | radar under its radome, field mill, wind tower | weather `radar` | `radar`, `field_mill` | 1,696, 19 |
+
+**Far field (review pass 2).** So that a ship never looks crowded: a mobile service tower rolls back until its face is
+at least 1.3 × H from the ship's axis (real rollbacks are 1.3-2.6 × H: ELS 80 m, Vostochny 80-140 m, ELA-4 120 m);
+free-standing lightning masts and the catenary towers stand at least 1.2 × H out (Pad 39B) and the mast keeps out of the
+studio camera's first line of sight; the weather station and its balloon stand out with them; the ground disc grows to
+hold them (`groundR`), and a model's long trench run-out is shortened to stay on it (`keepInside`). At sea (Sea Launch)
+the code's steel deck stays, the fire falls off its edge, and there is no storage, tanker or weather station on the water.
 
 **One exception to the ratio rules: ML-1.** Its base keeps its real proportions, 5.7 × 4.9 D (48 × 41 m beside the
 SLS core's 8.4 m), instead of the "deck about 3 × D" rule: the ship must stand over its exhaust hole the way the SLS
