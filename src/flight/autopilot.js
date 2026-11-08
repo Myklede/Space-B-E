@@ -108,7 +108,8 @@ export function createAutopilot(options = {}) {
       if (burning) { input.throttleTarget = 0; burning = false; }
       if (ctx.corridor && alt > fc.planet.scaleHeight * 9) {
         const pred = predictInterface(fc);
-        if (pred && Math.abs(pred.fpaDeg - ctx.corridor.centreDeg) > TRIM_BAND) {
+        const band = Math.min(TRIM_BAND, (ctx.corridor.halfWidthDeg ?? Infinity) * 0.25); // a narrow (damaged-shield) corridor needs a tighter aim
+        if (pred && Math.abs(pred.fpaDeg - ctx.corridor.centreDeg) > band) {
           input.trim = pred.fpaDeg > ctx.corridor.centreDeg ? -1 : 1;
           set('trim');
           return input;

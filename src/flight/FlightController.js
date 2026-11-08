@@ -37,6 +37,14 @@ export const FIXED_DT = 1 / 120;
 export const WARP_IN_AIR = 4; // max time warp inside the atmosphere
 export const WARP_THIN_AIR = 10; // max time warp where the air is almost vacuum (density below WARP_THIN_DENSITY)
 export const WARP_THIN_DENSITY = 1e-4; // kg/m³
+/** Heat flux the shield can take. planned: what the flight computer believes (an unseen gouge is not in its plan). */
+export function heatLimitFor(ship, { planned = false } = {}) {
+  const L = TUNING.heatLimit;
+  if (!ship.hasHeatShield) return L.none;
+  if (!ship.heatShieldDamaged || (planned && ship.heatShieldUnseen)) return L.shield;
+  return ship.heatShieldInspected ? L.damagedMapped : L.damaged;
+}
+
 export const TRIM_ACCEL = 6; // m/s²: RCS-style corridor trim before entry (W/S), costs real fuel
 
 // Local notice → contract flight:event type (contract.js FLIGHT_EVENT_TYPES). Others stay local.
@@ -49,6 +57,8 @@ const CAUSES = {
   g_force_blackout: 'The g-force was so high that the pilot blacked out and lost the ship.',
   no_heat_shield: 'With no heat shield, the ship burned up on atmospheric entry.',
   heat_shield_damaged: 'The damaged heat shield let hot plasma in during entry.',
+  heat_shield_unseen: 'A debris strike in Earth orbit had damaged the heat shield, and no one inspected it. On entry, hot gas got in.',
+  pad_fire: 'A wiring spark in a pure-oxygen cabin started a fire during the pad test; in pure oxygen it spread in seconds.',
   heat_overload: 'The entry was too fast and steep, and the heat shield could not take it.',
   seal_failure_cold: 'The cheap seals went stiff in the cold, leaked hot gas, and the rocket broke up.',
   crash_landing: 'The ship hit the ground too fast.',
@@ -66,7 +76,9 @@ export const TUNING = {
   gSustainedLimit: 6, // g held for gSustainedTime → blackout → loss of vehicle
   gSustainedTime: 4,
   gInstantLimit: 12,
-  heatLimit: { none: 4e3, damaged: 7e3, shield: 2e5 }, // W/m² (game units); a good Mars entry peaks ≈ 1e4
+  // W/m² (game units); a good Mars entry peaks ≈ 1e4. damagedMapped: the gouge was found by inspection, so the computer
+  // knows where it is and rolls the ship to keep that edge out of the hottest flow (a little better than blind damage).
+  heatLimit: { none: 4e3, damaged: 7e3, damagedMapped: 1e4, shield: 2e5 },
   chuteMaxSpeed: 500, // m/s: supersonic chute (Perseverance opened at about Mach 1.7)
   chuteMaxAltitude: 15000, // m
   heatGrace: 1.0, // s above the limit before failure
@@ -106,6 +118,8 @@ export function shipParams(spec = {}) {
     hasLegs: s.hasLegs ?? true,
     hasHeatShield: s.hasHeatShield ?? true,
     heatShieldDamaged: s.heatShieldDamaged ?? false,
+    heatShieldInspected: false, // the strike gouge was found by the RCS camera sweep
+    heatShieldUnseen: false, // true while a debris-strike gouge has not been found: the flight computer's corridor ignores it
     coldRatedSeals: s.coldRatedSeals ?? true,
     armorHits: s.armorHits ?? 0,
     radius: s.radius ?? 2, // m, collision radius of the ship
@@ -538,7 +552,14 @@ export class FlightController {
         if (this.armorLeft > 0) {
           this.armorLeft -= 1;
           this._flags.debris_hit = false;
-          this._event('debris_hit', { id: o.id, armorLeft: this.armorLeft, radius: o.radius });
+          // An Earth-orbit strike also gouges the heat shield, on the side the crew cannot see (Columbia, 2003).
+          let shield = false;
+          if (this.planetId === 'earth' && this.ship.hasHeatShield && !this.ship.heatShieldDamaged) {
+            this.ship.heatShieldDamaged = true;
+            this.ship.heatShieldUnseen = true;
+            shield = true;
+          }
+          this._event('debris_hit', { id: o.id, armorLeft: this.armorLeft, radius: o.radius, ...(shield && { heatShieldDamaged: true }) });
           continue; // absorbed: the piece is gone
         }
         this._fail('rud', 'debris_impact', { id: o.id, radius: o.radius });
@@ -569,9 +590,7 @@ export class FlightController {
 
   // --- limits & failures -------------------------------------------------------
   _heatLimit() {
-    const L = TUNING.heatLimit;
-    if (!this.ship.hasHeatShield) return L.none;
-    return this.ship.heatShieldDamaged ? L.damaged : L.shield;
+    return heatLimitFor(this.ship);
   }
 
   _updateEngineHeat(throttle, dt) {
@@ -611,7 +630,7 @@ export class FlightController {
       this._timers.heat = hf > this._heatLimit() ? this._timers.heat + dt : 0;
       if (this._timers.heat > T.heatGrace) {
         if (!this.ship.hasHeatShield) return this._fail('burnup', 'no_heat_shield');
-        if (this.ship.heatShieldDamaged) return this._fail('theFoam', 'heat_shield_damaged', {}, 'columbia');
+        if (this.ship.heatShieldDamaged) return this._fail('theFoam', this.ship.heatShieldUnseen ? 'heat_shield_unseen' : 'heat_shield_damaged', {}, 'columbia');
         return this._fail('burnup', 'heat_overload');
       }
     }
@@ -712,6 +731,9 @@ export class FlightController {
     const busType = BUS_FLIGHT_EVENTS[type];
     if (busType) this.bus.emit('flight:event', { type: busType, t: this.t, data });
   }
+
+  /** Public failure path for scripted tragic endings owned by Role 2 (pad fire). causeId is a key of CAUSES. */
+  failWith(endingId, causeId, data = {}, historyHint = null) { this._fail(endingId, causeId, data, historyHint); }
 
   _fail(endingId, causeId, data = {}, historyHint = null) {
     if (this.failed) return;
