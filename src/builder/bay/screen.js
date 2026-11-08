@@ -61,6 +61,7 @@ export function createWallScreen(scene, { renderer, getScene, standTop = 0.35 })
   function setTelemetry({ spec, breakdown, poll, money }) {
     const s = spec.stats;
     const ok = (v) => ({ text: v, color: '#4ade80' });
+    const warn = (v) => ({ text: v, color: '#fbbf24' });
     const bad = (v) => ({ text: v, color: '#f87171' });
     const lines = [
       { text: `VEHICLE  ${spec.name.toUpperCase()}`, color: '#67e8f9' }, '',
