@@ -13,6 +13,7 @@
 import * as THREE from 'three';
 import { std, canvasTexture } from '../../bay/util.js';
 import { nasaPartArt } from '../../bay/nasa.js';
+import tailInternals from './internals.json';
 
 const V = (x, y, z) => new THREE.Vector3(x, y, z);
 const UP = V(0, 1, 0);
@@ -814,7 +815,19 @@ const DIR = { L: V(-1, 0, 0), R: V(1, 0, 0), U: V(0, 1, 0), D: V(0, -1, 0), F: V
  * The pieces inside a part, for the exploded view: [{ key (the kit slot), name, object, dir (THREE.Vector3) }], or null
  * for the default pieces in bay/internalsArt.js. options = { slotKey: chosenOption }, dims = { radius, height }.
  */
+// each kit's slot keys in the card's order (sections/tail/internals.json)
+const KIT_ORDER = Object.fromEntries(Object.entries(tailInternals.kits ?? tailInternals).map(([id, k]) => [id, (k.slots ?? []).map((sl) => sl.key)]));
+
 export function internalsArt(def, options, dims) {
+  const out = tailPieces(def, options, dims);
+  if (!out) return null;
+  // in the kit's order, so the numbered markers of the exploded view match the card's numbered list
+  const order = KIT_ORDER[def.internals] ?? [];
+  const rank = (key) => { const i = order.indexOf(key); return i < 0 ? order.length : i; };
+  return out.sort((a, b) => rank(a.key) - rank(b.key));
+}
+
+function tailPieces(def, options, dims) {
   const kit = def?.internals;
   if (!['thrust', 'ring', 'strapon', 'legs', 'booster', 'segmented', 'gimbal', 'engine'].includes(kit)) return null;
   const M = palette();
