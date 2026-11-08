@@ -6,7 +6,7 @@
 // one line, price, a small INSTALL / USE button); an installed part's own controls stay in its view. One card open at a time.
 import { partFigures } from './stats.js';
 import { createPadViews } from './designPad.js';
-import { hullChoices, hullMaterial } from './hull.js';
+import { hullChoices, hullHasSkin, hullMaterial } from './hull.js';
 import { internalsArt } from './bay/internalsArt.js';
 import { BASE_RADIUS, SIZE_SCALE } from './assembly.js';
 import { explainFor } from './explain.js';
@@ -316,7 +316,8 @@ export function createDesignPage({ assembly, catalog, sections, materials, engin
       }
       out.push(comp);
     }
-    if (!empty) {
+    // the skin row only where this section has a skin (a material choice there would change nothing otherwise)
+    if (!empty && hullHasSkin(assembly.layout(), sec.id)) {
       const skin = h('div', 'vd-block');
       skin.append(h('div', 'vd-label', '3 · Outer skin'));
       const mat = hullMaterial(assembly.hull, sec.id);

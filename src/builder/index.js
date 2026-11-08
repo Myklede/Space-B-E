@@ -2,9 +2,9 @@
 // HANGAR is the engineering bay: a round integration hall the engineer walks through in first person, with one
 // machine per job (integration stand, propulsion, structures, crew systems, warehouse, test stand, range, handbook).
 import './builder.css';
-import { graphics } from '/src/graphics/index.js';
+import { assets, graphics } from '/src/graphics/index.js';
 import { audio } from '/src/audio/index.js';
-import { G0, PLANETS, contract, economy, events, input, requestState, save, setShip, ui } from '/src/core/index.js';
+import { G0, PLANETS, contract, economy, events, getShip, input, requestState, save, setShip, ui } from '/src/core/index.js';
 import engines from './data/engines.json';
 import launch from './data/launch.json';
 import materials from './data/materials.json';
@@ -31,6 +31,7 @@ import { NASA_PARTS, hasNasaArt, nasaFailures, preloadNasaParts, registerNasaMod
 import { menu } from './menu.js';
 import { openPauseMenu, openSettings } from './settings.js';
 import { initLang } from './i18n.js';
+import { registerFlightArt } from './flightArt.js';
 
 export { openPauseMenu, openSettings }; // other roles may open the Esc menu and settings from their states
 
@@ -675,6 +676,8 @@ function enterGonogo() {
 export default {
   init() {
     initLang(save);
+    // the flight scenes draw the ship and its launch pad with Role 1's art (agreed by all four roles, docs/DECISIONS.md)
+    registerFlightArt({ assets, getAssembly: () => assembly, getSpec: () => getShip(), padSection: sections.pad });
     events.on('builder:highlightPart', ({ partId }) => bay?.highlight([partId]));
     // how our flight ended: the record gets its outcome; a ship that came home may fly again (reuse with wear)
     events.on('flight:failed', (p) => noteFailure(p));
