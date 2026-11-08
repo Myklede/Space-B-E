@@ -83,8 +83,20 @@ check(outsideList.every((id) => !H.ridesInside(g(id))), `outside the skin: ${out
 
 // ---------- every shape combination ----------
 const base = presets.reliable;
+// Every pair of shapes meets at least once (nose-body, body-tail, nose-tail): about 2,600 ships instead of every
+// triple (25,000+, minutes). HULL_FULL=1 runs every combination.
 const combos = [];
-for (const n of sections.nose.shapes) for (const b of sections.body.shapes) for (const t of sections.tail.shapes) combos.push([n, b, t]);
+{
+  const N = sections.nose.shapes, B = sections.body.shapes, T = sections.tail.shapes;
+  if (process.env.HULL_FULL) { for (const n of N) for (const b of B) for (const t of T) combos.push([n, b, t]); }
+  else {
+    const seen = new Set();
+    const add = (i, j, k) => { const key = i + ':' + j + ':' + k; if (!seen.has(key)) { seen.add(key); combos.push([N[i], B[j], T[k]]); } };
+    N.forEach((_, i) => B.forEach((_, j) => add(i, j, (i + j) % T.length)));
+    B.forEach((_, j) => T.forEach((_, k) => add((j + k) % N.length, j, k)));
+    N.forEach((_, i) => T.forEach((_, k) => add(i, (i + 2 * k) % B.length, k)));
+  }
+}
 const problems = { overlap: [], jump: [], gap: [], uncovered: [], clearance: [], inside: [], propellant: [], axis: [], flight: [], mass: [], adapterCone: [], steep: [], determinism: [], cache: [], bay: [] };
 let maxMass = 0, maxMassCombo = '', withSkin = 0, bays = 0, maxBay = 0, steepest = 0, steepestTag = '';
 for (const [n, b, t] of combos) {
