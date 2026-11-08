@@ -89,6 +89,11 @@ def trench_hardstand(p, hs, w, slope=None, r=RH, closed_back=None, top='concrete
     toward +z when closed_back = z of the back wall), its walls lined with heat-proof brick near the ship.
     """
     slope = 1.0 * hs if slope is None else slope
+    with p.node('hardstand'):
+        return _trench_hardstand(p, hs, w, slope, r, closed_back, top, side)
+
+
+def _trench_hardstand(p, hs, w, slope, r, closed_back, top, side):
     lo, hi = octagon(r + slope), octagon(r)
     if closed_back is None:
         for s in (1, -1):
@@ -216,8 +221,9 @@ def slab():
     """A bare concrete launch slab: hardstand, scorch, expansion joints, cable-trench covers, tie-down plates."""
     p = Piece('slab', 'rocket axis, on the ground', {'xyz': 'D'}, 'mount = slab. The ship stands on attach_deck.')
     hs = 0.45
-    p.prism('concrete_old', octagon(RH + 0.06), 0, hs - 0.06)
-    p.prism('slab_top', octagon(RH), hs - 0.06, hs)
+    with p.node('hardstand'):
+        p.prism('concrete_old', octagon(RH + 0.06), 0, hs - 0.06)
+        p.prism('slab_top', octagon(RH), hs - 0.06, hs)
     for i in range(6):
         p.box('steel_dark', 0.85, 0.04, 0.7, 2.6 + i * 0.95, hs + 0.02, 0.0)
     for a in (45, 135, 225, 315):
@@ -243,8 +249,9 @@ def mount_raised():
     p = Piece('mount_raised', 'rocket axis, on the ground', {'xyz': 'D'},
               'mount = raised (Starbase Pad 1). Hide node plate when the pad has no water.')
     hs, top, tt = 0.45, 2.0 * D, 0.9
-    p.prism('concrete_old', octagon(RH + 0.06), 0, hs - 0.06)
-    p.prism('concrete', octagon(RH), hs - 0.06, hs)
+    with p.node('hardstand'):
+        p.prism('concrete_old', octagon(RH + 0.06), 0, hs - 0.06)
+        p.prism('concrete', octagon(RH), hs - 0.06, hs)
     r_leg = 2.55
     for k in range(6):
         a = 30 + 60 * k
@@ -336,8 +343,9 @@ def pedestal_lc34():
     """
     p = Piece('pedestal_lc34', 'rocket axis, on the ground', {'xyz': 'D'}, 'mount = pedestal at LC-34. deflector_wedge rolls on its rails (-x).')
     hs = 0.45
-    p.prism('concrete_old', octagon(RH + 0.06), 0, hs - 0.06)
-    p.prism('concrete', octagon(RH), hs - 0.06, hs)
+    with p.node('hardstand'):
+        p.prism('concrete_old', octagon(RH + 0.06), 0, hs - 0.06)
+        p.prism('concrete', octagon(RH), hs - 0.06, hs)
     half, top, slab_t = 2.45, hs + 1.2 * D, 0.62
     pier = 1.25
     for sx in (-1, 1):
@@ -380,6 +388,7 @@ def pit():
     hs = 1.2
     pit_w = TRENCH_W * 1.3
     hi = octagon(RH)
+    p.node('hardstand').__enter__()
     # the platform: the hardstand everywhere except the pit, which runs out to -x from under the ship
     p.prism('concrete_old', clip(hi, 1, 0, HOLE / 2), 0, hs - 0.06)
     p.prism('concrete', clip(hi, 1, 0, HOLE / 2), hs - 0.06, hs)
@@ -395,6 +404,7 @@ def pit():
         p.side_prism('slope', [(0.0, s * (pit_w / 2 + 0.4)), (hs, s * (pit_w / 2 + 0.4)), (hs, s * (pit_w / 2 + 2.0)), (0.0, s * (pit_w / 2 + 2.0 + 2.6 * hs))], x0, x1)
         p.box('concrete_old', x1 - x0, hs, 0.4, (x0 + x1) / 2, hs / 2, s * (pit_w / 2 + 0.2))
     scorch(p, -L + HOLE / 2 + 5.0, 0, 9.0, pit_w * 0.9, seed=5, y=0.12)
+    p.cur = p.nodes[0]
     # the deflector: a steel-faced concrete slope under the ship, falling away into the pit
     run = HOLE + 2.2
     p.front_prism('steel_dark', [(HOLE / 2 + 0.3, hs - 0.15), (HOLE / 2 + 0.3, 0.1), (HOLE / 2 - run, 0.1)], -pit_w / 2 + 0.1, pit_w / 2 - 0.1)
@@ -624,38 +634,66 @@ def table_ela3():
 # ------------------------------------------------------------------ gear at the ship's base
 def holddown():
     """
-    The gear that holds or feeds the ship's base, one node per kind, each on its own base with the rocket on -x
-    (art.js clones a node to each place): arm_saturn (a Saturn V hold-down arm: 3.35 m real, 0.33 D here, over the
-    stage's rim, released only at full thrust), clamp (a Falcon 9-style hydraulic clamp hooking the rim), post (an
-    SLS / Shuttle hold-down post with its spherical bearing), tsm (a tail service mast 1.15 D tall with its blast hood:
-    Shuttle 9.4 m / 8.4 m), mast_umbilical (the small umbilical mast of a bare pad).
+    The gear that holds or feeds the ship's base, each kind in parts that art.js puts together at the ship's own grip
+    height (the bottom of its lowest tank), the rocket on -x of each node's origin:
+      - clamp_base, clamp_column (1 m tall: art stretches it), clamp_head (its origin at the grip): a Falcon 9-style
+        hydraulic clamp whose jaw hooks the rim, its column 0.5 m out from the hull;
+      - arm_saturn_base, arm_saturn_column, arm_saturn_head: a Saturn V hold-down arm (3.35 m real; four held the
+        S-IC until all five F-1s were at full thrust), its hooded arm reaching 0.75 m in to the rim, a release pin;
+      - post: an SLS / Shuttle hold-down post with its spherical bearing; tsm: a tail service mast 1.15 D tall with
+        its blast hood (Shuttle 9.4 m / 8.4 m); mast_umbilical: the small umbilical mast of a bare pad.
     """
-    p = Piece('holddown', 'each node on its own base; the rocket on -x of it', {'xyz': 'D'},
-              'clamps = hold (clamp, post), release (arm_saturn); tower = tsm (tsm); the base umbilical mast.')
-    with p.node('arm_saturn', (0, 0, 0)):
-        saturn_holddown(p, 0, -0.55, 0.0)
-    with p.node('clamp', (0, 0, 3.0)):
-        with p.at(T(0, 0, 3.0)):
-            p.box('steel', 0.6, 0.35, 0.5, 0, 0.18, 0, chamfer=0.03)
-            p.box('steel', 0.32, 1.0, 0.36, 0, 0.5, 0)
-            p.box('steel', 0.6, 0.16, 0.34, -0.25, 0.92, 0)
-            p.box('steel_dark', 0.1, 0.3, 0.34, -0.52, 1.0, 0)
-            p.tube('steel_dark', (0.35, 0.05, 0), (0.12, 0.8, 0), 0.06, seg=8)
-            p.tube('steel', (0.3, 0.25, 0), (0.17, 0.65, 0), 0.04, seg=8)
-    with p.node('post', (0, 0, 6.0)):
-        with p.at(T(0, 0, 6.0)):
-            p.box('steel_dark', 0.6, 0.12, 0.6, 0, 0.06, 0)
-            p.lathe('steel_dark', [(0.2, 0.12), (0.13, 0.42), (0.16, 0.46)], seg=12)
-            p.sphere('steel', 0.1, 0, 0.5, 0, seg=10, rings=6)
-            p.box('yellow', 0.06, 0.25, 0.06, 0.22, 0.25, 0.22)
+    p = Piece('holddown', 'each node on its own base (heads at the grip height); the rocket on -x of it', {'xyz': 'D'},
+              'clamps = hold (clamp_*), release (arm_saturn_*); tower = tsm and platform TSMs (tsm). Columns stretch in y.')
+    g = 1.2  # the reference grip height the parts are shown at
+    # the clamp
+    with p.node('clamp_base', (0, 0, 3.0)), p.at(T(0, 0, 3.0)):
+        p.box('steel', 0.6, 0.35, 0.5, 0, 0.175, 0, chamfer=0.03)
+        p.box('steel_dark', 0.7, 0.06, 0.6, 0, 0.03, 0)
+        for dz in (-0.2, 0.2):
+            for dx in (-0.22, 0.22):
+                p.cyl('steel_dark', 0.03, 0.35, 0.4, dx, dz, seg=6)
+    with p.node('clamp_column', (0, 0.35, 3.0)), p.at(T(0, 0.35, 3.0)):
+        p.box('steel', 0.32, 1.0, 0.36, 0, 0.5, 0)
+        p.box('steel_dark', 0.04, 1.0, 0.2, 0.17, 0.5, 0)
+        p.cyl('steel_dark', 0.06, 0.0, 0.62, 0.3, 0.0, seg=8)
+        p.cyl('steel', 0.035, 0.62, 0.98, 0.3, 0.0, seg=8)
+    with p.node('clamp_head', (0, g, 3.0)), p.at(T(0, g, 3.0)):
+        p.box('steel', 0.8, 0.16, 0.34, -0.31, -0.1, 0, chamfer=0.02)
+        p.box('steel_dark', 0.1, 0.3, 0.34, -0.43, 0.05, 0)
+        p.box('steel', 0.36, 0.16, 0.4, 0.0, -0.02, 0)
+        p.box('steel_dark', 0.2, 0.08, 0.2, 0.3, -0.06, 0)
+    # the Saturn V arm
+    with p.node('arm_saturn_base', (0, 0, 0)):
+        p.box('steel_dark', 1.0, 0.5, 0.9, 0, 0.25, 0, chamfer=0.04)
+        for dz in (-0.46, 0.46):
+            p.front_prism('steel_dark', [(-0.4, 0.5), (0.45, 0.5), (0.45, 0.62)], dz - 0.03, dz + 0.03)
+        p.cyl('yellow', 0.07, 0.5, 0.9, 0.36, 0.3, seg=8)
+    with p.node('arm_saturn_column', (0, 0.5, 0)), p.at(T(0, 0.5, 0)):
+        p.box('steel_dark', 0.55, 1.0, 0.6, 0, 0.5, 0)
+        for dz in (-0.31, 0.31):
+            p.box('steel', 0.4, 1.0, 0.03, 0, 0.5, dz)
+    with p.node('arm_saturn_head', (0, g, 0)), p.at(T(0, g, 0)):
+        # the hood over the pivot, the arm reaching in to the rim, the jaw that clamps the stage's hold-down post
+        p.front_prism('steel', [(-0.25, 0.05), (0.35, 0.05), (0.32, 0.42), (-0.05, 0.6), (-0.25, 0.45)], -0.37, 0.37)
+        p.box('steel', 0.98, 0.24, 0.24, -0.4, 0.05, 0, chamfer=0.02)
+        p.box('steel', 0.12, 0.42, 0.4, -0.87, -0.08, 0)
+        p.box('steel_dark', 0.16, 0.12, 0.44, -0.87, 0.18, 0)
+        with p.at(Rx(90)):
+            p.cyl('steel_dark', 0.12, -0.4, 0.4, 0.05, -0.28, seg=10)
+    # the Shuttle / SLS post, the tail service mast, the small umbilical mast
+    with p.node('post', (0, 0, 6.0)), p.at(T(0, 0, 6.0)):
+        p.box('steel_dark', 0.6, 0.12, 0.6, 0, 0.06, 0)
+        p.lathe('steel_dark', [(0.2, 0.12), (0.13, 0.42), (0.16, 0.46)], seg=12)
+        p.sphere('steel', 0.1, 0, 0.5, 0, seg=10, rings=6)
+        p.box('yellow', 0.06, 0.25, 0.06, 0.22, 0.25, 0.22)
     with p.node('tsm', (0, 0, -3.0)):
         tsm(p, 0.0, -3.0, 0, 1.15 * D, 0.0, w=1.0, d=1.2)
-    with p.node('mast_umbilical', (0, 0, -6.0)):
-        with p.at(T(0, 0, -6.0)):
-            p.box('steel_dark', 0.6, 1.6, 0.6, 0, 0.8, 0)
-            p.box('steel_dark', 0.9, 0.3, 0.35, -0.55, 1.3, 0)
-            p.tube('rubber', (0.0, 1.0, 0.25), (-1.0, 1.1, 0.25), 0.07, seg=6)
-            p.box('grey', 0.8, 0.12, 0.8, 0, 1.66, 0)
+    with p.node('mast_umbilical', (0, 0, -6.0)), p.at(T(0, 0, -6.0)):
+        p.box('steel_dark', 0.6, 1.6, 0.6, 0, 0.8, 0)
+        p.box('steel_dark', 0.9, 0.3, 0.35, -0.55, 1.3, 0)
+        p.tube('rubber', (0.0, 1.0, 0.25), (-1.0, 1.1, 0.25), 0.07, seg=6)
+        p.box('grey', 0.8, 0.12, 0.8, 0, 1.66, 0)
     return p, {'ship': (-3.0, -16.0, 0.0), 'frame': 9.0, 'views': ('detail',), 'ship_on': False}
 
 

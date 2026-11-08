@@ -76,14 +76,16 @@ export const PAD_MODELS = Object.freeze({
   mountBySite: { lc39a: 'pad/mlp_saturn', wenchang: 'pad/mlp_saturn', jiuquan: 'pad/mlp_saturn', lc39b: 'pad/ml1', ela3: 'pad/table_ela3', lc34: 'pad/pedestal_lc34', starbase2: 'pad/mount_olm2' },
   tower: { strongback: 'pad/strongback', gantry: 'pad/soyuz_gantry', fixed: 'pad/tower_fixed', rss: 'pad/tower_fixed', catch: 'pad/catch_tower', mst: 'pad/mst' },
   rss: 'pad/rss',
-  clamps: { tulip: 'pad/soyuz_launcher' },
+  clamps: { tulip: 'pad/soyuz_launcher', hold: 'pad/holddown', release: 'pad/holddown' },
+  holddown: 'pad/holddown', // clamps, Saturn arms and tail service masts
   deluge: { tower: 'pad/water_tower', iop: 'pad/water_tower' },
   lightning: { mast: 'pad/lightning_tower', catenary: 'pad/lightning_tower' },
-  access: { slidewire: 'pad/egress' },
+  crewArm: 'pad/crew_arm', // every crew access option boards by the arm
+  access: { slidewire: 'pad/egress', blastroom: 'pad/egress' },
   propellant: { auto: ['pad/sphere', 'pad/sphere_lox'], loadgo: ['pad/sphere', 'pad/sphere_lox'] },
   weather: { radar: 'pad/weather_gear' },
 });
-/** The model ids one pad uses ({ mount, trench, tower, rss, tulip, water, lightning, egress, spheres: [], weather }). */
+/** The model ids one pad uses ({ mount, trench, tower, rss, tulip, holddown, crewArm, water, lightning, egress, spheres, weather }). */
 export function padModelIds(o, siteId) {
   const bySite = o.mount === 'mlp' || o.mount === 'raised' || o.mount === 'deflector' ? PAD_MODELS.mountBySite[siteId] : null;
   const mount = bySite ?? (o.mount === 'mlp' && o.tower === 'fixed' ? 'pad/mlp_saturn' : PAD_MODELS.mount[o.mount] ?? null);
@@ -92,7 +94,9 @@ export function padModelIds(o, siteId) {
     trench: o.mount === 'trench' || (o.mount === 'mlp' && mount !== 'pad/table_ela3') ? 'pad/trench' : null,
     tower: mount === 'pad/ml1' ? null : PAD_MODELS.tower[o.tower] ?? null,
     rss: o.tower === 'rss' ? PAD_MODELS.rss : null,
-    tulip: PAD_MODELS.clamps[o.clamps] ?? null,
+    tulip: o.clamps === 'tulip' ? PAD_MODELS.clamps.tulip : null,
+    holddown: o.clamps === 'hold' || o.clamps === 'release' || o.tower === 'tsm' || (o.mount === 'mlp' && o.tower !== 'strongback') ? PAD_MODELS.holddown : null,
+    crewArm: o.access !== 'none' ? PAD_MODELS.crewArm : null,
     water: PAD_MODELS.deluge[o.deluge] ?? null,
     lightning: PAD_MODELS.lightning[o.lightning] ?? null,
     egress: PAD_MODELS.access[o.access] ?? null,
@@ -129,6 +133,9 @@ function copyOf(source, nodeName = null) {
     o.receiveShadow = true;
     o.userData.padModel = true; // its geometry is shared with the loaded model: never disposed here
   });
+  // a big concrete hardstand only receives shadows (casting them on itself at grazing light makes the studio's shadow
+  // map ripple across it)
+  c.getObjectByName('hardstand')?.traverse((o) => { if (o.isMesh) o.castShadow = false; });
   return c;
 }
 /** Recolours a model's `paint` material (a tower's colour). */
@@ -493,7 +500,7 @@ export function padArt(state, opts = {}) {
   const kit = new Kit();
   // the Blender models this pad uses: the loaded ones replace code pieces; pending ones redraw the pad when they arrive
   const ids = padModelIds(o, site?.id);
-  const wanted = icon || near || bare ? [] : [ids.mount, ids.trench, ids.tower, ids.rss, ids.tulip, ids.water, ids.lightning, ids.egress, ...ids.spheres, ids.weather].filter(Boolean);
+  const wanted = icon || near || bare ? [] : [...new Set([ids.mount, ids.trench, ids.tower, ids.rss, ids.tulip, ids.holddown, ids.crewArm, ids.water, ids.lightning, ids.egress, ...ids.spheres, ids.weather].filter(Boolean))];
   const pending = [];
   const modelOf = (id) => {
     if (!id || !wanted.includes(id)) return null;
@@ -713,10 +720,14 @@ export function padArt(state, opts = {}) {
         }
         for (const [hx, hz] of [[mlpX0 * 0.7, mlpHZ * 0.6], [mlpX0 * 0.7, -mlpHZ * 0.6], [mlpX1 * 0.75, -mlpHZ * 0.6]]) box(kit, M.steelDark, 0.9, 0.04, 0.7, hx, top + 0.02, hz);
       }
-      // the crawlerway ramp it came up, two gravel lanes
-      const rampL = 12;
-      if (!icon) box(kit, M.concreteOld, Math.hypot(rampL, hs), 0.4, 10, -RH - rampL / 2 + 0.6, hs / 2 - 0.15, 0, 0, 0, Math.atan2(hs, rampL));
-      if (!icon) for (const s of [-1, 1]) box(kit, M.concreteOld, 14, 0.05, 3.2, -RH - rampL - 6, 0.04, s * 2.8);
+      // the crawlerway ramp it came up, from the hardstand's edge (the model's, with its slope, or the code's), and its
+      // two gravel lanes, which stop inside the ground disc
+      if (!icon) {
+        const edge = mt ? 7.85 * across * (ids.mount === 'pad/ml1' ? 1.45 : 1) : RH * 0.924;
+        const rampL = Math.max(8, hs * 3.2), x1 = -edge - rampL, rim = Math.max(26, RH + 14) - 2;
+        box(kit, M.concreteOld, Math.hypot(rampL, hs), 0.4, 9, -edge - rampL / 2 + 0.3, hs / 2 - 0.15, 0, 0, 0, Math.atan2(hs, rampL));
+        if (rim + x1 > 2) for (const s of [-1, 1]) box(kit, M.concreteOld, rim + x1, 0.05, 3.2, (x1 - rim) / 2, 0.04, s * 2.8);
+      }
     }
   } else {
     // a flat concrete slab, scorched where the engines fire straight down
@@ -751,10 +762,20 @@ export function padArt(state, opts = {}) {
   if (!near && !bare && ((o.mount === 'mlp' && o.tower !== 'strongback') || o.tower === 'tsm')) {
     const onDeck = o.mount === 'mlp' || o.mount === 'slab';
     const y0m = onDeck ? top : hs, hm = (top - y0m) + D * (onDeck ? 1.15 : 0.6);
+    const mh = modelOf(ids.holddown);
     for (const a of [wa(67.5), wa(247.5)]) {
       const [tx, tz] = polar(a, Math.max(R + 1.2, hole / 2 + 0.7));
-      box(kit, M.steelDark, 0.8, hm - 0.35, 1.0, tx, y0m + (hm - 0.35) / 2, tz, a * DEG);
-      box(kit, M.grey, 1.0, 0.35, 1.2, tx, y0m + hm - 0.175, tz, a * DEG); // the hood that drops shut at liftoff
+      const tsmModel = mh && copyOf(mh, 'tsm');
+      if (tsmModel) {
+        // the model: housing, umbilical carrier and blast hood, 2.875 m tall at D 2.5, its carrier toward the ship
+        tsmModel.position.set(tx, y0m, tz);
+        tsmModel.rotation.y = a * DEG;
+        tsmModel.scale.set(across * 0.85, hm / 2.875, across * 0.85);
+        extras.push(tsmModel);
+      } else {
+        box(kit, M.steelDark, 0.8, hm - 0.35, 1.0, tx, y0m + (hm - 0.35) / 2, tz, a * DEG);
+        box(kit, M.grey, 1.0, 0.35, 1.2, tx, y0m + hm - 0.175, tz, a * DEG); // the hood that drops shut at liftoff
+      }
       const [ix, iz] = polar(a, R + 0.1);
       pipe(kit, M.rubber, [tx, y0m + hm * 0.75, tz], [ix, top + Math.min(1.2, hm * 0.5), iz], 0.08); // the umbilical to the tail
     }
@@ -1026,13 +1047,27 @@ export function padArt(state, opts = {}) {
     // the white room stands off the widest hull beside it; a short boxed seal reaches in to the capsule wall at the hatch
     const rHatch = hull(crewH), xr = (empty ? 1.25 : ship.hullMax(crewH - 0.95, crewH + 1.05)) + 0.03;
     fit.crew = [+rHatch.toFixed(2), +xr.toFixed(2), +crew.d.toFixed(2)];
-    if (empty) swungBack(kit, x0, crew.w);
-    box(kit, M.white, x0 - (xr + room), 1.9, 1.3, (x0 + xr + room) / 2, accessY, 0); // the walkway
-    for (const s of [-1, 1]) box(kit, M.glass, x0 - (xr + room) - 0.2, 0.35, 0.04, (x0 + xr + room) / 2, accessY + 0.35, s * 0.66);
-    box(kit, M.white, room, 2.0, 1.8, xr + room / 2, accessY + 0.05, 0); // the white room at the hatch
-    box(kit, M.grey, room + 0.1, 0.12, 1.9, xr + room / 2, accessY + 1.1, 0);
-    if (!empty && xr - rHatch > 0.04) box(kit, M.grey, xr - rHatch + 0.04, 1.1, 1.1, (xr + rHatch) / 2, accessY + 0.05, 0); // the hatch seal
-    if (empty) kit.pop();
+    const mca = modelOf(ids.crewArm);
+    const arm = mca && copyOf(mca, 'pose_arm');
+    if (arm) {
+      // the model: hinge on the tower face, walkway (1 m at D 2.5) stretched to the white room, which keeps its size;
+      // on an empty stand it is swung back along the tower face
+      const walk = Math.max(0.3, x0 - (xr + room));
+      arm.position.copy(kitPoint(x0, accessY - 0.95, 0));
+      arm.rotation.y = (crew.angle + (empty ? -90 : 0)) * DEG;
+      arm.getObjectByName('walkway').scale.x = walk / 1.0;
+      arm.getObjectByName('white_room').position.x = -walk;
+      extras.push(arm);
+      if (!empty && xr - rHatch > 0.29) box(kit, M.grey, xr - rHatch - 0.21, 1.1, 1.1, (xr + rHatch - 0.25) / 2, accessY + 0.05, 0); // the hatch seal
+    } else {
+      if (empty) swungBack(kit, x0, crew.w);
+      box(kit, M.white, x0 - (xr + room), 1.9, 1.3, (x0 + xr + room) / 2, accessY, 0); // the walkway
+      for (const s of [-1, 1]) box(kit, M.glass, x0 - (xr + room) - 0.2, 0.35, 0.04, (x0 + xr + room) / 2, accessY + 0.35, s * 0.66);
+      box(kit, M.white, room, 2.0, 1.8, xr + room / 2, accessY + 0.05, 0); // the white room at the hatch
+      box(kit, M.grey, room + 0.1, 0.12, 1.9, xr + room / 2, accessY + 1.1, 0);
+      if (!empty && xr - rHatch > 0.04) box(kit, M.grey, xr - rHatch + 0.04, 1.1, 1.1, (xr + rHatch) / 2, accessY + 0.05, 0); // the hatch seal
+      if (empty) kit.pop();
+    }
     if (o.access === 'chute') {
       // SLC-40's escape chute: packed at the crew level, two guide cables to an anchor on the ground; deployed in its
       // own card picture
@@ -1053,17 +1088,36 @@ export function padArt(state, opts = {}) {
     if (o.access === 'slidewire' || o.access === 'blastroom') {
       // steel wires from the crew level down to a bunker, escape baskets parked at the top
       const xs = crew.d + crew.w / 2, xe = crew.d + (icon ? 8 : 17);
-      for (const z of [-0.8, -0.27, 0.27, 0.8]) {
-        const curve = cable(kit, M.wire, [xs, accessY - 0.3, z], [xe, 0.9, z * 1.6], 0.6, 0.025);
+      const me = modelOf(ids.egress);
+      // the model's baskets (Artemis: up to five people each) are about 2 m tall: the wires spread to fit them
+      const zs = me ? [-1.5, -0.5, 0.5, 1.5] : [-0.8, -0.27, 0.27, 0.8];
+      for (const z of zs) {
+        const curve = cable(kit, M.wire, [xs, accessY - 0.3, z], [xe, 0.9, z * (me ? 1.2 : 1.6)], 0.6, 0.025);
         const p = curve.getPoint(0.05);
+        const basket = me && copyOf(me, 'basket');
+        if (basket) {
+          basket.position.copy(kitPoint(p.x, p.y, p.z));
+          basket.rotation.y = crew.angle * DEG;
+          basket.scale.setScalar(0.8);
+          extras.push(basket);
+          continue;
+        }
         box(kit, M.wire, 0.03, 0.5, 0.03, p.x, p.y - 0.25, p.z);
         box(kit, M.yellow, 0.75, 0.55, 0.55, p.x, p.y - 0.75, p.z);
         box(kit, M.yellow, 0.85, 0.06, 0.65, p.x, p.y - 0.42, p.z);
       }
-      for (const s of [-1, 1]) post(kit, M.steel, 0.1, 2.4, xe - 0.5, 0, s * 2.2); // catch-net posts
-      box(kit, M.concreteOld, 3.2, 1.7, 3.6, xe + 2.4, 0.85, 0); // the bunker
-      box(kit, M.concreteOld, 4.4, 0.8, 4.8, xe + 2.4, 0.4, 0);
-      box(kit, M.trench, 0.05, 1.1, 1.0, xe + 0.79, 0.75, 0);
+      const bunker = me && copyOf(me, 'bunker');
+      if (bunker) {
+        // the model: the bunker with its blast door toward the wires, earth banked on that side, the catch-net posts
+        bunker.position.copy(kitPoint(xe + 2.4, 0, 0));
+        bunker.rotation.y = crew.angle * DEG;
+        extras.push(bunker);
+      } else {
+        for (const s of [-1, 1]) post(kit, M.steel, 0.1, 2.4, xe - 0.5, 0, s * 2.2); // catch-net posts
+        box(kit, M.concreteOld, 3.2, 1.7, 3.6, xe + 2.4, 0.85, 0); // the bunker
+        box(kit, M.concreteOld, 4.4, 0.8, 4.8, xe + 2.4, 0.4, 0);
+        box(kit, M.trench, 0.05, 1.1, 1.0, xe + 0.79, 0.75, 0);
+      }
     }
     kit.pop();
   }
@@ -1075,11 +1129,28 @@ export function padArt(state, opts = {}) {
     const rg = ship.lowest ? surfaceOf(ship.lowest, 0.02) : R;
     const rc = rg + (big ? 0.75 : 0.5); // the column's distance from the axis
     fit.grip = [+gy.toFixed(2), +rg.toFixed(2)];
+    const mh = modelOf(ids.holddown);
     for (const a0 of [22.5, 112.5, 202.5, 292.5]) {
       // the usual angle, or a little either side if a side part comes down there
       const a = [a0, a0 + 11.25, a0 - 11.25].find((t) => empty || !ship.blocked(t, 0, gy + 0.3, 0.4));
       if (a == null) continue;
       kit.push(turn(wa(a)));
+      // the model: base, a column stretched to the grip and the head at the grip (a Saturn arm needs room for its base)
+      const kind = big ? 'arm_saturn' : 'clamp', baseH = big ? 0.5 : 0.35;
+      if (mh && gy >= baseH + 0.15) {
+        const parts = [copyOf(mh, `${kind}_base`), copyOf(mh, `${kind}_column`), copyOf(mh, `${kind}_head`)];
+        if (parts.every(Boolean)) {
+          const [b, c, h] = parts;
+          for (const [obj, yy] of [[b, top], [c, top + baseH], [h, top + gy]]) {
+            obj.position.copy(kitPoint(rc, yy, 0));
+            obj.rotation.y = wa(a) * DEG;
+            extras.push(obj);
+          }
+          c.scale.y = Math.max(0.05, gy - baseH - (big ? 0.0 : 0.02));
+          kit.pop();
+          continue;
+        }
+      }
       if (big) {
         // a Saturn-style hold-down arm: a heavy column, its blast hood, the arm over the rim, a controlled-release pin
         box(kit, M.steelDark, 1.0, 0.5, 0.9, rc, top + 0.25, 0);

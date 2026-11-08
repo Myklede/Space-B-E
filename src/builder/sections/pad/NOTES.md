@@ -11,7 +11,7 @@ across nine regions and eight new pieces of equipment, with sizes from the ratio
 | `effects.js` | `padSetup`, `complexOf`, `kitFee`, `heatLimitOf`, `liftoffOn`, `padEffects` (pure, Node-tested) |
 | `../../weather.js` | `weatherFor`: launch-day forecast, actual temperature, HOLD fees (pure) |
 | `../../designPad.js` (+ `designPad.css`) | the Launch pad card (region headings in the complex list, `REGION_NAMES`) |
-| `art.js` | the pad under the ship, each complex's look, the card pictures (`icon`, `only`), `PAD_MODELS` (planned Blender models) |
+| `art.js` | the pad under the ship, each complex's look, the card pictures (`icon`, `only`), `PAD_MODELS` and `padModelIds` (the Blender models) |
 | `explain.json` | `pad:<id>`, `equip:<key>`, `equip:<key>/<option>` in English and Vietnamese |
 | `../../tests/pad.test.mjs` | `node src/builder/tests/pad.test.mjs` |
 
@@ -195,38 +195,63 @@ the escape chute (packed; deployed in its own card picture), the blast room's sl
 the opening (`iop`), the lightning rod (on the tallest tower, else on a pole), ten new grounds (`wallops`, `gobi`,
 `xichang`, `sriharikota`, `naro`, `alcantara`, `atoll`, `kagoshima`, `amur`, `ocean`: Sea Launch stands on a steel deck
 on the sea) and the tower colour `grey` (`TOWER`). Far-field gear (water tower, lightning towers, spheres, radar) keeps
-its wave-3 placement.
+its wave-3 placement. The crawlerway ramp at a mobile platform starts at the hardstand's edge and its lanes stop inside
+the ground disc.
 
-## Blender models (planned; `PAD_MODELS` in art.js)
+## Blender models (wave 4; `PAD_MODELS` and `padModelIds` in art.js)
 
-`padArt(state, { ..., models })` takes an optional map of model id → loaded THREE.Object3D. Where one is given it
-replaces the procedural piece (`useModel`); today none is passed, so every piece is drawn by code. Each model is built
-for the reference ship (20 m × 2.5 m) and scaled by art.js along one axis family: towers in height, mounts across.
-Anchors: a tower at the centre of its base, its face toward the rocket on −X; a mount centred on the rocket's axis at the
-hardstand. Hooks wired today: `pad/mount_raised`, `pad/mlp`, `pad/tower_lattice` (the fixed tower), `pad/catch_tower`,
-`pad/soyuz_gantry`, `pad/mst`, `pad/soyuz_launcher` (the tulip arms); the others are listed for the modeller.
+25 ground models, `public/assets/models/builder/pad/<id>.glb`, about 1.5 MB in all (cap 12 MB), built by
+`src/builder/tools/blender/pad/build.py` (`padlib.py`, `mounts.py`, `towers.py`, `farfield.py`, `ml1.py`), which also
+writes `pieces.json` there: each piece's anchor, scaling, nodes, triangles and size. Every piece is built for the
+reference ship (20 m × 2.5 m) and stays within 20,000 triangles and 400 KB. Credits: `ASSETS.md`.
 
-| Model id | Piece | Used by | Budget |
-|---|---|---|---|
-| `pad/tower_lattice` | modular umbilical tower: `bay`, `base`, `top_crane`, `top_mast`, `top_rod`, `arm_swing`, `arm_crew`, `lift` | LC-39A, LC-34, Xichang, Jiuquan, Naro, Wenchang, Site 110 | 20k tris, 350 KB |
-| `pad/mlp` | mobile launch platform (Saturn, Shuttle, Ariane 5 table, China); LC-39B may reuse NASA's `mobile_launcher.glb` | LC-39A/B, SLC-41, ELA-3, Wenchang, Jiuquan, Tanegashima | 15k, 300 KB |
-| `pad/mount_raised` | Starbase Pad 1 and Pad 2 mounts, LC-34 pedestal, small mounts | Starbase, LC-34, LC-1, Omelek | 15k, 300 KB |
-| `pad/soyuz_launcher` | ring, four support arms (`pose_open`/`pose_closed`), counterweights, cable and fuelling masts | Gagarin's Start, Plesetsk, Vostochny, ELS | 15k, 300 KB |
-| `pad/soyuz_gantry` | the two gantry halves (`pose_raised`/`pose_lowered`) | Gagarin's Start, Plesetsk | 12k, 250 KB |
-| `pad/mst` | mobile service tower (Vostochny, ELS, ELA-4, SLC-17, SHAR FLP, LC-14, LC-34, Alcântara, Uchinoura, Site 81) | 10 complexes | 15k, 300 KB |
-| `pad/rss` | Shuttle rotating service structure; Site 110's rotating tower | Site 110 | 15k, 300 KB |
-| `pad/strongback` | Falcon 9 strongback, Electron, Antares TEL, Gemini erector, Proton and Zenit erectors | SLC-40, SLC-4E, Wallops, LC-19, LC-1, Omelek, Sea Launch | 12k, 250 KB |
-| `pad/catch_tower` | Starbase tower, carriage, chopsticks, ship QD arm, rod (Pad 2: shorter arms) | Starbase Pads 1 and 2 | 20k, 380 KB |
-| `pad/deflectors` | LC-39 inverted V, LC-34 wedge, Pad 39B one-way ramp, Starbase plate and diverter, trench wall, pit lip | trench and pit mounts | 8k, 200 KB |
-| `pad/water_tower` | 39A/B and Wallops towers, rainbird, water bag | `tower`, `iop` | 6k, 150 KB |
-| `pad/lightning_tower` | 39B catenary mast, ELA/ELS/Wallops towers (wires by code) | `mast`, `catenary` | 4k, 100 KB |
-| `pad/sphere` | cryogenic sphere, horizontal tank, kerosene tank | `auto`, `loadgo` | 8k, 180 KB |
-| `pad/egress` | slidewire basket, M113, escape chute, blast-room door | `slidewire`, `blastroom`, `chute` | 10k, 250 KB |
-| `pad/weather_gear` | radar radome, field mill, wind tower | `radar` | 3k, 80 KB |
-| `pad/holddown` | Saturn V hold-down arm, SLS post, Falcon and Starbase clamps, tail service mast | `hold`, `release`, `tsm` | 6k, 150 KB |
+How art.js uses them: `padArt` asks `bay/nasa.js` `loadGroundModel` for the files the complex needs (each file once,
+only when that complex is shown; never for card pictures, `icon`), draws the code pieces meanwhile, and when the files
+have arrived draws again and swaps the contents of the same group in place (keeping the studio's dim and tint). A
+missing file keeps the code piece. Every placement keeps the code's numbers (hardstand height, deck, `top`, tower top),
+so the ship never moves when a model arrives. Scaling follows the README: mounts uniformly by D / 2.5 (their height
+fitted to the code's `top`), towers' `body` in height to the ratio rule with `head` carried to the top, arms and clamps
+posed and stretched to the hull, far-field gear (built at real size) drawn at the size the code gives it, its pipes
+toward the pad. A hardstand (node `hardstand`) does not cast shadows on itself.
 
-About 4.4 MB at the budgets (cap 12 MB). Reference photos (NASA, public domain): the wave-4 research folder
-`spaceb-wave4/pad/refs/` (two SpaceX photos there are reference only).
+Anchors: a mount, deck or table on the rocket's axis on the ground (y = 0); a tower at the centre of its base, its
+face toward the rocket on −X (the gantry: one half; the MST: its centre, the ship's axis when closed round it); far-field
+pieces at the centre of their base. Named nodes: `attach_*` points the art uses, `pose_*` moving parts on their pivots.
+
+| Model id | Piece (real basis) | Used for | Nodes the art uses | Tris, KB |
+|---|---|---|---|---|
+| `pad/slab` | concrete slab with its scorch | mount `slab` | `hardstand`, `attach_deck` | 520, 43 |
+| `pad/trench` | raised hardstand 1.2 D, trench 1.9 D wide, brick walls, the launch table over it | mount `trench`; under `mlp` (no table) | `table`, `deflector_wedge` (LC-39A, LC-34 style) or `deflector_ramp` (Pad 39B, 2018), `hardstand` | 2,130, 86 |
+| `pad/mount_raised` | Starbase Pad 1: six legs, table with 20 clamps, booster QD, water-cooled plate | mount `raised` (Starbase, LC-1, Omelek) | `plate` (hidden without water), `hardstand` | 3,440, 61 |
+| `pad/mount_olm2` | Starbase Pad 2: square mount on four legs over a dug trench, diverter | mount `deflector` at `starbase2` | `hardstand` | 1,224, 77 |
+| `pad/pedestal_lc34` | LC-34's concrete pedestal, open on four sides, eight arms, wedge deflector on rails | mount `raised` at `lc34` | `holddown` (hidden: clamps fit the ship), `deflector_wedge` | 1,514, 44 |
+| `pad/pit` | Gagarin's Start: platform at the pit's edge, steel-faced slope, green ring on four legs | mount `deflector` (every other complex) | `attach_ring`, `hardstand` | 900, 48 |
+| `pad/mlp_saturn` | Saturn V mobile launcher base, its tower stands on the deck | mount `mlp` with a fixed tower (LC-39A, Wenchang, Jiuquan) | `attach_tower`, `holddown` and `tsm` (hidden) | 2,188, 50 |
+| `pad/mlp_shuttle` | Shuttle-era platform: three holes, rainbirds, posts | mount `mlp` otherwise (SLC-41, Tanegashima) | `rainbirds`, `posts` and `tsm` (hidden) | 3,428, 58 |
+| `pad/ml1` | NASA's Mobile Launcher 1 (public domain), split in `base` and `tower` | mount `mlp` at `lc39b` (brings its own tower) | `base`, `tower` (stretched to 1.10 H), `attach_tower` | 19,296, 197 |
+| `pad/table_ela3` | Ariane 5's launch table on its pad over the flame duct, two yellow masts | mount `mlp` at `ela3` | `masts`, `hardstand` | 4,600, 119 |
+| `pad/holddown` | Falcon-style clamp, Saturn V hold-down arm (each base, column, head), SLS post, tail service mast | clamps `hold` / `release`; the TSMs | `clamp_*`, `arm_saturn_*` (column stretched to the grip height), `tsm` | 896, 28 |
+| `pad/tower_fixed` | umbilical tower 1.3 D wide, floors, stairs, lift, hammerhead crane, three swing arms | tower `fixed`, `rss` | `body`, `head`, `pose_arm_1` (copied to each fitted arm), `top_mast` (hidden), `paint` recoloured | 7,694, 98 |
+| `pad/rss` | the Shuttle's rotating service structure on its hinge column | tower `rss` (beside `tower_fixed`) | `pose_rss` (swung −120°), `rail` | 1,732, 42 |
+| `pad/catch_tower` | Starbase tower, carriage, chopsticks, ship QD arm, rod | tower `catch` | `body`, `head`, `pose_carriage`, `pose_chopstick_a/b`, `pose_arm_qd` | 3,466, 57 |
+| `pad/strongback` | Falcon 9 transporter-erector: frame, clamps, lines, pistons | tower `strongback` | `pose_frame` (leaned 4°), `body`, `pose_clamp_1..3` | 2,604, 29 |
+| `pad/soyuz_gantry` | one half of the Soyuz service gantry, green, yellow floors | tower `gantry` (two copies) | whole, in the code's turned and tilted frame | 2,140, 32 |
+| `pad/mst` | enclosed mobile service tower, clad, doors, bogies | tower `mst` | `pose_door_a/b` (swung open) | 4,336, 46 |
+| `pad/soyuz_launcher` | the four Soyuz support arms with counterweights | clamps `tulip` | `pose_arm_1` (copied, turned and scaled to the ship's side) | 3,344, 70 |
+| `pad/crew_arm` | crew access arm: enclosed walkway and white room | every access option | `pose_arm`, `walkway` (stretched), `white_room` | 544, 14 |
+| `pad/egress` | Artemis slidewire basket, landing-zone bunker | access `slidewire`, `blastroom` | `basket` (four, on the wires), `bunker` | 504, 26 |
+| `pad/water_tower` | Pad 39B's water tower (88.8 m real) | deluge `tower`, `iop` | whole | 2,144, 34 |
+| `pad/lightning_tower` | Pad 39B's catenary tower (184 m real) | lightning `mast`, `catenary` | whole; wires by code | 3,874, 50 |
+| `pad/sphere`, `pad/sphere_lox` | LC-39's LH2 (1.25 M gal) and LOX (900,000 gal) spheres | propellant `auto`, `loadgo` | whole | 5,964 / 5,868, 67 / 66 |
+| `pad/weather_gear` | radar under its radome, field mill, wind tower | weather `radar` | `radar`, `field_mill` | 1,696, 19 |
+
+**One exception to the ratio rules: ML-1.** Its base keeps its real proportions, 5.7 × 4.9 D (48 × 41 m beside the
+SLS core's 8.4 m), instead of the "deck about 3 × D" rule: the ship must stand over its exhaust hole the way the SLS
+core does (the hole is 9.4 m for the 8.4 m core). At LC-39B the trench hardstand under it is drawn 1.45 times wider so
+its pedestals stand on concrete. Accepted by the lead (2026-11-07).
+
+Reference photos (NASA, public domain): the wave-4 research folder `spaceb-wave4/pad/refs/` (two SpaceX photos there
+are reference only); Starbase was built from published descriptions only.
 
 ## Sources
 

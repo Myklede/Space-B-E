@@ -2,7 +2,7 @@
 
 ## Blender models (wave 4)
 
-25 ground models in `public/assets/models/builder/pad/` (about 1.9 MB in all; each under 20,000 triangles and 400 KB,
+25 ground models in `public/assets/models/builder/pad/` (about 1.5 MB in all; each under 20,000 triangles and 400 KB,
 Draco-compressed GLB). `art.js` `PAD_MODELS` and `padModelIds` say which complex uses which; each file downloads only
 when a complex that uses it is shown, and the code-drawn piece shows meanwhile (and if a file is missing).
 

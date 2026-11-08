@@ -51,14 +51,14 @@ def lin(hexcol):
 
 # name: (sRGB hex as in sections/pad/art.js M, roughness, metalness, texture kind or None, texture tile in metres)
 PALETTE = {
-    'concrete': (0xa7a8a4, 0.95, 0.0, 'concrete', 6.0),
-    'concrete_old': (0x8a8982, 0.95, 0.0, 'concrete_old', 6.0),
+    'concrete': (0xa7a8a4, 0.95, 0.0, 'concrete', 8.0),
+    'concrete_old': (0x8a8982, 0.95, 0.0, 'concrete_old', 8.0),
     'scorch': (0x5d5851, 0.95, 0.0, None, 1),
-    'trench': (0x2a2b2c, 0.95, 0.0, 'concrete_dark', 6.0),
+    'trench': (0x2a2b2c, 0.95, 0.0, 'concrete_dark', 8.0),
     'brick': (0x8c5b45, 0.9, 0.0, 'brick', 2.4),
     'steel': (0x9ea5ab, 0.45, 0.55, None, 1),
     'steel_dark': (0x4a5158, 0.55, 0.5, None, 1),
-    'deck': (0x7f878d, 0.6, 0.45, 'grating', 1.6),
+    'deck': (0x7f878d, 0.6, 0.45, 'grating', 2.4),
     'paint': (0xb3472f, 0.6, 0.3, None, 1),          # the tower colour: art.js recolours it (red, white, grey, dark)
     'red': (0xb3472f, 0.6, 0.3, None, 1),
     'orange': (0xc8642a, 0.6, 0.3, None, 1),
@@ -150,8 +150,8 @@ def texture(kind):
         base = {'concrete': 0xa7a8a4, 'concrete_old': 0x8a8982, 'concrete_dark': 0x2e2f30}[kind]
         c = _srgb(base)
         low = _fbm(n, rng)
-        fine = rng.random((n, n))
-        v = 0.92 + 0.09 * (low - 0.5) + 0.05 * (fine - 0.5)
+        mid = _fbm(n, rng, ((32, 0.6), (64, 0.4)))
+        v = 0.92 + 0.09 * (low - 0.5) + 0.035 * (mid - 0.5)
         if kind == 'concrete_old':
             stains = _fbm(n, rng, ((4, 0.6), (16, 0.4)))
             v -= 0.08 * np.clip((stains - 0.55) * 4, 0, 1)
@@ -184,10 +184,10 @@ def texture(kind):
     elif kind == 'grating':
         m = 256
         yy, xx = np.mgrid[0:m, 0:m]
-        bar = (xx % 8) < 2
-        cross = (yy % 64) < 3
+        bar = (xx % 16) < 5
+        cross = (yy % 64) < 5
         c = _srgb(0x7f878d)
-        v = np.where(bar | cross, 1.05, 0.55) * (0.95 + 0.1 * _fbm(m, rng, ((4, 0.6), (16, 0.4))))
+        v = np.where(bar | cross, 1.0, 0.72) * (0.95 + 0.1 * _fbm(m, rng, ((4, 0.6), (16, 0.4))))
         rgb = c[None, None, :] * v[..., None]
         img = _save(kind, rgb)
     elif kind == 'slab_top':
@@ -195,7 +195,7 @@ def texture(kind):
         yy, xx = np.mgrid[0:n, 0:n] / n - 0.5
         r = np.hypot(xx, yy)
         c = _srgb(0xa7a8a4)
-        v = 0.9 + 0.14 * (_fbm(n, rng) - 0.5) + 0.05 * (rng.random((n, n)) - 0.5)
+        v = 0.9 + 0.12 * (_fbm(n, rng) - 0.5) + 0.035 * (_fbm(n, rng, ((32, 0.6), (64, 0.4))) - 0.5)
         rgb = c[None, None, :] * v[..., None]
         ang = np.arctan2(yy, xx)
         streak = 0.5 + 0.5 * np.sin(ang * 23 + 3 * np.sin(ang * 7))

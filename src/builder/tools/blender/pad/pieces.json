@@ -8,7 +8,7 @@
   },
   "notes": "tower = catch. body.y to (mount top + 1.05 H) / 26; pose_carriage moves in y; chopsticks turn about y.",
   "tris": 3466,
-  "kb": 63,
+  "kb": 57,
   "bbox": [
    [
     -10.48,
@@ -74,7 +74,7 @@
   },
   "notes": "access = slidewire (basket, bunker); blastroom uses bunker.",
   "tris": 504,
-  "kb": 41,
+  "kb": 26,
   "bbox": [
    [
     -0.8,
@@ -95,13 +95,13 @@
  },
  "holddown": {
   "file": "pad/holddown.glb",
-  "anchor": "each node on its own base; the rocket on -x of it",
+  "anchor": "each node on its own base (heads at the grip height); the rocket on -x of it",
   "scale": {
    "xyz": "D"
   },
-  "notes": "clamps = hold (clamp, post), release (arm_saturn); tower = tsm (tsm); the base umbilical mast.",
-  "tris": 592,
-  "kb": 19,
+  "notes": "clamps = hold (clamp_*), release (arm_saturn_*); tower = tsm and platform TSMs (tsm). Columns stretch in y.",
+  "tris": 896,
+  "kb": 28,
   "bbox": [
    [
     -1.25,
@@ -115,8 +115,12 @@
    ]
   ],
   "nodes": [
-   "arm_saturn",
-   "clamp",
+   "arm_saturn_base",
+   "arm_saturn_column",
+   "arm_saturn_head",
+   "clamp_base",
+   "clamp_column",
+   "clamp_head",
    "mast_umbilical",
    "post",
    "tsm"
@@ -131,7 +135,7 @@
   },
   "notes": "lightning = mast / catenary. Real size; wires from attach_wire.",
   "tris": 3874,
-  "kb": 66,
+  "kb": 50,
   "bbox": [
    [
     -8.25,
@@ -207,7 +211,7 @@
   },
   "notes": "mount = mlp with a tower on the deck (Saturn V). tower_fixed stands at attach_tower.",
   "tris": 2188,
-  "kb": 72,
+  "kb": 50,
   "bbox": [
    [
     -2.67,
@@ -248,7 +252,7 @@
   },
   "notes": "mount = mlp with the tower on the pad (Shuttle era). Hide node posts when the ship has no strap-ons.",
   "tris": 3428,
-  "kb": 80,
+  "kb": 58,
   "bbox": [
    [
     -4.67,
@@ -284,7 +288,7 @@
   },
   "notes": "mount = raised at Starbase Pad 2 (flame trench, no plate).",
   "tris": 1224,
-  "kb": 113,
+  "kb": 77,
   "bbox": [
    [
     -9.7,
@@ -298,7 +302,8 @@
    ]
   ],
   "nodes": [
-   "attach_deck"
+   "attach_deck",
+   "hardstand"
   ],
   "attach": {
    "deck": [
@@ -316,7 +321,7 @@
   },
   "notes": "mount = raised (Starbase Pad 1). Hide node plate when the pad has no water.",
   "tris": 3440,
-  "kb": 97,
+  "kb": 61,
   "bbox": [
    [
     -7.91,
@@ -331,6 +336,7 @@
   ],
   "nodes": [
    "attach_deck",
+   "hardstand",
    "plate"
   ],
   "attach": {
@@ -350,7 +356,7 @@
   },
   "notes": "tower = mst. body.y to 1.15 H; head rides on top; doors pose_door_a/b about y; bogies stay.",
   "tris": 4336,
-  "kb": 52,
+  "kb": 46,
   "bbox": [
    [
     -4.0,
@@ -380,7 +386,7 @@
   },
   "notes": "mount = pedestal at LC-34. deflector_wedge rolls on its rails (-x).",
   "tris": 1514,
-  "kb": 79,
+  "kb": 44,
   "bbox": [
    [
     -11.0,
@@ -396,6 +402,7 @@
   "nodes": [
    "attach_deck",
    "deflector_wedge",
+   "hardstand",
    "holddown"
   ],
   "attach": {
@@ -414,7 +421,7 @@
   },
   "notes": "mount = deflector (flame pit). soyuz_launcher stands on attach_ring.",
   "tris": 900,
-  "kb": 85,
+  "kb": 48,
   "bbox": [
    [
     -19.29,
@@ -429,7 +436,8 @@
   ],
   "nodes": [
    "attach_deck",
-   "attach_ring"
+   "attach_ring",
+   "hardstand"
   ],
   "attach": {
    "ring": [
@@ -453,7 +461,7 @@
   },
   "notes": "tower = rss (with tower_fixed). pose_rss turns about y on the hinge; rail is a 120 deg arc.",
   "tris": 1732,
-  "kb": 64,
+  "kb": 42,
   "bbox": [
    [
     -6.35,
@@ -481,7 +489,7 @@
   },
   "notes": "mount = slab. The ship stands on attach_deck.",
   "tris": 520,
-  "kb": 74,
+  "kb": 43,
   "bbox": [
    [
     -7.91,
@@ -495,7 +503,8 @@
    ]
   ],
   "nodes": [
-   "attach_deck"
+   "attach_deck",
+   "hardstand"
   ],
   "attach": {
    "deck": [
@@ -514,7 +523,7 @@
   },
   "notes": "tower = gantry: two copies (turned 180 deg about the ship). Hinge at attach_hinge (outer foot), turn about z.",
   "tris": 2140,
-  "kb": 38,
+  "kb": 32,
   "bbox": [
    [
     -1.57,
@@ -548,7 +557,7 @@
   },
   "notes": "clamps = tulip. pose_arm_k: hinge 0.3 m above the ring, local +x outward; rotate about local z (negative opens).",
   "tris": 3344,
-  "kb": 86,
+  "kb": 70,
   "bbox": [
    [
     -2.97,
@@ -584,7 +593,7 @@
   },
   "notes": "propellant = auto / loadgo: LH2, Pad 39B (1.25 M gal). Real size.",
   "tris": 5964,
-  "kb": 89,
+  "kb": 67,
   "bbox": [
    [
     -23.6,
@@ -608,7 +617,7 @@
   },
   "notes": "propellant = auto / loadgo: LOX, LC-39 (900,000 gal). Real size.",
   "tris": 5868,
-  "kb": 89,
+  "kb": 66,
   "bbox": [
    [
     -22.55,
@@ -664,7 +673,7 @@
   },
   "notes": "mount = mlp at ELA-3 (table on the duct). Hide node masts if a tower serves the ship.",
   "tris": 4600,
-  "kb": 163,
+  "kb": 119,
   "bbox": [
    [
     -10.51,
@@ -679,6 +688,7 @@
   ],
   "nodes": [
    "attach_deck",
+   "hardstand",
    "masts"
   ],
   "attach": {
@@ -698,7 +708,7 @@
   },
   "notes": "tower = fixed (and under rss). Scale body.y to the 1.10 H rule; head and top_mast ride on the top; arms by art.",
   "tris": 7694,
-  "kb": 104,
+  "kb": 98,
   "bbox": [
    [
     -4.63,
@@ -729,7 +739,7 @@
   },
   "notes": "mount = trench (with node table) or under mlp / ml1 (hide table). Show one of deflector_wedge, deflector_ramp.",
   "tris": 2130,
-  "kb": 123,
+  "kb": 86,
   "bbox": [
    [
     -10.62,
@@ -747,6 +757,7 @@
    "attach_table",
    "deflector_ramp",
    "deflector_wedge",
+   "hardstand",
    "table"
   ],
   "attach": {
@@ -770,7 +781,7 @@
   },
   "notes": "deluge = tower (and iop). Real size: place by the far-field rule.",
   "tris": 2144,
-  "kb": 50,
+  "kb": 34,
   "bbox": [
    [
     -30.0,
