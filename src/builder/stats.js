@@ -74,6 +74,14 @@ export function optionMods(options) {
 const sum = (xs, f) => xs.reduce((acc, x, i) => acc + f(x, i), 0);
 
 /**
+ * A part that can fail stays imperfect: however good its options and material, it keeps at least 1 failure in 2,000
+ * flights, so the luck rule (a manufacturing defect with chance 1 − reliability) still applies and no card reads 100 %.
+ * A passive part with no failure mode of its own (base reliability 1 or none) may stay at 1.
+ */
+export const MAX_PART_RELIABILITY = 0.9995;
+const capRel = (r, base) => Math.min((base ?? 1) >= 1 ? 1 : MAX_PART_RELIABILITY, Math.max(0.01, r));
+
+/**
  * computeShipSpec(assembly, { catalog, engines, launch, balance, planets, g0, materials })
  * → { spec, breakdown, blocks } where blocks are the hard blocks that need no money check (OVER_BUDGET is added by gonogo.js).
  * Solid motors (def.booster) add their thrust and propellant to the single stage the flight model flies; their casings
@@ -171,7 +179,7 @@ export function computeShipSpec(assembly, { catalog, engines, launch, balance, p
   // A cluster of n engines: with engine-out capability (the thrust structure's flag) the ship survives one failure,
   // so n engines count as about 1 + 0.2 (n - 1) single engines; without it every engine must work (r^n).
   const partReliability = (e) => {
-    const r = Math.min(1, Math.max(0.01, (e.def.reliability ?? 1) + reliabilityDelta(e) + mod(e).rel));
+    const r = capRel((e.def.reliability ?? 1) + reliabilityDelta(e) + mod(e).rel, e.def.reliability);
     const k = countOf(e);
     if (k <= 1) return r;
     const engineOut = layout.find((x) => x.id === e.parentId)?.def.flags?.engineOut;
@@ -244,7 +252,7 @@ export function computeShipSpec(assembly, { catalog, engines, launch, balance, p
   };
 
   const breakdown = {
-    parts: layout.map((e) => ({ id: e.id, type: e.type, name: e.def.name, family: e.def.family, mass: massOf(e), dry: dryOf(e) + (e.def.engine ? engineStats(engineDefOf(e), engines, g0, mod(e)).mass * massFactor(e) * countOf(e) : 0), cost: (e.def.cost * costFactor(e) + mod(e).costD) * mod(e).costF * seriesShare(e) + (e.def.engine ? engineStats(engineDefOf(e), engines, g0, mod(e)).cost * costFactor(e) * seriesFactor(countOf(e)) : 0), fuel: (e.def.fuel?.mass ?? 0) + (e.def.booster?.propellant ?? 0), y: e.y, height: e.height, sideArea: e.def.aero.sideArea, attach: e.attach, material: materialOf(e)?.name ?? null, reliability: Math.min(1, (e.def.reliability ?? 1) + reliabilityDelta(e) + mod(e).rel) })),
+    parts: layout.map((e) => ({ id: e.id, type: e.type, name: e.def.name, family: e.def.family, mass: massOf(e), dry: dryOf(e) + (e.def.engine ? engineStats(engineDefOf(e), engines, g0, mod(e)).mass * massFactor(e) * countOf(e) : 0), cost: (e.def.cost * costFactor(e) + mod(e).costD) * mod(e).costF * seriesShare(e) + (e.def.engine ? engineStats(engineDefOf(e), engines, g0, mod(e)).cost * costFactor(e) * seriesFactor(countOf(e)) : 0), fuel: (e.def.fuel?.mass ?? 0) + (e.def.booster?.propellant ?? 0), y: e.y, height: e.height, sideArea: e.def.aero.sideArea, attach: e.attach, material: materialOf(e)?.name ?? null, reliability: capRel((e.def.reliability ?? 1) + reliabilityDelta(e) + mod(e).rel, e.def.reliability) })),
     fuelPartIds: layout.filter((e) => e.def.fuel || e.def.booster).map((e) => e.id),
     enginePartIds: [...engineEntries, ...boosterEntries].map((e) => e.id),
     finPartIds: layout.filter((e) => /fin/.test(e.type)).map((e) => e.id),
@@ -275,7 +283,7 @@ export function partFigures(def, { engines, g0, materials = null, catalog = null
   const booster = def.booster ? { thrust: def.booster.thrust * m.thrustF, ispSL: def.booster.ispSL + m.isp, ispVac: def.booster.ispVac + m.isp, propellant: def.booster.propellant, burnTime: def.booster.burnTime } : null;
   return {
     mass, cost, dry: mass, wet: mass + (def.fuel?.mass ?? 0) + (def.booster?.propellant ?? 0),
-    reliability: Math.min(1, (def.reliability ?? 1) + (mat?.reliability ?? 0) + m.rel),
+    reliability: capRel((def.reliability ?? 1) + (mat?.reliability ?? 0) + m.rel, def.reliability),
     power: (Number(def.flags?.power) || 0) * m.powerF, chuteCdA: (Number(def.flags?.chuteCdA) || 0) * m.chuteF,
     engine, booster, material: mat, mods: m,
   };

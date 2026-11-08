@@ -1,7 +1,7 @@
 // What a part looks like inside: small 3D pieces for every slot of a kit (sections/<id>/internals.json), so the design page
 // can pull a selected part apart like an exploded engineering drawing. Each piece stands where it lives in the part
 // (metres, part base at y = 0) and carries the direction it slides out in when the view explodes.
-import { isBuilderModel, modelSlotPiece } from './nasa.js';
+import { isBuilderModel, modelSlotPiece, modelSlotHides } from './nasa.js';
 import * as THREE from 'three';
 import { std } from './util.js';
 import { sectionInternalsArt } from './partArt.js';
@@ -36,7 +36,10 @@ export function internalsArt(def, options, dims = {}) {
     const own = modelSlotPiece(def.id, p.key, options?.[p.key]?.id ?? null);
     if (own) p.object = own;
   }
-  return pieces;
+  // a piece another chosen piece replaces (the docking port under a glass dome) is not drawn, as on the ship
+  const ids = Object.fromEntries(Object.entries(options ?? {}).map(([k, o]) => [k, o?.id ?? null]));
+  const hidden = modelSlotHides(def.id, ids);
+  return pieces.filter((p) => !hidden[p.key]);
 }
 
 function internalsArtDrawn(def, options, { radius = 1.25, height = 1 } = {}) {

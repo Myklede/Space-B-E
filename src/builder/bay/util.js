@@ -115,10 +115,10 @@ export function createDisposalQueue(frames = 3) {
 }
 
 export function disposeObject(obj) {
-  const shared = new Set();
-  obj.traverse((o) => { if (o.userData?.sharedGeometry) o.traverse((c) => shared.add(c)); });
+  // every node of a loaded model's copy carries sharedGeometry (its buffers belong to the cached model); what the art
+  // adds under such a copy later (a fairing's see-through skirt, struts, clamps) does not, and is freed
   obj.traverse((o) => {
-    if (o.geometry && !shared.has(o)) o.geometry.dispose();
+    if (o.geometry && !o.userData?.sharedGeometry) o.geometry.dispose();
     if (o.material) (Array.isArray(o.material) ? o.material : [o.material]).forEach((m) => m.dispose?.());
   });
 }

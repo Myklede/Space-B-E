@@ -203,6 +203,17 @@ export function applyShape(assembly, section, shape) {
   const offset = items.findIndex((it) => !it.id && it.origin === section.id && shape.stack.includes(it.type));
   const radials = (shape.radial ?? []).map((r) => ({ ...r, on: offset + (r.on ?? 0), origin: section.id }));
   const shapeRows = new Set((shape.radial ?? []).map((r) => rowOf(section, catalog.get(r.type))?.id).filter(Boolean));
+  // in a row that picks by job (flags: oxygen, shelter, airlock…), the shape replaces only what does the same jobs as
+  // what it brings: Voskhod's airlock must not take the ship's spare oxygen and storm shelter with it
+  const shapeJobs = new Map();
+  for (const r of shape.radial ?? []) {
+    const def = catalog.get(r.type), row = rowOf(section, def);
+    if (!row?.pick?.flags) continue;
+    const jobs = shapeJobs.get(row.id) ?? new Set();
+    for (const fl of row.pick.flags) if (def.flags?.[fl]) jobs.add(fl);
+    shapeJobs.set(row.id, jobs);
+  }
+  const sameJob = (row, def) => !shapeJobs.has(row.id) || row.pick.flags.some((fl) => def.flags?.[fl] && shapeJobs.get(row.id).has(fl));
   return assembly.restack(items, {
     radials,
     before: () => { for (const p of tailEngines) p.engine = { ...p.engine, fuel: bodyFuel }; },
@@ -214,7 +225,7 @@ export function applyShape(assembly, section, shape) {
       // other shape-made trim (fins, boosters, verniers) goes with the shape that brought it
       if (row && KEEP_ROWS.has(row.id) && !shapeRows.has(row.id)) return false;
       if (r.origin === section.id) return true;
-      return !!row && shapeRows.has(row.id);
+      return !!row && shapeRows.has(row.id) && sameJob(row, def);
     },
     rehost: (r, chain) => { const def = catalog.get(r.type); return def ? pickHost(assembly, chain, def, hostRuleFor(def)) : null; },
   });

@@ -287,6 +287,20 @@ for (const [key, json] of Object.entries(presets)) {
   check(g.lines.length >= (text.gonogo.consoles ?? []).length, `${key}: one Go/No-Go line per console at least`);
 }
 
+// ---------- no part that can fail reaches 100 % with its best options ----------
+{
+  const perfect = [];
+  for (const def of catalog.parts) {
+    if (!((def.reliability ?? 1) < 1) || !catalog.kit(def)) continue;
+    const best = Object.fromEntries(catalog.kit(def).slots.map((sl) => [sl.key, [...sl.options].sort((a, b) => (b.rel ?? 0) - (a.rel ?? 0))[0].id]));
+    const fam = materials.families?.[def.materialFamily];
+    const mat = fam ? [...fam.options].sort((a, b) => (b.reliability ?? 0) - (a.reliability ?? 0))[0].id : null;
+    const f = partFigures(def, { engines, g0: G0, materials, catalog, materialId: mat, options: best, engineDef: def.engine ? { fuel: 'methalox', nozzle: 'sl', pump: String(def.size).toUpperCase() } : null });
+    if (!(f.reliability < 1)) perfect.push(def.id);
+  }
+  check(!perfect.length, `no part that can fail reads 100 % with its best options${perfect.length ? ` (${perfect.slice(0, 8).join(', ')})` : ''}`);
+}
+
 // ---------- options bound to a propellant ("fuels"): they fall back on another fuel ----------
 {
   const eng = catalog.get('engine_m');

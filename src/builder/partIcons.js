@@ -97,8 +97,7 @@ export function createIconRenderer({ renderer, size = 512 }) {
   };
   /** Frees the geometry of an object the card or an icon made, but never a real NASA model's: its clones share geometry with the studio. */
   const disposeGeometry = (o) => {
-    if (o.userData?.nasa) return;
-    o.geometry?.dispose?.();
+    if (!o.userData?.sharedGeometry) o.geometry?.dispose?.(); // a node of a loaded model's copy shares the cached buffers
     for (const c of o.children) disposeGeometry(c);
   };
   /**

@@ -234,6 +234,24 @@ export function modelSlotPiece(partId, key, optionId = null) {
   return copy;
 }
 
+/**
+ * The slot keys a Blender model's chosen pieces replace (their glTF extras "hides"), e.g. the glass dome replaces the
+ * docking port: { key: the slot whose piece replaces it }. options: { slotKey: optionId }.
+ */
+export function modelSlotHides(partId, options = null) {
+  const proto = protos.get(partId);
+  const out = {};
+  if (!proto || !NASA_PARTS[partId]?.builder) return out;
+  const keys = new Set();
+  proto.traverse((o) => { if (o.name?.startsWith('slot_')) keys.add(o.name.slice(5).split('__')[0]); });
+  for (const key of keys) {
+    const id = options?.[key];
+    const node = (id && proto.getObjectByName(`slot_${key}__${id}`)) || proto.getObjectByName(`slot_${key}`);
+    for (const k of [].concat(node?.userData?.hides ?? [])) if (k !== key) out[k] = key;
+  }
+  return out;
+}
+
 export const hasNasaArt = (partId) => protos.has(partId);
 export const wantsNasaArt = (partId) => !!NASA_PARTS[partId] && !protos.has(partId);
 
