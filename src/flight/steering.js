@@ -15,10 +15,11 @@ const rad = Math.PI / 180;
 export function copyForPrediction(fc) {
   const copy = Object.create(Object.getPrototypeOf(fc));
   for (const [key, value] of Object.entries(fc)) {
-    if (['bus', 'onNotice', 'rng'].includes(key) || typeof value === 'function') continue;
+    if (['bus', 'onNotice', 'rng', 'fx'].includes(key) || typeof value === 'function') continue;
     copy[key] = structuredClone(value);
   }
   copy.bus = { emit() {} }; copy.onNotice = null; copy.rng = () => 0.5;
+  copy.fx = fc.fx?.quiet ?? null; // the part effects' limits and thrust, without their dice, records or failures
   copy.accumulator = 0;
   return copy;
 }

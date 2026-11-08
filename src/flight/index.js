@@ -11,10 +11,14 @@
 import * as THREE from 'three';
 import { assets, createLaunchSite, createSpaceScene, getTerrainHeight, graphics, cinematic } from '/src/graphics/index.js';
 import { audio } from '/src/audio/index.js';
-import { G0, PLANETS, contract, economy, events, getShip, input, requestState, ui } from '/src/core/index.js';
+import { G0, PLANETS, contract, economy, events, getShip, input, requestState, save, ui } from '/src/core/index.js';
 import { astronaut } from '/src/surface/astronaut.js';
 import { getMars } from '/src/surface/scenes.js';
 import { FlightController, TUNING } from './FlightController.js';
+import { recordInSave, setPartEffectsRecorder } from './effects/index.js';
+
+// each flight's record of what the chosen parts did (./effects/) is kept in save for the hangar's flight analysis
+setPartEffectsRecorder(recordInSave(save));
 import { createCockpitControls, createCockpitIndicators } from './cockpitControls.js';
 import { ascentGuide, assistReadout, landingGuide, predictPath } from './flightAssist.js';
 import { createDebrisField } from './debris.js';

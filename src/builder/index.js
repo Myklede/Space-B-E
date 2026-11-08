@@ -14,7 +14,7 @@ import coldMorning from './data/presets/coldMorning.json';
 import thinSkin from './data/presets/thinSkin.json';
 import workhorse from './data/presets/workhorse.json';
 import { Assembly, createCatalog } from './assembly.js';
-import { internalsJson, partsJson, sections } from './catalogData.js';
+import { internalsJson, partsJson, sections, traitsData } from './catalogData.js';
 import { computeShipSpec, engineStats } from './stats.js';
 import { evaluate, holdPlan, owed } from './gonogo.js';
 import { buildAsFlown, describeDefect, designSignature, meanWear, partGroups, refurbFee, staticFireFee, wearAfterFlight } from './asBuilt.js';
@@ -38,7 +38,7 @@ export { openPauseMenu, openSettings }; // other roles may open the Esc menu and
 const catalog = createCatalog(partsJson, internalsJson);
 registerNasaModels(catalog);
 const PRESETS = { reliable, workhorse, coldMorning, thinSkin };
-const deps = { catalog, engines, launch, balance: economy.balance, planets: PLANETS, g0: G0, materials, pad: sections.pad };
+const deps = { catalog, engines, launch, balance: economy.balance, planets: PLANETS, g0: G0, materials, pad: sections.pad, traitsData };
 
 let assembly = null; // the vehicle being built, kept across states
 let bay = null; // the engineering bay scene, built once

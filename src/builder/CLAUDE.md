@@ -212,6 +212,36 @@ Người dùng muốn làm lại giao diện trang thiết kế:
   - Thân: dữ liệu (`daaaaac`) và khoang thiết bị (`2f3e0ac`) đã sửa; màu mô hình đang làm lại.
   - Đuôi và Mũi đang chạy.
 
+## 8. Đợt 5 (2026-11-08): bộ phận ảnh hưởng thật khi bay (ĐÃ CHỐT)
+
+- **Người dùng muốn:**
+  - Chỉ số mỗi bộ phận khác nhau theo giá thì phải khác nhau cả lúc bay và lúc chơi, để người chơi cảm nhận và cân nhắc.
+  - Ví dụ: động cơ hoặc bệ rẻ thì bay lên chậm; bình O₂ xịn thì đi bộ ngoài trời lâu hơn; vỏ titan bền và chịu va đập tốt hơn nhôm.
+- **Đã chốt với người dùng:**
+  - **Ai làm:** cả 4 người đã đồng ý cho Role 1 làm luôn phần bay (`src/flight`, `src/surface`, `src/cruise`, `src/missions`), nhưng phải ghi `docs/SHARE_PROBLEMS.md` để báo cả nhóm. Đã ghi mục "Role 1 is adding part effects…" và `docs/DECISIONS.md`. Khi chạy `npm run check` cho các file này cần `ALLOW_OWNERSHIP_CHANGE=1`, vì người dùng nói cả 4 đã đồng ý.
+  - **Phạm vi:** tất cả, càng sát thực tế càng tốt:
+    - động cơ và bệ phóng;
+    - vỏ và khung;
+    - sự sống của phi hành gia;
+    - hạ cánh, điện, liên lạc.
+  - **Cách cảm nhận:**
+    - Ngay khi bay, nhưng **không thông báo gì**: người chơi tự cảm nhận.
+    - Sau chuyến bay có bảng phân tích, ví dụ vỏ titan thì % hao mòn tăng rất chậm.
+    - Bệ phóng xịn thì tàu rời bệ rất nhanh, bệ rẻ thì chậm.
+  - **Nguyên tắc:** vật lý thật, có đánh đổi. Không phải "đắt hơn là tốt hơn mọi mặt".
+  - **Nhánh:** người dùng cho gộp `dev` vào `role1-builder` (merge `38e0f50`); nhánh `dev` không đổi.
+  - **Đội agent:** 5 thực thi + 5 kiểm tra, Opus 5.5 mức extra high:
+    - (1) động cơ và bệ phóng;
+    - (2) vỏ, khung và tấm chắn nhiệt;
+    - (3) sự sống (O₂, CO₂, nước, bức xạ, hành trình);
+    - (4) hạ cánh, điện, liên lạc;
+    - (5) bảng phân tích sau chuyến và hao mòn.
+- **Khung chung (AI làm ở bước 0):**
+  - `src/builder/traits/` (`index.js` cùng 4 nhóm `.js` và `.json` số liệu thật) tính `ShipSpec.stats.traits`, kèm `minThrottle` và `ignitions` mà FlightController đã đọc sẵn.
+  - `src/flight/effects/` (`index.js` và 3 nhóm) gồm các điểm móc trong FlightController: `params`, `thrust`, `ignite`, `maxQ`, `heatLimit`, `touchdownLimit`, `turnAccel`, `debrisHit`, `step`, `liftoff`, `end`.
+  - Bản ghi mỗi chuyến lưu ở `save.partEffects` để hangar phân tích. Hook giá trị phải thuần, không gieo xúc xắc, vì bản sao dự đoán quỹ đạo cũng gọi chúng.
+  - Chưa có số liệu thì tàu bay y như cũ; test của Role 2 vẫn qua hết.
+
 ## 5. Việc tồn đọng
 
 - Khoảng 58 model NASA không dùng (35 MB) còn trong repo; lệnh xoá hàng loạt từng bị chặn, cần người dùng cho phép.

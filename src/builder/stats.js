@@ -3,6 +3,7 @@ import { computeHull } from './hull.js';
 import { weatherFor } from './weather.js';
 import { padEffects } from './sections/pad/effects.js';
 import { partRadius } from './assembly.js';
+import { flightTraits, flatTraits } from './traits/index.js';
 
 export const TWR_MIN = 1.2;
 export const RELIABILITY_MIN = 0.8;
@@ -82,12 +83,12 @@ export const MAX_PART_RELIABILITY = 0.9995;
 const capRel = (r, base) => Math.min((base ?? 1) >= 1 ? 1 : MAX_PART_RELIABILITY, Math.max(0.01, r));
 
 /**
- * computeShipSpec(assembly, { catalog, engines, launch, balance, planets, g0, materials })
+ * computeShipSpec(assembly, { catalog, engines, launch, balance, planets, g0, materials, pad, traitsData })
  * → { spec, breakdown, blocks } where blocks are the hard blocks that need no money check (OVER_BUDGET is added by gonogo.js).
  * Solid motors (def.booster) add their thrust and propellant to the single stage the flight model flies; their casings
  * ride along as dry mass. Internal options (sections/<id>/internals.json) modify mass, cost, reliability, Isp, thrust and power.
  */
-export function computeShipSpec(assembly, { catalog, engines, launch, balance, planets, g0, materials = null, pad = null }) {
+export function computeShipSpec(assembly, { catalog, engines, launch, balance, planets, g0, materials = null, pad = null, traitsData = null }) {
   const layout = assembly.layout();
   // launch-day weather (weather.js) and the outer skin (hull.js); the pad's effects follow once the thrust is known
   const weather = weatherFor(assembly.launch, { pad, launchData: launch });
@@ -214,6 +215,10 @@ export function computeShipSpec(assembly, { catalog, engines, launch, balance, p
     ascentCdA: (noseCdA ?? 6) * (hull.cdAFactor ?? 1), cdA: hasHeatShield ? (shieldCdA ?? 80) : 3,
     ...(chuteCdA > 0 ? { chuteCdA } : {}),
   };
+  // what each chosen part does in flight and on Mars (traits/, wave 5): stats.traits, plus the flat minThrottle and
+  // ignitions FlightController already reads
+  stats.traits = flightTraits(layout, { catalog, engines, materials, hull, padFx, stats, g0, optionsOf: (e) => (e.def.internals && catalog.optionsOf ? catalog.optionsOf(e.def, e.options, e.engine?.fuel ?? shipFuel) : {}), traitsData });
+  Object.assign(stats, flatTraits(stats.traits));
 
   const dv = balance.deltaVKmS ?? { ascent: 3.3, transfer: 2.1, landing: 0.4, return: 3.1 };
   const dvNeeded = { ascent: dv.ascent * 1000, transfer: dv.transfer * 1000, landing: dv.landing * 1000, return: dv.return * 1000 };

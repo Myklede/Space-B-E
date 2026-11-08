@@ -1,0 +1,5 @@
+{
+  "_about": "Real numbers for the propulsion flight traits (traits/propulsion.js). neutral: what the traits are with no data (the flight as before). Add per-part and per-option entries with a source for each number in sources.",
+  "neutral": { "minThrottle": 0, "ignitions": null },
+  "sources": []
+}

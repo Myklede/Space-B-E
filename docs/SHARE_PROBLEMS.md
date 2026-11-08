@@ -114,6 +114,30 @@ Copy this block. Keep each line short and factual. Don't commit screenshots.
 
 ## Needs the whole team
 
+### Role 1 is adding part effects in flight, on Mars and in the cruise (information: all four agreed)
+- **For:** all four roles · **From:** Role 1 (Myklede) · **Found:** 2026-11-08 on dev 66d5e5d · **Severity:** decision (agreed by all four, told by Myklede)
+- **Where:**
+  - New files: `src/builder/traits/` (what each chosen part does, computed into `ShipSpec.stats.traits`) and `src/flight/effects/` (one file per group).
+  - Hooks in `src/flight/FlightController.js` (marked "part effects").
+  - Wave-5 agents will also edit `src/surface/oxygen.js`, `astronaut.js`, `RoverController.js`, `rovers.js`, `src/cruise/index.js` and `src/missions/` comms.
+- **Steps:** build a cheap ship and an expensive one with the same Δv and fly both
+- **Expected:** each part's real characteristics show in play, with real physics and trade-offs, not "dearer is better":
+  - engine throttle depth, restarts, steering, and an engine failing in flight by its reliability;
+  - a cheap pad holding the ship back at liftoff;
+  - skin strength at max-Q, heating, and what a debris hit does to titanium versus aluminium;
+  - heat shield capacity;
+  - suit and cabin oxygen in kilograms, CO₂ scrubbing and the radiation dose behind the shelter;
+  - leg touchdown limits, power for the rovers and antenna data rates.
+
+  The game shows no new messages in flight; a flight analysis in the hangar explains afterwards.
+- **Actual:** today most part choices change only the builder's numbers
+- **Suggested fix:** nothing to do for you.
+  - Every new field is optional, so a missing trait means "as before".
+  - No contract name changes: failures use existing `ENDINGS` and `flight:failed`.
+  - The flight's record is kept in `save.partEffects`.
+  - Role 1 runs Role 2's and Role 4's tests before each commit and will list every touched file here when it lands on dev. Please tell Myklede if a hook gets in your way.
+- **Status:** open (in progress on `role1-builder`)
+
 ### Allow PRELAUNCH → HANGAR (and LAUNCH → HANGAR before liftoff) so the player can SCRUB a launch
 - **For:** all four roles · **From:** Role 2 + Role 4 (Minh Vuong) · **Found:** 2026-11-07 on dev 3d4fa59 · **Severity:** decision
 - **Where:** `src/core/contract.js` `TRANSITIONS` (`PRELAUNCH: ['LAUNCH']`, `LAUNCH: ['ORBIT']`)

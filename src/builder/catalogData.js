@@ -14,6 +14,13 @@ import padParts from './sections/pad/parts.json';
 import padInternals from './sections/pad/internals.json';
 import padSection from './sections/pad/section.json';
 import { createSections, mergeSectionData } from './sections.js';
+import propulsionTraits from './traits/propulsion.json';
+import structureTraits from './traits/structure.json';
+import lifeTraits from './traits/life.json';
+import landingTraits from './traits/landing.json';
+
+/** The real numbers behind each part's flight traits (traits/*.json), passed to computeShipSpec as deps.traitsData. */
+export const traitsData = { propulsion: propulsionTraits, structure: structureTraits, life: lifeTraits, landing: landingTraits };
 
 const files = {
   nose: { parts: noseParts, internals: noseInternals, section: noseSection },
