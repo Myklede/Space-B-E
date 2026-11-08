@@ -246,6 +246,7 @@ Người dùng muốn làm lại giao diện trang thiết kế:
 
 ## 5. Việc tồn đọng
 
+- **Hứa với Role 3 (2026-11-08):** sau đợt 5 thì thêm `ShipSpec.stats.cabin = { type, windows, hatch, docking, couches, atmosphere, suits, crew, volumeM3 }`, để khoang đi bộ (INTERIOR) khớp với khoang người chơi chọn. Tài liệu đã gửi bạn: `C:/Users/Thainguyen/Downloads/SpaceB-E-cabins-for-Role3.md` và trang https://claude.ai/artifact/7GaaeTkSwWYV9dWWHqffxg. Mọi khoang đều có cửa sổ (small, panoramic, cupola), không có khoang nào không cửa sổ.
 - Khoảng 58 model NASA không dùng (35 MB) còn trong repo; lệnh xoá hàng loạt từng bị chặn, cần người dùng cho phép.
 - Model không còn dùng: `satkit_radio1.glb` (ăng-ten giờ vẽ tay), `shuttle_engines.glb` cho động cơ (vẫn đứng trong hangar).
 - Tuỳ chọn: hook `surfaceRadius` cho designScene/hangarScene; thêm shape Super Heavy / N1; bước đường kính M ở Delta/Workhorse.
