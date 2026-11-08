@@ -1,7 +1,21 @@
 # Nose section: assets
 
-No new files were downloaded for the nose. Everything new is procedural three.js geometry in `art.js`
-(capsules, heat shields, fairings, escape towers, covers, trunk, parachute cluster, abort pods, LiOH rack, high-gain dish).
+## Wave 4 (2026-11-07): no new files yet
+
+The 50 new parts of wave 4 have no model file yet. The planned Blender models (slugs, sizes, priorities) are listed in
+`NOTES.md`; a part gets `"model": { "builder": "nose/<slug>" }` only once `public/assets/models/builder/nose/<slug>.glb`
+exists. Until then the code-drawn art in `art.js` and `bay/partMeshes.js` is used.
+
+Free models the modeller may use (credit here when shipped):
+
+| Source | Licence | Use |
+|---|---|---|
+| Smithsonian 3D, Apollo 11 command module "Columbia" scan (https://3d.si.edu) | CC0 | measuring the Apollo command module; a 1K crop of its texture for the charred Avcoat look |
+| Smithsonian 3D, Apollo 11 crew hatch scan and CAD (https://3d.si.edu) | CC0 | decimated as the Apollo capsule's `slot_hatch` piece |
+| NASA 3D Resources: Mercury on Redstone and Atlas, Gemini, Orion capsule STL, SLS Block 1 (https://science.nasa.gov/3d-resources/, https://github.com/nasa/NASA-3D-Resources) | NASA (public domain) | proportions and outer mould lines |
+
+Reference photos and drawings used for measuring are listed with their licences in the wave-4 research folder
+(`refs/LICENSES.md`); none of them is shipped.
 
 ## NASA models still used by nose parts (already in `public/assets/nasa/`, public domain, NASA 3D Resources)
 
