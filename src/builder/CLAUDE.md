@@ -261,6 +261,20 @@ Người dùng muốn làm lại giao diện trang thiết kế:
     - Thẻ Whipple và tấm giáp sửa theo vật lý; tấm tản nhiệt rẻ nhất.
   - **Gợi ý cho Role 3:** khoang demo Apollo (bản quét CC0 của Smithsonian). Phương án thay thế: Orion.
 
+## 9. Đợt 6 (2026-11-08): hangar kiểu VAB High Bay 3 (ĐÃ CHỐT, Codex dựng mô hình)
+
+- **Người dùng muốn:** sảnh tròn hiện tại nhìn giả, quá thấp (cao 15 m, trong khi tàu cao 8–36 m). Làm lại theo ảnh thật VAB High Bay 3 có SLS bên trong: giàn giáo thép khổng lồ, sàn công tác, có góc nhìn từ mặt đất ngước lên thấy cả con tàu.
+- **Đã chốt:**
+  - Gian cao cố định khoảng 80 m.
+  - Các tầng sàn cách nhau khoảng 6 m, mỗi tầng hai nửa trượt ôm sát thân tàu, mép vàng cắt theo bán kính S/M/L. Tầng cao hơn đỉnh tàu hoặc ngang tầng có booster thì rút vào.
+  - Người chơi đi bộ dưới mặt đất. Có thang máy trong tháp giàn giáo lên các tầng sàn.
+  - **Tầng phi hành đoàn** là tầng ngang cửa khoang lái của con tàu đang lắp: có cầu dẫn (crew access arm) bắc tới cửa. Đi qua cầu, bấm E ở cửa → Readiness Poll → xác nhận → sàn rút ra (khoảng 1–2 s, âm thanh rầm rầm, khói) → sang phần bay của Role 2 như hiện nay.
+  - Dãy 7 bàn máy tính đặt trên sàn nhà cạnh bệ tàu, quay mặt về tàu.
+- **Chia việc:**
+  - Codex dựng mô hình Blender theo mô-đun (dùng nhân bản InstancedMesh) và `layout.json`, kèm sandbox `sandbox/role1.hangar.html`. Codex làm trên nhánh `role1-hangar-vab`, trong thư mục riêng `C:/Users/Thainguyen/Downloads/SpaceB-E-hangar`, commit đứng tên Myklede, không có dòng Co-Authored-By, không push `dev`.
+  - Claude kiểm tra rồi lắp vào game: hangarScene, thang máy, sàn rút, cầu dẫn, bàn máy, âm thanh và khói.
+  - Prompt gửi Codex: `C:/Users/Thainguyen/Downloads/CODEX-PROMPT-VAB-HANGAR.md`.
+
 ## 5. Việc tồn đọng
 
 - **Đã làm cho Role 3 (2026-11-08):**
