@@ -287,6 +287,19 @@ for (const [key, json] of Object.entries(presets)) {
   check(g.lines.length >= (text.gonogo.consoles ?? []).length, `${key}: one Go/No-Go line per console at least`);
 }
 
+// ---------- the Apollo demo preset and ShipSpec.stats.cabin (for Role 3's interior) ----------
+{
+  const apollo = read('src/builder/data/presets/apollo.json');
+  const { spec, breakdown, blocks } = computeShipSpec(new Assembly(apollo, catalog), { catalog, engines, launch, balance, planets: PLANETS, g0: G0, materials, pad: sections.pad });
+  const total = spec.stats.cost + breakdown.launchFee;
+  check(!blocks.length && spec.warnings.length === 0 && total <= balance.startMoney, `Apollo preset flies with no warning within the starting money ($${Math.round(total).toLocaleString('en-US')}, Δv ${Math.round(spec.stats.deltaV)} m/s)`);
+  const c = spec.stats.cabin;
+  check(c?.type === 'capsule_apollo' && c.windows === 'small' && c.hatch && c.docking && c.couches, `stats.cabin names the cabin and its fittings (${JSON.stringify(c)})`);
+  const rel = computeShipSpec(new Assembly(presets.reliable, catalog), { catalog, engines, launch, balance, planets: PLANETS, g0: G0, materials, pad: sections.pad });
+  check(rel.spec.stats.cabin?.type === 'capsule_m', 'the Reliable preset reports its generic Mk2 cabin');
+  JSON.parse(JSON.stringify(c));
+}
+
 // ---------- no part that can fail reaches 100 % with its best options ----------
 {
   const perfect = [];

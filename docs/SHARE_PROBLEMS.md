@@ -115,6 +115,24 @@ Copy this block. Keep each line short and factual. Don't commit screenshots.
 
 ## Role 3: Graphics, Audio & Core
 
+### The demo cabin is Apollo: `ShipSpec.stats.cabin` and an Apollo preset are ready (information)
+- **For:** Role 3 · **From:** Role 1 (Myklede) · **Found:** 2026-11-08 · **Severity:** polish
+- **Where:** `getShip().stats.cabin` (`src/builder/stats.js`); the preset is `src/builder/data/presets/apollo.json` (More → Preset vehicles → Apollo)
+- **Steps:** open the hangar, More → Preset vehicles → Apollo, then the readiness poll and launch; in INTERIOR read `getShip().stats.cabin`
+- **Expected:** the walkable interior matches the Apollo command module:
+  - 3 couches;
+  - 5 windows (2 forward, 2 side, 1 in the hatch);
+  - the side hatch;
+  - the docking tunnel overhead.
+
+  The window and hatch pieces of the outside model are on branch `role1-cabins-for-role3` (`public/assets/models/builder/nose/capsule_apollo.glb`: `slot_windows*`, `slot_hatch*`).
+- **Actual:** nothing wrong. `stats.cabin` for the preset reads `{ type: 'capsule_apollo', windows: 'small', hatch: 'outward', docking: 'probe_drogue', couches: 'shock', atmosphere: 'pad_mix', suits: 'pressure', volumeM3: 6.17 }`.
+- **Suggested fix:**
+  - Use `stats.cabin.type === 'capsule_apollo'` to pick the Apollo interior, and keep your current cabin for every other type.
+  - Real references: the Smithsonian CC0 scan at https://3d.si.edu (Apollo 11 command module, interior included) and NASA's Apollo Operations Handbook.
+  - Keep all seven `STATIONS`.
+- **Status:** open
+
 ## Role 4: Story, Cruise & Knowledge
 
 ### Reset money on the bankrupt ending

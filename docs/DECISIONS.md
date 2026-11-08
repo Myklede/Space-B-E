@@ -94,4 +94,11 @@ Choices the spec left open. Add a line whenever you pick the simplest option: th
     - on each flight record: `design`, `flown`, `wear {before, after, loads}`, `effectsId`, `home.before`;
     - `fleet.wear.consumed`.
   - **Telemetry:** `co2` is in mmHg.
+- **2026-11-08, Role 1 with Role 3 (told by Myklede): the hackathon demo cabin is Apollo.**
+  - **What Role 3 builds:** one walkable interior, for the Apollo command module (`capsule_apollo`). The reasons:
+    - the Smithsonian's CC0 3D scan of Apollo 11 *Columbia* includes the interior;
+    - NASA's manuals are public domain;
+    - everyone recognises it.
+  - **Demo ship:** the builder has an **Apollo** preset (More → Preset vehicles): Titan II body, one large engine, two small solids, an extra kerosene tank. It costs $4.91M with fees, has Δv 5,409 m/s against 5,400 needed, and gives no warnings.
+  - **`ShipSpec.stats.cabin`:** `{ type, windows, hatch, docking, couches, atmosphere, suits, volumeM3 }`, the cabin the player chose and how it is fitted. `type` is a part id, `capsule_apollo` for the demo. It is optional for readers: a missing field means the default cabin.
 

@@ -221,6 +221,19 @@ export function computeShipSpec(assembly, { catalog, engines, launch, balance, p
   // ignitions FlightController already reads
   stats.traits = flightTraits(layout, { catalog, engines, materials, hull, padFx, stats, g0, optionsOf: (e) => (e.def.internals && catalog.optionsOf ? catalog.optionsOf(e.def, e.options, e.engine?.fuel ?? shipFuel) : {}), traitsData });
   Object.assign(stats, flatTraits(stats.traits));
+  // the crew cabin the player chose (promised to Role 3, 2026-11-08): which capsule and how its windows, hatch, docking
+  // port and seats were fitted, so the walkable interior can match the outside. Optional for readers.
+  const cabinEntry = layout.find((e) => e.def.flags?.capsule);
+  if (cabinEntry) {
+    const opts = catalog.optionsOf ? catalog.optionsOf(cabinEntry.def, cabinEntry.options) : {};
+    const life = stats.traits?.life?.cabin ?? {};
+    stats.cabin = {
+      type: cabinEntry.type,
+      windows: opts.windows?.id ?? null, hatch: opts.hatch?.id ?? null, docking: opts.docking?.id ?? null,
+      couches: opts.couches?.id ?? null, atmosphere: opts.atmosphere?.id ?? null, suits: opts.suits?.id ?? null,
+      volumeM3: Number.isFinite(life.cabinM3) ? life.cabinM3 : null,
+    };
+  }
 
   const dv = balance.deltaVKmS ?? { ascent: 3.3, transfer: 2.1, landing: 0.4, return: 3.1 };
   const dvNeeded = { ascent: dv.ascent * 1000, transfer: dv.transfer * 1000, landing: dv.landing * 1000, return: dv.return * 1000 };

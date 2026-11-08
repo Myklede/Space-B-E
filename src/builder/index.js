@@ -13,6 +13,7 @@ import reliable from './data/presets/reliable.json';
 import coldMorning from './data/presets/coldMorning.json';
 import thinSkin from './data/presets/thinSkin.json';
 import workhorse from './data/presets/workhorse.json';
+import apollo from './data/presets/apollo.json'; // the hackathon demo ship: Role 3's interior is built for the Apollo cabin
 import { Assembly, createCatalog } from './assembly.js';
 import { internalsJson, partsJson, sections, traitsData } from './catalogData.js';
 import { computeShipSpec, engineStats } from './stats.js';
@@ -38,7 +39,7 @@ export { openPauseMenu, openSettings }; // other roles may open the Esc menu and
 
 const catalog = createCatalog(partsJson, internalsJson);
 registerNasaModels(catalog);
-const PRESETS = { reliable, workhorse, coldMorning, thinSkin };
+const PRESETS = { reliable, workhorse, coldMorning, thinSkin, apollo };
 const deps = { catalog, engines, launch, balance: economy.balance, planets: PLANETS, g0: G0, materials, pad: sections.pad, traitsData };
 
 let assembly = null; // the vehicle being built, kept across states
